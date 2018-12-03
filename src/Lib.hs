@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Lib
   ( runApp
@@ -9,16 +10,17 @@ import LoadEnv
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
+import Servant.Server.StaticFiles
 import System.Environment (lookupEnv)
 import System.IO
 
-type RootAPI = Get '[ PlainText] String
+type RootAPI = "hello" :> Get '[ PlainText] String :<|> "static" :> Raw
 
 helloWorldMessage :: String
 helloWorldMessage = "Hello World!"
 
-server1 :: Server RootAPI
-server1 = return helloWorldMessage
+server :: Server RootAPI
+server = return helloWorldMessage :<|> serveDirectoryWebApp "./static"
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
@@ -27,7 +29,7 @@ rootAPI = Proxy
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.
 app :: Application
-app = serve rootAPI server1
+app = serve rootAPI server
 
 runApp :: IO ()
 runApp = do

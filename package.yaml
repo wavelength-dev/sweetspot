@@ -25,6 +25,7 @@ dependencies:
 - wai
 - warp
 - load-env
+- aeson
 
 library:
   source-dirs: src

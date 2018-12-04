@@ -26,6 +26,8 @@ dependencies:
 - warp
 - load-env
 - aeson
+- postgresql-simple
+- transformers
 
 library:
   source-dirs: src

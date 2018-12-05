@@ -55,7 +55,7 @@ rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 createApp :: Connection -> Application
-createApp dbconn = serve rootAPI (server dbconn)
+createApp = serve rootAPI . server
 
 runApp :: IO ()
 runApp = do

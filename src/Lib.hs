@@ -9,12 +9,15 @@ module Lib
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
+import Data.Text (Text)
 import Database.PostgreSQL.Simple
   ( Connection
   , Query
   , connect
   , connectDatabase
   , defaultConnectInfo
+  , execute
+  , query
   , query_
   )
 import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
@@ -31,7 +34,7 @@ import Servant
 import System.Environment (lookupEnv)
 
 type RootAPI
-   = "hello" :> Get '[ PlainText] String :<|> "static" :> Raw :<|> "experiments" :> Get '[ JSON] [Experiment]
+   = "hello" :> Get '[ PlainText] Text :<|> "static" :> Raw :<|> "experiments" :> Get '[ JSON] [Experiment] :<|> "experiment" :> QueryParam "id" Int :> QueryParam "price" Int :> Post '[ JSON] Response
 
 data Experiment = Experiment
   { id :: Int
@@ -40,10 +43,16 @@ data Experiment = Experiment
 
 instance ToJSON Experiment
 
+data Response = Response
+  { message :: Text
+  } deriving (Generic)
+
+instance ToJSON Response
+
 instance FromRow Experiment where
   fromRow = Experiment <$> field <*> field
 
-helloWorldMessage :: String
+helloWorldMessage :: Text
 helloWorldMessage = "Hello World!"
 
 experimentsHandler :: Connection -> Handler [Experiment]
@@ -52,10 +61,20 @@ experimentsHandler dbconn =
   where
     experimentsQuery = "select product_id, price from experiments;" :: Query
 
+createExperimentHandler ::
+     Connection -> Maybe Int -> Maybe Int -> Handler Response
+createExperimentHandler dbconn (Just id) (Just price) = do
+  liftIO $ execute dbconn q (id, price)
+  return Response {message = "Created experiment"}
+  where
+    q = "insert into experiments (product_id, price) values (?, ?)" :: Query
+createExperimentHandler _ _ _ = return Response {message = "Invalid request"}
+
 server :: Connection -> Server RootAPI
 server dbconn =
   return helloWorldMessage :<|> serveDirectoryWebApp "./static" :<|>
-  experimentsHandler dbconn
+  experimentsHandler dbconn :<|>
+  createExperimentHandler dbconn
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy

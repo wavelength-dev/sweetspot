@@ -23,6 +23,7 @@ dependencies:
 - text
 - servant-server
 - wai
+- wai-logger
 - warp
 - load-env
 - aeson

@@ -20,7 +20,13 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
 import GHC.Generics (Generic)
 import LoadEnv (loadEnv)
-import Network.Wai.Handler.Warp (run)
+import Network.Wai.Handler.Warp
+  ( defaultSettings
+  , runSettings
+  , setLogger
+  , setPort
+  )
+import Network.Wai.Logger (withStdoutLogger)
 import Servant
 import System.Environment (lookupEnv)
 
@@ -63,4 +69,6 @@ runApp = do
   apiKey <- lookupEnv "SHOPIFY_API_KEY"
   dbconn <- connect defaultConnectInfo {connectDatabase = "supple"}
   putStrLn $ show apiKey
-  run 8082 (createApp dbconn)
+  withStdoutLogger $ \aplogger -> do
+    let settings = setPort 8082 $ setLogger aplogger defaultSettings
+    runSettings settings (createApp dbconn)

@@ -7,19 +7,22 @@ module Lib
   ( runApp
   ) where
 
-import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow (field, fromRow)
-import GHC.Generics
-import LoadEnv
-import Network.Wai
-import Network.Wai.Handler.Warp
+  ( Connection
+  , Query
+  , connect
+  , connectDatabase
+  , defaultConnectInfo
+  , query_
+  )
+import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
+import GHC.Generics (Generic)
+import LoadEnv (loadEnv)
+import Network.Wai.Handler.Warp (run)
 import Servant
-import Servant.Server.StaticFiles
 import System.Environment (lookupEnv)
-import System.IO
 
 type RootAPI
    = "hello" :> Get '[ PlainText] String :<|> "static" :> Raw :<|> "experiments" :> Get '[ JSON] [Experiment]
@@ -58,13 +61,6 @@ runApp :: IO ()
 runApp = do
   loadEnv
   apiKey <- lookupEnv "SHOPIFY_API_KEY"
-  dbconn <-
-    connect
-      defaultConnectInfo
-        { connectHost = "localhost"
-        , connectDatabase = "supple"
-        , connectPort = 5432
-        , connectUser = "postgres"
-        }
+  dbconn <- connect defaultConnectInfo {connectDatabase = "supple"}
   putStrLn $ show apiKey
   run 8082 (createApp dbconn)

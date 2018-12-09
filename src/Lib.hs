@@ -8,7 +8,7 @@ module Lib
   ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson (ToJSON)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import Database.PostgreSQL.Simple
   ( Connection
@@ -33,54 +33,47 @@ import Network.Wai.Logger (withStdoutLogger)
 import Servant
 import System.Environment (lookupEnv)
 
-type RootAPI
-   = "hello" :> Get '[ PlainText] Text :<|> "static" :> Raw :<|> "experiments" :> Get '[ JSON] [Experiment] :<|> "experiment" :> QueryParam "id" Int :> QueryParam "price" Int :> Post '[ JSON] Response
-
-data Experiment = Experiment
-  { id :: Int
+data BucketReq = BucketReq
+  { variant_id :: Int
+  , sku :: Text
   , price :: Int
   } deriving (Generic, Show)
 
-instance ToJSON Experiment
-
-data Response = Response
+data BucketRes = BucketRes
   { message :: Text
-  } deriving (Generic)
+  } deriving (Generic, Show)
 
-instance ToJSON Response
+instance ToJSON BucketReq
 
-instance FromRow Experiment where
-  fromRow = Experiment <$> field <*> field
+instance FromJSON BucketReq
 
-helloWorldMessage :: Text
-helloWorldMessage = "Hello World!"
+instance ToJSON BucketRes
 
-experimentsHandler :: Connection -> Handler [Experiment]
-experimentsHandler dbconn =
-  liftIO (query_ dbconn experimentsQuery :: IO [Experiment])
+instance FromRow BucketReq where
+  fromRow = BucketReq <$> field <*> field <*> field
+
+type RootAPI
+   = "static" :> Raw :<|> "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
+
+createBucketHandler :: Connection -> BucketReq -> Handler BucketRes
+createBucketHandler dbconn req = do
+  liftIO $ execute dbconn q (vid, sk, p)
+  return BucketRes {message = "Created experiment"}
   where
-    experimentsQuery = "select product_id, price from experiments;" :: Query
-
-createExperimentHandler ::
-     Connection -> Maybe Int -> Maybe Int -> Handler Response
-createExperimentHandler dbconn (Just id) (Just price) = do
-  liftIO $ execute dbconn q (id, price)
-  return Response {message = "Created experiment"}
-  where
-    q = "insert into experiments (product_id, price) values (?, ?)" :: Query
-createExperimentHandler _ _ _ = return Response {message = "Invalid request"}
+    vid = variant_id req
+    sk = sku req
+    p = price req
+    q =
+      "insert into buckets (variant_id, sku, price) values (?, ?, ?);" :: Query
 
 server :: Connection -> Server RootAPI
-server dbconn =
-  return helloWorldMessage :<|> serveDirectoryWebApp "./static" :<|>
-  experimentsHandler dbconn :<|>
-  createExperimentHandler dbconn
+server dbconn = serveDirectoryWebApp "./static" :<|> createBucketHandler dbconn
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 createApp :: Connection -> Application
-createApp = serve rootAPI . server
+createApp dbconn = serve rootAPI (server dbconn)
 
 runApp :: IO ()
 runApp = do

@@ -30,6 +30,7 @@ import Network.Wai.Handler.Warp
   , setPort
   )
 import Network.Wai.Logger (withStdoutLogger)
+import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 import System.Environment (lookupEnv)
 
@@ -98,7 +99,7 @@ rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 createApp :: Connection -> Application
-createApp dbconn = serve rootAPI (server dbconn)
+createApp dbconn = simpleCors $ serve rootAPI (server dbconn)
 
 runApp :: IO ()
 runApp = do

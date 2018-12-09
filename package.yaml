@@ -29,6 +29,7 @@ dependencies:
 - aeson
 - postgresql-simple
 - transformers
+- wai-cors
 
 library:
   source-dirs: src

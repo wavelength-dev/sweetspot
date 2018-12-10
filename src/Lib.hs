@@ -9,6 +9,7 @@ module Lib
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
+import qualified Data.ByteString as B
 import Data.Text (Text)
 import Database.PostgreSQL.Simple
   ( Connection
@@ -23,6 +24,7 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
 import GHC.Generics (Generic)
 import LoadEnv (loadEnv)
+import Network.Wai (Middleware, Request)
 import Network.Wai.Handler.Warp
   ( defaultSettings
   , runSettings
@@ -30,7 +32,18 @@ import Network.Wai.Handler.Warp
   , setPort
   )
 import Network.Wai.Logger (withStdoutLogger)
-import Network.Wai.Middleware.Cors (simpleCors)
+import Network.Wai.Middleware.Cors
+  ( CorsResourcePolicy
+  , cors
+  , corsExposedHeaders
+  , corsMethods
+  , corsOrigins
+  , corsRequestHeaders
+  , simpleCors
+  , simpleCorsResourcePolicy
+  , simpleMethods
+  , simpleResponseHeaders
+  )
 import Servant
 import System.Environment (lookupEnv)
 
@@ -117,8 +130,15 @@ server dbconn =
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
+corsMiddleware :: Request -> Maybe CorsResourcePolicy
+corsMiddleware _ =
+  Just $
+  simpleCorsResourcePolicy
+    { corsOrigins = Just (["libertyproduct.myshopify.com" :: B.ByteString], True)
+    , corsExposedHeaders = Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"] }
+
 createApp :: Connection -> Application
-createApp dbconn = simpleCors $ serve rootAPI (server dbconn)
+createApp dbconn = (cors corsMiddleware) $ serve rootAPI (server dbconn)
 
 runApp :: IO ()
 runApp = do

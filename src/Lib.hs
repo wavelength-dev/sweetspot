@@ -71,7 +71,7 @@ instance FromRow UserBucketRes where
   fromRow = UserBucketRes <$> field <*> field
 
 type RootAPI
-   = "static" :> Raw :<|> "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes :<|> "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[JSON] UserBucketRes
+   = "static" :> Raw :<|> "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes :<|> "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucketRes
 
 createBucketHandler :: Connection -> BucketReq -> Handler BucketRes
 createBucketHandler dbconn req = do
@@ -84,16 +84,22 @@ createBucketHandler dbconn req = do
     q =
       "insert into buckets (variant_id, sku, price) values (?, ?, ?);" :: Query
 
-getUserBucketHandler :: Connection -> Maybe Int -> Maybe Text -> Handler UserBucketRes
+getUserBucketHandler ::
+     Connection -> Maybe Int -> Maybe Text -> Handler UserBucketRes
 getUserBucketHandler dbconn (Just uid) (Just sku) = do
   res <- liftIO $ (query dbconn q (uid, sku) :: IO [UserBucketRes])
-  return $ res !! 0
+  if length res > 0
+    then return $ res !! 0
+    else throwError err500 {errBody = "Something went wrong"}
   where
-    q = "select buckets.price, buckets.variant_id from user_buckets inner join users on user_buckets.user_id = users.user_id inner join buckets on user_buckets.variant_id = buckets.variant_id where users.user_id = ? and buckets.sku = ?;" :: Query
+    q =
+      "select buckets.price, buckets.variant_id from user_buckets inner join users on user_buckets.user_id = users.user_id inner join buckets on user_buckets.variant_id = buckets.variant_id where users.user_id = ? and buckets.sku = ?;" :: Query
 getUserBucketHandler _ _ _ = undefined
 
 server :: Connection -> Server RootAPI
-server dbconn = serveDirectoryWebApp "./static" :<|> createBucketHandler dbconn :<|> getUserBucketHandler dbconn
+server dbconn =
+  serveDirectoryWebApp "./static" :<|> createBucketHandler dbconn :<|>
+  getUserBucketHandler dbconn
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy

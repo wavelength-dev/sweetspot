@@ -70,11 +70,17 @@ instance FromRow BucketReq where
 instance FromRow UserBucketRes where
   fromRow = UserBucketRes <$> field <*> field
 
-type StaticRoute = "static" :> Raw
-type CreateBucketRoute = "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
-type UserBucketRoute = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucketRes
-type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
+type CookieHeader = '[ Header "Set-Cookie" Text]
 
+type StaticRoute = "static" :> Raw
+
+type CreateBucketRoute
+   = "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
+
+type UserBucketRoute
+   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] (Headers CookieHeader UserBucketRes)
+
+type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
 
 createBucketHandler :: Connection -> BucketReq -> Handler BucketRes
 createBucketHandler dbconn req = do
@@ -88,16 +94,20 @@ createBucketHandler dbconn req = do
       "insert into buckets (variant_id, sku, price) values (?, ?, ?);" :: Query
 
 getUserBucketHandler ::
-     Connection -> Maybe Int -> Maybe Text -> Handler UserBucketRes
+     Connection
+  -> Maybe Int
+  -> Maybe Text
+  -> Handler (Headers CookieHeader UserBucketRes)
 getUserBucketHandler dbconn (Just uid) (Just sku) = do
   res <- liftIO $ (query dbconn q (uid, sku) :: IO [UserBucketRes])
   if length res > 0
-    then return $ res !! 0
+    then return $ addHeader "lol=bal" $ res !! 0
     else throwError err500 {errBody = "Something went wrong"}
   where
     q =
       "select buckets.price, buckets.variant_id from user_buckets inner join users on user_buckets.user_id = users.user_id inner join buckets on user_buckets.variant_id = buckets.variant_id where users.user_id = ? and buckets.sku = ?;" :: Query
-getUserBucketHandler _ _ _ = throwError err500 {errBody = "Something went wrong"}
+getUserBucketHandler _ _ _ =
+  throwError err500 {errBody = "Something went wrong"}
 
 server :: Connection -> Server RootAPI
 server dbconn =

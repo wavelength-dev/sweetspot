@@ -70,8 +70,11 @@ instance FromRow BucketReq where
 instance FromRow UserBucketRes where
   fromRow = UserBucketRes <$> field <*> field
 
-type RootAPI
-   = "static" :> Raw :<|> "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes :<|> "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucketRes
+type StaticRoute = "static" :> Raw
+type CreateBucketRoute = "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
+type UserBucketRoute = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucketRes
+type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
+
 
 createBucketHandler :: Connection -> BucketReq -> Handler BucketRes
 createBucketHandler dbconn req = do

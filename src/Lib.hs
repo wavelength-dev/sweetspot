@@ -94,7 +94,7 @@ getUserBucketHandler dbconn (Just uid) (Just sku) = do
   where
     q =
       "select buckets.price, buckets.variant_id from user_buckets inner join users on user_buckets.user_id = users.user_id inner join buckets on user_buckets.variant_id = buckets.variant_id where users.user_id = ? and buckets.sku = ?;" :: Query
-getUserBucketHandler _ _ _ = undefined
+getUserBucketHandler _ _ _ = throwError err500 {errBody = "Something went wrong"}
 
 server :: Connection -> Server RootAPI
 server dbconn =

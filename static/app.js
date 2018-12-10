@@ -12,10 +12,15 @@ var requestURL = REMOTE_URL+'/bucket/?uid='+uid+'&sku='+sku;
 var request = new XMLHttpRequest();
 request.open('GET', requestURL);
 request.responseType = 'json';
-request.send();
+console.log('WE SENT A RESPONSE')
 request.onload = function() {
-  console.log(request.response);
+  console.log('WE GOT A RESPONSE')
+  var experiment = request.response;
+  var el = document.getElementsByClassName('pea__placeholder')[0]
+  el.innerHTML = experiment.bucket_price;
+  el.classList.remove("pea__placeholder");
 }
+request.send();
 
 function setCookie(name,value,days) {
     var expires = "";

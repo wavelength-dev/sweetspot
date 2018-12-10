@@ -134,7 +134,7 @@ corsMiddleware :: Request -> Maybe CorsResourcePolicy
 corsMiddleware _ =
   Just $
   simpleCorsResourcePolicy
-    { corsOrigins = Just (["libertyproduct.myshopify.com" :: B.ByteString], True)
+    { corsOrigins = Just (["https://libertyproduct.myshopify.com" :: B.ByteString], True)
     , corsExposedHeaders = Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"] }
 
 createApp :: Connection -> Application

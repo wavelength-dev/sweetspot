@@ -8,9 +8,8 @@ module Lib
   ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson (FromJSON, ToJSON, encode)
-import qualified Data.ByteString.Lazy as B
-import Data.ByteString.Lazy.Char8 (unpack)
+import Data.Aeson (FromJSON, ToJSON)
+import qualified Data.ByteString as B
 import Data.Text (Text)
 import Database.PostgreSQL.Simple
   ( Connection
@@ -92,7 +91,7 @@ type CreateBucketRoute
    = "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
 
 type UserBucketRoute
-  = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ PlainText] (Headers CookieHeader [Char])
+   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] (Headers CookieHeader UserBucketRes)
 
 type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
 
@@ -111,11 +110,11 @@ getUserBucketHandler ::
      Connection
   -> Maybe Int
   -> Maybe Text
-  -> Handler (Headers CookieHeader String)
+  -> Handler (Headers CookieHeader UserBucketRes)
 getUserBucketHandler dbconn (Just uid) (Just sku) = do
   res <- liftIO $ (query dbconn q (uid, sku) :: IO [UserBucketRes])
   if length res > 0
-    then return $ addHeader "lol=bal" $ (unpack . encode) (res !! 0)
+    then return $ addHeader "lol=bal" $ res !! 0
     else throwError err500 {errBody = "Something went wrong"}
   where
     q =
@@ -135,7 +134,7 @@ corsMiddleware :: Request -> Maybe CorsResourcePolicy
 corsMiddleware _ =
   Just $
   simpleCorsResourcePolicy
-    { corsOrigins = Just (["https://libertyproduct.myshopify.com"], True)
+    { corsOrigins = Just (["https://libertyproduct.myshopify.com" :: B.ByteString], True)
     , corsExposedHeaders = Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"] }
 
 createApp :: Connection -> Application

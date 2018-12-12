@@ -1,28 +1,14 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Lib
   ( runApp
   ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.ByteString as B
 import Data.Text (Text)
-import Database.PostgreSQL.Simple
-  ( Connection
-  , Query
-  , connect
-  , connectDatabase
-  , defaultConnectInfo
-  , execute
-  , query
-  , query_
-  )
-import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
-import GHC.Generics (Generic)
 import LoadEnv (loadEnv)
 import Network.Wai (Middleware, Request)
 import Network.Wai.Handler.Warp
@@ -47,78 +33,36 @@ import Network.Wai.Middleware.Cors
 import Servant
 import System.Environment (lookupEnv)
 
-data BucketReq = BucketReq
-  { variant_id :: Int
-  , sku :: Text
-  , price :: Int
-  } deriving (Generic, Show)
-
-data BucketRes = BucketRes
-  { message :: Text
-  } deriving (Generic, Show)
-
-data UserBucketReq = UserBucketReq
-  { user_id :: Int
-  , product_sku :: Text
-  } deriving (Generic, Show)
-
-data UserBucketRes = UserBucketRes
-  { bucket_price :: Int
-  , bucket_variant :: Int
-  } deriving (Generic, Show)
-
-instance ToJSON BucketReq
-
-instance FromJSON BucketReq
-
-instance ToJSON BucketRes
-
-instance FromJSON UserBucketReq
-
-instance ToJSON UserBucketRes
-
-instance FromRow BucketReq where
-  fromRow = BucketReq <$> field <*> field <*> field
-
-instance FromRow UserBucketRes where
-  fromRow = UserBucketRes <$> field <*> field
+import Db (Connection, getDbConnection, getUserBucket, insertBucket)
+import Types
 
 type CookieHeader = '[ Header "Set-Cookie" Text]
 
 type StaticRoute = "static" :> Raw
 
 type CreateBucketRoute
-   = "bucket" :> ReqBody '[ JSON] BucketReq :> Post '[ JSON] BucketRes
+   = "bucket" :> ReqBody '[ JSON] Bucket :> Post '[ JSON] BucketRes
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] (Headers CookieHeader UserBucketRes)
+   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] (Headers CookieHeader UserBucket)
 
 type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
 
-createBucketHandler :: Connection -> BucketReq -> Handler BucketRes
+createBucketHandler :: Connection -> Bucket -> Handler BucketRes
 createBucketHandler dbconn req = do
-  liftIO $ execute dbconn q (vid, sk, p)
+  liftIO $ insertBucket dbconn req
   return BucketRes {message = "Created experiment"}
-  where
-    vid = variant_id req
-    sk = sku req
-    p = price req
-    q =
-      "insert into buckets (variant_id, sku, price) values (?, ?, ?);" :: Query
 
 getUserBucketHandler ::
      Connection
   -> Maybe Int
   -> Maybe Text
-  -> Handler (Headers CookieHeader UserBucketRes)
+  -> Handler (Headers CookieHeader UserBucket)
 getUserBucketHandler dbconn (Just uid) (Just sku) = do
-  res <- liftIO $ (query dbconn q (uid, sku) :: IO [UserBucketRes])
-  if length res > 0
-    then return $ addHeader "lol=bal" $ res !! 0
-    else throwError err500 {errBody = "Something went wrong"}
-  where
-    q =
-      "select buckets.price, buckets.variant_id from user_buckets inner join users on user_buckets.user_id = users.user_id inner join buckets on user_buckets.variant_id = buckets.variant_id where users.user_id = ? and buckets.sku = ?;" :: Query
+  res <- liftIO $ getUserBucket dbconn uid sku
+  case res of
+    (Just res) -> return $ addHeader "lol=bal" $ res
+    Nothing -> throwError err500 {errBody = "Something went wrong"}
 getUserBucketHandler _ _ _ =
   throwError err500 {errBody = "Something went wrong"}
 
@@ -134,8 +78,11 @@ corsMiddleware :: Request -> Maybe CorsResourcePolicy
 corsMiddleware _ =
   Just $
   simpleCorsResourcePolicy
-    { corsOrigins = Just (["https://libertyproduct.myshopify.com" :: B.ByteString], True)
-    , corsExposedHeaders = Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"] }
+    { corsOrigins =
+        Just (["https://libertyproduct.myshopify.com" :: B.ByteString], True)
+    , corsExposedHeaders =
+        Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
+    }
 
 createApp :: Connection -> Application
 createApp dbconn = (cors corsMiddleware) $ serve rootAPI (server dbconn)
@@ -144,7 +91,7 @@ runApp :: IO ()
 runApp = do
   loadEnv
   apiKey <- lookupEnv "SHOPIFY_API_KEY"
-  dbconn <- connect defaultConnectInfo {connectDatabase = "supple"}
+  dbconn <- getDbConnection
   putStrLn $ show apiKey
   withStdoutLogger $ \aplogger -> do
     let settings = setPort 8082 $ setLogger aplogger defaultSettings

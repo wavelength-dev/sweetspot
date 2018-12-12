@@ -1,4 +1,4 @@
-var REMOTE_URL = 'ngrok';
+var REMOTE_URL = 'https://15008d2f.ngrok.io';
 
 // Identify user.
 // Identify which variant is being viewer.
@@ -8,7 +8,7 @@ var REMOTE_URL = 'ngrok';
 
 var uid = 123;
 var sku = "MEH5680S";
-var requestURL = 'https://3318b275.ngrok.io/bucket/?uid='+uid+'&sku='+sku;
+var requestURL = REMOTE_URL+'/bucket/?uid='+uid+'&sku='+sku;
 var request = new XMLHttpRequest();
 request.open('GET', requestURL);
 request.responseType = 'json';
@@ -36,7 +36,6 @@ function getCookie(name) {
     }
     return null;
 }
-function eraseCookie(name) {   
-    document.cookie = name+'=; Max-Age=-99999999;';  
+function eraseCookie(name) {
+    document.cookie = name+'=; Max-Age=-99999999;';
 }
-

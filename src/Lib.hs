@@ -7,7 +7,6 @@ module Lib
   ) where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.ByteString as B
 import Data.Text (Text)
 import LoadEnv (loadEnv)
 import Network.Wai (Middleware, Request)
@@ -79,13 +78,13 @@ corsMiddleware _ =
   Just $
   simpleCorsResourcePolicy
     { corsOrigins =
-        Just (["https://libertyproduct.myshopify.com" :: B.ByteString], True)
+        Just (["https://libertyproduct.myshopify.com"], True)
     , corsExposedHeaders =
         Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
     }
 
 createApp :: Connection -> Application
-createApp dbconn = (cors corsMiddleware) $ serve rootAPI (server dbconn)
+createApp dbconn = cors corsMiddleware $ serve rootAPI (server dbconn)
 
 runApp :: IO ()
 runApp = do

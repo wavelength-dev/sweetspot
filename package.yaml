@@ -30,7 +30,6 @@ dependencies:
 - postgresql-simple
 - transformers
 - wai-cors
-- bytestring
 
 library:
   source-dirs: src

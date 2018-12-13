@@ -110,18 +110,19 @@ server =
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
-corsMiddleware :: Request -> Maybe CorsResourcePolicy
-corsMiddleware _ =
-  Just $
-  simpleCorsResourcePolicy
-    { corsOrigins = Just (["https://libertyproduct.myshopify.com"], True)
-    , corsExposedHeaders =
-        Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
-    }
+corsMiddleware :: Middleware
+corsMiddleware =
+  cors $ \_ ->
+    Just $
+    simpleCorsResourcePolicy
+      { corsOrigins = Just (["https://libertyproduct.myshopify.com"], True)
+      , corsExposedHeaders =
+          Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
+      }
 
 createApp :: AppCtx -> Application
 createApp ctx =
-  cors corsMiddleware $
+  corsMiddleware $
   serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
 
 jsonRequestLogger :: IO Middleware

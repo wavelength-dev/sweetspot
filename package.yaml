@@ -27,9 +27,10 @@ dependencies:
 - warp
 - load-env
 - aeson
-- postgresql-simple
 - transformers
 - wai-cors
+- hasql
+- contravariant
 
 library:
   source-dirs: src

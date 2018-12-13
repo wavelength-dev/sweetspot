@@ -21,18 +21,13 @@ import Network.Wai.Middleware.Cors
   ( CorsResourcePolicy
   , cors
   , corsExposedHeaders
-  , corsMethods
   , corsOrigins
-  , corsRequestHeaders
-  , simpleCors
   , simpleCorsResourcePolicy
-  , simpleMethods
-  , simpleResponseHeaders
   )
 import Servant
 import System.Environment (lookupEnv)
 
-import Db (Connection, getDbConnection, getUserBucket, insertBucket)
+import Database (Connection, getDbConnection, getUserBucket, insertBucket)
 import Types
 
 type CookieHeader = '[ Header "Set-Cookie" Text]
@@ -59,9 +54,7 @@ getUserBucketHandler ::
   -> Handler (Headers CookieHeader UserBucket)
 getUserBucketHandler dbconn (Just uid) (Just sku) = do
   res <- liftIO $ getUserBucket dbconn uid sku
-  case res of
-    (Just res) -> return $ addHeader "lol=bal" $ res
-    Nothing -> throwError err500 {errBody = "Something went wrong"}
+  return $ addHeader "lol=bal" $ res
 getUserBucketHandler _ _ _ =
   throwError err500 {errBody = "Something went wrong"}
 
@@ -77,8 +70,7 @@ corsMiddleware :: Request -> Maybe CorsResourcePolicy
 corsMiddleware _ =
   Just $
   simpleCorsResourcePolicy
-    { corsOrigins =
-        Just (["https://libertyproduct.myshopify.com"], True)
+    { corsOrigins = Just (["https://libertyproduct.myshopify.com"], True)
     , corsExposedHeaders =
         Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
     }

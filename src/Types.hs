@@ -4,7 +4,6 @@ module Types where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
-import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
 import GHC.Generics (Generic)
 
 data Bucket = Bucket
@@ -36,9 +35,3 @@ instance ToJSON BucketRes
 instance FromJSON UserBucketReq
 
 instance ToJSON UserBucket
-
-instance FromRow Bucket where
-  fromRow = Bucket <$> field <*> field <*> field
-
-instance FromRow UserBucket where
-  fromRow = UserBucket <$> field <*> field

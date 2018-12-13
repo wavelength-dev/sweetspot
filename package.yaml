@@ -23,14 +23,18 @@ dependencies:
 - text
 - servant-server
 - wai
-- wai-logger
+- wai-extra
+- wai-cors
 - warp
 - load-env
 - aeson
 - transformers
-- wai-cors
 - hasql
 - contravariant
+- fast-logger
+- mtl
+- time
+- data-default
 
 library:
   source-dirs: src

@@ -21,11 +21,11 @@ import Data.Default (def)
 import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
-import Network.Wai (Middleware, Request)
+import Network.Wai (Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
-  ( CorsResourcePolicy
-  , cors
+  (
+    cors
   , corsExposedHeaders
   , corsOrigins
   , simpleCorsResourcePolicy
@@ -37,7 +37,6 @@ import System.Log.FastLogger
   ( LoggerSet
   , ToLogStr(..)
   , defaultBufSize
-  , flushLogStr
   , newStdoutLoggerSet
   , pushLogStrLn
   )

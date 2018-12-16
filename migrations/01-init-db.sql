@@ -1,10 +1,49 @@
-CREATE TABLE users (user_id integer primary key);
-CREATE TABLE buckets (variant_id bigint primary key, sku text, price integer);
-CREATE TABLE user_buckets (user_id integer, variant_id bigint,
-  foreign key (user_id) references users(user_id),
-  foreign key (variant_id) references buckets(variant_id));
+CREATE TABLE users
+(user_id SERIAL PRIMARY KEY);
 
+CREATE TABLE experiment_groups
+(exp_group_id SERIAL PRIMARY KEY);
 
-INSERT INTO users (user_id) VALUES (123);
-INSERT INTO buckets (variant_id, sku, price) VALUES (17043734724672, 'MEH5680S', 24);
-INSERT INTO user_buckets (user_id, variant_id) VALUES (123, 17043734724672);
+CREATE TABLE experiments
+(exp_id SERIAL PRIMARY KEY,
+ sku TEXT);
+
+CREATE TABLE buckets
+(bucket_id SERIAL PRIMARY KEY,
+ svid BIGINT,
+ sku TEXT,
+ price NUMERIC(2));
+
+CREATE TABLE bucket_users
+(bucket_id SERIAL,
+ user_id SERIAL,
+ FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id),
+ FOREIGN KEY (user_id) REFERENCES users(user_id));
+
+CREATE TABLE experiment_group_users
+(exp_group_id SERIAL,
+ user_id SERIAL,
+ FOREIGN KEY (exp_group_id) REFERENCES experiment_groups(exp_group_id),
+ FOREIGN KEY (user_id) REFERENCES users(user_id));
+
+CREATE TABLE experiment_group_experiments
+(exp_group_id SERIAL,
+ exp_id SERIAL,
+ FOREIGN KEY (exp_group_id) REFERENCES experiment_groups(exp_group_id),
+ FOREIGN KEY (exp_id) REFERENCES experiments(exp_id));
+
+CREATE TABLE experiment_buckets
+(exp_id SERIAL,
+ bucket_id SERIAL,
+ FOREIGN KEY (exp_id) REFERENCES experiments(exp_id),
+ FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id));
+
+INSERT INTO users (user_id) VALUES (DEFAULT);
+INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);
+INSERT INTO experiments (exp_id, sku) VALUES (DEFAULT, 'sku123');
+INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 1234567, 'sku123', 19.90);
+INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 1234567, 'sku123', 29.90);
+INSERT INTO experiment_group_users (exp_group_id, user_id) VALUES (1, 1);
+INSERT INTO experiment_group_experiments (exp_group_id, exp_id) VALUES (1, 1);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 1);
+INSERT INTO bucket_users (bucket_id, user_id) VALUES (1, 1);

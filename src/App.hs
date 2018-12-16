@@ -24,8 +24,7 @@ import GHC.Generics (Generic)
 import Network.Wai (Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
-  (
-    cors
+  ( cors
   , corsExposedHeaders
   , corsOrigins
   , simpleCorsResourcePolicy
@@ -41,7 +40,7 @@ import System.Log.FastLogger
   , pushLogStrLn
   )
 
-import Database (Connection, getDbConnection, getUserBucket, insertBucket)
+import Database (Connection, getDbConnection, getUserBucket)
 import Types
 
 data AppConfig = AppConfig
@@ -72,37 +71,26 @@ type AppM = ReaderT AppCtx Handler
 
 type StaticRoute = "static" :> Raw
 
-type CreateBucketRoute
-   = "bucket" :> ReqBody '[ JSON] Bucket :> Post '[ JSON] BucketRes
-
 type UserBucketRoute
-   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucket
+   = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
 
-type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
+type RootAPI = StaticRoute :<|> UserBucketRoute
 
-createBucketHandler :: Bucket -> AppM BucketRes
-createBucketHandler req = do
-  dbconn <- asks _getDbConn
-  liftIO $ insertBucket dbconn req
-  return BucketRes {message = "Created experiment"}
-
-getUserBucketHandler ::
-     Maybe Int -> Maybe Text -> AppM UserBucket
-getUserBucketHandler (Just uid) (Just sku) = do
+getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
+getUserBucketHandler (Just uid) = do
   dbconn <- asks _getDbConn
   logset <- asks _getLogger
   ts <- liftIO getCurrentTime
-  res <- liftIO $ getUserBucket dbconn uid sku
+  res <- liftIO $ getUserBucket dbconn uid
   liftIO $
     pushLogStrLn logset $
     toLogStr LogMessage {logMessage = "Got user bucket", timestamp = ts}
   return res
-getUserBucketHandler _ _ = throwError err500 {errBody = "Something went wrong"}
+getUserBucketHandler Nothing =
+  throwError err500 {errBody = "Missing query parameter: uid"}
 
 server :: ServerT RootAPI AppM
-server =
-  serveDirectoryWebApp "./static" :<|> createBucketHandler :<|>
-  getUserBucketHandler
+server = serveDirectoryWebApp "./static" :<|> getUserBucketHandler
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy

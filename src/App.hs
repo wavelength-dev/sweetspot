@@ -49,9 +49,9 @@ data AppConfig = AppConfig
   } deriving (Generic, Show)
 
 data AppCtx = AppCtx
-  { _getConfig :: AppConfig
-  , _getLogger :: LoggerSet
-  , _getDbConn :: Connection
+  { _getConfig :: !AppConfig
+  , _getLogger :: !LoggerSet
+  , _getDbConn :: !Connection
   }
 
 data LogMessage = LogMessage

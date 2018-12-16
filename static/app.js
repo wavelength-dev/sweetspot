@@ -1,4 +1,4 @@
-// TODO: Update add-to-cart hidden form to add correct variantID.
+console.time('supple_complete');
 
 const apiUrl = 'https://7b7ba380.ngrok.io'
 const queryString = {
@@ -128,6 +128,7 @@ Promise.resolve()
     const pageType = getPageType();
     applyExperiments(pageType, exps);
     console.log('SUPPLE -- probably successful?')
+    console.timeEnd('supple_complete');
   })
   .catch((err) => {
     console.error('SUPPLE -- failed to apply experiments');

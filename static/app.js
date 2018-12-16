@@ -3,8 +3,14 @@
 const apiUrl = 'https://7b7ba380.ngrok.io'
 const queryString = {
   stringify: (kvs) => Object
-    .keys(kvs)
-    .reduce((qs, k) => (kvs[k] == null ? qs : (qs === '' ? `${k}=${kvs[k]}` : `${qs}&${k}=${kvs[k]}`), ''))
+  .keys(kvs)
+  .reduce((qs, k) => (
+    kvs[k] == null
+    ? qs
+    : (qs === '')
+    ? `${k}=${kvs[k]}`
+    : `${qs}&${k}=${kvs[k]}`
+  ), '')
 };
 
 const getExperiments = () => {

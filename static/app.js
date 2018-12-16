@@ -127,7 +127,7 @@ Promise.resolve()
     localStorage.setItem('supple_uid', userId);
     const pageType = getPageType();
     applyExperiments(pageType, exps);
-    console.log('SUPPLE -- probably successful?')
+    console.log('SUPPLE -- success!');
     console.timeEnd('supple_complete');
   })
   .catch((err) => {

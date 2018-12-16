@@ -49,7 +49,7 @@ const getPageType = () => {
     throw new Error(`SUPPLE -- unrecognized page type, path was: ${path}`);
   }
 
-  const pageType = pathComponents[2];
+  const pageType = pathComponents[1];
   if (pageType === '') {
     throw new Error(`SUPPLE -- unrecognized page type, path was ${path}`);
   }

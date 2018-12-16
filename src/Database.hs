@@ -80,6 +80,7 @@ randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
          , "ORDER BY random()) as \"subq\";"
          ])
     decoder =
+      -- TODO Use vectors instead of lists
       Decoders.rowList $
       (,) <$> Decoders.column Decoders.int8 <*> Decoders.column Decoders.int8
 

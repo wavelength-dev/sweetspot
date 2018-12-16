@@ -1,0 +1,17 @@
+{
+  "name": "supple",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "tsc -w -p ."
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^1.15.3",
+    "typescript": "^3.2.2"
+  }
+}

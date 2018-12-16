@@ -1,6 +1,5 @@
 // TODO: Update add-to-cart hidden form to add correct variantID.
 
-const sku = "";
 const apiUrl = 'https://7b7ba380.ngrok.io'
 const queryString = {
   stringify: (kvs) => Object

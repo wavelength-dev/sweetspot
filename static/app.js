@@ -121,5 +121,8 @@ Promise.resolve()
     const pageType = getPageType();
     applyExperiments(pageType, exps);
   })
-  .catch((err) => { console.error('SUPPLE -- failed to apply experiments'); throw err; })
+  .catch((err) => {
+    console.error('SUPPLE -- failed to apply experiments');
+    throw err;
+  });
 

@@ -115,7 +115,7 @@ const applyExperiments = (pageType, exps) => {
 }
 
 Promise.resolve()
-  .then(() => { console.log('SUPPLE -- init') })
+  .then(() => { console.log('SUPPLE -- init'); })
   .then(() => getExperiments())
   .then(rawExps => ({
     userId: rawExps[0].user_id,

@@ -82,15 +82,22 @@ const revealProductPrice = (price) => {
   el.classList.remove("supple__price--hidden");
 }
 
-const handleProductPage = (svid, exps) => {
+const setCheckoutSvid = (svid) => {
+  const checkoutForm = document.getElementById('product_form_1857606385728');
+  checkoutForm.id = svid;
+}
+
+const handleProductPage = (exps) => {
   const svid = identifyProductPageVariant();
   const maybeExp = exps.find(exp => exp.svid === svid);
+
   if (maybeExp === undefined) {
     // TODO: handle product not in experiment
     throw new Error('SUPPLE -- no experiment for visible svid');
   }
-
   const exp = maybeExp;
+
+  setCheckoutSvid(svid);
   revealProductPrice(exp.bucket_price);
 }
 
@@ -99,8 +106,7 @@ const applyExperiments = (pageType, exps) => {
     // TODO: handle collections page
     throw new Error('SUPPLE -- unable to apply prices for collections page')
   } else if (pageType === 'products') {
-    const svid = identifyProductPageVariant();
-    handleProductPage(svid, exps)
+    handleProductPage(svid, exps);
   } else {
     // TODO: handle unknown pages. Simply unhide price?
     throw new Error(`SUPPLE -- unrecognized page type, page type: ${pageType}`)

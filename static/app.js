@@ -64,14 +64,14 @@ const getPageType = () => {
 };
 
 const identifyProductPageVariant = () => {
-    const maybeEl = document.getElementById('ProductJson-product-template');
+  const maybeEl = document.getElementById('ProductJson-product-template');
 
-    if (maybeEl === null) {
-      throw new Error('Failed to identify product variant');
-    }
+  if (maybeEl === null) {
+    throw new Error('Failed to identify product page variant');
+  }
 
-    const product = JSON.parse(maybeEl.innerText);
-    return product.id;
+  const product = JSON.parse(maybeEl.innerText);
+  return product.id;
 }
 
 const identifyListingsPageVariants = () => {}

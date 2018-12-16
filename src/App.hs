@@ -70,15 +70,13 @@ instance ToLogStr LogMessage where
 
 type AppM = ReaderT AppCtx Handler
 
-type CookieHeader = '[ Header "Set-Cookie" Text]
-
 type StaticRoute = "static" :> Raw
 
 type CreateBucketRoute
    = "bucket" :> ReqBody '[ JSON] Bucket :> Post '[ JSON] BucketRes
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] (Headers CookieHeader UserBucket)
+   = "bucket" :> QueryParam "uid" Int :> QueryParam "sku" Text :> Get '[ JSON] UserBucket
 
 type RootAPI = StaticRoute :<|> CreateBucketRoute :<|> UserBucketRoute
 
@@ -89,7 +87,7 @@ createBucketHandler req = do
   return BucketRes {message = "Created experiment"}
 
 getUserBucketHandler ::
-     Maybe Int -> Maybe Text -> AppM (Headers CookieHeader UserBucket)
+     Maybe Int -> Maybe Text -> AppM UserBucket
 getUserBucketHandler (Just uid) (Just sku) = do
   dbconn <- asks _getDbConn
   logset <- asks _getLogger
@@ -98,7 +96,7 @@ getUserBucketHandler (Just uid) (Just sku) = do
   liftIO $
     pushLogStrLn logset $
     toLogStr LogMessage {logMessage = "Got user bucket", timestamp = ts}
-  return $ addHeader "lol=bal" $ res
+  return res
 getUserBucketHandler _ _ = throwError err500 {errBody = "Something went wrong"}
 
 server :: ServerT RootAPI AppM

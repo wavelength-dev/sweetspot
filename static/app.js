@@ -4,21 +4,15 @@ const apiUrl = 'https://7b7ba380.ngrok.io'
 const queryString = {
   stringify: (kvs) => Object
     .keys(kvs)
-    .reduce((qs, k) => (
-      kvs[k] == null
-      ? qs
-      : qs === ''
-      ? `${k}=${kvs[k]}`
-      : `${qs}&${k}=${kvs[k]}`
-      , ''))
+    .reduce((qs, k) => (kvs[k] == null ? qs : (qs === '' ? `${k}=${kvs[k]}` : `${qs}&${k}=${kvs[k]}`), ''))
 };
 
-const getExperiments = (maybeSuppleUid) => {
+const getExperiments = () => {
   const path = `/bucket/`;
-  const maybeUid = localStorage.getItem('suppleUid');
+  const maybeUid = localStorage.getItem('supple_uid');
   let qs = null;
-  if (typeof maybeSuppleUid === 'string') {
-    qs = `?${queryString.strigify({ uid: maybeUid })}`;
+  if (typeof maybeUid === 'string') {
+    qs = `?${queryString.stringify({ uid: maybeUid })}`;
   } else {
     qs = '';
   }
@@ -62,7 +56,7 @@ const getPageType = () => {
   return pageType;
 };
 
-const identifyProductPageVariant = () => {
+const identifyProductPageSku = () => {
   const maybeEl = document.getElementById('ProductJson-product-template');
 
   if (maybeEl === null) {
@@ -70,7 +64,8 @@ const identifyProductPageVariant = () => {
   }
 
   const product = JSON.parse(maybeEl.innerText);
-  return product.id;
+  // TODO: make sure to grab the visible variant
+  return product.variants[0].sku;
 }
 
 const identifyListingsPageVariants = () => {}
@@ -79,16 +74,17 @@ const revealProductPrice = (price) => {
   const el = document.getElementsByClassName('supple__price--hidden')[0]
   el.innerHTML = price;
   el.classList.remove("supple__price--hidden");
+  el.className = `${el.className} supple__price`;
 }
 
 const setCheckoutSvid = (svid) => {
-  const checkoutForm = document.getElementById('product_form_1857606385728');
-  checkoutForm.id = svid;
+  const option = document.getElementById('ProductSelect-product-template')[0];
+  option.value = svid;
 }
 
 const handleProductPage = (exps) => {
-  const svid = identifyProductPageVariant();
-  const maybeExp = exps.find(exp => exp.svid === svid);
+  const sku = identifyProductPageSku();
+  const maybeExp = exps.find(exp => exp.sku === sku);
 
   if (maybeExp === undefined) {
     // TODO: handle product not in experiment
@@ -96,8 +92,8 @@ const handleProductPage = (exps) => {
   }
   const exp = maybeExp;
 
-  setCheckoutSvid(svid);
-  revealProductPrice(exp.bucket_price);
+  setCheckoutSvid(exp.svid);
+  revealProductPrice(exp.price);
 }
 
 const applyExperiments = (pageType, exps) => {
@@ -105,21 +101,27 @@ const applyExperiments = (pageType, exps) => {
     // TODO: handle collections page
     throw new Error('SUPPLE -- unable to apply prices for collections page')
   } else if (pageType === 'products') {
-    handleProductPage(svid, exps);
+    handleProductPage(exps);
   } else {
     // TODO: handle unknown pages. Simply unhide price?
     throw new Error(`SUPPLE -- unrecognized page type, page type: ${pageType}`)
   }
 }
 
-const maybeSuppleUid = localStorage.getItem('supple_uid');
-
 Promise.resolve()
   .then(() => { console.log('SUPPLE -- init') })
-  .then(() => getExperiments(maybeSuppleUid))
-  .then((exp) => {
+  .then(() => getExperiments())
+  .then(rawExps => ({
+    userId: rawExps[0].user_id,
+    // exps: rawExps.map(exp => ({ price: exp.bucket_price, sku: exp.bucket_sku, svid: exp.bucket_svid }))
+    exps: rawExps.map(exp => ({ price: exp.bucket_price, sku: "3", svid: 18250765205568 }))
+  }))
+  .then(({userId, exps}) => {
+    // TODO: carefully consider when to set the userId
+    localStorage.setItem('supple_uid', userId);
     const pageType = getPageType();
     applyExperiments(pageType, exps);
+    console.log('SUPPLE -- probably successful?')
   })
   .catch((err) => {
     console.error('SUPPLE -- failed to apply experiments');

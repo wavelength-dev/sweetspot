@@ -7,7 +7,8 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 data UserBucket = UserBucket
-  { bucket_sku :: !Text
+  { user_id :: !Int
+  , bucket_sku :: !Text
   , bucket_svid :: !Int
   , bucket_price :: !Int
   } deriving (Generic, Show)

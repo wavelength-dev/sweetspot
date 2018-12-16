@@ -35,7 +35,7 @@ import System.Log.FastLogger
   , pushLogStrLn
   )
 
-import Database (Connection, getDbConnection, getUserBucket)
+import Database (Connection, getDbConnection, getNewUserBuckets, getUserBuckets)
 import Types
 
 data AppConfig = AppConfig
@@ -79,13 +79,15 @@ getUserBucketHandler (Just uid) = do
   dbconn <- asks _getDbConn
   logset <- asks _getLogger
   ts <- liftIO getCurrentTime
-  res <- liftIO $ getUserBucket dbconn uid
+  res <- liftIO $ getUserBuckets dbconn uid
   liftIO $
     pushLogStrLn logset $
     toLogStr LogMessage {logMessage = "Got user bucket", timestamp = ts}
   return res
-getUserBucketHandler Nothing =
-  throwError err500 {errBody = "Missing query parameter: uid"}
+getUserBucketHandler Nothing = do
+  dbconn <- asks _getDbConn
+  res <- liftIO $ getNewUserBuckets dbconn
+  return res
 
 server :: ServerT RootAPI AppM
 server = serveDirectoryWebApp "./static" :<|> getUserBucketHandler

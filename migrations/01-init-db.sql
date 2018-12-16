@@ -46,4 +46,5 @@ INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 1234567, 'sku
 INSERT INTO experiment_group_users (exp_group_id, user_id) VALUES (1, 1);
 INSERT INTO experiment_group_experiments (exp_group_id, exp_id) VALUES (1, 1);
 INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 1);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 2);
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1, 1);

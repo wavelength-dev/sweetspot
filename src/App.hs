@@ -23,12 +23,7 @@ import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
 import Network.Wai (Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
-import Network.Wai.Middleware.Cors
-  ( cors
-  , corsExposedHeaders
-  , corsOrigins
-  , simpleCorsResourcePolicy
-  )
+import Network.Wai.Middleware.Cors (simpleCors)
 import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.RequestLogger.JSON (formatAsJSON)
 import Servant
@@ -76,6 +71,9 @@ type UserBucketRoute
 
 type RootAPI = StaticRoute :<|> UserBucketRoute
 
+rootAPI :: Proxy RootAPI
+rootAPI = Proxy
+
 getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
 getUserBucketHandler (Just uid) = do
   dbconn <- asks _getDbConn
@@ -92,23 +90,9 @@ getUserBucketHandler Nothing =
 server :: ServerT RootAPI AppM
 server = serveDirectoryWebApp "./static" :<|> getUserBucketHandler
 
-rootAPI :: Proxy RootAPI
-rootAPI = Proxy
-
-corsMiddleware :: Middleware
-corsMiddleware =
-  cors $ \_ ->
-    Just $
-    simpleCorsResourcePolicy
-      { corsOrigins = Just (["https://libertyproduct.myshopify.com"], True)
-      , corsExposedHeaders =
-          Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
-      }
-
 createApp :: AppCtx -> Application
 createApp ctx =
-  corsMiddleware $
-  serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
+  simpleCors $ serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
 
 jsonRequestLogger :: IO Middleware
 jsonRequestLogger =

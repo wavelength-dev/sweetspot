@@ -81,6 +81,8 @@ const identifyProductPageSku = (): string => {
   return el.innerText;
 };
 
+// Inject price with id based on base variant id
+// Check for id in experiments, reveal correct price
 const identifyListingsPageVariants = () => {};
 
 const revealProductPrice = (price: number) => {

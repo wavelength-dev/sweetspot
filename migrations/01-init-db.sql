@@ -12,7 +12,7 @@ CREATE TABLE buckets
 (bucket_id SERIAL PRIMARY KEY,
  svid BIGINT,
  sku TEXT,
- price NUMERIC(12, 2));
+ price NUMERIC(2));
 
 CREATE TABLE bucket_users
 (bucket_id SERIAL,

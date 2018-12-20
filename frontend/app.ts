@@ -58,7 +58,7 @@ const getExperiments = (): Promise<IApiExperiment[]> => {
 }
 
 const revealProductPrice = (el: Element, price: number | null) => {
-  if (typeof price === "string") {
+  if (typeof price === "number") {
     el.innerHTML = String(price)
   }
   el.classList.remove("supple__price--hidden")

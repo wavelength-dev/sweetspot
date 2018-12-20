@@ -40,9 +40,9 @@ CREATE TABLE experiment_buckets
 
 INSERT INTO users (user_id) VALUES (DEFAULT);
 INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);
-INSERT INTO experiments (exp_id, sku) VALUES (DEFAULT, 'sku123');
-INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 1234567, 'sku123', 19.90);
-INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 1234567, 'sku123', 29.90);
+INSERT INTO experiments (exp_id, sku) VALUES (DEFAULT, '3');
+INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 18765024952384, '3', 19.90);
+INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 18764920946752, '3', 29.90);
 INSERT INTO experiment_group_users (exp_group_id, user_id) VALUES (1, 1);
 INSERT INTO experiment_group_experiments (exp_group_id, exp_id) VALUES (1, 1);
 INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 1);

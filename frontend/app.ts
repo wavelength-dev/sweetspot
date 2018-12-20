@@ -34,8 +34,15 @@ const queryString = {
     )
 };
 
-const getExperiments = (): Promise<any> => {
-  return Promise.resolve([{ user_id: 1, bucket_price: 20 }]);
+const getExperiments = (): Promise<ApiExperiment[]> => {
+  return Promise.resolve([
+    {
+      user_id: 1,
+      bucket_price: 20,
+      bucket_svid: 18250765205568,
+      bucket_sku: "1"
+    }
+  ]);
   const path = `/bucket/`;
   const maybeUid = localStorage.getItem("supple_uid");
   let qs = null;
@@ -160,18 +167,17 @@ const getDOMAccessible = () =>
   });
 
 Promise.all([getDOMAccessible(), getExperiments()])
-  .then(([_, rawExps]) => ({
-    userId: rawExps[0].user_id,
-    // exps: rawExps.map((exp: any) => ({ price: exp.bucket_price, sku: exp.bucket_sku, svid: exp.bucket_svid }))
-    exps: rawExps.map((exp: any) => ({
+  .then(([_, apiExps]) => ({
+    userId: apiExps[0].user_id,
+    exps: apiExps.map((exp: ApiExperiment) => ({
       price: exp.bucket_price,
-      sku: "3",
-      svid: 18250765205568
+      sku: exp.bucket_sku,
+      svid: exp.bucket_svid
     }))
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId
-    localStorage.setItem("supple_uid", userId);
+    localStorage.setItem("supple_uid", String(userId));
     const pageType = getPageType();
     applyExperiments(pageType, exps);
     console.log("SUPPLE -- success!");

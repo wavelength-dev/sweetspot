@@ -15,7 +15,7 @@ interface IExperiment {
   svid: number
 }
 
-const apiUrl = "https://7b7ba380.ngrok.io"
+const apiURL = "https://3876d549.ngrok.io/"
 const queryString = {
   stringify: (kvs: { [key: string]: string | null }) =>
     Object.keys(kvs).reduce(
@@ -30,12 +30,12 @@ const queryString = {
 }
 
 const getExperiments = (): Promise<IApiExperiment[]> => {
-  const path = `/bucket/`
+  const path = `bucket/`
   const maybeUid = localStorage.getItem("supple_uid")
   const qs =
     maybeUid === "string" ? `?${queryString.stringify({ uid: maybeUid })}` : ""
   console.log("SUPPLE -- fetching experiments")
-  return fetch(`${apiUrl}${path}${qs}`)
+  return fetch(`${apiURL}${path}${qs}`)
     .then(res => {
       if (res.status !== 200) {
         throw new Error(

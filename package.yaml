@@ -35,6 +35,8 @@ dependencies:
 - mtl
 - time
 - data-default
+- wreq
+- lens
 
 library:
   source-dirs: src

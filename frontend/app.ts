@@ -14,12 +14,6 @@ interface Experiment {
   svid: number;
 }
 
-enum PageType {
-  Unknown = "",
-  Collection = "collections",
-  Product = "products",
-}
-
 const apiUrl = "https://7b7ba380.ngrok.io";
 const queryString = {
   stringify: (kvs: { [key: string]: string | null }) =>
@@ -74,48 +68,12 @@ const getExperiments = (): Promise<ApiExperiment[]> => {
     });
 };
 
-const getPageType = (): PageType => {
-  const path = window.location.pathname;
-  const pathComponents = path.split("/");
-
-  if (pathComponents.length < 2) {
-    throw new Error(`SUPPLE -- unrecognized page type, path was: ${path}`);
+const revealProductPrice = (el: Element, price: number | null) => {
+  if (typeof price === "string") {
+    el.innerHTML = String(price);
   }
-
-  const pageType = pathComponents[1];
-  if (pageType === "") {
-    throw new Error(`SUPPLE -- unrecognized page type, path was ${path}`);
-  }
-
-  if (pageType === PageType.Collection) {
-    return PageType.Collection;
-  } else if (pageType === PageType.Product) {
-    return PageType.Product;
-  }
-
-  return PageType.Unknown;
-};
-
-const identifyProductPageSku = (): string => {
-  const el = document.getElementById("supple__sku");
-
-  if (el === null) {
-    throw new Error("SUPPLE -- failed to identify product page variant");
-  }
-
-  // TODO: make sure to grab the visible base variant
-  return el.innerText;
-};
-
-// Inject price with id based on base variant id
-// Check for id in experiments, reveal correct price
-const identifyListingsPageVariants = () => {};
-
-const revealProductPrice = (price: number) => {
-  const el = document.getElementsByClassName("supple__price--hidden")[0];
-  el.innerHTML = String(price);
   el.classList.remove("supple__price--hidden");
-  el.className = `${el.className} supple__price`;
+  el.classList.add("supple__price");
 };
 
 const setCheckoutSvid = (svid: number): void => {
@@ -133,32 +91,73 @@ const setCheckoutSvid = (svid: number): void => {
   option.value = String(svid);
 };
 
-const handleProductPage = (exps: Experiment[]): void => {
-  const sku = identifyProductPageSku();
-  const exp = exps.find(exp => exp.sku === sku);
-
-  if (exp === undefined) {
-    // TODO: handle product not in experiment
-    throw new Error("SUPPLE -- no experiment for visible svid");
+const getIdFromPriceElement = (el: Element) => {
+  const priceIdClass = Array.from(el.classList).find(cl =>
+    cl.startsWith("supple__price_id--")
+  );
+  if (priceIdClass === undefined) {
+    return null;
   }
-
-  setCheckoutSvid(exp.svid);
-  revealProductPrice(exp.price);
+  return priceIdClass.split("--")[1];
 };
 
-const applyExperiments = (pageType: PageType, exps: Experiment[]): void => {
-  if (pageType === PageType.Collection) {
-    // TODO: handle collections page
-    throw new Error("SUPPLE -- unable to apply prices for collections page");
-  } else if (pageType === PageType.Product) {
-    handleProductPage(exps);
-    return;
-  } else if (pageType === PageType.Unknown) {
-    // TODO: handle unknown pages. Simply unhide price?
-    throw new Error(`SUPPLE -- unrecognized page type, page type: ${pageType}`);
+const setDebutCheckoutSvid = (svid: number) => {
+  const el = document.getElementById("ProductSelect-product-template");
+  if (el === null) {
+    throw new Error("SUPPLE -- failed to find Debut checkout element to set");
   }
+  const option = el.children[0];
+  if (!(option instanceof HTMLOptionElement)) {
+    throw new Error("SUPPLE -- failed to find Debut checkout element to set");
+  }
+  option.value = String(svid);
+};
 
-  const assertNever: never = pageType;
+const getIsDebutCheckout = (): boolean => {
+  const el = document.getElementById("ProductSelect-product-template");
+  if (!(el instanceof HTMLSelectElement)) {
+    console.log("SUPPLE -- failed to find Debut checkout");
+    return false;
+  }
+  const option = el.children[0];
+  if (!(option instanceof HTMLOptionElement)) {
+    console.warn(
+      "SUPPLE -- failed to descend what looks like a Debut checkout"
+    );
+    return false;
+  }
+  return true;
+};
+
+const applyExperiments = (exps: IExperiment[]): void => {
+  const els = Array.from(
+    document.getElementsByClassName("supple__price--hidden")
+  );
+
+  els.map(el => {
+    const id = getIdFromPriceElement(el);
+    if (id === null) {
+      console.error("SUPPLE -- Hidden price with no id! Unhiding price as-is");
+      revealProductPrice(el, null);
+      return;
+    }
+
+    const exp = exps.find(e => e.sku === id);
+
+    if (exp === undefined) {
+      console.warn(
+        "SUPPLE -- Price with no matching experiment! Unhiding price as-is"
+      );
+      revealProductPrice(el, null);
+      return;
+    }
+
+    // TODO: support more than one checkout (Debut)
+    if (getIsDebutCheckout()) {
+      setCheckoutSvid(exp.svid);
+    }
+    revealProductPrice(el, exp.price);
+  });
 };
 
 const getDOMAccessible = () =>

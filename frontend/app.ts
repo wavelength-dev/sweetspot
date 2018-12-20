@@ -150,7 +150,7 @@ const applyExperiments = (exps: IExperiment[]): void => {
 const getDOMAccessible = () =>
   new Promise(resolve => {
     document.addEventListener("DOMContentLoaded", () => {
-      console.time("supple_dom_ready")
+      console.timeEnd("supple_dom_ready")
       resolve()
     })
   })

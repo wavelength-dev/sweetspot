@@ -1,6 +1,25 @@
 console.time("supple_complete");
 console.log("SUPPLE -- init");
 
+interface ApiExperiment {
+  user_id: number;
+  bucket_sku: string;
+  bucket_svid: number;
+  bucket_price: number;
+}
+
+interface Experiment {
+  price: number;
+  sku: string;
+  svid: number;
+}
+
+enum PageType {
+  Unknown = "",
+  Collections = "collections",
+  Products = "products",
+}
+
 const apiUrl = "https://7b7ba380.ngrok.io";
 const queryString = {
   stringify: (kvs: { [key: string]: string | null }) =>
@@ -106,18 +125,6 @@ const setCheckoutSvid = (svid: number): void => {
   }
   option.value = String(svid);
 };
-
-interface Experiment {
-  price: number;
-  sku: string;
-  svid: number;
-}
-
-enum PageType {
-  Unknown = "",
-  Collections = "collections",
-  Products = "products"
-}
 
 const handleProductPage = (exps: Experiment[]): void => {
   const sku = identifyProductPageSku();

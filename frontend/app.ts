@@ -1,14 +1,15 @@
 console.time("supple_complete");
+console.time("supple_dom_ready");
 console.log("SUPPLE -- init");
 
-interface ApiExperiment {
+interface IApiExperiment {
   user_id: number;
   bucket_sku: string;
   bucket_svid: number;
   bucket_price: number;
 }
 
-interface Experiment {
+interface IExperiment {
   price: number;
   sku: string;
   svid: number;
@@ -28,23 +29,11 @@ const queryString = {
     )
 };
 
-const getExperiments = (): Promise<ApiExperiment[]> => {
-  return Promise.resolve([
-    {
-      user_id: 1,
-      bucket_price: 20,
-      bucket_svid: 18250765205568,
-      bucket_sku: "1"
-    }
-  ]);
+const getExperiments = (): Promise<IApiExperiment[]> => {
   const path = `/bucket/`;
   const maybeUid = localStorage.getItem("supple_uid");
-  let qs = null;
-  if (typeof maybeUid === "string") {
-    qs = `?${queryString.stringify({ uid: maybeUid })}`;
-  } else {
-    qs = "";
-  }
+  const qs =
+    maybeUid === "string" ? `?${queryString.stringify({ uid: maybeUid })}` : "";
   console.log("SUPPLE -- fetching experiments");
   return fetch(`${apiUrl}${path}${qs}`)
     .then(res => {
@@ -162,23 +151,25 @@ const applyExperiments = (exps: IExperiment[]): void => {
 
 const getDOMAccessible = () =>
   new Promise(resolve => {
-    document.addEventListener("DOMContentLoaded", resolve);
+    document.addEventListener("DOMContentLoaded", () => {
+      console.time("supple_dom_ready");
+      resolve();
+    });
   });
 
 Promise.all([getDOMAccessible(), getExperiments()])
   .then(([_, apiExps]) => ({
-    userId: apiExps[0].user_id,
-    exps: apiExps.map((exp: ApiExperiment) => ({
+    exps: apiExps.map((exp: IApiExperiment) => ({
       price: exp.bucket_price,
       sku: exp.bucket_sku,
       svid: exp.bucket_svid
-    }))
+    })),
+    userId: apiExps[0].user_id
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId
     localStorage.setItem("supple_uid", String(userId));
-    const pageType = getPageType();
-    applyExperiments(pageType, exps);
+    applyExperiments(exps);
     console.log("SUPPLE -- success!");
     console.timeEnd("supple_complete");
   })

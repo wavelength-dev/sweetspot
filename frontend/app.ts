@@ -16,8 +16,8 @@ interface Experiment {
 
 enum PageType {
   Unknown = "",
-  Collections = "collections",
-  Products = "products",
+  Collection = "collections",
+  Product = "products",
 }
 
 const apiUrl = "https://7b7ba380.ngrok.io";
@@ -87,10 +87,10 @@ const getPageType = (): PageType => {
     throw new Error(`SUPPLE -- unrecognized page type, path was ${path}`);
   }
 
-  if (pageType === PageType.Collections) {
-    return PageType.Collections;
-  } else if (pageType === PageType.Products) {
-    return PageType.Products;
+  if (pageType === PageType.Collection) {
+    return PageType.Collection;
+  } else if (pageType === PageType.Product) {
+    return PageType.Product;
   }
 
   return PageType.Unknown;
@@ -147,10 +147,10 @@ const handleProductPage = (exps: Experiment[]): void => {
 };
 
 const applyExperiments = (pageType: PageType, exps: Experiment[]): void => {
-  if (pageType === PageType.Collections) {
+  if (pageType === PageType.Collection) {
     // TODO: handle collections page
     throw new Error("SUPPLE -- unable to apply prices for collections page");
-  } else if (pageType === PageType.Products) {
+  } else if (pageType === PageType.Product) {
     handleProductPage(exps);
     return;
   } else if (pageType === PageType.Unknown) {

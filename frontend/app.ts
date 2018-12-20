@@ -121,7 +121,7 @@ const applyExperiments = (exps: IExperiment[]): void => {
     document.getElementsByClassName("supple__price--hidden")
   )
 
-  els.map(el => {
+  els.forEach(el => {
     const id = getIdFromPriceElement(el)
     if (id === null) {
       console.error("SUPPLE -- Hidden price with no id! Unhiding price as-is")

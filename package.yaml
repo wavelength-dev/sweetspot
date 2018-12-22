@@ -37,6 +37,7 @@ dependencies:
 - data-default
 - wreq
 - lens
+- scientific
 
 library:
   source-dirs: src

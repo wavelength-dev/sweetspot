@@ -5,13 +5,16 @@ module Types where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
+import Data.Scientific (Scientific)
 import GHC.Generics (Generic)
+
+type Price = Scientific
 
 data UserBucket = UserBucket
   { user_id :: !Int
   , bucket_sku :: !Text
   , bucket_svid :: !Int
-  , bucket_price :: !Int
+  , bucket_price :: !Price
   } deriving (Generic, Show)
 
 data Variant = Variant
@@ -33,7 +36,7 @@ data ShopifyResponse = ShopifyResponse
 
 data CreateVariant = CreateVariant
   { option1 :: Text
-  , price :: Float
+  , price :: !Price
   } deriving (Generic, Show)
 
 data ShopifyVariantBody = ShopifyVariantBody

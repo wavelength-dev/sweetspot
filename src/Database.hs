@@ -48,14 +48,14 @@ userBucketsStatement = Statement sql encoder decoder True
           (,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.int8 <*>
-          Decoders.column Decoders.int8
+          Decoders.column Decoders.numeric
         toUserBucket =
           \(uid, sku, svid, price) ->
             UserBucket
               { user_id = fromIntegral uid
               , bucket_sku = sku
               , bucket_svid = fromIntegral svid
-              , bucket_price = fromIntegral price
+              , bucket_price = price
               }
 
 insertUserStatement :: Statement () Int64

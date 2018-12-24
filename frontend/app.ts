@@ -3,10 +3,10 @@ console.time("supple_dom_ready")
 console.log("SUPPLE -- init")
 
 interface IApiExperiment {
-  user_id: number
-  bucket_sku: string
-  bucket_svid: number
-  bucket_price: number
+  readonly user_id: number
+  readonly bucket_sku: string
+  readonly bucket_svid: number
+  readonly bucket_price: number
 }
 
 interface IExperiment {
@@ -29,7 +29,7 @@ const queryString = {
     )
 }
 
-const getExperiments = (): Promise<IApiExperiment[]> => {
+const getExperiments = (): Promise<ReadonlyArray<IApiExperiment>> => {
   const path = `bucket/`
   const maybeUid = localStorage.getItem("supple_uid")
   const qs =

@@ -60,9 +60,11 @@ const getExperiments = (): Promise<IApiExperiment[]> => {
 const revealProductPrice = (el: Element, price: number | null) => {
   if (typeof price === "number") {
     el.innerHTML = String(price)
+    el.classList.add("supple__price--exp")
+  } else {
+    el.classList.add("supple__price--no-exp")
   }
   el.classList.remove("supple__price--hidden")
-  el.classList.add("supple__price")
 }
 
 const setCheckoutSvid = (svid: number): void => {

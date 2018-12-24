@@ -28,6 +28,12 @@ const queryString = {
       ""
     )
 }
+const mockBucket = {
+  bucket_price: 24.99,
+  bucket_sku: "1",
+  bucket_svid: 18251107598400,
+  user_id: 1
+}
 
 const getExperiments = (): Promise<ReadonlyArray<IApiExperiment>> => {
   const path = `bucket/`

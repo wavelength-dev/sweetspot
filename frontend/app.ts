@@ -3,10 +3,10 @@ console.time("supple_dom_ready")
 console.log("SUPPLE -- init")
 
 interface IApiExperiment {
-  readonly user_id: number
+  readonly bucket_price: number
   readonly bucket_sku: string
   readonly bucket_svid: number
-  readonly bucket_price: number
+  readonly user_id: number
 }
 
 interface IExperiment {

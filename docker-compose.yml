@@ -10,4 +10,4 @@ services:
     environment:
       - POSTGRES_DB=supple
     volumes:
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ./server/migrations:/docker-entrypoint-initdb.d

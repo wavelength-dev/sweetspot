@@ -65,15 +65,13 @@ instance ToLogStr LogMessage where
 
 type AppM = ReaderT AppCtx Handler
 
-type StaticRoute = "static" :> Raw
-
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
 
 type CreateVariantRoute
    = "variant" :> QueryParam "pid" Int :> ReqBody '[ JSON] CreateVariant :> Post '[ JSON] OkResponse
 
-type RootAPI = StaticRoute :<|> UserBucketRoute :<|> CreateVariantRoute
+type RootAPI = UserBucketRoute :<|> CreateVariantRoute
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
@@ -100,9 +98,7 @@ createVariantHandler (Just pid) var = do
 createVariantHandler _ _ = throwError err500 {errBody = "Something went wrong"}
 
 server :: ServerT RootAPI AppM
-server =
-  serveDirectoryWebApp "../frontend/dist" :<|> getUserBucketHandler :<|>
-  createVariantHandler
+server = getUserBucketHandler :<|> createVariantHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

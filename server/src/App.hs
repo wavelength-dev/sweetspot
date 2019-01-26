@@ -101,7 +101,7 @@ createVariantHandler _ _ = throwError err500 {errBody = "Something went wrong"}
 
 server :: ServerT RootAPI AppM
 server =
-  serveDirectoryWebApp "./static" :<|> getUserBucketHandler :<|>
+  serveDirectoryWebApp "../frontend/dist" :<|> getUserBucketHandler :<|>
   createVariantHandler
 
 createApp :: AppCtx -> Application

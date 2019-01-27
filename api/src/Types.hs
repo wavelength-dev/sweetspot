@@ -17,6 +17,8 @@ data UserBucket = UserBucket
   , bucket_price :: !Price
   } deriving (Generic, Show)
 
+instance ToJSON UserBucket
+
 data Variant = Variant
   { id :: !Int
   , product_id :: !Int
@@ -24,45 +26,61 @@ data Variant = Variant
   , sku :: !Text
   } deriving (Generic, Show)
 
+instance ToJSON Variant
+instance FromJSON Variant
+
 data Product = Product
   { id :: !Int
   , title :: !Text
   , variants :: ![Variant]
   } deriving (Generic, Show)
 
+instance ToJSON Product
+instance FromJSON Product
+
 data ShopifyResponse = ShopifyResponse
   { products :: ![Product]
   } deriving (Generic, Show)
+
+instance FromJSON ShopifyResponse
 
 data CreateVariant = CreateVariant
   { option1 :: Text
   , price :: !Price
   } deriving (Generic, Show)
 
+instance ToJSON CreateVariant
+instance FromJSON CreateVariant
+
 data ShopifyVariantBody = ShopifyVariantBody
   { variant :: CreateVariant
   } deriving (Generic, Show)
+
+instance ToJSON ShopifyVariantBody
 
 data OkResponse = OkResponse
   { message :: Text
   } deriving (Generic, Show)
 
-instance ToJSON UserBucket
-
-instance ToJSON CreateVariant
-
-instance ToJSON ShopifyVariantBody
-
 instance ToJSON OkResponse
 
-instance ToJSON Variant
+data Bucket = Bucket
+  { bucket_id :: !Int
+  , svid :: !Int
+  , price :: !Price
+  } deriving (Generic, Show)
 
-instance ToJSON Product
+instance ToJSON Bucket
 
-instance FromJSON Variant
+data Experiment = Experiment
+  { exp_id :: !Int
+  , sku :: !Text
+  } deriving (Generic, Show)
 
-instance FromJSON CreateVariant
+data ExperimentBuckets = ExperimentBuckets
+  { exp_id :: !Int
+  , sku :: !Text
+  , buckets :: ![Bucket]
+  } deriving (Generic, Show)
 
-instance FromJSON Product
-
-instance FromJSON ShopifyResponse
+instance ToJSON ExperimentBuckets

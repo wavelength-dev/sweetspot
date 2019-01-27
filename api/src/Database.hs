@@ -1,13 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Database
   ( Connection
   , getDbConnection
   , getUserBuckets
   , getNewUserBuckets
+  , getExperimentBuckets
   ) where
 
-import Control.Monad (forM_)
+import Control.Monad (forM, forM_)
 import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int64)
 import qualified Hasql.Connection as Connection
@@ -79,8 +81,9 @@ randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
          , "FROM (SELECT exp_id, bucket_id FROM experiment_buckets "
          , "ORDER BY random()) as \"subq\";"
          ])
-    decoder =
+    decoder
       -- TODO Use vectors instead of lists
+     =
       Decoders.rowList $
       (,) <$> Decoders.column Decoders.int8 <*> Decoders.column Decoders.int8
 
@@ -91,6 +94,40 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
     encoder =
       (fst >$< Encoders.param Encoders.int8) <>
       (snd >$< Encoders.param Encoders.int8)
+
+getExperimentsStatement :: Statement () [Experiment]
+getExperimentsStatement = Statement sql Encoders.unit decoder True
+  where
+    sql = "SELECT * FROM experiments;"
+    decoder = Decoders.rowList $ toExperiment <$> row
+      where
+        row =
+          (,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text
+        toExperiment =
+          \(exp_id, sku) -> Experiment {exp_id = fromIntegral exp_id, sku = sku}
+
+getBucketsForExperimentStatement :: Statement ExpId [Bucket]
+getBucketsForExperimentStatement = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+        [ "SELECT bs.bucket_id, bs.price, bs.svid "
+        , "FROM experiment_buckets as ebs "
+        , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
+        , "WHERE ebs.exp_id = $1;"
+        ]
+    encoder = Encoders.param Encoders.int8
+    decoder = Decoders.rowList $ toBucket <$> row
+      where
+        row =
+          (,,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.numeric <*>
+          Decoders.column Decoders.int8
+        toBucket =
+          \(bid, p, sv) ->
+            Bucket
+              {bucket_id = fromIntegral bid, price = p, svid = fromIntegral sv}
 
 --
 -- Sessions
@@ -108,6 +145,20 @@ assignAndGetUserBucketSession = do
        Session.statement (uid, bucketId) assignUserToBucketStatement)
   Session.statement uid userBucketsStatement
 
+getBucketsSession :: Session [ExperimentBuckets]
+getBucketsSession = do
+  exps <- Session.statement () getExperimentsStatement
+  expBuckets <- forM exps addBuckets
+  return expBuckets
+    where
+      addBuckets = \exp -> do
+        let id = exp_id (exp :: Experiment)
+        bs <- Session.statement (fromIntegral id) getBucketsForExperimentStatement
+        return ExperimentBuckets
+          { exp_id = id
+          , sku = sku (exp :: Experiment)
+          , buckets = bs }
+
 --
 -- Exposed functions
 --
@@ -119,6 +170,15 @@ getUserBuckets conn userId = do
 getNewUserBuckets :: Connection -> IO [UserBucket]
 getNewUserBuckets conn = do
   res <- Session.run assignAndGetUserBucketSession conn
+  case res of
+    Right res -> return res
+    Left err -> do
+      putStrLn $ show err
+      return []
+
+getExperimentBuckets :: Connection -> IO [ExperimentBuckets]
+getExperimentBuckets conn = do
+  res <- Session.run getBucketsSession conn
   case res of
     Right res -> return res
     Left err -> do

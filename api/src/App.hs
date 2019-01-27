@@ -36,7 +36,7 @@ import System.Log.FastLogger
   )
 
 import Database (Connection, getDbConnection, getNewUserBuckets, getUserBuckets)
-import ShopifyClient (createVariant)
+import ShopifyClient (createVariant, fetchProducts)
 import Types
 
 data AppConfig = AppConfig
@@ -71,7 +71,9 @@ type UserBucketRoute
 type CreateVariantRoute
    = "variant" :> QueryParam "pid" Int :> ReqBody '[ JSON] CreateVariant :> Post '[ JSON] OkResponse
 
-type RootAPI = UserBucketRoute :<|> CreateVariantRoute
+type ProductsRoute = "products" :> Get '[ JSON] [Product]
+
+type RootAPI = UserBucketRoute :<|> CreateVariantRoute :<|> ProductsRoute
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
@@ -97,8 +99,11 @@ createVariantHandler (Just pid) var = do
   return $ OkResponse {message = "Created variant"}
 createVariantHandler _ _ = throwError err500 {errBody = "Something went wrong"}
 
+getProductsHandler :: AppM [Product]
+getProductsHandler = liftIO fetchProducts
+
 server :: ServerT RootAPI AppM
-server = getUserBucketHandler :<|> createVariantHandler
+server = getUserBucketHandler :<|> createVariantHandler :<|> getProductsHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

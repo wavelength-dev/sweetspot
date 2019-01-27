@@ -11,11 +11,11 @@ import Types
 apiRoot =
   "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"
 
-fetchProducts :: IO ShopifyResponse
+fetchProducts :: IO [Product]
 fetchProducts = do
   r <- get $ apiRoot ++ "/products.json?fields=id,title,variants"
   json <- asJSON r
-  return $ json ^. responseBody
+  return $ products (json ^. responseBody)
 
 createVariant :: Int -> CreateVariant -> IO ()
 createVariant pid var = do

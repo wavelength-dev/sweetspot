@@ -55,6 +55,10 @@ instance ToJSON ShopifyVariantBody
 
 instance ToJSON OkResponse
 
+instance ToJSON Variant
+
+instance ToJSON Product
+
 instance FromJSON Variant
 
 instance FromJSON CreateVariant

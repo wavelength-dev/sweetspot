@@ -15,6 +15,7 @@
     "routing",
     "routing-duplex",
     "web-dom",
-    "web-html"
+    "web-html",
+    "web-xhr"
   ]
 }

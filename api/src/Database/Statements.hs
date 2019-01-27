@@ -1,38 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Database
-  ( Connection
-  , getDbConnection
-  , getUserBuckets
-  , getNewUserBuckets
-  , getExperimentBuckets
-  ) where
+module Database.Statements where
 
-import Control.Monad (forM, forM_)
-import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int64)
-import qualified Hasql.Connection as Connection
+import Data.Functor.Contravariant ((>$<))
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
-import Hasql.Session (Session)
-import qualified Hasql.Session as Session
 import Hasql.Statement (Statement(..))
 import Types
 
-type Connection = Connection.Connection
 
-getDbConnection :: IO Connection
-getDbConnection = do
-  Right connection <- Connection.acquire connectionSettings
-  return connection
-  where
-    connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "supple"
+type UserId = Int64
+type ExpId = Int64
+type BucketId = Int64
 
---
--- Statements
---
 userBucketsStatement :: Statement Int64 [UserBucket]
 userBucketsStatement = Statement sql encoder decoder True
   where
@@ -65,12 +47,6 @@ insertUserStatement = Statement sql Encoders.unit decoder True
   where
     sql = "INSERT INTO users (user_id) VALUES (DEFAULT) RETURNING user_id;"
     decoder = Decoders.singleRow $ Decoders.column Decoders.int8
-
-type UserId = Int64
-
-type ExpId = Int64
-
-type BucketId = Int64
 
 randomBucketPerExpStatement :: Statement () [(ExpId, BucketId)]
 randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
@@ -128,59 +104,3 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
           \(bid, p, sv) ->
             Bucket
               {bucket_id = fromIntegral bid, price = p, svid = fromIntegral sv}
-
---
--- Sessions
---
-getUserBucketSession :: Int64 -> Session [UserBucket]
-getUserBucketSession userId = Session.statement userId userBucketsStatement
-
-assignAndGetUserBucketSession :: Session [UserBucket]
-assignAndGetUserBucketSession = do
-  uid <- Session.statement () insertUserStatement
-  randBs <- Session.statement () randomBucketPerExpStatement
-  forM_
-    randBs
-    (\(_, bucketId) ->
-       Session.statement (uid, bucketId) assignUserToBucketStatement)
-  Session.statement uid userBucketsStatement
-
-getBucketsSession :: Session [ExperimentBuckets]
-getBucketsSession = do
-  exps <- Session.statement () getExperimentsStatement
-  expBuckets <- forM exps addBuckets
-  return expBuckets
-    where
-      addBuckets = \exp -> do
-        let id = exp_id (exp :: Experiment)
-        bs <- Session.statement (fromIntegral id) getBucketsForExperimentStatement
-        return ExperimentBuckets
-          { exp_id = id
-          , sku = sku (exp :: Experiment)
-          , buckets = bs }
-
---
--- Exposed functions
---
-getUserBuckets :: Connection -> Int -> IO [UserBucket]
-getUserBuckets conn userId = do
-  Right res <- Session.run (getUserBucketSession $ fromIntegral userId) conn
-  return res
-
-getNewUserBuckets :: Connection -> IO [UserBucket]
-getNewUserBuckets conn = do
-  res <- Session.run assignAndGetUserBucketSession conn
-  case res of
-    Right res -> return res
-    Left err -> do
-      putStrLn $ show err
-      return []
-
-getExperimentBuckets :: Connection -> IO [ExperimentBuckets]
-getExperimentBuckets conn = do
-  res <- Session.run getBucketsSession conn
-  case res of
-    Right res -> return res
-    Left err -> do
-      putStrLn $ show err
-      return []

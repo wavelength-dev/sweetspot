@@ -35,7 +35,13 @@ import System.Log.FastLogger
   , pushLogStrLn
   )
 
-import Database (Connection, getDbConnection, getNewUserBuckets, getUserBuckets, getExperimentBuckets)
+import Database.Lib
+  ( Connection
+  , getDbConnection
+  , getExperimentBuckets
+  , getNewUserBuckets
+  , getUserBuckets
+  )
 import ShopifyClient (createVariant, fetchProducts)
 import Types
 
@@ -73,9 +79,10 @@ type CreateVariantRoute
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
-type ExperimentsRoute = "experiments" :> Get '[JSON] [ExperimentBuckets]
+type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
 
-type RootAPI = UserBucketRoute :<|> CreateVariantRoute :<|> ProductsRoute :<|> ExperimentsRoute
+type RootAPI
+   = UserBucketRoute :<|> CreateVariantRoute :<|> ProductsRoute :<|> ExperimentsRoute
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
@@ -110,7 +117,9 @@ getExperimentsHandler = do
   liftIO $ getExperimentBuckets dbconn
 
 server :: ServerT RootAPI AppM
-server = getUserBucketHandler :<|> createVariantHandler :<|> getProductsHandler :<|> getExperimentsHandler
+server =
+  getUserBucketHandler :<|> createVariantHandler :<|> getProductsHandler :<|>
+  getExperimentsHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

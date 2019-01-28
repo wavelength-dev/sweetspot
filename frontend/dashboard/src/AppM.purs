@@ -1,13 +1,19 @@
 module AppM where
 
 import Prelude
-import Control.Monad.Reader.Trans (class MonadAsk, ReaderT, ask, asks, runReaderT)
+
+import Api.Request (Endpoint(..), mkRequest)
+import Capability.Experiment (class ManageExperiments)
+import Capability.Navigate (class Navigate)
+import Control.Monad.Reader.Trans (class MonadAsk, ReaderT, asks, runReaderT)
+import Data.Api (decodeResponse)
+import Data.Either (hush)
+import Data.Maybe (maybe, Maybe(..))
 import Effect.Aff (Aff)
-import Type.Equality (class TypeEquals, from)
-import Effect.Class.Console (log)
-import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Aff.Class (class MonadAff)
-import Capability.Navigate (class Navigate, navigate)
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Class.Console (log)
+import Type.Equality (class TypeEquals, from)
 
 data LogLevel = Dev | Prod
 
@@ -34,3 +40,8 @@ instance monadAskAppM :: TypeEquals e Env => MonadAsk e AppM where
 
 instance navigateAppM :: Navigate AppM where
   navigate _ = liftEffect <<< log $ "LEL"
+
+instance manageExperimentsAppM :: ManageExperiments AppM where
+  getExperiments =
+    mkRequest Experiments >>=
+      \json -> pure $ maybe Nothing (hush <<< decodeResponse) json

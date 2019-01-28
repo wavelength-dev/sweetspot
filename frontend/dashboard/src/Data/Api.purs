@@ -4,12 +4,14 @@ import Prelude
 
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson, getField)
-import Data.Either (Either)
+import Data.Either (Either, hush)
+import Data.Maybe (Maybe)
 import Data.Traversable (sequence)
 
 type Bucket =
   { bucket_id :: Int
-  , price :: Number}
+  , price :: Number
+  , svid :: Number}
 
 type Experiment =
   { exp_id :: Int
@@ -21,7 +23,8 @@ decodeBucket json = do
   obj <- decodeJson json
   bucket_id <- getField obj "bucket_id"
   price <- getField obj "price"
-  pure { bucket_id, price }
+  svid <- getField obj "svid"
+  pure { bucket_id, price, svid }
 
 decodeExperiment :: Json -> Either String Experiment
 decodeExperiment json = do

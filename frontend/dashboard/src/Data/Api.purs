@@ -1,4 +1,4 @@
-module Data where
+module Data.Api where
 
 import Prelude
 

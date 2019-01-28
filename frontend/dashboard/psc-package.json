@@ -12,6 +12,7 @@
     "halogen",
     "prelude",
     "psci-support",
+    "routing",
     "web-dom",
     "web-html"
   ]

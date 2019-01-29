@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Database.Statements where
+module Supple.Database.Statements where
 
 import Data.Int (Int64)
 import Data.Functor.Contravariant ((>$<))
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
-import Types
+import Supple.Types
 
 
 type UserId = Int64

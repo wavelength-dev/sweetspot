@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Types where
+module Supple.Types where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)

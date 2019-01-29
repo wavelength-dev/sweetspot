@@ -1,13 +1,13 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Database.Sessions where
+module Supple.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Int (Int64)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
-import Types
-import Database.Statements
+import Supple.Types
+import Supple.Database.Statements
 
 getUserBucketSession :: Int64 -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement

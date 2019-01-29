@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Database.Lib
+module Supple.Database
   ( Connection
   , getDbConnection
   , getUserBuckets
@@ -11,8 +11,8 @@ module Database.Lib
 
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Types
-import Database.Sessions
+import Supple.Types
+import Supple.Database.Sessions
 
 type Connection = Connection.Connection
 

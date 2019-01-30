@@ -1,6 +1,6 @@
 {
   "name": "dashboard",
-  "set": "psc-0.12.1",
+  "set": "psc-0.12.2",
   "source": "https://github.com/purescript/package-sets.git",
   "depends": [
     "affjax",
@@ -13,6 +13,7 @@
     "prelude",
     "psci-support",
     "routing",
+    "routing-duplex",
     "web-dom",
     "web-html"
   ]

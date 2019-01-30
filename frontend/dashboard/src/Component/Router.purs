@@ -10,7 +10,7 @@ import Component.Home as Home
 import Control.Monad.Reader (class MonadAsk)
 import Data.Either.Nested (Either2)
 import Data.Functor.Coproduct.Nested (Coproduct2)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Route (Route(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -18,6 +18,8 @@ import Halogen.Component.ChildPath as CP
 import Halogen.HTML as HH
 
 type State = { route :: Route }
+
+type Input = Maybe Route
 
 data Query a
   = Navigate Route a
@@ -32,10 +34,10 @@ component
     => MonadAsk Env m
     => Navigate m
     => ManageExperiments m
-    => H.Component HH.HTML Query Unit Void m
+    => H.Component HH.HTML Query Input Void m
 component =
   H.parentComponent
-    { initialState: const initialState
+    { initialState: \initialRoute -> { route: fromMaybe Home initialRoute }
     , render
     , eval
     , receiver: const Nothing
@@ -56,5 +58,5 @@ component =
     render { route } = case route of
       Home ->
         HH.slot' CP.cp1 unit Home.component unit absurd
-      Experiment _ ->
+      Experiment ->
         HH.slot' CP.cp2 unit Experiment.component unit absurd

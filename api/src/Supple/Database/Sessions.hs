@@ -6,8 +6,8 @@ import Control.Monad (forM, forM_)
 import Data.Int (Int64)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
-import Supple.Types
 import Supple.Database.Statements
+import Supple.Types
 
 getUserBucketSession :: Int64 -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement
@@ -27,11 +27,16 @@ getBucketsSession = do
   exps <- Session.statement () getExperimentsStatement
   expBuckets <- forM exps addBuckets
   return expBuckets
-    where
-      addBuckets = \exp -> do
+  where
+    addBuckets =
+      \exp -> do
         let id = exp_id (exp :: Experiment)
-        bs <- Session.statement (fromIntegral id) getBucketsForExperimentStatement
-        return ExperimentBuckets
-          { exp_id = id
-          , sku = sku (exp :: Experiment)
-          , buckets = bs }
+        bs <-
+          Session.statement (fromIntegral id) getBucketsForExperimentStatement
+        return
+          ExperimentBuckets
+            { exp_id = id
+            , sku = sku (exp :: Experiment)
+            , name = name (exp :: Experiment)
+            , buckets = bs
+            }

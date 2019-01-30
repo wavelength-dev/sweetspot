@@ -4,8 +4,8 @@
 module Supple.Types where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Text (Text)
 import Data.Scientific (Scientific)
+import Data.Text (Text)
 import GHC.Generics (Generic)
 
 type Price = Scientific
@@ -27,6 +27,7 @@ data Variant = Variant
   } deriving (Generic, Show)
 
 instance ToJSON Variant
+
 instance FromJSON Variant
 
 data Product = Product
@@ -36,6 +37,7 @@ data Product = Product
   } deriving (Generic, Show)
 
 instance ToJSON Product
+
 instance FromJSON Product
 
 data ShopifyResponse = ShopifyResponse
@@ -50,6 +52,7 @@ data CreateVariant = CreateVariant
   } deriving (Generic, Show)
 
 instance ToJSON CreateVariant
+
 instance FromJSON CreateVariant
 
 data ShopifyVariantBody = ShopifyVariantBody
@@ -75,11 +78,13 @@ instance ToJSON Bucket
 data Experiment = Experiment
   { exp_id :: !Int
   , sku :: !Text
+  , name :: !Text
   } deriving (Generic, Show)
 
 data ExperimentBuckets = ExperimentBuckets
   { exp_id :: !Int
   , sku :: !Text
+  , name :: !Text
   , buckets :: ![Bucket]
   } deriving (Generic, Show)
 

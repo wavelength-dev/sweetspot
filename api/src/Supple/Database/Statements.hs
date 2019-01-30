@@ -3,16 +3,17 @@
 
 module Supple.Database.Statements where
 
-import Data.Int (Int64)
 import Data.Functor.Contravariant ((>$<))
+import Data.Int (Int64)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
 import Supple.Types
 
-
 type UserId = Int64
+
 type ExpId = Int64
+
 type BucketId = Int64
 
 userBucketsStatement :: Statement Int64 [UserBucket]
@@ -74,14 +75,16 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
   where
-    sql = "SELECT * FROM experiments;"
+    sql = "SELECT exp_id, sku, name FROM experiments;"
     decoder = Decoders.rowList $ toExperiment <$> row
       where
         row =
-          (,) <$> Decoders.column Decoders.int8 <*>
+          (,,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text <*>
           Decoders.column Decoders.text
         toExperiment =
-          \(exp_id, sku) -> Experiment {exp_id = fromIntegral exp_id, sku = sku}
+          \(exp_id, sku, name) ->
+            Experiment {exp_id = fromIntegral exp_id, sku = sku, name = name}
 
 getBucketsForExperimentStatement :: Statement ExpId [Bucket]
 getBucketsForExperimentStatement = Statement sql encoder decoder True

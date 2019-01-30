@@ -58,7 +58,7 @@ component =
           HH.h1_ [ HH.text "Home"],
 
           case state.experiments of
-            Just es -> maybe (HH.text "") (HH.text <<< _.sku) (A.head es)
+            Just es -> maybe (HH.text "") (HH.text <<< _.name) (A.head es)
             Nothing -> HH.text ""
 
         ]

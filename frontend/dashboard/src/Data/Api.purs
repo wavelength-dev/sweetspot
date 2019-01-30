@@ -16,6 +16,7 @@ type Bucket =
 type Experiment =
   { exp_id :: Int
   , sku :: String
+  , name :: String
   , buckets :: Array Bucket }
 
 decodeBucket :: Json -> Either String Bucket
@@ -31,9 +32,10 @@ decodeExperiment json = do
   obj <- decodeJson json
   exp_id <- getField obj "exp_id"
   sku <- getField obj "sku"
+  name <- getField obj "name"
   arr <- getField obj "buckets"
   buckets <- sequence $ decodeBucket <$> arr
-  pure { exp_id, sku, buckets }
+  pure { exp_id, sku, name, buckets }
 
 
 decodeResponse :: Json -> Either String (Array Experiment)

@@ -58,5 +58,5 @@ component =
     render { route } = case route of
       Home ->
         HH.slot' CP.cp1 unit Home.component unit absurd
-      Experiment ->
-        HH.slot' CP.cp2 unit Experiment.component unit absurd
+      Experiment expId ->
+        HH.slot' CP.cp2 unit Experiment.component expId absurd

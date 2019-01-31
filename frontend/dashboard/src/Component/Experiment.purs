@@ -19,7 +19,7 @@ component
    . MonadAff m
   => MonadAsk Env m
   => Navigate m
-  => H.Component HH.HTML Query Unit Void m
+  => H.Component HH.HTML Query Int Void m
 component =
   H.component
     { initialState: const Nothing

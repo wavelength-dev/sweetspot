@@ -5,6 +5,7 @@ import Prelude
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson, getField)
 import Data.Either (Either, hush)
+import Data.Int (fromString)
 import Data.Maybe (Maybe)
 import Data.Traversable (sequence)
 

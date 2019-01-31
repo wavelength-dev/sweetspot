@@ -2,15 +2,17 @@ module Data.Route where
 
 import Prelude hiding ((/))
 
+import Data.Either (note)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Routing.Duplex (RouteDuplex', root)
+import Data.Int (decimal, fromString, toStringAs)
+import Routing.Duplex (RouteDuplex', as, root, segment)
 import Routing.Duplex.Generic (noArgs, sum)
 import Routing.Duplex.Generic.Syntax ((/))
 
 data Route
   = Home
-  | Experiment
+  | Experiment Int
 
 
 derive instance genericRoute :: Generic Route _
@@ -22,6 +24,9 @@ instance showRoute :: Show Route where
 
 routeCodec :: RouteDuplex' Route
 routeCodec = root $ sum
-  { "Home": noArgs
-  , "Experiment": "experiment" / noArgs
+  { "Home": "dashboard" / noArgs
+  , "Experiment": "experiment" / experimentId segment
   }
+
+experimentId :: RouteDuplex' String -> RouteDuplex' Int
+experimentId = as (toStringAs decimal) (fromString >>> note "Bad username")

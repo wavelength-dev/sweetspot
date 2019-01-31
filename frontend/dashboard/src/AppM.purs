@@ -8,11 +8,12 @@ import Capability.Navigate (class Navigate)
 import Control.Monad.Reader.Trans (class MonadAsk, ReaderT, asks, runReaderT)
 import Data.Api (decodeResponse)
 import Data.Either (hush)
-import Data.Maybe (maybe, Maybe(..))
+import Data.Route as Route
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console (log)
+import Routing.Duplex (print)
+import Routing.Hash (setHash)
 import Type.Equality (class TypeEquals, from)
 
 data LogLevel = Dev | Prod
@@ -39,9 +40,10 @@ instance monadAskAppM :: TypeEquals e Env => MonadAsk e AppM where
   ask = AppM $ asks from
 
 instance navigateAppM :: Navigate AppM where
-  navigate _ = liftEffect <<< log $ "LEL"
+  navigate =
+    liftEffect <<< setHash <<< print Route.routeCodec
 
 instance manageExperimentsAppM :: ManageExperiments AppM where
   getExperiments =
     mkRequest Experiments >>=
-      \json -> pure $ maybe Nothing (hush <<< decodeResponse) json
+      \json -> pure $ json >>= (hush <<< decodeResponse)

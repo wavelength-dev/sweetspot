@@ -2,69 +2,44 @@ module Injectable where
 
 import Prelude
 
+import Data.Array (uncons)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..)) as Method
-import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
+import Effect.Aff (Aff, makeAff)
 import Effect.Console (log)
-import Web.Event.EventTarget (addEventListener)
+import Web.Event.EventTarget (addEventListener, eventListener)
+import Web.XHR.EventTypes (loadend) as EventType
 import Web.XHR.ResponseType (string)
 import Web.XHR.XMLHttpRequest (open, response, send, toEventTarget, xmlHttpRequest)
--- import Web.DOM.Document (getElementsByClassName)
--- import Web.DOM.Element (toNode)
--- import Web.DOM.HTMLCollection (item)
--- import Web.DOM.Node (setTextContent)
--- import Web.HTML (window)
--- import Web.HTML.HTMLDocument (toDocument)
--- import Web.HTML.Window (document)
 
-type ApiExperiment = {
-  bucket_price :: Number,
-  bucket_sku :: String,
-  bucket_svid :: Number,
-  user_id :: Number
-}
+type ApiExperiment
+  = {bucket_price :: Number, bucket_sku :: String, bucket_svid :: Number, user_id :: Number}
 
-type Experiment = {
-  price :: Number,
-  sku :: String,
-  svid :: Number
-}
-
-data QueryParam = QueryParam String (Maybe String)
-
-stringifyQueryString :: List QueryParam -> String
-stringifyQueryString Nil = ""
-stringifyQueryString (QueryParam key (Just value) : Nil) = key <> "=" <> value
-stringifyQueryString (QueryParam key Nothing : xs) = "" <> stringifyQueryString xs
-stringifyQueryString (QueryParam key (Just value) : xs) = key
-  <> "="
-  <> value
-  <> "&"
-  <> stringifyQueryString xs
+type Experiment
+  = {price :: Number, sku :: String, svid :: Number}
 
 apiURL :: String
-apiURL = "http://57630551.ngrok.io/api/bucket"
+apiURL = "http://71a81ddd.ngrok.io/api/bucket"
 
-getExperiments :: Effect (Maybe String)
+mkCb :: (Either Error a -> Effect Unit) -> Effect Canceler
+mkCb (Left Error) = pure Unit
+mkCb (Right cb) = cb ?resHere
+
+getExperiments :: Aff (Maybe String)
 getExperiments = do
   xhr <- xmlHttpRequest string
-  _ <- open (Left Method.GET) apiURL xhr
-  _ <- send xhr
-  target <- toEventTarget xhr
-  makeAff
+  successListener <- eventListener ?success
+  failureListener <- eventListener ?failure
+  addEventListener EventType.load successListener false (toEventTarget xhr)
+  addEventListener EventType.error failureListener false (toEventTarget xhr)
+  open (Left Method.GET) apiURL xhr
+  send xhr
 
 main :: Effect Unit
 main = do
   expsRes <- getExperiments
   case expsRes of
-       (Just expsJSON) -> log expsJSON
-       Nothing -> log "No response!"
-  -- window' <- window
-  -- doc <- document window'
-  -- el <-  getElementsByClassName "hello" $ toDocument doc
-  -- maybeEl <- item 0 el
-  -- case maybeEl of
-  --   Just e -> setTextContent "Hello world!" $ toNode e
-  --   Nothing -> pure unit
+    (Just expsJSON) -> log expsJSON
+    Nothing -> log "No response!"

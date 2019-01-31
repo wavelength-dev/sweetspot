@@ -5,6 +5,7 @@
   "depends": [
     "affjax",
     "argonaut",
+    "aff",
     "console",
     "debug",
     "effect",

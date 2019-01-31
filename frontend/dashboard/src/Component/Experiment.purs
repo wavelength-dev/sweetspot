@@ -1,14 +1,14 @@
-module Component.Experiment where
+module Supple.Component.Experiment where
 
 import Prelude
 
-import Halogen.HTML as HH
-import AppM (Env)
-import Capability.Navigate (class Navigate)
 import Control.Monad.Reader (class MonadAsk)
 import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
+import Halogen.HTML as HH
+import Supple.AppM (Env)
+import Supple.Capability.Navigate (class Navigate)
 
 type State = Maybe Int
 

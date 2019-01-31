@@ -1,14 +1,14 @@
-module Api.Request where
+module Supple.Api.Request where
 
 import Prelude
 
 import Affjax as AX
 import Affjax.ResponseFormat as ResponseFormat
-import Data.Maybe (Maybe(..))
 import Data.Argonaut.Core (Json)
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class.Console (log)
-import Data.Either (Either(..))
 
 data Endpoint = Experiments
 

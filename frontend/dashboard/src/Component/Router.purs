@@ -1,21 +1,21 @@
-module Component.Router where
+module Supple.Component.Router where
 
 import Prelude
 
-import AppM (Env)
-import Capability.Experiment (class ManageExperiments)
-import Capability.Navigate (class Navigate)
-import Component.Experiment as Experiment
-import Component.Home as Home
 import Control.Monad.Reader (class MonadAsk)
 import Data.Either.Nested (Either2)
 import Data.Functor.Coproduct.Nested (Coproduct2)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Route (Route(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.Component.ChildPath as CP
 import Halogen.HTML as HH
+import Supple.AppM (Env)
+import Supple.Capability.Experiment (class ManageExperiments)
+import Supple.Capability.Navigate (class Navigate)
+import Supple.Component.Experiment as Experiment
+import Supple.Component.Home as Home
+import Supple.Data.Route (Route(..))
 
 type State = { route :: Route }
 

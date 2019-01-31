@@ -1,10 +1,10 @@
-module Capability.Navigate where
+module Supple.Capability.Navigate where
 
 import Prelude
 
 import Control.Monad.Trans.Class (lift)
-import Data.Route (Route)
 import Halogen (HalogenM)
+import Supple.Data.Route (Route)
 
 -- | This capability represents the ability to move around the application. The `navigate` function
 -- | should change the browser location, which will then notify our routing component. The `logout`

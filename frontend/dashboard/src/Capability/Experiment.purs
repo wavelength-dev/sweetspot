@@ -1,9 +1,9 @@
-module Capability.Experiment where
+module Supple.Capability.Experiment where
 
-import Prelude
-import Halogen (HalogenM, lift)
-import Data.Api (Experiment)
 import Data.Maybe (Maybe)
+import Halogen (HalogenM, lift)
+import Prelude
+import Supple.Data.Api (Experiment)
 
 class Monad m <= ManageExperiments m where
   getExperiments :: m (Maybe (Array Experiment))

@@ -1,9 +1,9 @@
-module Component.Util where
+module Supple.Component.Util where
 
-import Prelude
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Prelude
 
 css :: forall r i. String -> HH.IProp ( class :: String | r ) i
 css = HP.class_ <<< HH.ClassName

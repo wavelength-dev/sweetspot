@@ -2,11 +2,8 @@ module Main where
 
 import Prelude
 
-import AppM (Env, LogLevel(..), runAppM)
-import Component.Router as Router
 import Data.Either (hush)
 import Data.Maybe (Maybe(..))
-import Data.Route (Route, routeCodec)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -16,6 +13,9 @@ import Halogen.HTML as HH
 import Halogen.VDom.Driver (runUI)
 import Routing.Duplex (parse)
 import Routing.Hash (getHash, matchesWith)
+import Supple.AppM (Env, LogLevel(..), runAppM)
+import Supple.Component.Router as Router
+import Supple.Data.Route (Route, routeCodec)
 
 main :: Effect Unit
 main = HA.runHalogenAff $ do

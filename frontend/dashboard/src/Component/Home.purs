@@ -1,19 +1,18 @@
-module Component.Home where
+module Supple.Component.Home where
 
 import Prelude
 
-import AppM (Env)
-import Capability.Experiment (class ManageExperiments, getExperiments)
-import Capability.Navigate (class Navigate)
-import Component.Util (css)
 import Control.Monad.Reader (class MonadAsk)
-import Data.Api (Experiment)
-import Data.Array (mapWithIndex)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Supple.AppM (Env)
+import Supple.Capability.Experiment (class ManageExperiments, getExperiments)
+import Supple.Capability.Navigate (class Navigate)
+import Supple.Component.Util (css)
+import Supple.Data.Api (Experiment)
 
 type State =
   { experiments :: Maybe (Array Experiment) }

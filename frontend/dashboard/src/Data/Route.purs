@@ -1,4 +1,4 @@
-module Data.Route where
+module Supple.Data.Route where
 
 import Prelude hiding ((/))
 

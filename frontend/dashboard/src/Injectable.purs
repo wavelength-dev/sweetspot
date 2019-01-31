@@ -10,8 +10,8 @@ import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
 import Effect.Console (log)
 import Web.Event.EventTarget (addEventListener, eventListener)
-import Web.XHR.EventTypes (loadend) as EventType
-import Web.XHR.ResponseType (string)
+import Web.XHR.EventTypes (error, load) as EventType
+import Web.XHR.ResponseType (string) as ResponseType
 import Web.XHR.XMLHttpRequest (open, response, send, toEventTarget, xmlHttpRequest)
 
 type ApiExperiment
@@ -23,13 +23,9 @@ type Experiment
 apiURL :: String
 apiURL = "http://71a81ddd.ngrok.io/api/bucket"
 
-mkCb :: (Either Error a -> Effect Unit) -> Effect Canceler
-mkCb (Left Error) = pure Unit
-mkCb (Right cb) = cb ?resHere
-
 getExperiments :: Aff (Maybe String)
 getExperiments = do
-  xhr <- xmlHttpRequest string
+  xhr <- xmlHttpRequest ResponseType.string
   successListener <- eventListener ?success
   failureListener <- eventListener ?failure
   addEventListener EventType.load successListener false (toEventTarget xhr)

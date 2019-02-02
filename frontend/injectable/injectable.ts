@@ -2,14 +2,14 @@ console.time("supple_complete")
 console.time("supple_dom_ready")
 console.log("SUPPLE -- init")
 
-interface IApiExperiment {
+interface ApiExperiment {
   readonly bucket_price: number
   readonly bucket_sku: string
   readonly bucket_svid: number
   readonly user_id: number
 }
 
-interface IExperiment {
+interface Experiment {
   price: number
   sku: string
   svid: number
@@ -23,7 +23,7 @@ const mockBucket = {
   user_id: 1
 }
 
-const getExperiments = (): Promise<ReadonlyArray<IApiExperiment>> => {
+const getExperiments = (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = uid === "string" ? `?uid=${uid}` : ""
   console.log("SUPPLE -- fetching experiments")
@@ -110,7 +110,7 @@ const getIsDebutCheckout = (): boolean => {
   return true
 }
 
-const applyExperiments = (exps: IExperiment[]): void => {
+const applyExperiments = (exps: Experiment[]): void => {
   const els = Array.from(
     document.getElementsByClassName("supple__price--hidden")
   )
@@ -151,7 +151,7 @@ const getDOMAccessible = () =>
 
 Promise.all([getDOMAccessible(), getExperiments()])
   .then(([_, apiExps]) => ({
-    exps: apiExps.map((exp: IApiExperiment) => ({
+    exps: apiExps.map((exp: ApiExperiment): Experiment => ({
       price: exp.bucket_price,
       sku: exp.bucket_sku,
       svid: exp.bucket_svid

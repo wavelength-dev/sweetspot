@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Supple.Data.Common where
 
 import Data.Scientific (Scientific)

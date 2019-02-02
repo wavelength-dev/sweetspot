@@ -14,7 +14,9 @@ import Data.Aeson (toJSON)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
 import Supple.Database.Sessions
-import Supple.Types
+import Supple.Data.Database (UserBucket, ExperimentBuckets, TrackViewJSON(..))
+import Supple.Data.Api (TrackView)
+import Supple.Data.Common (EventType(..))
 
 type Connection = Connection.Connection
 

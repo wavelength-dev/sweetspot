@@ -7,7 +7,8 @@ import Data.Int (Int64)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
 import Supple.Database.Statements
-import Supple.Types
+import Supple.Data.Database
+import Supple.Data.Common (EventType)
 
 getUserBucketSession :: Int64 -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement

@@ -5,8 +5,8 @@ module Supple.ShopifyClient where
 import Control.Lens
 import Data.Aeson (toJSON)
 import Network.Wreq
-
-import Supple.Types
+import Supple.Data.Shopify (Product, ShopifyVariantBody(..), ShopifyResponse(..))
+import Supple.Data.Api (CreateVariant)
 
 apiRoot =
   "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"

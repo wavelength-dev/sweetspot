@@ -9,7 +9,8 @@ import Data.Int (Int64)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
-import Supple.Types
+import Supple.Data.Database
+import Supple.Data.Common (EventType)
 
 type UserId = Int64
 

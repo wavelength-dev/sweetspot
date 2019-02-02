@@ -1,0 +1,40 @@
+{-# LANGUAGE DeriveGeneric #-}
+
+module Supple.Data.Api where
+
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
+import GHC.Generics (Generic)
+import Supple.Data.Common (Price)
+
+--
+-- Request types
+--
+data TrackView = TrackView
+  { productId :: !Text
+  , userId :: !Text
+  , campaign :: !Text
+  , page :: !Text
+  } deriving (Generic, Show)
+
+data CreateVariant = CreateVariant
+  { option1 :: Text
+  , price :: !Price
+  } deriving (Generic, Show)
+
+instance FromJSON TrackView
+
+instance ToJSON TrackView
+
+instance ToJSON CreateVariant
+
+instance FromJSON CreateVariant
+
+--
+-- Response types
+--
+data OkResponse = OkResponse
+  { message :: Text
+  } deriving (Generic, Show)
+
+instance ToJSON OkResponse

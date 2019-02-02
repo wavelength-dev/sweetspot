@@ -15,8 +15,9 @@ import Data.Time.Clock (getCurrentTime)
 import Servant
 import Supple.AppM (AppCtx(..), AppM, LogMessage(..))
 import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
-import Supple.Types
 import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
+import Supple.Data.Api (OkResponse(..), TrackView)
+import Supple.Data.Database (UserBucket)
 
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]

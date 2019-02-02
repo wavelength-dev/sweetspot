@@ -15,7 +15,9 @@ import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Database (getExperimentBuckets)
 import Supple.ShopifyClient (createVariant, fetchProducts)
-import Supple.Types
+import Supple.Data.Shopify (Product)
+import Supple.Data.Api (OkResponse(..), CreateVariant)
+import Supple.Data.Database (ExperimentBuckets)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 

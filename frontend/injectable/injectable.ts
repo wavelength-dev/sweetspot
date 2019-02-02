@@ -1,6 +1,16 @@
+import {
+  detectCampaign,
+  detectPage,
+  detectProduct,
+  trackEvent
+} from './events';
+
 console.time("supple_complete")
 console.time("supple_dom_ready")
-console.log("SUPPLE -- init")
+// TODO: Use development only debug logging
+const log = console.log
+
+log("init")
 
 interface ApiExperiment {
   readonly bucket_price: number
@@ -15,47 +25,38 @@ interface Experiment {
   svid: number
 }
 
-const apiURL = "http://localhost/api/bucket"
-const mockBucket = {
-  bucket_price: 24.99,
-  bucket_sku: "1",
-  bucket_svid: 18251107598400,
-  user_id: 1
-}
+// const mockBucket = {
+//   bucket_price: 24.99,
+//   bucket_sku: "1",
+//   bucket_svid: 18251107598400,
+//   user_id: 1
+// }
 
+const apiURL = "http://localhost/api/bucket"
 const getExperiments = (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = uid === "string" ? `?uid=${uid}` : ""
-  console.log("SUPPLE -- fetching experiments")
-  return fetch(`${apiURL}${qs}`)
-    .then(res => {
-      if (res.status !== 200) {
-        throw new Error(
-          `SUPPLE -- bad response for experiment fetch, got ${
-            res.status
-          }, with body: ${res.body}`
-        )
-      }
+  log("fetching experiments")
+  return fetch(`${apiURL}${qs}`).then(res => {
+    if (res.status !== 200) {
+      throw new Error(`failed to fetch experiments, got ${res.status}`)
+    }
 
-      if (res.body == null) {
-        throw new Error("SUPPLE -- response body for experiment fetch empty")
-      }
-
-      return res.json()
-    })
-    .catch(err => {
-      console.error("SUPPLE -- failed to fetch experiments")
-      throw err
-    })
+    return res.json()
+  })
 }
 
 const revealProductPrice = (el: Element, price: number | null) => {
   if (typeof price === "number") {
+    log("loading local price")
     el.innerHTML = String(price)
     el.classList.add("supple__price--exp")
   } else {
+    log("loading non-local price")
     el.classList.add("supple__price--no-exp")
   }
+
+  log("revealing price")
   el.classList.remove("supple__price--hidden")
 }
 
@@ -84,29 +85,34 @@ const getIdFromPriceElement = (el: Element) => {
   return priceIdClass.split("--")[1]
 }
 
-const setDebutCheckoutSvid = (svid: number) => {
-  const el = document.getElementById("ProductSelect-product-template")
-  if (el === null) {
-    throw new Error("SUPPLE -- failed to find Debut checkout element to set")
-  }
-  const option = el.children[0]
-  if (!(option instanceof HTMLOptionElement)) {
-    throw new Error("SUPPLE -- failed to find Debut checkout element to set")
-  }
-  option.value = String(svid)
-}
+// const setDebutCheckoutSvid = (svid: number) => {
+//   const el = document.getElementById("ProductSelect-product-template")
+//   if (el === null) {
+//     throw new Error("SUPPLE -- failed to find Debut checkout element to set")
+//   }
+//   const option = el.children[0]
+//   if (!(option instanceof HTMLOptionElement)) {
+//     throw new Error("SUPPLE -- failed to find Debut checkout element to set")
+//   }
+//   option.value = String(svid)
+// }
 
+// TODO: unify detecting of compatibility and required targets.
+// i.e. the function that detects a compatible page should return
+// all functions required to to update, reveal and add-to-cart.
 const getIsDebutCheckout = (): boolean => {
   const el = document.getElementById("ProductSelect-product-template")
   if (!(el instanceof HTMLSelectElement)) {
-    console.log("SUPPLE -- failed to find Debut checkout")
+    log("not a debut checkout")
     return false
   }
   const option = el.children[0]
   if (!(option instanceof HTMLOptionElement)) {
-    console.warn("SUPPLE -- failed to descend what looks like a Debut checkout")
+    console.warn("failed to descend what looks like a Debut checkout")
     return false
   }
+
+  log("detected debut checkout")
   return true
 }
 
@@ -118,7 +124,7 @@ const applyExperiments = (exps: Experiment[]): void => {
   els.forEach(el => {
     const id = getIdFromPriceElement(el)
     if (id === null) {
-      console.error("SUPPLE -- Hidden price with no id! Unhiding price as-is")
+      console.error("SUPPLE -- hidden price with no id! Unhiding price as-is")
       revealProductPrice(el, null)
       return
     }
@@ -127,7 +133,7 @@ const applyExperiments = (exps: Experiment[]): void => {
 
     if (exp === undefined) {
       console.warn(
-        "SUPPLE -- Price with no matching experiment! Unhiding price as-is"
+        "SUPPLE -- price with no matching experiment! Unhiding price as-is"
       )
       revealProductPrice(el, null)
       return
@@ -141,7 +147,7 @@ const applyExperiments = (exps: Experiment[]): void => {
   })
 }
 
-const getDOMAccessible = () =>
+const getDOMContentLoaded = () =>
   new Promise(resolve => {
     document.addEventListener("DOMContentLoaded", () => {
       console.timeEnd("supple_dom_ready")
@@ -149,23 +155,33 @@ const getDOMAccessible = () =>
     })
   })
 
-Promise.all([getDOMAccessible(), getExperiments()])
+trackEvent({
+  campaign: detectCampaign(),
+  kind: "view",
+  page: detectPage(),
+  productId: detectProduct(),
+  userId: localStorage.getItem("supple_uid")
+})
+
+Promise.all([getDOMContentLoaded(), getExperiments()])
   .then(([_, apiExps]) => ({
-    exps: apiExps.map((exp: ApiExperiment): Experiment => ({
-      price: exp.bucket_price,
-      sku: exp.bucket_sku,
-      svid: exp.bucket_svid
-    })),
+    exps: apiExps.map(
+      (exp: ApiExperiment): Experiment => ({
+        price: exp.bucket_price,
+        sku: exp.bucket_sku,
+        svid: exp.bucket_svid
+      })
+    ),
     userId: apiExps[0].user_id
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId
     localStorage.setItem("supple_uid", String(userId))
     applyExperiments(exps)
-    console.log("SUPPLE -- success!")
+    console.log("success!")
     console.timeEnd("supple_complete")
   })
   .catch(err => {
-    console.error("SUPPLE -- failed to apply experiments")
+    console.error("failed to apply experiments")
     throw err
   })

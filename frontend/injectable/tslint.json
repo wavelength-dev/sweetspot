@@ -6,8 +6,7 @@
     ],
     "jsRules": {},
     "rules": {
-        "no-console": false,
-        "no-unused-variable": true
+        "no-console": false
     },
     "rulesDirectory": []
 }

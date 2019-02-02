@@ -10,6 +10,7 @@ module Supple.Route.Dashboard
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
+import Control.Applicative ((*>))
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Database (getExperimentBuckets)
@@ -26,9 +27,8 @@ type CreateVariantRoute
 type DashboardAPI = CreateVariantRoute :<|> ProductsRoute :<|> ExperimentsRoute
 
 createVariantHandler :: Maybe Int -> CreateVariant -> AppM OkResponse
-createVariantHandler (Just pid) var = do
-  _ <- liftIO $ createVariant pid var
-  return $ OkResponse {message = "Created variant"}
+createVariantHandler (Just pid) var =
+  liftIO $ createVariant pid var *> (return OkResponse {message = "Created variant"})
 createVariantHandler _ _ = throwError err500 {errBody = "Something went wrong"}
 
 getProductsHandler :: AppM [Product]

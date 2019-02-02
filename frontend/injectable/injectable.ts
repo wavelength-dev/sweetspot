@@ -15,19 +15,7 @@ interface IExperiment {
   svid: number
 }
 
-const apiURL = "https://3876d549.ngrok.io/"
-const queryString = {
-  stringify: (kvs: { [key: string]: string | null }) =>
-    Object.keys(kvs).reduce(
-      (qs, k) =>
-        kvs[k] == null
-          ? qs
-          : qs === ""
-          ? `${k}=${kvs[k]}`
-          : `${qs}&${k}=${kvs[k]}`,
-      ""
-    )
-}
+const apiURL = "http://localhost/api/bucket"
 const mockBucket = {
   bucket_price: 24.99,
   bucket_sku: "1",
@@ -36,12 +24,10 @@ const mockBucket = {
 }
 
 const getExperiments = (): Promise<ReadonlyArray<IApiExperiment>> => {
-  const path = `bucket/`
-  const maybeUid = localStorage.getItem("supple_uid")
-  const qs =
-    maybeUid === "string" ? `?${queryString.stringify({ uid: maybeUid })}` : ""
+  const uid = localStorage.getItem("supple_uid")
+  const qs = uid === "string" ? `?uid=${uid}` : ""
   console.log("SUPPLE -- fetching experiments")
-  return fetch(`${apiURL}${path}${qs}`)
+  return fetch(`${apiURL}${qs}`)
     .then(res => {
       if (res.status !== 200) {
         throw new Error(

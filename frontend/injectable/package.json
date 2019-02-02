@@ -1,8 +1,8 @@
 {
-  "name": "supple",
+  "name": "supple-injectable",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "injectable.js",
   "scripts": {
     "build": "tsc -p .",
     "start": "tsc -w -p ."

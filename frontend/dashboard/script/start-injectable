@@ -1,3 +1,0 @@
-#!/bin/sh
-
-pulp --watch build --main Injectable --to ../dist/injectable.js

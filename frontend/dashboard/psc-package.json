@@ -14,9 +14,6 @@
     "prelude",
     "psci-support",
     "routing",
-    "routing-duplex",
-    "web-dom",
-    "web-html",
-    "web-xhr"
+    "routing-duplex"
   ]
 }

@@ -7,12 +7,14 @@ module Supple.Database
   , getUserBuckets
   , getNewUserBuckets
   , getExperimentBuckets
+  , insertEvent
   ) where
 
+import Data.Aeson (toJSON)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Supple.Types
 import Supple.Database.Sessions
+import Supple.Types
 
 type Connection = Connection.Connection
 
@@ -46,3 +48,12 @@ getExperimentBuckets conn = do
     Left err -> do
       putStrLn $ show err
       return []
+
+insertEvent :: Connection -> TrackView -> IO ()
+insertEvent conn tv = do
+  res <- Session.run (insertEventSession input) conn
+  case res of
+    Right _ -> return ()
+    Left err -> (putStrLn . show) err *> return ()
+  where
+    input = (View, TrackViewJSON $ toJSON tv)

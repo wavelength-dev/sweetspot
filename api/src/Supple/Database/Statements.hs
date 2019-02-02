@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Supple.Database.Statements where
 
@@ -61,8 +62,8 @@ randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
     decoder
       -- TODO Use vectors instead of lists
      =
-      Decoders.rowList $
-      (,) <$> Decoders.column Decoders.int8 <*> Decoders.column Decoders.int8
+      Decoders.rowList $ (,) <$> Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.int8
 
 assignUserToBucketStatement :: Statement (UserId, BucketId) ()
 assignUserToBucketStatement = Statement sql encoder Decoders.unit True
@@ -107,3 +108,12 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
           \(bid, p, sv) ->
             Bucket
               {bucket_id = fromIntegral bid, price = p, svid = fromIntegral sv}
+
+insertEventStatement :: Statement (EventType, TrackViewJSON) ()
+insertEventStatement = Statement sql encoder decoder True
+  where
+    sql = "INSERT INTO events (type, payload) VALUES ($1, $2);"
+    encoder =
+      (fst >$< Encoders.param (Encoders.enum eventTypeToText)) <>
+      (extractValue . snd >$< Encoders.param Encoders.jsonb)
+    decoder = Decoders.unit

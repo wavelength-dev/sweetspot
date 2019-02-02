@@ -1,9 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Supple.Types where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, ToJSON, Value)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -89,3 +90,25 @@ data ExperimentBuckets = ExperimentBuckets
   } deriving (Generic, Show)
 
 instance ToJSON ExperimentBuckets
+
+data TrackView = TrackView
+  { productId :: !Text
+  , userId :: !Text
+  , campaign :: !Text
+  , page :: !Text
+  } deriving (Generic, Show)
+
+newtype TrackViewJSON = TrackViewJSON Value
+
+data EventType = View | Tag
+
+eventTypeToText :: EventType -> Text
+eventTypeToText View = "view"
+eventTypeToText Tag = "tag"
+
+extractValue :: TrackViewJSON -> Value
+extractValue (TrackViewJSON v) = v
+
+instance ToJSON TrackView
+
+instance FromJSON TrackView

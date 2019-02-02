@@ -40,3 +40,6 @@ getBucketsSession = do
             , name = name (exp :: Experiment)
             , buckets = bs
             }
+
+insertEventSession :: (EventType, TrackViewJSON) -> Session ()
+insertEventSession input = Session.statement input insertEventStatement

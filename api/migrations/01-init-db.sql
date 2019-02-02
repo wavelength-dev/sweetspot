@@ -39,6 +39,14 @@ CREATE TABLE experiment_buckets
  FOREIGN KEY (exp_id) REFERENCES experiments(exp_id),
  FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id));
 
+--CREATE TYPE event_type as enum('view', 'tag');
+
+CREATE TABLE events
+(id SERIAL,
+ type TEXT,
+ timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ payload JSONB);
+
 INSERT INTO users (user_id) VALUES (DEFAULT);
 INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);
 INSERT INTO experiments (exp_id, sku, name) VALUES (DEFAULT, '3', 'Kanpeki uber knife experiment');

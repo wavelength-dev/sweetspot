@@ -8,19 +8,23 @@ module Supple.Route.Injectable
   , injectableHandler
   ) where
 
+import Control.Applicative ((*>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Time.Clock (getCurrentTime)
 import Servant
 import Supple.AppM (AppCtx(..), AppM, LogMessage(..))
-import Supple.Database (getNewUserBuckets, getUserBuckets)
+import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
 import Supple.Types
 import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
 
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
 
-type InjectableAPI = UserBucketRoute
+type EventRoute
+   = "event" :> ReqBody '[ JSON] TrackView :> Post '[ JSON] OkResponse
+
+type InjectableAPI = UserBucketRoute :<|> EventRoute
 
 getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
 getUserBucketHandler (Just uid) = do
@@ -37,4 +41,10 @@ getUserBucketHandler Nothing = do
   res <- liftIO $ getNewUserBuckets dbconn
   return res
 
-injectableHandler = getUserBucketHandler
+trackViewHandler :: TrackView -> AppM OkResponse
+trackViewHandler tv = do
+  dbconn <- asks _getDbConn
+  liftIO $
+    insertEvent dbconn tv *> return OkResponse {message = "Event received"}
+
+injectableHandler = getUserBucketHandler :<|> trackViewHandler

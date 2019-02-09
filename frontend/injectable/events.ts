@@ -1,4 +1,8 @@
 import { eventsUrl } from "./constants"
+import { log } from "./logging"
+import { isElementsFound, isEmpty } from "./util"
+
+// Shopify --
 /* Price in local currency in cents */
 type Price = number
 type ProductId = number
@@ -25,59 +29,74 @@ interface Product {
   compare_at_price_varies: boolean
   variants: Variant[]
 }
+// --
 
+// Events --
+/* Page types recognized by supple injectable */
+type Page = "product" | "collection" | "collections"
+/* Location WebAPI pathname */
+type Pathname = string
 interface BaseViewEvent {
   campaign: string | null
-  page: string | null
-  page_url: string
+  page: Page
+  pageUrl: string
   userId: string | null
 }
+interface CollectionListingsViewEvent extends BaseViewEvent {
+  page: "collections"
+}
 interface ProductListingsViewEvent extends BaseViewEvent {
-  kind: "product-listings-view"
-  productIds: string[]
+  page: "collection"
+  productIds: number[] | null
 }
 interface ProductDetailsViewEvent extends BaseViewEvent {
-  kind: "product-details-view"
-  productId: string
+  page: "product"
+  productId: number | null
+}
+interface UnknownViewEvent {
+  campaign: string | null
+  page: "unknown"
+  pageUrl: string
+  userId: string | null
 }
 type ViewEvent =
+  | CollectionListingsViewEvent
   | ProductDetailsViewEvent
   | ProductListingsViewEvent
+  | UnknownViewEvent
+// --
 
-const extractInjectedProductJSON = (el: Element): Product => {
+const extractInjectedProductJSON = (el: Element): Product | null => {
   if (!(el instanceof HTMLDivElement)) {
-    throw new Error(
-      "SUPPLE -- injected product JSON element of unexpected kind"
-    )
+    log("Injected product JSON element of unexpected kind", "warn")
+    return null
   }
 
   try {
     const product = JSON.parse(el.innerText) as Product
     return product
   } catch (err) {
-    console.error("SUPPLE -- failed to parse injected product JSON")
-    throw err
+    log("Failed to parse injected product JSON", "error")
+    return null
   }
 }
-const readInjectedProducts = (): Product[] => {
+
+const readInjectedProducts = (): Product[] | null => {
   const els = document.getElementsByClassName("supple__product")
 
-  if (els.length < 1) {
-    throw new Error("SUPPLE -- no injected product JSON found")
+  if (!isElementsFound(els)) {
+    log("Failed to read injected products from DOM", "warn")
+    return null
   }
 
-  return Array.from(els).map(extractInjectedProductJSON)
+  const mProducts = Array.from(els).map(extractInjectedProductJSON)
+  const products = mProducts.reduce(
+    (ps, p) => (p === null ? ps : [...ps, p]),
+    [] as Product[],
+  )
+
+  return isEmpty(products) ? null : products
 }
-
-// TODO: Use on product pages only
-export const detectProduct = (): Product => {
-  const products = readInjectedProducts()
-  return products[0]
-}
-
-type Page = "product" | "collection" | "collections" | "unknown"
-
-type Pathname = string
 
 const collectionURLRegExp = RegExp("^/collections/w+$")
 const isCollectionURL = (path: Pathname): boolean =>
@@ -91,7 +110,7 @@ const productDetailsURLRegExp = RegExp("^/collections/w+/products")
 const isProductDetailsURL = (path: Pathname): boolean =>
   productDetailsURLRegExp.test(path)
 
-export const detectPage = (): Page => {
+export const detectPage = (): Page | null => {
   const path = window.location.pathname as Pathname
 
   if (isProductDetailsURL(path)) {
@@ -106,7 +125,7 @@ export const detectPage = (): Page => {
     return "collections"
   }
 
-  return "unknown"
+  return null
 }
 
 interface QueryParameters {
@@ -121,7 +140,7 @@ const parseQuery = (queryString: string): QueryParameters => {
   for (const kvStr of pairs) {
     const pair = kvStr.split("=")
     queryParameters[decodeURIComponent(pair[0])] = decodeURIComponent(
-      pair[1] || ""
+      pair[1] || "",
     )
   }
   return queryParameters
@@ -133,13 +152,92 @@ export const detectCampaign = (): string | null => {
   return params.campaign || null
 }
 
+const getViewMeta = (baseMeta: BaseViewEvent): ViewEvent => {
+  const { page } = baseMeta
+
+  switch (page) {
+    case "collection": {
+      const products = readInjectedProducts()
+      if (products === null || isEmpty(products)) {
+        log(
+          "Failed to read injected products when building collection view event, sending without product ids",
+          "error",
+        )
+        return {
+          ...baseMeta,
+          page: "collection",
+          productIds: null,
+        }
+      }
+
+      const productIds = products.map(p => p.id)
+      return {
+        ...baseMeta,
+        page: "collection",
+        productIds,
+      }
+    }
+    case "collections": {
+      return {
+        ...baseMeta,
+        page: "collections",
+      }
+    }
+    case "product": {
+      const products = readInjectedProducts()
+      if (products === null || isEmpty(products)) {
+        log(
+          "Failed to read injected products when building product view event, sending without product id",
+          "error",
+        )
+        return {
+          ...baseMeta,
+          page: "product",
+          productId: null,
+        }
+      }
+
+      const productId = products[0].id
+      return {
+        ...baseMeta,
+        page: "product",
+        productId,
+      }
+    }
+  }
+}
+
+export const trackView = () => {
+  const campaign = detectCampaign()
+  const userId = localStorage.getItem("supple_uid")
+  const page = detectPage()
+
+  const baseMeta = {
+    campaign,
+    pageUrl: window.location.href,
+    userId,
+  }
+
+  if (page === null) {
+    const event: UnknownViewEvent = { ...baseMeta, page: "unknown" }
+    trackEvent(event)
+    return
+  }
+
+  const viewMeta = getViewMeta({ ...baseMeta, page })
+  trackEvent(viewMeta)
+}
+
 export const trackEvent = (event: ViewEvent) => {
-  console.log("SUPPLE -- tracking event", event)
+  log("Tracking event")
+  log(JSON.stringify(event))
   fetch(eventsUrl, {
     body: JSON.stringify(event),
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
-    method: "POST"
+    method: "POST",
+  }).catch(err => {
+    log(err, "error")
   })
 }

@@ -64,7 +64,7 @@ const setCheckoutSvid = (svid: number): void => {
 
 const getIdFromPriceElement = (el: Element) => {
   const priceIdClass = Array.from(el.classList).find(cl =>
-    cl.startsWith("supple__price_id--")
+    cl.startsWith("supple__price_id--"),
   )
   if (priceIdClass === undefined) {
     return null
@@ -93,7 +93,7 @@ const getIsDebutCheckout = (): boolean => {
 
 const applyExperiments = (exps: Experiment[]): void => {
   const els = Array.from(
-    document.getElementsByClassName("supple__price--hidden")
+    document.getElementsByClassName("supple__price--hidden"),
   )
 
   els.forEach(el => {
@@ -109,7 +109,7 @@ const applyExperiments = (exps: Experiment[]): void => {
     if (exp === undefined) {
       log(
         "SUPPLE -- price with no matching experiment! Unhiding price as-is",
-        "warn"
+        "warn",
       )
       revealProductPrice(el, null)
       return
@@ -141,10 +141,10 @@ getDOMContentLoaded()
       (exp: ApiExperiment): Experiment => ({
         price: exp.bucket_price,
         sku: exp.bucket_sku,
-        svid: exp.bucket_svid
-      })
+        svid: exp.bucket_svid,
+      }),
     ),
-    userId: apiExps[0].user_id
+    userId: apiExps[0].user_id,
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId

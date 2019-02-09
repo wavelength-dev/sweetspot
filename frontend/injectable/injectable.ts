@@ -133,8 +133,10 @@ const getDOMContentLoaded = () =>
 
 trackView()
 
-Promise.all([getDOMContentLoaded(), getExperiments()])
-  .then(([_, apiExps]) => ({
+// TODO: switch to webpack and do the below in parallel
+getDOMContentLoaded()
+  .then(getExperiments)
+  .then(apiExps => ({
     exps: apiExps.map(
       (exp: ApiExperiment): Experiment => ({
         price: exp.bucket_price,

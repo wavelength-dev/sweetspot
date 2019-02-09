@@ -3,7 +3,7 @@
 module Supple.ShopifyClient where
 
 import Control.Lens
-import Data.Aeson (toJSON)
+import Data.Aeson (toJSON, Value)
 import Network.Wreq
 import Supple.Data.Shopify (Product, ShopifyVariantBody(..), ShopifyResponse(..))
 import Supple.Data.Api (CreateVariant)
@@ -24,3 +24,16 @@ createVariant pid var = do
   where
     url = apiRoot ++ "/products/" ++ show pid ++ "/variants.json"
     body = toJSON ShopifyVariantBody {variant = var}
+
+fetchProduct :: Int -> IO Value
+fetchProduct pid = do
+  r <- get $ apiRoot ++ "/products/" ++ show pid ++ ".json"
+  json <- asJSON r
+  return $ json ^. responseBody
+
+createProduct :: Value -> IO ()
+createProduct v = do
+  r <- post url v
+  return ()
+  where
+    url = apiRoot ++ "/products.json"

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Supple.Data.Api where
 
@@ -22,6 +23,11 @@ data CreateVariant = CreateVariant
   , price :: !Price
   } deriving (Generic, Show)
 
+data CreateExperiment = CreateExperiment
+  { productId :: !Int
+  , price :: !Price
+  } deriving (Generic, Show)
+
 instance FromJSON TrackView
 
 instance ToJSON TrackView
@@ -29,6 +35,10 @@ instance ToJSON TrackView
 instance ToJSON CreateVariant
 
 instance FromJSON CreateVariant
+
+instance ToJSON CreateExperiment
+
+instance FromJSON CreateExperiment
 
 --
 -- Response types

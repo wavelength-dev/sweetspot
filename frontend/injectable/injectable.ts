@@ -1,14 +1,8 @@
-import {
-  detectCampaign,
-  detectPage,
-  detectProduct,
-  trackEvent
-} from './events';
+import { detectCampaign, detectPage, detectProduct, trackEvent } from "./events"
+import { log } from "./logging"
 
 console.time("supple_complete")
 console.time("supple_dom_ready")
-
-const log = console.log;
 
 log("init")
 
@@ -108,7 +102,7 @@ const getIsDebutCheckout = (): boolean => {
   }
   const option = el.children[0]
   if (!(option instanceof HTMLOptionElement)) {
-    console.warn("failed to descend what looks like a Debut checkout")
+    log("failed to descend what looks like a Debut checkout", "warn")
     return false
   }
 
@@ -124,7 +118,7 @@ const applyExperiments = (exps: Experiment[]): void => {
   els.forEach(el => {
     const id = getIdFromPriceElement(el)
     if (id === null) {
-      console.error("SUPPLE -- hidden price with no id! Unhiding price as-is")
+      log("SUPPLE -- hidden price with no id! Unhiding price as-is", "error")
       revealProductPrice(el, null)
       return
     }
@@ -132,8 +126,9 @@ const applyExperiments = (exps: Experiment[]): void => {
     const exp = exps.find(e => e.sku === id)
 
     if (exp === undefined) {
-      console.warn(
-        "SUPPLE -- price with no matching experiment! Unhiding price as-is"
+      log(
+        "SUPPLE -- price with no matching experiment! Unhiding price as-is",
+        "warn"
       )
       revealProductPrice(el, null)
       return
@@ -178,7 +173,7 @@ Promise.all([getDOMContentLoaded(), getExperiments()])
     // TODO: carefully consider when to set the userId
     localStorage.setItem("supple_uid", String(userId))
     applyExperiments(exps)
-    console.log("success!")
+    log("success!")
     console.timeEnd("supple_complete")
   })
   .catch(err => {

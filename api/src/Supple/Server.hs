@@ -10,7 +10,16 @@ import Control.Monad.Reader (runReaderT)
 import Data.Default (def)
 import Network.Wai (Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
-import Network.Wai.Middleware.Cors (simpleCors)
+import Network.Wai.Middleware.Cors
+  ( cors
+  , corsExposedHeaders
+  , corsRequestHeaders
+  , corsMethods
+  , corsOrigins
+  , simpleCorsResourcePolicy
+  , simpleHeaders
+  , simpleMethods
+  )
 import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.RequestLogger.JSON (formatAsJSON)
 import Servant
@@ -31,7 +40,16 @@ server = dashboardHandler :<|> injectableHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =
-  simpleCors $ serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
+  corsMiddleware $ serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
+    where
+    corsMiddleware :: Middleware
+    corsMiddleware = cors $ \_ ->
+      Just $ simpleCorsResourcePolicy
+        { corsOrigins = Just (["https://libertyprice.myshopify.com"], True)
+        , corsRequestHeaders = "Content-Type" : simpleHeaders
+        , corsMethods = simpleMethods
+        , corsExposedHeaders =
+            Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]      }
 
 jsonRequestLogger :: IO Middleware
 jsonRequestLogger =

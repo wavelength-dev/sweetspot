@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Supple.Database
   ( Connection
@@ -7,26 +8,41 @@ module Supple.Database
   , getUserBuckets
   , getNewUserBuckets
   , getExperimentBuckets
+  , DbConfig(..)
   , insertEvent
   ) where
 
 import Data.Aeson (toJSON)
+import Data.ByteString.UTF8 (fromString)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Supple.Database.Sessions
-import Supple.Data.Database (UserBucket, ExperimentBuckets, TrackViewJSON(..))
 import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..))
+import Supple.Data.Database (ExperimentBuckets, TrackViewJSON(..), UserBucket)
+import Supple.Database.Sessions
 
 type Connection = Connection.Connection
 
-getDbConnection :: IO Connection
-getDbConnection = do
+data DbConfig = DbConfig
+  { host :: String
+  , port :: Int
+  , name :: String
+  , user :: String
+  , password :: String
+  }
+
+getDbConnection :: DbConfig -> IO Connection
+getDbConnection DbConfig {..} = do
   Right connection <- Connection.acquire connectionSettings
   return connection
   where
     connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "supple"
+      Connection.settings
+        (fromString host)
+        (fromIntegral port)
+        (fromString user)
+        (fromString password)
+        (fromString name)
 
 getUserBuckets :: Connection -> Int -> IO [UserBucket]
 getUserBuckets conn userId = do

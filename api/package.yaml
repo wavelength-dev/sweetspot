@@ -38,6 +38,8 @@ dependencies:
 - wreq
 - lens
 - scientific
+- dotenv
+- utf8-string
 
 library:
   source-dirs: src

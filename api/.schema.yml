@@ -1,0 +1,14 @@
+- name: DB_HOST
+  type: text
+  required: true
+- name: DB_PORT
+  type: integer
+- name: DB_NAME
+  type: text
+  required: true
+- name: DB_USER
+  type: text
+  required: true
+- name: DB_PASSWORD
+  type: text
+  required: true

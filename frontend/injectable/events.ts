@@ -1,3 +1,4 @@
+import { eventsUrl } from "./constants"
 /* Price in local currency in cents */
 type Price = number
 type ProductId = number
@@ -42,8 +43,6 @@ interface ProductDetailsViewEvent extends BaseViewEvent {
 type ViewEvent =
   | ProductDetailsViewEvent
   | ProductListingsViewEvent
-
-const eventsURL = "http://localhost/api/events"
 
 const extractInjectedProductJSON = (el: Element): Product => {
   if (!(el instanceof HTMLDivElement)) {
@@ -136,7 +135,7 @@ export const detectCampaign = (): string | null => {
 
 export const trackEvent = (event: ViewEvent) => {
   console.log("SUPPLE -- tracking event", event)
-  fetch(eventsURL, {
+  fetch(eventsUrl, {
     body: JSON.stringify(event),
     headers: {
       "Content-Type": "application/json"

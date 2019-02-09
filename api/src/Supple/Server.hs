@@ -5,6 +5,7 @@ module Supple.Server
   ( runServer
   ) where
 
+import Configuration.Dotenv (defaultConfig, defaultValidatorMap, loadSafeFile)
 import Control.Monad.Reader (runReaderT)
 import Data.Default (def)
 import Network.Wai (Middleware)
@@ -14,9 +15,10 @@ import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.RequestLogger.JSON (formatAsJSON)
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
-import Supple.Database (getDbConnection)
+import Supple.Database (DbConfig(..), getDbConnection)
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
+import System.Environment (getEnv)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
 type RootAPI = DashboardAPI :<|> InjectableAPI
@@ -38,7 +40,21 @@ jsonRequestLogger =
 
 runServer :: IO ()
 runServer = do
-  dbconn <- getDbConnection
+  loadSafeFile defaultValidatorMap ".schema.yml" defaultConfig
+  host <- getEnv "DB_HOST"
+  port <- getEnv "DB_PORT"
+  name <- getEnv "DB_NAME"
+  user <- getEnv "DB_USER"
+  pass <- getEnv "DB_PASSWORD"
+  let dbConfig =
+        DbConfig
+          { host = host
+          , port = read port
+          , name = name
+          , user = user
+          , password = pass
+          }
+  dbconn <- getDbConnection dbConfig
   warpLogger <- jsonRequestLogger
   appLogger <- newStdoutLoggerSet defaultBufSize
   let config = AppConfig "dev" "0.1"

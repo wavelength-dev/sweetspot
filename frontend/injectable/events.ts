@@ -30,22 +30,23 @@ interface TemplateProduct {
   variants: Variant[]
 }
 
-interface ViewEvent {
+interface BaseViewEvent {
   campaign: string | null
-  kind: "view"
-  page: string
+  page: string | null
+  page_url: string
   userId: string | null
 }
-interface ProductListingsViewEvent extends ViewEvent {
+interface ProductListingsViewEvent extends BaseViewEvent {
+  kind: "product-listings-view"
   productIds: string[]
 }
-interface ProductDetailsViewEvent extends ViewEvent {
+interface ProductDetailsViewEvent extends BaseViewEvent {
+  kind: "product-details-view"
   productId: string
 }
-type SuppleEvent =
+type ViewEvent =
   | ProductDetailsViewEvent
   | ProductListingsViewEvent
-  | ViewEvent
 
 const eventsURL = "http://localhost/api/events"
 
@@ -77,7 +78,7 @@ const readInjectedProducts = (): Product[] => {
 // TODO: Use on product pages only
 export const detectProduct = (): Product => {
   const products = readInjectedProducts()
-  return products[0];
+  return products[0]
 }
 
 type Page = "product" | "collection" | "collections" | "unknown"
@@ -138,8 +139,7 @@ export const detectCampaign = (): string | null => {
   return params.campaign || null
 }
 
-export const trackEvent = (event: SuppleEvent) => {
-  // console.log(`SUPPLE -- tracking event, kind: ${event.kind}`)
+export const trackEvent = (event: ViewEvent) => {
   console.log("SUPPLE -- tracking event", event)
   fetch(eventsURL, {
     body: JSON.stringify(event),

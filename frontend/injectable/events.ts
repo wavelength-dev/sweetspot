@@ -4,42 +4,20 @@ type DateTime = string
 // TODO: before using double check API docs are wrong and this is a number
 // https://help.shopify.com/en/api/reference/products/product-variant
 /* Price in local currency in cents */
-type Price = number
+type Price = string
 type ProductId = number
 type VariantId = number
 type URL = string
-interface Variant {
+type SKU = string
+interface TemplateVariant {
   id: VariantId
-  title: string
   /* null for products with a single non-consumer facing variant? */
-  option1: string | null
-  option2: string | null
-  option3: string | null
-  sku: string
-  requires_shipping: boolean
-  taxable: boolean
-  featured_image: string | null
-  available: boolean
-  name: string
-  public_title: string
-  /* Same as option1, option2, option3 but as an array  */
-  options: string[]
+  sku: SKU
   price: Price
-  weight: number // number | 0 ??
-  compare_at_price: number | null
-  inventory_management: string
-  barcode: string
 }
-interface Product {
+interface TemplateProduct {
+  available: boolean
   id: ProductId
-  title: string
-  handle: Slug
-  description: string
-  published_at: DateTime
-  created_at: DateTime
-  vendor: string
-  type: string
-  tags: string[]
   price: Price
   price_min: Price
   price_max: Price
@@ -50,11 +28,6 @@ interface Product {
   compare_at_price_max: 0 // number | 0 ??
   compare_at_price_varies: boolean
   variants: Variant[]
-  images: URL[]
-  featured_image: URL
-  /* Option category names */
-  options: string[]
-  content: string
 }
 
 interface ViewEvent {

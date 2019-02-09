@@ -7,8 +7,8 @@ import {
 
 console.time("supple_complete")
 console.time("supple_dom_ready")
-// TODO: Use development only debug logging
-const log = console.log
+
+const log = console.log;
 
 log("init")
 
@@ -33,7 +33,7 @@ interface Experiment {
 // }
 
 const apiURL = "http://localhost/api/bucket"
-const getExperiments = (): Promise<ApiExperiment[]> => {
+const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = uid === "string" ? `?uid=${uid}` : ""
   log("fetching experiments")

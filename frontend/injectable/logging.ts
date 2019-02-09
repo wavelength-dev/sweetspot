@@ -4,7 +4,7 @@ type LogFn = (msg: string, severity?: Severity) => void
 const DEBUG = true
 const noop = () => undefined
 
-const conoleLog = (msg, severity = "info") => {
+const consoleLog = (msg: string, severity = "info") => {
       switch (severity) {
         case "error": {
           console.error(msg)
@@ -22,5 +22,5 @@ const conoleLog = (msg, severity = "info") => {
     }
 
 export const log: LogFn = DEBUG
-  ? conoleLog
+  ? consoleLog
   : noop

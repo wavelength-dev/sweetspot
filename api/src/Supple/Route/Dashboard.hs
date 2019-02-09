@@ -9,8 +9,11 @@ module Supple.Route.Dashboard
   ) where
 
 import Control.Applicative ((*>))
+import Control.Lens ((.~))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
+import Data.Aeson.Lens (_String, key, nth)
+import Data.Text (pack)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (CreateExperiment(..), CreateVariant, OkResponse(..))
@@ -53,7 +56,12 @@ getExperimentsHandler = do
 
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler CreateExperiment {..} = do
-  liftIO $ fetchProduct productId >>= createProduct
+  json <- liftIO $ fetchProduct productId
+  let
+    priceLens = key "product" . key "variants" . nth 0 . key "price" . _String
+    textPrice = pack . show $ price
+    withNewPrice = priceLens .~ textPrice $ json
+  liftIO $ createProduct withNewPrice
   return OkResponse {message = "Created experiment"}
 
 dashboardHandler =

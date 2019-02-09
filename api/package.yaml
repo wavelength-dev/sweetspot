@@ -28,6 +28,7 @@ dependencies:
 - warp
 - load-env
 - aeson
+- lens-aeson
 - transformers
 - hasql
 - contravariant

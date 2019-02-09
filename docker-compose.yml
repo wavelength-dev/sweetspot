@@ -10,6 +10,9 @@ services:
     ports:
       - 80:80
       - 443:443
+    depends_on:
+      - supple-api
+
   postgres-db:
     container_name: postgres-db
     restart: unless-stopped
@@ -20,3 +23,13 @@ services:
       - POSTGRES_DB=supple
     volumes:
       - ./api/migrations:/docker-entrypoint-initdb.d
+
+  supple-api:
+    container_name: supple-api
+    restart: unless-stopped
+    build:
+      context: api/build
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres-db

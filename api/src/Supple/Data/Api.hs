@@ -12,9 +12,10 @@ import Supple.Data.Common (Price)
 -- Request types
 --
 data TrackView = TrackView
-  { productId :: !Text
-  , userId :: !Text
-  , campaign :: !Text
+  { productId :: Maybe Int
+  , productIds :: Maybe [Int]
+  , userId :: Maybe Text
+  , campaign :: Maybe Text
   , page :: !Text
   } deriving (Generic, Show)
 

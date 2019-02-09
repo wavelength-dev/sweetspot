@@ -19,13 +19,6 @@ interface Experiment {
   svid: number
 }
 
-// const mockBucket = {
-//   bucket_price: 24.99,
-//   bucket_sku: "1",
-//   bucket_svid: 18251107598400,
-//   user_id: 1
-// }
-
 const apiURL = "http://localhost/api/bucket"
 const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
@@ -78,18 +71,6 @@ const getIdFromPriceElement = (el: Element) => {
   }
   return priceIdClass.split("--")[1]
 }
-
-// const setDebutCheckoutSvid = (svid: number) => {
-//   const el = document.getElementById("ProductSelect-product-template")
-//   if (el === null) {
-//     throw new Error("SUPPLE -- failed to find Debut checkout element to set")
-//   }
-//   const option = el.children[0]
-//   if (!(option instanceof HTMLOptionElement)) {
-//     throw new Error("SUPPLE -- failed to find Debut checkout element to set")
-//   }
-//   option.value = String(svid)
-// }
 
 // TODO: unify detecting of compatibility and required targets.
 // i.e. the function that detects a compatible page should return

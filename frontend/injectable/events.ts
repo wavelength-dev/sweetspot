@@ -1,27 +1,22 @@
-type Slug = string
-/* ISO8601 datetime */
-type DateTime = string
-// TODO: before using double check API docs are wrong and this is a number
-// https://help.shopify.com/en/api/reference/products/product-variant
 /* Price in local currency in cents */
-type Price = string
+type Price = number
 type ProductId = number
 type VariantId = number
-type URL = string
 type SKU = string
-interface TemplateVariant {
+/* Variant as injected into Liquid templates by the shopify backend */
+interface Variant {
   id: VariantId
   /* null for products with a single non-consumer facing variant? */
   sku: SKU
   price: Price
 }
-interface TemplateProduct {
+/* Product as injected into Liquid templates by the shopify backend */
+interface Product {
   available: boolean
   id: ProductId
   price: Price
   price_min: Price
   price_max: Price
-  available: boolean
   price_varies: boolean
   compare_at_price: Price | null
   compare_at_price_min: 0 // number | 0 ??

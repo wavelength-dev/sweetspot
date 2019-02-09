@@ -1,4 +1,5 @@
 import { detectCampaign, detectPage, detectProduct, trackEvent } from "./events"
+import { experimentsUrl } from "./constants"
 import { log } from "./logging"
 
 console.time("supple_complete")
@@ -19,12 +20,11 @@ interface Experiment {
   svid: number
 }
 
-const apiURL = "http://localhost/api/bucket"
 const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = uid === "string" ? `?uid=${uid}` : ""
   log("fetching experiments")
-  return fetch(`${apiURL}${qs}`).then(res => {
+  return fetch(`${experimentsUrl}${qs}`).then(res => {
     if (res.status !== 200) {
       throw new Error(`failed to fetch experiments, got ${res.status}`)
     }

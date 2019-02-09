@@ -1,5 +1,5 @@
-import { detectCampaign, detectPage, detectProduct, trackEvent } from "./events"
 import { experimentsUrl } from "./constants"
+import { trackView } from "./events"
 import { log } from "./logging"
 
 console.time("supple_complete")
@@ -131,13 +131,7 @@ const getDOMContentLoaded = () =>
     })
   })
 
-trackEvent({
-  campaign: detectCampaign(),
-  kind: "view",
-  page: detectPage(),
-  productId: detectProduct(),
-  userId: localStorage.getItem("supple_uid")
-})
+trackView()
 
 Promise.all([getDOMContentLoaded(), getExperiments()])
   .then(([_, apiExps]) => ({

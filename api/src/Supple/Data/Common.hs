@@ -1,8 +1,18 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Supple.Data.Common where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific (Scientific)
+import GHC.Generics (Generic)
 
-type Price = Scientific
+newtype Price =
+  Price Scientific
+  deriving (Show, Generic)
 
-data EventType
-  = View
+instance ToJSON Price
+
+instance FromJSON Price
+
+data EventType =
+  View

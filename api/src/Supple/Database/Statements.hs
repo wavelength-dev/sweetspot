@@ -3,22 +3,21 @@
 
 module Supple.Database.Statements where
 
+import Data.Aeson (Value)
 import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int64)
-import Data.Aeson (Value)
 import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
+import Supple.Data.Common (EventType, Price(..))
 import Supple.Data.Database
-import Supple.Data.Common (EventType, Price)
 
 type UserId = Int64
 
 type ExpId = Int64
 
 type BucketId = Int64
-
 
 userBucketsStatement :: Statement Int64 [UserBucket]
 userBucketsStatement = Statement sql encoder decoder True
@@ -44,7 +43,7 @@ userBucketsStatement = Statement sql encoder decoder True
               { user_id = fromIntegral uid
               , bucket_sku = sku
               , bucket_svid = fromIntegral svid
-              , bucket_price = price
+              , bucket_price = Price price
               }
 
 insertUserStatement :: Statement () Int64
@@ -95,8 +94,9 @@ insertExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-      [ "INSERT INTO experiments (sku, name) "
-      , "VALUES ($1, $2) RETURNING exp_id;"]
+        [ "INSERT INTO experiments (sku, name) "
+        , "VALUES ($1, $2) RETURNING exp_id;"
+        ]
     encoder =
       (fst >$< Encoders.param Encoders.text) <>
       (snd >$< Encoders.param Encoders.text)
@@ -107,16 +107,15 @@ insertBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-      [ "INSERT INTO buckets (svid, sku, price) "
-      , "VALUES ($1, $2, $3);"]
+        ["INSERT INTO buckets (svid, sku, price) ", "VALUES ($1, $2, $3);"]
     encoder =
       (fst' >$< Encoders.param Encoders.int8) <>
       (snd' >$< Encoders.param Encoders.text) <>
-      (thd' >$< Encoders.param Encoders.numeric)
+      (getPrice >$< Encoders.param Encoders.numeric)
     decoder = Decoders.singleRow $ Decoders.column Decoders.int8
     fst' (x, _, _) = x
     snd' (_, x, _) = x
-    thd' (_, _, x) = x
+    getPrice (_, _, (Price p)) = p
 
 insertExperimentBucketStatement :: Statement (ExpId, BucketId) ()
 insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
@@ -124,11 +123,11 @@ insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
     sql =
       mconcat
         [ "INSERT INTO experiment_buckets (exp_id, bucket_id) "
-        , "VALUES ($1, $2);"]
+        , "VALUES ($1, $2);"
+        ]
     encoder =
       (fst >$< Encoders.param Encoders.int8) <>
       (snd >$< Encoders.param Encoders.int8)
-
 
 getBucketsForExperimentStatement :: Statement ExpId [Bucket]
 getBucketsForExperimentStatement = Statement sql encoder decoder True
@@ -150,7 +149,10 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         toBucket =
           \(bid, p, sv) ->
             Bucket
-              {bucket_id = fromIntegral bid, price = p, svid = fromIntegral sv}
+              { bucket_id = fromIntegral bid
+              , price = Price p
+              , svid = fromIntegral sv
+              }
 
 insertEventStatement :: Statement (EventType, Value) ()
 insertEventStatement = Statement sql encoder decoder True

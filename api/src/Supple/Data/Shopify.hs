@@ -6,16 +6,10 @@ module Supple.Data.Shopify where
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Supple.Data.Api (CreateVariant)
 
 --
 -- Request types
 --
-data ShopifyVariantBody = ShopifyVariantBody
-  { variant :: CreateVariant
-  } deriving (Generic, Show)
-
-instance ToJSON ShopifyVariantBody
 
 --
 -- Response types

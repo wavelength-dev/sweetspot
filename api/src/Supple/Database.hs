@@ -22,6 +22,7 @@ import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Database (ExperimentBuckets, UserBucket)
 import Supple.Database.Sessions
+import Supple.Data.Common
 
 type Connection = Connection.Connection
 
@@ -46,9 +47,9 @@ getDbConnection DbConfig {..} = do
         (fromString password)
         (fromString name)
 
-getUserBuckets :: Connection -> Int -> IO [UserBucket]
+getUserBuckets :: Connection -> UserId -> IO [UserBucket]
 getUserBuckets conn userId = do
-  Right res <- Session.run (getUserBucketSession $ fromIntegral userId) conn
+  Right res <- Session.run (getUserBucketSession userId) conn
   return res
 
 getNewUserBuckets :: Connection -> IO [UserBucket]

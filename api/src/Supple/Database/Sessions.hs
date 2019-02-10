@@ -4,16 +4,15 @@
 module Supple.Database.Sessions where
 
 import Control.Monad (forM, forM_)
-import Data.Int (Int64)
-import Data.Text (Text)
 import Data.Aeson (Value)
+import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
 import Supple.Data.Common
 import Supple.Data.Database
 import Supple.Database.Statements
 
-getUserBucketSession :: Int64 -> Session [UserBucket]
+getUserBucketSession :: UserId -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement
 
 assignAndGetUserBucketSession :: Session [UserBucket]
@@ -35,8 +34,7 @@ getBucketsSession = do
     addBuckets =
       \exp -> do
         let id = exp_id (exp :: Experiment)
-        bs <-
-          Session.statement (fromIntegral id) getBucketsForExperimentStatement
+        bs <- Session.statement id getBucketsForExperimentStatement
         return
           ExperimentBuckets
             { exp_id = id

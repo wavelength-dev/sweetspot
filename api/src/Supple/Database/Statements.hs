@@ -5,7 +5,6 @@ module Supple.Database.Statements where
 
 import Data.Aeson (Value)
 import Data.Functor.Contravariant ((>$<))
-import Data.Int (Int64)
 import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
@@ -13,13 +12,7 @@ import Hasql.Statement (Statement(..))
 import Supple.Data.Common
 import Supple.Data.Database
 
-type UserId = Int64
-
-type ExpId = Int64
-
-type BucketId = Int64
-
-userBucketsStatement :: Statement Int64 [UserBucket]
+userBucketsStatement :: Statement UserId [UserBucket]
 userBucketsStatement = Statement sql encoder decoder True
   where
     sql =
@@ -29,7 +22,7 @@ userBucketsStatement = Statement sql encoder decoder True
          , "INNER JOIN buckets ON bucket_users.bucket_id = buckets.bucket_id "
          , "WHERE users.user_id = $1;"
          ])
-    encoder = Encoders.param Encoders.int8
+    encoder = unwrapUserId >$< Encoders.param Encoders.int8
     decoder = Decoders.rowList $ toUserBucket <$> row
       where
         row =
@@ -40,17 +33,19 @@ userBucketsStatement = Statement sql encoder decoder True
         toUserBucket =
           \(uid, sku, svid, price) ->
             UserBucket
-              { user_id = fromIntegral uid
-              , bucket_sku = sku
-              , bucket_svid = fromIntegral svid
+              { user_id = UserId $ fromIntegral uid
+              , bucket_sku = Sku sku
+              , bucket_svid = Svid $ fromIntegral svid
               , bucket_price = Price price
               }
+    unwrapUserId (UserId uid) = fromIntegral uid
 
-insertUserStatement :: Statement () Int64
+insertUserStatement :: Statement () UserId
 insertUserStatement = Statement sql Encoders.unit decoder True
   where
     sql = "INSERT INTO users (user_id) VALUES (DEFAULT) RETURNING user_id;"
-    decoder = Decoders.singleRow $ Decoders.column Decoders.int8
+    decoder = Decoders.singleRow $ wrapUserId <$> Decoders.column Decoders.int8
+    wrapUserId id = UserId $ fromIntegral id
 
 randomBucketPerExpStatement :: Statement () [(ExpId, BucketId)]
 randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
@@ -61,19 +56,20 @@ randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
          , "FROM (SELECT exp_id, bucket_id FROM experiment_buckets "
          , "ORDER BY random()) as \"subq\";"
          ])
-    decoder
-      -- TODO Use vectors instead of lists
-     =
-      Decoders.rowList $ (,) <$> Decoders.column Decoders.int8 <*>
-      Decoders.column Decoders.int8
+    decoder = Decoders.rowList $ wrapRow <$> row
+    row =
+      (,) <$> (Decoders.column Decoders.int8) <*> Decoders.column Decoders.int8
+    wrapRow (eid, bid) = (ExpId $ fromIntegral eid, BucketId $ fromIntegral bid)
 
 assignUserToBucketStatement :: Statement (UserId, BucketId) ()
 assignUserToBucketStatement = Statement sql encoder Decoders.unit True
   where
     sql = "INSERT INTO bucket_users (user_id, bucket_id) VALUES ($1, $2);"
     encoder =
-      (fst >$< Encoders.param Encoders.int8) <>
-      (snd >$< Encoders.param Encoders.int8)
+      (getUid . fst >$< Encoders.param Encoders.int8) <>
+      (getBuid . snd >$< Encoders.param Encoders.int8)
+    getUid (UserId id) = fromIntegral id
+    getBuid (BucketId id) = fromIntegral id
 
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
@@ -87,7 +83,8 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
           Decoders.column Decoders.text
         toExperiment =
           \(exp_id, sku, name) ->
-            Experiment {exp_id = fromIntegral exp_id, sku = sku, name = name}
+            Experiment
+              {exp_id = ExpId $ fromIntegral exp_id, sku = Sku sku, name = name}
 
 insertExperimentStatement :: Statement (Sku, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True
@@ -101,19 +98,23 @@ insertExperimentStatement = Statement sql encoder decoder True
       (getSku >$< Encoders.param Encoders.text) <>
       (snd >$< Encoders.param Encoders.text)
     getSku (Sku txt, _) = txt
-    decoder = Decoders.singleRow $ Decoders.column Decoders.int8
+    decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
+    wrapExpId id = ExpId $ fromIntegral id
 
 insertBucketStatement :: Statement (Svid, Sku, Price) BucketId
 insertBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        ["INSERT INTO buckets (svid, sku, price) ", "VALUES ($1, $2, $3);"]
+        [ "INSERT INTO buckets (svid, sku, price) "
+        , "VALUES ($1, $2, $3) RETURNING bucket_id;"
+        ]
     encoder =
       (getSvid >$< Encoders.param Encoders.int8) <>
       (getSku >$< Encoders.param Encoders.text) <>
       (getPrice >$< Encoders.param Encoders.numeric)
-    decoder = Decoders.singleRow $ Decoders.column Decoders.int8
+    decoder = Decoders.singleRow $ wrapBuid <$> Decoders.column Decoders.int8
+    wrapBuid buid = BucketId $ fromIntegral buid
     getSvid (Svid s, _, _) = fromIntegral s
     getSku (_, Sku s, _) = s
     getPrice (_, _, (Price p)) = p
@@ -127,8 +128,10 @@ insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
         , "VALUES ($1, $2);"
         ]
     encoder =
-      (fst >$< Encoders.param Encoders.int8) <>
-      (snd >$< Encoders.param Encoders.int8)
+      (getExpId . fst >$< Encoders.param Encoders.int8) <>
+      (getBuId . snd >$< Encoders.param Encoders.int8)
+    getExpId (ExpId id) = fromIntegral id
+    getBuId (BucketId id) = fromIntegral id
 
 getBucketsForExperimentStatement :: Statement ExpId [Bucket]
 getBucketsForExperimentStatement = Statement sql encoder decoder True
@@ -140,7 +143,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
         , "WHERE ebs.exp_id = $1;"
         ]
-    encoder = Encoders.param Encoders.int8
+    encoder = unwrapExpId >$< Encoders.param Encoders.int8
     decoder = Decoders.rowList $ toBucket <$> row
       where
         row =
@@ -150,10 +153,11 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         toBucket =
           \(bid, p, sv) ->
             Bucket
-              { bucket_id = fromIntegral bid
+              { bucket_id = BucketId $ fromIntegral bid
               , price = Price p
-              , svid = fromIntegral sv
+              , svid = Svid $ fromIntegral sv
               }
+    unwrapExpId (ExpId id) = fromIntegral id
 
 insertEventStatement :: Statement (EventType, Value) ()
 insertEventStatement = Statement sql encoder decoder True

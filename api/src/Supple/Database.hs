@@ -15,9 +15,9 @@ module Supple.Database
 
 import Data.Aeson (toJSON)
 import Data.ByteString.UTF8 (fromString)
+import Data.Text (Text)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Data.Text (Text)
 import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..), Price)
 import Supple.Data.Database (ExperimentBuckets, TrackViewJSON(..), UserBucket)
@@ -78,9 +78,12 @@ insertEvent conn tv = do
   where
     input = (View, TrackViewJSON $ toJSON tv)
 
-createExperiment :: Connection -> Text -> Int -> Price -> IO ()
-createExperiment conn sku svid price = do
-  res <- Session.run (createExperimentSession (sku, fromIntegral svid, price)) conn
+createExperiment :: Connection -> Text -> Int -> Price -> Text -> IO ()
+createExperiment conn sku svid price name = do
+  res <-
+    Session.run
+      (createExperimentSession (sku, fromIntegral svid, price, name))
+      conn
   case res of
     Right _ -> return ()
     Left err -> (putStrLn . show) err *> return ()

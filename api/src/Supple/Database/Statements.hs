@@ -5,6 +5,7 @@ module Supple.Database.Statements where
 
 import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int64)
+import Data.Aeson (Value)
 import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
@@ -151,11 +152,11 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
             Bucket
               {bucket_id = fromIntegral bid, price = p, svid = fromIntegral sv}
 
-insertEventStatement :: Statement (EventType, TrackViewJSON) ()
+insertEventStatement :: Statement (EventType, Value) ()
 insertEventStatement = Statement sql encoder decoder True
   where
     sql = "INSERT INTO events (type, payload) VALUES ($1, $2);"
     encoder =
       (eventTypeToText . fst >$< Encoders.param Encoders.text) <>
-      (extractValue . snd >$< Encoders.param Encoders.jsonb)
+      (snd >$< Encoders.param Encoders.jsonb)
     decoder = Decoders.unit

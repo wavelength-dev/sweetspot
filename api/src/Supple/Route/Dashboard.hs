@@ -7,7 +7,7 @@ module Supple.Route.Dashboard
   ( DashboardAPI
   , dashboardHandler
   ) where
-
+import Prelude hiding (id)
 import Control.Applicative ((*>))
 import Control.Lens ((.~))
 import Control.Monad.IO.Class (liftIO)
@@ -18,8 +18,8 @@ import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (CreateExperiment(..), CreateVariant, OkResponse(..))
 import Supple.Data.Database (ExperimentBuckets)
-import Supple.Data.Shopify (Product)
-import Supple.Database (getExperimentBuckets)
+import Supple.Data.Shopify (Product(variants), Variant(id, sku))
+import Supple.Database (getExperimentBuckets, createExperiment)
 import Supple.ShopifyClient
   ( createProduct
   , createVariant
@@ -61,7 +61,13 @@ createExperimentHandler CreateExperiment {..} = do
     priceLens = key "product" . key "variants" . nth 0 . key "price" . _String
     textPrice = pack . show $ price
     withNewPrice = priceLens .~ textPrice $ json
-  liftIO $ createProduct withNewPrice
+  newProduct <- liftIO $ createProduct withNewPrice
+  let
+    variant = (variants newProduct) !! 0
+    s = sku variant
+    sv = id variant
+  dbconn <- asks _getDbConn
+  liftIO $ createExperiment dbconn s sv price
   return OkResponse {message = "Created experiment"}
 
 dashboardHandler =

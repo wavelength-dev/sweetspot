@@ -37,6 +37,10 @@ data ShopifyResponse = ShopifyResponse
   { products :: ![Product]
   } deriving (Generic, Show)
 
+data ShopifyProductResponse = ShopifyProductResponse
+  { product :: Product
+  } deriving (Generic, Show)
+
 instance ToJSON Variant
 
 instance FromJSON Variant
@@ -46,3 +50,5 @@ instance ToJSON Product
 instance FromJSON Product
 
 instance FromJSON ShopifyResponse
+
+instance FromJSON ShopifyProductResponse

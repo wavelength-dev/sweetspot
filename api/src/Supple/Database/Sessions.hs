@@ -1,14 +1,16 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Supple.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Int (Int64)
 import Hasql.Session (Session)
+import Data.Text (Text)
 import qualified Hasql.Session as Session
 import Supple.Database.Statements
 import Supple.Data.Database
-import Supple.Data.Common (EventType)
+import Supple.Data.Common (EventType, Price)
 
 getUserBucketSession :: Int64 -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement
@@ -44,3 +46,9 @@ getBucketsSession = do
 
 insertEventSession :: (EventType, TrackViewJSON) -> Session ()
 insertEventSession input = Session.statement input insertEventStatement
+
+createExperimentSession :: (Text, Int64, Price) -> Session ()
+createExperimentSession (sku, svid, price) = do
+  expId <- Session.statement (sku, "test experiment") insertExperimentStatement
+  bucketId <- Session.statement (svid, sku, price) insertBucketStatement
+  Session.statement (expId, bucketId) insertExperimentBucketStatement

@@ -6,6 +6,7 @@ module Supple.Database
   ( Connection
   , getDbConnection
   , getUserBuckets
+  , createExperiment
   , getNewUserBuckets
   , getExperimentBuckets
   , DbConfig(..)
@@ -16,8 +17,9 @@ import Data.Aeson (toJSON)
 import Data.ByteString.UTF8 (fromString)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
+import Data.Text (Text)
 import Supple.Data.Api (TrackView)
-import Supple.Data.Common (EventType(..))
+import Supple.Data.Common (EventType(..), Price)
 import Supple.Data.Database (ExperimentBuckets, TrackViewJSON(..), UserBucket)
 import Supple.Database.Sessions
 
@@ -75,3 +77,10 @@ insertEvent conn tv = do
     Left err -> (putStrLn . show) err *> return ()
   where
     input = (View, TrackViewJSON $ toJSON tv)
+
+createExperiment :: Connection -> Text -> Int -> Price -> IO ()
+createExperiment conn sku svid price = do
+  res <- Session.run (createExperimentSession (sku, fromIntegral svid, price)) conn
+  case res of
+    Right _ -> return ()
+    Left err -> (putStrLn . show) err *> return ()

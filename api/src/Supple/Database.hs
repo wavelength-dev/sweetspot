@@ -19,7 +19,7 @@ import Data.Text (Text)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
 import Supple.Data.Api (TrackView)
-import Supple.Data.Common (EventType(..), Price)
+import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Database (ExperimentBuckets, UserBucket)
 import Supple.Database.Sessions
 
@@ -78,11 +78,11 @@ insertEvent conn tv = do
   where
     input = (View, toJSON tv)
 
-createExperiment :: Connection -> Text -> Int -> Price -> Text -> IO ()
+createExperiment :: Connection -> Sku -> Svid -> Price -> Text -> IO ()
 createExperiment conn sku svid price name = do
   res <-
     Session.run
-      (createExperimentSession (sku, fromIntegral svid, price, name))
+      (createExperimentSession (sku, svid, price, name))
       conn
   case res of
     Right _ -> return ()

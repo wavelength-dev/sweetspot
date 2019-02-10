@@ -9,7 +9,7 @@ import Data.Text (Text)
 import Data.Aeson (Value)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
-import Supple.Data.Common (EventType, Price)
+import Supple.Data.Common
 import Supple.Data.Database
 import Supple.Database.Statements
 
@@ -48,7 +48,7 @@ getBucketsSession = do
 insertEventSession :: (EventType, Value) -> Session ()
 insertEventSession input = Session.statement input insertEventStatement
 
-createExperimentSession :: (Text, Int64, Price, Text) -> Session ()
+createExperimentSession :: (Sku, Svid, Price, Text) -> Session ()
 createExperimentSession (sku, svid, price, name) = do
   expId <- Session.statement (sku, name) insertExperimentStatement
   bucketId <- Session.statement (svid, sku, price) insertBucketStatement

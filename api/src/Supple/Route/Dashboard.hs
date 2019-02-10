@@ -17,14 +17,11 @@ import Prelude hiding (id)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (CreateExperiment(..), OkResponse(..))
+import Supple.Data.Common
 import Supple.Data.Database (ExperimentBuckets)
 import Supple.Data.Shopify (Product(variants), Variant(id, sku))
 import Supple.Database (createExperiment, getExperimentBuckets)
-import Supple.ShopifyClient
-  ( createProduct
-  , fetchProduct
-  , fetchProducts
-  )
+import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -52,8 +49,8 @@ createExperimentHandler CreateExperiment {..} = do
       withNewPrice = priceLens .~ textPrice $ json
   newProduct <- liftIO $ createProduct withNewPrice
   let variant = (variants newProduct) !! 0
-      s = sku variant
-      sv = id variant
+      s = Sku $ sku variant
+      sv = Svid $ id variant
   dbconn <- asks _getDbConn
   liftIO $ createExperiment dbconn s sv price name
   return OkResponse {message = "Created experiment"}

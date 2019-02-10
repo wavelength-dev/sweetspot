@@ -12,11 +12,7 @@ import Supple.Data.Common (Price)
 -- Request types
 --
 data TrackView = TrackView
-  { productId :: Maybe Int
-  , productIds :: Maybe [Int]
-  , userId :: Maybe Text
-  , campaign :: Maybe Text
-  , page :: !Text
+  { page :: !Text
   } deriving (Generic, Show)
 
 data CreateVariant = CreateVariant

@@ -6,6 +6,7 @@ module Supple.Database.Sessions where
 import Control.Monad (forM, forM_)
 import Data.Int (Int64)
 import Data.Text (Text)
+import Data.Aeson (Value)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
 import Supple.Data.Common (EventType, Price)
@@ -44,7 +45,7 @@ getBucketsSession = do
             , buckets = bs
             }
 
-insertEventSession :: (EventType, TrackViewJSON) -> Session ()
+insertEventSession :: (EventType, Value) -> Session ()
 insertEventSession input = Session.statement input insertEventStatement
 
 createExperimentSession :: (Text, Int64, Price, Text) -> Session ()

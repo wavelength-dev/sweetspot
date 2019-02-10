@@ -20,7 +20,7 @@ import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
 import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..), Price)
-import Supple.Data.Database (ExperimentBuckets, TrackViewJSON(..), UserBucket)
+import Supple.Data.Database (ExperimentBuckets, UserBucket)
 import Supple.Database.Sessions
 
 type Connection = Connection.Connection
@@ -76,7 +76,7 @@ insertEvent conn tv = do
     Right _ -> return ()
     Left err -> (putStrLn . show) err *> return ()
   where
-    input = (View, TrackViewJSON $ toJSON tv)
+    input = (View, toJSON tv)
 
 createExperiment :: Connection -> Text -> Int -> Price -> Text -> IO ()
 createExperiment conn sku svid price name = do

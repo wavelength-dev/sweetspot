@@ -4,7 +4,7 @@
 
 module Supple.Data.Database where
 
-import Data.Aeson (ToJSON, Value)
+import Data.Aeson (ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common (Price, EventType(..))
@@ -39,11 +39,6 @@ instance ToJSON UserBucket
 
 eventTypeToText :: EventType -> Text
 eventTypeToText View = "view"
-
-extractValue :: TrackViewJSON -> Value
-extractValue (TrackViewJSON v) = v
-
-newtype TrackViewJSON = TrackViewJSON Value
 
 instance ToJSON ExperimentBuckets
 

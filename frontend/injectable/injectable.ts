@@ -20,6 +20,7 @@ interface Experiment {
   svid: number
 }
 
+// Assumes non-empty list
 const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = uid === "string" ? `?uid=${uid}` : ""
@@ -123,6 +124,7 @@ const applyExperiments = (exps: Experiment[]): void => {
   })
 }
 
+// We expect this to always resolve
 const getDOMContentLoaded = () =>
   new Promise(resolve => {
     document.addEventListener("DOMContentLoaded", () => {
@@ -131,20 +133,22 @@ const getDOMContentLoaded = () =>
     })
   })
 
-trackView()
 
-// TODO: switch to webpack and do the below in parallel
-getDOMContentLoaded()
-  .then(getExperiments)
-  .then(apiExps => ({
-    exps: apiExps.map(
+const DOMPromise = getDOMContentLoaded()
+const expPromise = getExperiments()
+
+DOMPromise.then(trackView)
+
+Promise.all([DOMPromise, expPromise])
+  .then(([_, apiExps]) => ({
+    exps: (apiExps as ApiExperiment[]).map(
       (exp: ApiExperiment): Experiment => ({
         price: exp.bucket_price,
         sku: exp.bucket_sku,
         svid: exp.bucket_svid,
       }),
     ),
-    userId: apiExps[0].user_id,
+    userId: (apiExps as ApiExperiment[])[0].user_id,
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId
@@ -153,7 +157,9 @@ getDOMContentLoaded()
     log("success!")
     console.timeEnd("supple_complete")
   })
+  // Experiments failed to resolve, unhide base price
   .catch(err => {
-    console.error("failed to apply experiments")
+    log("Experiments failed to resolve, unhiding price", "error")
+    applyExperiments([])
     throw err
   })

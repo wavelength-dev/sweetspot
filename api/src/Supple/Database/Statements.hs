@@ -5,17 +5,19 @@ module Supple.Database.Statements where
 
 import Data.Functor.Contravariant ((>$<))
 import Data.Int (Int64)
+import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
 import Supple.Data.Database
-import Supple.Data.Common (EventType)
+import Supple.Data.Common (EventType, Price)
 
 type UserId = Int64
 
 type ExpId = Int64
 
 type BucketId = Int64
+
 
 userBucketsStatement :: Statement Int64 [UserBucket]
 userBucketsStatement = Statement sql encoder decoder True
@@ -86,6 +88,46 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
         toExperiment =
           \(exp_id, sku, name) ->
             Experiment {exp_id = fromIntegral exp_id, sku = sku, name = name}
+
+insertExperimentStatement :: Statement (Text, Text) ExpId
+insertExperimentStatement = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+      [ "INSERT INTO experiments (sku, name) "
+      , "VALUES ($1, $2) RETURNING exp_id;"]
+    encoder =
+      (fst >$< Encoders.param Encoders.text) <>
+      (snd >$< Encoders.param Encoders.text)
+    decoder = Decoders.singleRow $ Decoders.column Decoders.int8
+
+insertBucketStatement :: Statement (Int64, Text, Price) BucketId
+insertBucketStatement = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+      [ "INSERT INTO buckets (svid, sku, price) "
+      , "VALUES ($1, $2, $3);"]
+    encoder =
+      (fst' >$< Encoders.param Encoders.int8) <>
+      (snd' >$< Encoders.param Encoders.text) <>
+      (thd' >$< Encoders.param Encoders.numeric)
+    decoder = Decoders.singleRow $ Decoders.column Decoders.int8
+    fst' (x, _, _) = x
+    snd' (_, x, _) = x
+    thd' (_, _, x) = x
+
+insertExperimentBucketStatement :: Statement (ExpId, BucketId) ()
+insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
+  where
+    sql =
+      mconcat
+        [ "INSERT INTO experiment_buckets (exp_id, bucket_id) "
+        , "VALUES ($1, $2);"]
+    encoder =
+      (fst >$< Encoders.param Encoders.int8) <>
+      (snd >$< Encoders.param Encoders.int8)
+
 
 getBucketsForExperimentStatement :: Statement ExpId [Bucket]
 getBucketsForExperimentStatement = Statement sql encoder decoder True

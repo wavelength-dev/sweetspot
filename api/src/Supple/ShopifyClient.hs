@@ -2,11 +2,17 @@
 
 module Supple.ShopifyClient where
 
+import Prelude hiding (product)
 import Control.Lens
-import Data.Aeson (toJSON, Value)
+import Data.Aeson (Value, toJSON)
 import Network.Wreq
-import Supple.Data.Shopify (Product, ShopifyVariantBody(..), ShopifyResponse(..))
 import Supple.Data.Api (CreateVariant)
+import Supple.Data.Shopify
+  ( Product
+  , ShopifyProductResponse(..)
+  , ShopifyResponse(..)
+  , ShopifyVariantBody(..)
+  )
 
 apiRoot =
   "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"
@@ -31,9 +37,10 @@ fetchProduct pid = do
   json <- asJSON r
   return $ json ^. responseBody
 
-createProduct :: Value -> IO ()
+createProduct :: Value -> IO Product
 createProduct v = do
   r <- post url v
-  return ()
+  json <- asJSON r
+  return $ product (json ^. responseBody)
   where
     url = apiRoot ++ "/products.json"

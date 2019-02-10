@@ -7,31 +7,31 @@ module Supple.Data.Database where
 import Data.Aeson (ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Supple.Data.Common (Price, EventType(..))
+import Supple.Data.Common
 
 data Bucket = Bucket
-  { bucket_id :: !Int
-  , svid :: !Int
+  { bucket_id :: !BucketId
+  , svid :: !Svid
   , price :: !Price
   } deriving (Generic, Show)
 
 data Experiment = Experiment
-  { exp_id :: !Int
-  , sku :: !Text
+  { exp_id :: !ExpId
+  , sku :: !Sku
   , name :: !Text
   } deriving (Generic, Show)
 
 data ExperimentBuckets = ExperimentBuckets
-  { exp_id :: !Int
-  , sku :: !Text
+  { exp_id :: !ExpId
+  , sku :: !Sku
   , name :: !Text
   , buckets :: ![Bucket]
   } deriving (Generic, Show)
 
 data UserBucket = UserBucket
-  { user_id :: !Int
-  , bucket_sku :: !Text
-  , bucket_svid :: !Int
+  { user_id :: !UserId
+  , bucket_sku :: !Sku
+  , bucket_svid :: !Svid
   , bucket_price :: !Price
   } deriving (Generic, Show)
 

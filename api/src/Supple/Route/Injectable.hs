@@ -17,6 +17,7 @@ import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
 import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
 import Supple.Data.Api (OkResponse(..), TrackView)
 import Supple.Data.Database (UserBucket)
+import Supple.Data.Common
 
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
@@ -31,7 +32,7 @@ getUserBucketHandler (Just uid) = do
   dbconn <- asks _getDbConn
   logset <- asks _getLogger
   ts <- liftIO getCurrentTime
-  res <- liftIO $ getUserBuckets dbconn uid
+  res <- liftIO $ getUserBuckets dbconn (UserId uid)
   liftIO $
     pushLogStrLn logset $
     toLogStr LogMessage {logMessage = "Got user bucket", timestamp = ts}

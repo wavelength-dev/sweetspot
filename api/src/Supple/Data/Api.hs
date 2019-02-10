@@ -4,8 +4,8 @@
 
 module Supple.Data.Api where
 
-import Data.Aeson (FromJSON(..), ToJSON(..))
 import Control.Lens
+import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Aeson.Lens
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -78,20 +78,23 @@ instance ToJSON CreateExperiment
 instance FromJSON CreateExperiment
 
 instance FromJSON TrackView where
-  parseJSON val = case page of
-    "product" -> Details <$> parseJSON val
-    "collection" -> Listing <$> parseJSON val
-    "collections" -> Collection <$> parseJSON val
-    "unknown" -> Unknown <$> parseJSON val
+  parseJSON val =
+    case page of
+      "product" -> Details <$> parseJSON val
+      "collection" -> Listing <$> parseJSON val
+      "collections" -> Collection <$> parseJSON val
+      "unknown" -> Unknown <$> parseJSON val
     where
       page = val ^. key "page" . _String
 
 instance ToJSON TrackView where
-  toJSON view = case view of
-    Details a -> toJSON a
-    Listing a -> toJSON a
-    Collection a -> toJSON a
-    Unknown a -> toJSON a
+  toJSON view =
+    case view of
+      Details a -> toJSON a
+      Listing a -> toJSON a
+      Collection a -> toJSON a
+      Unknown a -> toJSON a
+
 --
 -- Response types
 --

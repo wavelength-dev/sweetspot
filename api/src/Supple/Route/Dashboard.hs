@@ -67,7 +67,7 @@ createExperimentHandler CreateExperiment {..} = do
     s = sku variant
     sv = id variant
   dbconn <- asks _getDbConn
-  liftIO $ createExperiment dbconn s sv price
+  liftIO $ createExperiment dbconn s sv price name
   return OkResponse {message = "Created experiment"}
 
 dashboardHandler =

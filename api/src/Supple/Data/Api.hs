@@ -27,6 +27,7 @@ data CreateVariant = CreateVariant
 data CreateExperiment = CreateExperiment
   { productId :: !Int
   , price :: !Price
+  , name :: !Text
   } deriving (Generic, Show)
 
 instance FromJSON TrackView

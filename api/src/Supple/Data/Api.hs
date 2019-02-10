@@ -15,11 +15,6 @@ data TrackView = TrackView
   { page :: !Text
   } deriving (Generic, Show)
 
-data CreateVariant = CreateVariant
-  { option1 :: Text
-  , price :: !Price
-  } deriving (Generic, Show)
-
 data CreateExperiment = CreateExperiment
   { productId :: !Int
   , price :: !Price
@@ -29,10 +24,6 @@ data CreateExperiment = CreateExperiment
 instance FromJSON TrackView
 
 instance ToJSON TrackView
-
-instance ToJSON CreateVariant
-
-instance FromJSON CreateVariant
 
 instance ToJSON CreateExperiment
 

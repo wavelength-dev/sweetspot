@@ -133,6 +133,10 @@ const getDOMContentLoaded = () =>
     })
   })
 
+// TODO: Browser Compatibility
+// IE <9: DOMContentLoaded does not fire
+// IE 9: Can't use console.time
+// IE >=9: fetch and Promise polyfill present?
 
 const DOMPromise = getDOMContentLoaded()
 const expPromise = getExperiments()

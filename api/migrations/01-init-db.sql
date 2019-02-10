@@ -39,8 +39,6 @@ CREATE TABLE experiment_buckets
  FOREIGN KEY (exp_id) REFERENCES experiments(exp_id),
  FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id));
 
---CREATE TYPE event_type as enum('view', 'tag');
-
 CREATE TABLE events
 (id SERIAL,
  type TEXT,

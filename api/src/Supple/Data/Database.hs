@@ -39,7 +39,6 @@ instance ToJSON UserBucket
 
 eventTypeToText :: EventType -> Text
 eventTypeToText View = "view"
-eventTypeToText Tag = "tag"
 
 extractValue :: TrackViewJSON -> Value
 extractValue (TrackViewJSON v) = v

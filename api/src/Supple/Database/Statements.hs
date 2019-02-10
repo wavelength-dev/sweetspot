@@ -156,6 +156,6 @@ insertEventStatement = Statement sql encoder decoder True
   where
     sql = "INSERT INTO events (type, payload) VALUES ($1, $2);"
     encoder =
-      (fst >$< Encoders.param (Encoders.enum eventTypeToText)) <>
+      (eventTypeToText . fst >$< Encoders.param Encoders.text) <>
       (extractValue . snd >$< Encoders.param Encoders.jsonb)
     decoder = Decoders.unit

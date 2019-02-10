@@ -6,4 +6,3 @@ type Price = Scientific
 
 data EventType
   = View
-  | Tag

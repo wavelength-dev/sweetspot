@@ -67,7 +67,7 @@ component =
             Just es ->
               (\e ->
                 HH.a
-                  [HP.href "/#/experiment"]
+                  [HP.href $ "/#/experiment/" <> show e.exp_id]
                   [HH.text e.name]) <$> es
 
             Nothing -> [HH.text ""]]

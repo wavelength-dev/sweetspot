@@ -10,12 +10,13 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class.Console (log)
 
-data Endpoint = Experiments
+data Endpoint = Experiments | Products
 
 mkRequest :: forall m. MonadAff m => Endpoint -> m (Maybe Json)
 mkRequest endpoint = do
   let path = case endpoint of
         Experiments -> "/api/experiments"
+        Products -> "/api/products"
 
   res <- liftAff $ AX.get ResponseFormat.json path
 

@@ -11,19 +11,20 @@ import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.Component.ChildPath as CP
 import Halogen.HTML as HH
-import Supple.AppM (Env)
-import Supple.Capability.Experiment (class ManageExperiments, getExperiments)
-import Supple.Capability.Navigate (class Navigate)
 import Partial.Unsafe (unsafePartial)
+import Supple.AppM (Env)
+import Supple.Capability.Experiment (class ManageExperiments, getExperiments, getProducts)
+import Supple.Capability.Navigate (class Navigate)
 import Supple.Component.Experiment as Experiment
 import Supple.Component.Home as Home
 import Supple.Component.Loading as Loading
-import Supple.Data.Api (ExperimentsResource, Experiment, Experiments)
+import Supple.Data.Api (Experiment, Experiments, ExperimentsResource, ProductsResource)
 import Supple.Data.Route (Route(..))
 
 type State =
   { route :: Route
-  , experiments :: ExperimentsResource }
+  , experiments :: ExperimentsResource
+  , products :: ProductsResource }
 
 type Input = Maybe Route
 
@@ -46,7 +47,8 @@ component =
   H.lifecycleParentComponent
     { initialState: \initialRoute ->
        { route: fromMaybe Home initialRoute
-       , experiments: Nothing }
+       , experiments: Nothing
+       , products: Nothing }
     , render
     , eval
     , receiver: const Nothing
@@ -59,7 +61,8 @@ component =
     eval = case _ of
       Initialize a -> do
         exps <- getExperiments
-        H.modify_ _ { experiments = exps }
+        prods <- getProducts
+        H.modify_ _ { experiments = exps, products = prods }
         pure a
 
       (Navigate dest a) -> do

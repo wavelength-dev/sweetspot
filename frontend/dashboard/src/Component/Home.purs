@@ -3,54 +3,47 @@ module Supple.Component.Home where
 import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
-import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Supple.AppM (Env)
-import Supple.Capability.Experiment (class ManageExperiments, getExperiments)
-import Supple.Capability.Navigate (class Navigate)
 import Supple.Component.Util (css)
-import Supple.Data.Api (Experiment)
+import Supple.Data.Api (Experiments, Experiment)
 
 type State =
-  { experiments :: Maybe (Array Experiment) }
+  { experiments :: Experiments }
 
 data Query a
-  = Initialize a
-  | LoadExperiments a
+  = UpdateExperiments Experiments a
 
 component
   :: forall m
    . MonadAff m
   => MonadAsk Env m
-  => Navigate m
-  => ManageExperiments m
-  => H.Component HH.HTML Query Unit Void m
+  => H.Component HH.HTML Query Experiments Void m
 component =
-  H.lifecycleComponent
-    { initialState: const { experiments: Nothing }
+  H.component
+    { initialState: \exps -> { experiments: exps }
     , render
     , eval
-    , receiver: const Nothing
-    , initializer: Just $ H.action Initialize
-    , finalizer: Nothing
+    , receiver: HE.input UpdateExperiments
     }
   where
 
     eval :: Query ~> H.ComponentDSL State Query Void m
     eval = case _ of
-      Initialize a -> do
-        exps <- getExperiments
-        H.modify_ _ { experiments = exps }
-        pure a
-      LoadExperiments a -> do
+      UpdateExperiments newExps a -> do
+        { experiments } <- H.get
+        when (newExps /= experiments) $ H.modify_ _ { experiments = newExps }
         pure a
 
-    renderExperiment :: forall i p. Experiment -> H.HTML i p
+    renderExperiment :: forall i p . Experiment -> HH.HTML i p
     renderExperiment e =
-      HH.text e.sku
+      HH.a
+        [HP.href $ "/#/experiment/" <> show e.exp_id]
+        [HH.text e.name]
 
     render :: State -> H.ComponentHTML Query
     render state =
@@ -62,12 +55,4 @@ component =
               [css "Polaris-DisplayText Polaris-DisplayText--sizeLarge"]
               [HH.text "Home"]],
 
-         HH.div_
-          case state.experiments of
-            Just es ->
-              (\e ->
-                HH.a
-                  [HP.href $ "/#/experiment/" <> show e.exp_id]
-                  [HH.text e.name]) <$> es
-
-            Nothing -> [HH.text ""]]
+         HH.div_ $ renderExperiment <$> state.experiments]

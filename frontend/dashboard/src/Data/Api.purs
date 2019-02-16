@@ -3,6 +3,7 @@ module Supple.Data.Api where
 import Prelude
 
 import Data.Argonaut.Core (Json)
+import Data.Maybe (Maybe)
 import Data.Argonaut.Decode (decodeJson, getField)
 import Data.Either (Either)
 import Data.Traversable (sequence)
@@ -17,6 +18,10 @@ type Experiment =
   , sku :: String
   , name :: String
   , buckets :: Array Bucket }
+
+type Experiments = Array Experiment
+
+type ExperimentsResource = Maybe Experiments
 
 decodeBucket :: Json -> Either String Bucket
 decodeBucket json = do

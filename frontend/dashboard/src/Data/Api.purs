@@ -24,11 +24,11 @@ type Experiments = Array Experiment
 type ExperimentsResource = Maybe Experiments
 
 type Variant =
-  { id :: Int
+  { id :: Number
   , sku :: String }
 
 type Product =
-  { id :: Int
+  { id :: Number
   , title :: String
   , image :: String
   , variants :: Array Variant }

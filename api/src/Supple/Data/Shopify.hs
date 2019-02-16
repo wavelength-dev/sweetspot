@@ -14,6 +14,10 @@ import GHC.Generics (Generic)
 --
 -- Response types
 --
+data Image = Image
+  { src :: !Text
+  } deriving (Generic, Show)
+
 data Variant = Variant
   { id :: !Int
   , product_id :: !Int
@@ -25,6 +29,7 @@ data Product = Product
   { id :: !Int
   , title :: !Text
   , variants :: ![Variant]
+  , image :: !Image
   } deriving (Generic, Show)
 
 data ShopifyResponse = ShopifyResponse
@@ -38,6 +43,10 @@ data ShopifyProductResponse = ShopifyProductResponse
 instance ToJSON Variant
 
 instance FromJSON Variant
+
+instance ToJSON Image
+
+instance FromJSON Image
 
 instance ToJSON Product
 

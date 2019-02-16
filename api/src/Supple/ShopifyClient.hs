@@ -17,7 +17,7 @@ apiRoot =
 
 fetchProducts :: IO [Product]
 fetchProducts = do
-  r <- get $ apiRoot ++ "/products.json?fields=id,title,variants"
+  r <- get $ apiRoot ++ "/products.json?fields=id,title,variants,image"
   json <- asJSON r
   return $ products (json ^. responseBody)
 

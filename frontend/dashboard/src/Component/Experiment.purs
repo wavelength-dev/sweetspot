@@ -9,6 +9,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Supple.AppM (Env)
 import Supple.Data.Api (Experiment)
+import Supple.Component.Util (css)
 
 type State = {experiment :: Experiment}
 
@@ -36,6 +37,12 @@ component =
         pure a
 
     render :: State -> H.ComponentHTML Query
-    render s =
-      HH.div_
-        [HH.h1_ [ HH.text "Experiment"]]
+    render { experiment } =
+      HH.div
+        [ css "Polaris-Page" ]
+        [HH.div
+         [ css "Polaris-Page__Title"]
+         [HH.h1
+          [css "Polaris-DisplayText Polaris-DisplayText--sizeLarge"]
+          [ HH.text "Experiment"]]
+        , HH.text experiment.name]

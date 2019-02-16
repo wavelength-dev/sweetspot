@@ -3,38 +3,39 @@ module Supple.Component.Experiment where
 import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
-import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Supple.AppM (Env)
-import Supple.Capability.Navigate (class Navigate)
+import Supple.Data.Api (Experiment)
 
-type State = Maybe Int
+type State = {experiment :: Experiment}
 
-data Query a = Initialize a
+data Query a = UpdateExperiment Experiment a
 
 component
   :: forall m
    . MonadAff m
   => MonadAsk Env m
-  => Navigate m
-  => H.Component HH.HTML Query Int Void m
+  => H.Component HH.HTML Query Experiment Void m
 component =
   H.component
-    { initialState: const Nothing
+    { initialState: \exp -> { experiment: exp }
     , render
     , eval
-    , receiver: const Nothing
+    , receiver: HE.input UpdateExperiment
     }
   where
 
     eval :: Query ~> H.ComponentDSL State Query Void m
     eval = case _ of
-      Initialize a -> do
+      UpdateExperiment newExp a -> do
+        { experiment } <- H.get
+        when (newExp /= experiment) $ H.modify_ _ { experiment = newExp }
         pure a
 
     render :: State -> H.ComponentHTML Query
-    render _ =
+    render s =
       HH.div_
         [HH.h1_ [ HH.text "Experiment"]]

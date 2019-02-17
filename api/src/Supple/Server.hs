@@ -45,7 +45,7 @@ createApp ctx =
     corsMiddleware :: Middleware
     corsMiddleware = cors $ \_ ->
       Just $ simpleCorsResourcePolicy
-        { corsOrigins = Just (["https://libertyprice.myshopify.com"], True)
+        { corsOrigins = Just (["https://libertyprice.myshopify.com", "http://localhost"], True)
         , corsRequestHeaders = "Content-Type" : simpleHeaders
         , corsMethods = simpleMethods
         , corsExposedHeaders =

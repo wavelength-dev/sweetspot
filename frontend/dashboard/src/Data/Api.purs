@@ -23,6 +23,11 @@ type Experiments = Array Experiment
 
 type ExperimentsResource = Maybe Experiments
 
+type CreateExperimentBody =
+  { productId :: Number
+  , price :: Number
+  , name :: String }
+
 type Variant =
   { id :: Number
   , sku :: String }

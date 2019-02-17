@@ -16,6 +16,7 @@ import Supple.Capability.Experiment (class ManageExperiments, createExperiment)
 import Supple.Component.Select as Select
 import Supple.Component.TextField as TextField
 import Supple.Component.Util (css)
+import Supple.Component.Button as Button
 import Supple.Data.Api (Products)
 
 type State =
@@ -105,6 +106,4 @@ component =
 
         , HH.slot' CP.cp3 unit TextField.component "Price" (HE.input UpdatePrice)
 
-        , HH.button
-          [ HE.onClick (HE.input_ Submit) ]
-          [ HH.text "Create" ]]
+        , Button.component "Create" (HE.input_ Submit) ]

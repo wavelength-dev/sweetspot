@@ -53,6 +53,10 @@ component =
         [css "Polaris-Page__Title"]
             [HH.h1
               [css "Polaris-DisplayText Polaris-DisplayText--sizeLarge"]
-              [HH.text "Home"]],
+              [HH.text "Home"]]
 
-         HH.div_ $ renderExperiment <$> state.experiments]
+        , HH.div_ $ renderExperiment <$> state.experiments
+        , HH.a
+            [HP.href "/#/experiment/create"]
+            [HH.text "Create experiment"]
+        ]

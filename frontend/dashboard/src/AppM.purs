@@ -51,3 +51,7 @@ instance manageExperimentsAppM :: ManageExperiments AppM where
   getProducts =
     mkRequest Products >>=
       \json -> pure $ json >>= (hush <<< decodeProducts)
+
+  createExperiment exp =
+    mkRequest (CreateExperiment exp) >>=
+      \_ -> pure unit

@@ -4,8 +4,8 @@ import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
 import Data.Array (find)
-import Data.Either.Nested (Either3)
-import Data.Functor.Coproduct.Nested (Coproduct3)
+import Data.Either.Nested (Either4)
+import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -17,6 +17,7 @@ import Supple.Capability.Experiment (class ManageExperiments, getExperiments, ge
 import Supple.Capability.Navigate (class Navigate)
 import Supple.Component.Experiment as Experiment
 import Supple.Component.Home as Home
+import Supple.Component.Create as Create
 import Supple.Component.Loading as Loading
 import Supple.Data.Api (Experiment, Experiments, ExperimentsResource, ProductsResource)
 import Supple.Data.Route (Route(..))
@@ -32,9 +33,9 @@ data Query a
   = Initialize a
   | Navigate Route a
 
-type ChildQuery = Coproduct3 Home.Query Experiment.Query Loading.Query
+type ChildQuery = Coproduct4 Home.Query Experiment.Query Create.Query Loading.Query
 
-type ChildSlot = Either3 Unit Unit Unit
+type ChildSlot = Either4 Unit Unit Unit Unit
 
 component
   :: forall m
@@ -71,7 +72,6 @@ component =
           H.modify_ _ { route = dest }
         pure a
 
-
     getExperiment :: Int -> Experiments -> Experiment
     getExperiment expId exps = unsafePartial $ fromJust $ (find (\e -> e.exp_id == expId) exps)
 
@@ -83,4 +83,7 @@ component =
       { route: Experiment expId, experiments: (Just exps) } ->
         HH.slot' CP.cp2 unit Experiment.component (getExperiment expId exps) absurd
 
-      _ -> HH.slot' CP.cp3 unit Loading.component unit absurd
+      { route: Create, products: (Just prods) } ->
+        HH.slot' CP.cp3 unit Create.component prods absurd
+
+      _ -> HH.slot' CP.cp4 unit Loading.component unit absurd

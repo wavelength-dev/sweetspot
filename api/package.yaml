@@ -41,6 +41,7 @@ dependencies:
 - scientific
 - dotenv
 - utf8-string
+- casing
 
 library:
   source-dirs: src

@@ -3,14 +3,15 @@
 
 module Supple.Data.Shopify where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, ToJSON, genericParseJSON, parseJSON)
+import Data.Aeson.Types (defaultOptions, fieldLabelModifier)
 import Data.Text (Text)
 import GHC.Generics (Generic)
+import Text.Casing (quietSnake)
 
 --
 -- Request types
 --
-
 --
 -- Response types
 --
@@ -20,7 +21,7 @@ data Image = Image
 
 data Variant = Variant
   { id :: !Int
-  , product_id :: !Int
+  , productId :: !Int
   , title :: !Text
   , sku :: !Text
   } deriving (Generic, Show)
@@ -42,7 +43,8 @@ data ShopifyProductResponse = ShopifyProductResponse
 
 instance ToJSON Variant
 
-instance FromJSON Variant
+instance FromJSON Variant where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
 
 instance ToJSON Image
 

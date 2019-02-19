@@ -1,4 +1,4 @@
-module Supple.Component.Button where
+module Supple.Component.Form.Button where
 
 
 import Halogen.HTML as HH

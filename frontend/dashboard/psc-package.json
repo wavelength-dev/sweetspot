@@ -11,6 +11,8 @@
     "effect",
     "generics-rep",
     "halogen",
+    "halogen-formless",
+    "newtype",
     "numbers",
     "prelude",
     "psci-support",

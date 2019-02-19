@@ -1,4 +1,4 @@
-module Supple.Component.TextField where
+module Supple.Component.Form.TextField where
 
 import Prelude
 

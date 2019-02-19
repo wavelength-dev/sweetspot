@@ -1,4 +1,4 @@
-module Supple.Component.Select where
+module Supple.Component.Form.Select where
 
 import Prelude
 

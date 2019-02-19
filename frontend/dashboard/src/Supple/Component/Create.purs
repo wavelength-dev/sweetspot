@@ -13,10 +13,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Partial.Unsafe (unsafePartial)
 import Supple.Capability.Experiment (class ManageExperiments, createExperiment)
-import Supple.Component.Select as Select
-import Supple.Component.TextField as TextField
+import Supple.Component.Form.Select as Select
+import Supple.Component.Form.TextField as TextField
 import Supple.Component.Util (css)
-import Supple.Component.Button as Button
+import Supple.Component.Form.Button as Button
 import Supple.Data.Api (Products)
 
 type State =

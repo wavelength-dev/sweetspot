@@ -41,6 +41,7 @@ dependencies:
 - scientific
 - dotenv
 - utf8-string
+- purescript-bridge
 - casing
 
 library:
@@ -56,6 +57,17 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - supple
+
+  bridge-exe:
+    main:                Main.hs
+    source-dirs:         bridge
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - supple
+
 
 tests:
   supple-test:

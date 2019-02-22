@@ -2,9 +2,10 @@ module Supple.Component.Form.Experiment where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
+import Data.Array (head)
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
-import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff.Class (class MonadAff)
 import Formless as F
@@ -12,8 +13,11 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Supple.Capability.Experiment (class ManageExperiments, createExperiment)
+import Supple.Component.Form.Button as Button
+import Supple.Component.Form.Select as Select
 import Supple.Component.Form.TextField as TextField
 import Supple.Component.Form.Validation (Error, isGtZero, isNonEmpty, isNumber)
+import Supple.Data.Api (Products)
 
 newtype ExperimentForm r f = ExperimentForm (r
   ( name :: f Error String String
@@ -23,13 +27,6 @@ newtype ExperimentForm r f = ExperimentForm (r
 
 derive instance newtypeForm :: Newtype (ExperimentForm r f) _
 
-inputs :: ExperimentForm Record F.InputField
-inputs = F.wrapInputFields
-  { name: ""
-  , productId: ""
-  , price: ""
-  }
-
 validators :: forall m. Monad m => ExperimentForm Record (F.Validation ExperimentForm m)
 validators = ExperimentForm
   { name: isNonEmpty
@@ -37,46 +34,47 @@ validators = ExperimentForm
   , price: isNumber >>> isGtZero
   }
 
-initialInputs :: ExperimentForm Record F.InputField
-initialInputs = F.wrapInputFields { name: "", productId: "", price: "" }
-
-renderFormless
+renderFormlessWith
   :: forall m
    . MonadAff m
-  => F.State ExperimentForm m
+  => Products
+  -> F.State ExperimentForm m
   -> F.HTML' ExperimentForm m
-renderFormless fstate =
-  HH.div_
-  [ TextField.component "Experiment name"
-    (F.getInput _name fstate.form)
-    (HE.input $ F.setValidate _name)
+renderFormlessWith products =
+  \fstate ->
+    HH.div_
+    [ TextField.component "Experiment name"
+      (F.getInput _name fstate.form)
+      (HE.input $ F.setValidate _name)
 
-  , TextField.component "Product id"
-    (F.getInput _productId fstate.form)
-    (HE.input $ F.asyncSetValidate debounceTime _productId)
+    , Select.component "Product" (F.getInput _productId fstate.form)
+      (toOpts products) (HE.input $ F.setValidate _productId)
 
-  , TextField.component "Price"
-    (F.getInput _productId fstate.form)
-    (HE.input $ F.asyncSetValidate debounceTime _price)
-  ]
-  where
-    _name = SProxy :: SProxy "name"
-    _productId = SProxy :: SProxy "productId"
-    _price = SProxy :: SProxy "price"
-    debounceTime = Milliseconds 300.0
+    , TextField.component "Price"
+      (F.getInput _price fstate.form)
+      (HE.input $ F.asyncSetValidate debounceTime _price)
 
-type State = Unit
+    , Button.component "Submit" (HE.input_ F.submit)
+    ]
+    where
+      _name = SProxy :: SProxy "name"
+      _productId = SProxy :: SProxy "productId"
+      _price = SProxy :: SProxy "price"
+      debounceTime = Milliseconds 300.0
+
+type State =
+  { products :: Products }
 
 data Query a
   = HandleForm (F.Message' ExperimentForm) a
 
-type Input = Unit
+type Input = Products
 
 type ChildQuery m = F.Query' ExperimentForm m
 
 type ChildSlot = Unit
 
-type Massage = Unit
+type Message = Unit
 
 component
   :: forall m
@@ -84,7 +82,7 @@ component
   => MonadAff m
   => H.Component HH.HTML Query Input Void m
 component = H.parentComponent
-  { initialState: const unit
+  { initialState: \ps -> { products: ps }
   , render
   , eval
   , receiver: const Nothing
@@ -93,18 +91,30 @@ component = H.parentComponent
   where
 
   render :: State -> H.ParentHTML Query (ChildQuery m) ChildSlot m
-  render st =
+  render { products } =
     HH.div_
     [ HH.slot unit F.component
-        { initialInputs, validators, render: renderFormless }
+        { initialInputs, validators, render: renderFormlessWith products }
         (HE.input HandleForm)
     ]
+    where
+      defaultPid = case head products of
+        Just p -> show $ _.id p
+        Nothing -> ""
+      initialInputs :: ExperimentForm Record F.InputField
+      initialInputs = F.wrapInputFields { name: "", productId: defaultPid, price: "" }
+
 
   eval :: Query ~> H.ParentDSL State Query (ChildQuery m) ChildSlot Void m
   eval (HandleForm m a) = case m of
     F.Submitted formOutput -> a <$ do
       let experiment = F.unwrapOutputFields formOutput
       createExperiment experiment
-      pure a
 
-    _ -> pure a
+    -- TODO implement
+    F.Changed  form -> pure a
+    F.Emit form -> pure a
+
+
+toOpts :: Products -> Array Select.Option
+toOpts ps = (\p -> { value: show p.id, label: p.title }) <$> ps

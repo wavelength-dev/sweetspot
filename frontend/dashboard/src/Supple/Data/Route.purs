@@ -31,4 +31,4 @@ routeCodec = root $ sum
   }
 
 experimentId :: RouteDuplex' String -> RouteDuplex' Int
-experimentId = as (toStringAs decimal) (fromString >>> note "Bad username")
+experimentId = as (toStringAs decimal) (fromString >>> note "Bad experiment id")

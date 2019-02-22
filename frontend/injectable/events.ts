@@ -33,7 +33,7 @@ interface Product {
 
 // Events --
 /* Page types recognized by supple injectable */
-type Page = "product" | "collection" | "collections"
+type Page = "product" | "collection" | "collections" | "checkout"
 /* Location WebAPI pathname */
 type Pathname = string
 interface BaseViewEvent {
@@ -53,6 +53,9 @@ interface ProductDetailsViewEvent extends BaseViewEvent {
   page: "product"
   productId: number | null
 }
+interface CheckoutViewEvent extends BaseViewEvent {
+  page: "checkout"
+}
 interface UnknownViewEvent {
   campaign: string | null
   page: "unknown"
@@ -63,6 +66,7 @@ type ViewEvent =
   | CollectionListingsViewEvent
   | ProductDetailsViewEvent
   | ProductListingsViewEvent
+  | CheckoutViewEvent
   | UnknownViewEvent
 // --
 
@@ -110,6 +114,10 @@ const productDetailsURLRegExp = RegExp("^/collections/w+/products")
 const isProductDetailsURL = (path: Pathname): boolean =>
   productDetailsURLRegExp.test(path)
 
+const checkoutURLRegExp = RegExp("^\/checkouts\/")
+const isCheckoutURL = (path: Pathname): boolean =>
+  checkoutURLRegExp.test(path)
+
 export const detectPage = (): Page | null => {
   const path = window.location.pathname as Pathname
 
@@ -123,6 +131,10 @@ export const detectPage = (): Page | null => {
 
   if (isCollectionsURL(path)) {
     return "collections"
+  }
+
+  if (isCheckoutURL) {
+    return "checkout"
   }
 
   return null
@@ -202,6 +214,12 @@ const getViewMeta = (baseMeta: BaseViewEvent): ViewEvent => {
         ...baseMeta,
         page: "product",
         productId,
+      }
+    }
+    case "checkout": {
+      return {
+        ...baseMeta,
+        page: "checkout",
       }
     }
   }

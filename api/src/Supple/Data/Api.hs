@@ -7,7 +7,7 @@ module Supple.Data.Api where
 import Control.Lens
 import Data.Aeson (FromJSON(..), ToJSON(..), genericParseJSON)
 import Data.Aeson.Lens
-import Data.Aeson.Types (typeMismatch, defaultOptions, fieldLabelModifier)
+import Data.Aeson.Types (defaultOptions, fieldLabelModifier, typeMismatch)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common (Price)
@@ -16,6 +16,24 @@ import Text.Casing (quietSnake)
 --
 -- Request types
 --
+data Image = Image
+  { src :: !Text
+  } deriving (Generic, Show)
+
+data Variant = Variant
+  { id :: !Int
+  , productId :: !Int
+  , title :: !Text
+  , sku :: !Text
+  } deriving (Generic, Show)
+
+data Product = Product
+  { id :: !Int
+  , title :: !Text
+  , variants :: ![Variant]
+  , image :: !Image
+  } deriving (Generic, Show)
+
 data CreateExperiment = CreateExperiment
   { productId :: !Int
   , price :: !Price
@@ -73,6 +91,19 @@ data TrackView
   | Checkout CheckoutEvent
   | Unknown UnknownView
   deriving (Show)
+
+instance ToJSON Variant
+
+instance FromJSON Variant where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
+
+instance ToJSON Image
+
+instance FromJSON Image
+
+instance ToJSON Product
+
+instance FromJSON Product
 
 instance FromJSON ProductDetailsView
 

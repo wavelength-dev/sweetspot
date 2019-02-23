@@ -12,6 +12,12 @@ type Option =
   { value :: String
   , label :: String }
 
+type Input p =
+  { label :: String
+  , value :: String
+  , options :: Array Option
+  , onUpdate :: (String -> Maybe p)
+  }
 
 renderOption :: forall i p . Option -> HH.HTML i p
 renderOption option =
@@ -19,8 +25,8 @@ renderOption option =
     [ HP.value option.value ]
     [ HH.text option.label ]
 
-component :: forall i p. String -> String -> Array Option -> (String -> Maybe p) -> HH.HTML i p
-component label value options onChange =
+component :: forall i p. Input p -> HH.HTML i p
+component {label, value, options, onUpdate } =
   HH.div_
     [ HH.div
       [ css "Polaris-Labelled__LabelWrapper"]
@@ -35,6 +41,6 @@ component label value options onChange =
     , HH.div_
       [ HH.select
         [ HP.value value
-        , HE.onValueChange onChange ]
+        , HE.onValueChange onUpdate ]
         ( renderOption <$> options )]
     ]

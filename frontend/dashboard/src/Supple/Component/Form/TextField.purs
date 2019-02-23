@@ -6,8 +6,14 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Supple.Component.Util (css)
 
-component :: forall i p. String -> String -> (String -> Maybe p) -> HH.HTML i p
-component placeholder value onUpdate =
+type Input p =
+  { placeholder :: String
+  , value :: String
+  , onUpdate :: (String -> Maybe p)
+  }
+
+component :: forall i p. Input p -> HH.HTML i p
+component { placeholder, value, onUpdate } =
     HH.div
       [css "Polaris-TextField"]
       [ HH.input

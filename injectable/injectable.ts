@@ -23,7 +23,7 @@ interface Experiment {
 // Assumes non-empty list
 const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
-  const qs = uid === "string" ? `?uid=${uid}` : ""
+  const qs = typeof uid === "string" ? `?uid=${uid}` : ""
   log("fetching experiments")
   return fetch(`${experimentsUrl}${qs}`).then(res => {
     if (res.status !== 200) {

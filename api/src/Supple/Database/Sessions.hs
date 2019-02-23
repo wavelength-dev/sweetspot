@@ -33,11 +33,11 @@ getBucketsSession = do
   where
     addBuckets =
       \exp -> do
-        let id = exp_id (exp :: Experiment)
+        let id = expId (exp :: Experiment)
         bs <- Session.statement id getBucketsForExperimentStatement
         return
           ExperimentBuckets
-            { exp_id = id
+            { expId = id
             , sku = sku (exp :: Experiment)
             , name = name (exp :: Experiment)
             , buckets = bs

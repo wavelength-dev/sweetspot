@@ -7,8 +7,13 @@ import Halogen.HTML.Events as HE
 import Supple.Component.Util (css)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-component :: forall i p . String -> (MouseEvent -> Maybe p) -> HH.HTML i p
-component label onClick =
+type Input p =
+  { label :: String
+  , onClick :: (MouseEvent -> Maybe p)
+  }
+
+component :: forall i p . Input p -> HH.HTML i p
+component  { label, onClick }=
   HH.button
   [ css "Polaris-Button"
   , HE.onClick onClick ]

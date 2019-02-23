@@ -2,8 +2,8 @@ module Supple.Component.Form.Experiment where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Data.Array (head)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
 import Data.Time.Duration (Milliseconds(..))
@@ -43,18 +43,29 @@ renderFormlessWith
 renderFormlessWith products =
   \fstate ->
     HH.div_
-    [ TextField.component "Experiment name"
-      (F.getInput _name fstate.form)
-      (HE.input $ F.setValidate _name)
+    [ TextField.component
+        { placeholder: "Experiment name"
+        , value: F.getInput _name fstate.form
+        , onUpdate: HE.input $ F.setValidate _name
+        }
 
-    , Select.component "Product" (F.getInput _productId fstate.form)
-      (toOpts products) (HE.input $ F.setValidate _productId)
+    , Select.component
+        { label: "Product"
+        , value: F.getInput _productId fstate.form
+        , options: toOpts products
+        , onUpdate: HE.input $ F.setValidate _productId
+        }
 
-    , TextField.component "Price"
-      (F.getInput _price fstate.form)
-      (HE.input $ F.asyncSetValidate debounceTime _price)
+    , TextField.component
+        { placeholder: "Price"
+        , value: F.getInput _price fstate.form
+        , onUpdate: HE.input $ F.asyncSetValidate debounceTime _price
+        }
 
-    , Button.component "Submit" (HE.input_ F.submit)
+    , Button.component
+        { label: "Submit"
+        , onClick: HE.input_ F.submit
+        }
     ]
     where
       _name = SProxy :: SProxy "name"

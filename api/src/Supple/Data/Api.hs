@@ -5,12 +5,13 @@
 module Supple.Data.Api where
 
 import Control.Lens
-import Data.Aeson (FromJSON(..), ToJSON(..))
-import Data.Aeson.Types (typeMismatch)
+import Data.Aeson (FromJSON(..), ToJSON(..), genericParseJSON)
 import Data.Aeson.Lens
+import Data.Aeson.Types (typeMismatch, defaultOptions, fieldLabelModifier)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common (Price)
+import Text.Casing (quietSnake)
 
 --
 -- Request types
@@ -44,6 +45,20 @@ data CollectionListingsView = CollectionListingsView
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+data LineItem = LineItem
+  { product_id :: Int
+  , variant_id :: Int
+  } deriving (Generic, Show)
+
+data CheckoutEvent = CheckoutEvent
+  { lineItems :: [LineItem]
+  , page :: Text -- checkout
+  , pageUrl :: Text
+  , step :: Maybe Text
+  , token :: Maybe Text
+  , userId :: Maybe Text
+  } deriving (Generic, Show)
+
 data UnknownView = UnknownView
   { campaign :: Maybe Text
   , page :: Text -- unknown
@@ -55,6 +70,7 @@ data TrackView
   = Details ProductDetailsView
   | Listing ProductListingsView
   | Collection CollectionListingsView
+  | Checkout CheckoutEvent
   | Unknown UnknownView
   deriving (Show)
 
@@ -78,12 +94,22 @@ instance ToJSON CreateExperiment
 
 instance FromJSON CreateExperiment
 
+instance FromJSON LineItem where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
+
+instance ToJSON LineItem
+
+instance FromJSON CheckoutEvent
+
+instance ToJSON CheckoutEvent
+
 instance FromJSON TrackView where
   parseJSON val =
     case page of
       "product" -> Details <$> parseJSON val
       "collection" -> Listing <$> parseJSON val
       "collections" -> Collection <$> parseJSON val
+      "checkout" -> Checkout <$> parseJSON val
       "unknown" -> Unknown <$> parseJSON val
       _ -> typeMismatch "TrackView" val
     where
@@ -95,6 +121,7 @@ instance ToJSON TrackView where
       Details a -> toJSON a
       Listing a -> toJSON a
       Collection a -> toJSON a
+      Checkout a -> toJSON a
       Unknown a -> toJSON a
 
 --

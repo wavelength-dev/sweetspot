@@ -7,7 +7,7 @@ module Supple.Route.Injectable
   , injectableHandler
   ) where
 
-import Control.Applicative ((*>))
+import Data.Functor (($>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Time.Clock (getCurrentTime)
@@ -39,13 +39,12 @@ getUserBucketHandler (Just uid) = do
   return res
 getUserBucketHandler Nothing = do
   dbconn <- asks _getDbConn
-  res <- liftIO $ getNewUserBuckets dbconn
-  return res
+  liftIO $ getNewUserBuckets dbconn
 
 trackViewHandler :: TrackView -> AppM OkResponse
 trackViewHandler tv = do
   dbconn <- asks _getDbConn
   liftIO $
-    insertEvent dbconn tv *> return OkResponse {message = "Event received"}
+    insertEvent dbconn tv $> OkResponse {message = "Event received"}
 
 injectableHandler = getUserBucketHandler :<|> trackViewHandler

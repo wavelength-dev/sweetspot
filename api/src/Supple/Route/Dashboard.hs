@@ -16,10 +16,14 @@ import Data.Text (pack)
 import Prelude hiding (id)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
-import Supple.Data.Api (CreateExperiment(..), OkResponse(..))
+import Supple.Data.Api
+  ( CreateExperiment(..)
+  , OkResponse(..)
+  , Product(variants)
+  , Variant(id, sku)
+  )
 import Supple.Data.Common
 import Supple.Data.Database (ExperimentBuckets)
-import Supple.Data.Shopify (Product(variants), Variant(id, sku))
 import Supple.Database (createExperiment, getExperimentBuckets)
 import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
 

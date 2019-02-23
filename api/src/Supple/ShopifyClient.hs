@@ -6,11 +6,8 @@ import Control.Lens
 import Data.Aeson (Value)
 import Network.Wreq
 import Prelude hiding (product)
-import Supple.Data.Shopify
-  ( Product
-  , ShopifyProductResponse(..)
-  , ShopifyResponse(..)
-  )
+import Supple.Data.Api (Product)
+import Supple.Data.Shopify (ShopifyProductResponse(..), ShopifyResponse(..))
 
 apiRoot =
   "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"

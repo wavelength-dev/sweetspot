@@ -6,6 +6,7 @@ module Supple.Data.Api where
 
 import Control.Lens
 import Data.Aeson (FromJSON(..), ToJSON(..))
+import Data.Aeson.Types (typeMismatch)
 import Data.Aeson.Lens
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -84,6 +85,7 @@ instance FromJSON TrackView where
       "collection" -> Listing <$> parseJSON val
       "collections" -> Collection <$> parseJSON val
       "unknown" -> Unknown <$> parseJSON val
+      _ -> typeMismatch "TrackView" val
     where
       page = val ^. key "page" . _String
 

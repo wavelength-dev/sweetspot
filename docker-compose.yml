@@ -6,7 +6,7 @@ services:
     container_name: nginx-proxy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./frontend/dist:/www/data
+      - ./dist:/www/data
     ports:
       - 80:80
       - 443:443

@@ -33,10 +33,10 @@ userBucketsStatement = Statement sql encoder decoder True
         toUserBucket =
           \(uid, sku, svid, price) ->
             UserBucket
-              { user_id = UserId $ fromIntegral uid
-              , bucket_sku = Sku sku
-              , bucket_svid = Svid $ fromIntegral svid
-              , bucket_price = Price price
+              { userId = UserId $ fromIntegral uid
+              , bucketSku = Sku sku
+              , bucketSvid = Svid $ fromIntegral svid
+              , bucketPrice = Price price
               }
     unwrapUserId (UserId uid) = fromIntegral uid
 
@@ -84,7 +84,7 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
         toExperiment =
           \(exp_id, sku, name) ->
             Experiment
-              {exp_id = ExpId $ fromIntegral exp_id, sku = Sku sku, name = name}
+              {expId = ExpId $ fromIntegral exp_id, sku = Sku sku, name = name}
 
 insertExperimentStatement :: Statement (Sku, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True
@@ -153,7 +153,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         toBucket =
           \(bid, p, sv) ->
             Bucket
-              { bucket_id = BucketId $ fromIntegral bid
+              { bucketId = BucketId $ fromIntegral bid
               , price = Price p
               , svid = Svid $ fromIntegral sv
               }

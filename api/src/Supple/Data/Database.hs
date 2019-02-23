@@ -10,29 +10,29 @@ import GHC.Generics (Generic)
 import Supple.Data.Common
 
 data Bucket = Bucket
-  { bucket_id :: !BucketId
+  { bucketId :: !BucketId
   , svid :: !Svid
   , price :: !Price
   } deriving (Generic, Show)
 
 data Experiment = Experiment
-  { exp_id :: !ExpId
+  { expId :: !ExpId
   , sku :: !Sku
   , name :: !Text
   } deriving (Generic, Show)
 
 data ExperimentBuckets = ExperimentBuckets
-  { exp_id :: !ExpId
+  { expId :: !ExpId
   , sku :: !Sku
   , name :: !Text
   , buckets :: ![Bucket]
   } deriving (Generic, Show)
 
 data UserBucket = UserBucket
-  { user_id :: !UserId
-  , bucket_sku :: !Sku
-  , bucket_svid :: !Svid
-  , bucket_price :: !Price
+  { userId :: !UserId
+  , bucketSku :: !Sku
+  , bucketSvid :: !Svid
+  , bucketPrice :: !Price
   } deriving (Generic, Show)
 
 instance ToJSON UserBucket

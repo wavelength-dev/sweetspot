@@ -12,9 +12,9 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
   ( cors
   , corsExposedHeaders
-  , corsRequestHeaders
   , corsMethods
   , corsOrigins
+  , corsRequestHeaders
   , simpleCorsResourcePolicy
   , simpleHeaders
   , simpleMethods
@@ -39,16 +39,23 @@ server = dashboardHandler :<|> injectableHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =
-  corsMiddleware $ serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
-    where
+  corsMiddleware $
+  serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
+  where
     corsMiddleware :: Middleware
-    corsMiddleware = cors $ \_ ->
-      Just $ simpleCorsResourcePolicy
-        { corsOrigins = Just (["https://libertyprice.myshopify.com", "http://localhost"], True)
-        , corsRequestHeaders = "Content-Type" : simpleHeaders
-        , corsMethods = simpleMethods
-        , corsExposedHeaders =
-            Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]      }
+    corsMiddleware =
+      cors $ \_ ->
+        Just $
+        simpleCorsResourcePolicy
+          { corsOrigins =
+              Just
+                ( ["https://libertyprice.myshopify.com", "http://localhost"]
+                , True)
+          , corsRequestHeaders = "Content-Type" : simpleHeaders
+          , corsMethods = simpleMethods
+          , corsExposedHeaders =
+              Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
+          }
 
 jsonRequestLogger :: IO Middleware
 jsonRequestLogger =

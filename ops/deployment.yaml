@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: supple
+  labels:
+    app: supple
+    env: staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: supple
+  template:
+    metadata:
+      labels:
+        app: supple
+        env: staging
+    spec:
+      containers:
+      - name: supple
+        image: gcr.io/supple/supple
+        ports:
+        - containerPort: 8082
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: supple
+              key: dbHost
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: supple
+              key: dbName
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: supple
+              key: dbPort
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: supple
+              key: dbPassword
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: supple
+              key: dbUser

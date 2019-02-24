@@ -2,14 +2,15 @@ module Supple.Component.Experiment where
 
 import Prelude
 
+import Data.Lens ((^.))
 import Control.Monad.Reader (class MonadAsk)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Supple.AppM (Env)
-import Supple.Data.Api (Experiment)
 import Supple.Component.Util (css)
+import Supple.Data.Api
 
 type State = {experiment :: Experiment}
 
@@ -31,9 +32,9 @@ component =
 
     eval :: Query ~> H.ComponentDSL State Query Void m
     eval = case _ of
-      UpdateExperiment newExp a -> do
-        { experiment } <- H.get
-        when (newExp /= experiment) $ H.modify_ _ { experiment = newExp }
+      UpdateExperiment (Experiment newExp) a -> do
+        { experiment: Experiment exp } <- H.get
+        when (newExp /= exp) $ H.modify_ _ { experiment = (Experiment newExp) }
         pure a
 
     render :: State -> H.ComponentHTML Query
@@ -45,4 +46,4 @@ component =
          [HH.h1
           [css "Polaris-DisplayText Polaris-DisplayText--sizeLarge"]
           [ HH.text "Experiment"]]
-        , HH.text experiment.name]
+        , HH.text $ experiment ^. eName]

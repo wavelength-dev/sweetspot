@@ -20,7 +20,7 @@ import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
 import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
-import Supple.Data.Database (ExperimentBuckets, UserBucket)
+import Supple.Data.Api (ExperimentBuckets, UserBucket)
 import Supple.Database.Sessions
 import Supple.Data.Common
 

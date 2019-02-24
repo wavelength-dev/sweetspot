@@ -10,7 +10,7 @@ import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
 import Supple.Data.Common
-import Supple.Data.Database
+import Supple.Data.Api
 
 userBucketsStatement :: Statement UserId [UserBucket]
 userBucketsStatement = Statement sql encoder decoder True
@@ -33,10 +33,10 @@ userBucketsStatement = Statement sql encoder decoder True
         toUserBucket =
           \(uid, sku, svid, price) ->
             UserBucket
-              { userId = UserId $ fromIntegral uid
-              , bucketSku = Sku sku
-              , bucketSvid = Svid $ fromIntegral svid
-              , bucketPrice = Price price
+              { _uUserId = UserId $ fromIntegral uid
+              , _uBucketSku = Sku sku
+              , _uBucketSvid = Svid $ fromIntegral svid
+              , _uBucketPrice = Price price
               }
     unwrapUserId (UserId uid) = fromIntegral uid
 
@@ -84,7 +84,7 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
         toExperiment =
           \(exp_id, sku, name) ->
             Experiment
-              {expId = ExpId $ fromIntegral exp_id, sku = Sku sku, name = name}
+              {_eExpId = ExpId $ fromIntegral exp_id, _eSku = Sku sku, _eName = name}
 
 insertExperimentStatement :: Statement (Sku, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True
@@ -153,9 +153,9 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         toBucket =
           \(bid, p, sv) ->
             Bucket
-              { bucketId = BucketId $ fromIntegral bid
-              , price = Price p
-              , svid = Svid $ fromIntegral sv
+              { _bBucketId = BucketId $ fromIntegral bid
+              , _bPrice = Price p
+              , _bSvid = Svid $ fromIntegral sv
               }
     unwrapExpId (ExpId id) = fromIntegral id
 

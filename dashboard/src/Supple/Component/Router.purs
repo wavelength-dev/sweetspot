@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
 import Data.Array (find)
+import Data.Lens ((^.))
 import Data.Either.Nested (Either4)
 import Data.Functor.Coproduct.Nested (Coproduct4)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
@@ -19,13 +20,14 @@ import Supple.Component.Experiment as Experiment
 import Supple.Component.Home as Home
 import Supple.Component.Create as Create
 import Supple.Component.Loading as Loading
-import Supple.Data.Api (Experiment, Experiments, ExperimentsResource, ProductsResource)
+import Supple.Data.Api (Experiment, Product, eExpId)
 import Supple.Data.Route (Route(..))
 
 type State =
   { route :: Route
-  , experiments :: ExperimentsResource
-  , products :: ProductsResource }
+  , experiments :: Maybe (Array Experiment)
+  , products :: Maybe (Array Product)
+  }
 
 type Input = Maybe Route
 
@@ -47,7 +49,7 @@ component
 component =
   H.lifecycleParentComponent
     { initialState: \initialRoute ->
-       { route: fromMaybe Home initialRoute
+       { route: fromMaybe HomeRoute initialRoute
        , experiments: Nothing
        , products: Nothing }
     , render
@@ -72,18 +74,19 @@ component =
           H.modify_ _ { route = dest }
         pure a
 
-    getExperiment :: Int -> Experiments -> Experiment
-    getExperiment expId exps = unsafePartial $ fromJust $ (find (\e -> e.exp_id == expId) exps)
+    getExperiment :: Number -> Array Experiment -> Experiment
+    getExperiment expId exps =
+      unsafePartial $ fromJust $ (find (\e -> e ^. eExpId == expId) exps)
 
     render :: State -> H.ParentHTML Query ChildQuery ChildSlot m
     render state = case state of
-      { route: Home, experiments: (Just exps) } ->
+      { route: HomeRoute, experiments: (Just exps) } ->
         HH.slot' CP.cp1 unit Home.component exps absurd
 
-      { route: Experiment expId, experiments: (Just exps) } ->
+      { route: ExperimentRoute expId, experiments: (Just exps) } ->
         HH.slot' CP.cp2 unit Experiment.component (getExperiment expId exps) absurd
 
-      { route: Create, products: (Just prods) } ->
+      { route: CreateRoute, products: (Just prods) } ->
         HH.slot' CP.cp3 unit Create.component prods absurd
 
       _ -> HH.slot' CP.cp4 unit Loading.component unit absurd

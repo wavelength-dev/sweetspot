@@ -13,28 +13,40 @@ suppleBridge = defaultBridge
   <|> expIdBridge
   <|> bucketIdBridge
   <|> svidBridge
+  <|> pidBridge
+  <|> imageBridge
 
 priceBridge :: BridgePart
 priceBridge = do
-   typeName ^== "Price"
-   return psNumber
+  typeName ^== "Price"
+  return psNumber
 
 skuBridge :: BridgePart
 skuBridge = do
-   typeName ^== "Sku"
-   return psString
+  typeName ^== "Sku"
+  return psString
 
 expIdBridge :: BridgePart
 expIdBridge = do
-   typeName ^== "ExpId"
-   return psString
+  typeName ^== "ExpId"
+  return psNumber
 
 bucketIdBridge :: BridgePart
 bucketIdBridge = do
-   typeName ^== "BucketId"
-   return psString
+  typeName ^== "BucketId"
+  return psNumber
 
 svidBridge :: BridgePart
 svidBridge = do
-   typeName ^== "Svid"
-   return psString
+  typeName ^== "Svid"
+  return psNumber
+
+pidBridge :: BridgePart
+pidBridge = do
+  typeName ^== "Pid"
+  return psNumber
+
+imageBridge :: BridgePart
+imageBridge = do
+  typeName ^== "Image"
+  return psString

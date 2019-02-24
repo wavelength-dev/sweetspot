@@ -9,8 +9,9 @@ import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
 import Supple.Data.Common
-import Supple.Data.Database
 import Supple.Database.Statements
+import Supple.Data.Api
+import Control.Lens ((^.))
 
 getUserBucketSession :: UserId -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement
@@ -33,14 +34,14 @@ getBucketsSession = do
   where
     addBuckets =
       \exp -> do
-        let id = expId (exp :: Experiment)
+        let id = exp ^. eExpId
         bs <- Session.statement id getBucketsForExperimentStatement
         return
           ExperimentBuckets
-            { expId = id
-            , sku = sku (exp :: Experiment)
-            , name = name (exp :: Experiment)
-            , buckets = bs
+            { _ebExpId = id
+            , _ebSku = exp ^. eSku
+            , _ebName = exp ^. eName
+            , _ebBuckets = bs
             }
 
 insertEventSession :: (EventType, Value) -> Session ()

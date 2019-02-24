@@ -9,31 +9,38 @@ import GHC.Generics (Generic)
 
 newtype Price =
   Price Scientific
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype Svid =
   Svid Int
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
+
+newtype Pid =
+  Pid Int deriving (Eq, Show, Generic)
 
 newtype Sku =
   Sku Text
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype UserId =
   UserId Int
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype ExpId =
   ExpId Int
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype BucketId =
   BucketId Int
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 instance ToJSON Price
 
 instance FromJSON Price
+
+instance ToJSON Pid
+
+instance FromJSON Pid
 
 instance ToJSON Svid
 

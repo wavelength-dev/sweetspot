@@ -6,6 +6,7 @@
     "aff",
     "affjax",
     "argonaut",
+    "argonaut-generic",
     "console",
     "debug",
     "effect",
@@ -15,6 +16,7 @@
     "newtype",
     "numbers",
     "prelude",
+    "profunctor-lenses",
     "psci-support",
     "routing",
     "routing-duplex"

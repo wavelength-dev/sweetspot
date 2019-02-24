@@ -12,13 +12,13 @@ import Halogen.HTML.Events as HE
 import Supple.Capability.Experiment (class ManageExperiments)
 import Supple.Component.Form.Experiment as ExperimentForm
 import Supple.Component.Util (css)
-import Supple.Data.Api (Products)
+import Supple.Data.Api (Product)
 
 type State =
-  { products :: Products }
+  { products :: Array Product }
 
 data Query a
-  = UpdateProducts Products a
+  = UpdateProducts (Array Product) a
 
 type ChildSlot = Either1 Unit
 
@@ -28,7 +28,7 @@ component
   :: forall m
    . ManageExperiments m
   => MonadAff m
-  => H.Component HH.HTML Query Products Void m
+  => H.Component HH.HTML Query (Array Product) Void m
 component =
   H.parentComponent
     { initialState: \ps -> { products: ps }

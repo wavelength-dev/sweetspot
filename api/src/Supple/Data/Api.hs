@@ -1,45 +1,137 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Supple.Data.Api where
 
 import Control.Lens
+import Control.Lens.TH (makeLenses)
 import Data.Aeson (FromJSON(..), ToJSON(..), genericParseJSON)
 import Data.Aeson.Lens
 import Data.Aeson.Types (defaultOptions, fieldLabelModifier, typeMismatch)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Supple.Data.Common (Price)
+import Supple.Data.Common
 import Text.Casing (quietSnake)
 
---
--- Request types
---
+-- | ---------------------------------------------------------------------------
+-- | Image
+-- | ---------------------------------------------------------------------------
 data Image = Image
-  { src :: !Text
-  } deriving (Generic, Show)
+  { _iSrc :: !Text
+  } deriving (Eq, Generic, Show)
 
+makeLenses ''Image
+
+instance FromJSON Image
+
+instance ToJSON Image
+
+-- | ---------------------------------------------------------------------------
+-- | Variant
+-- | ---------------------------------------------------------------------------
 data Variant = Variant
-  { id :: !Int
-  , productId :: !Int
-  , title :: !Text
-  , sku :: !Text
-  } deriving (Generic, Show)
+  { _vId :: !Svid
+  , _vProductId :: !Pid
+  , _vTitle :: !Text
+  , _vSku :: !Sku
+  } deriving (Eq, Generic, Show)
 
+makeLenses ''Variant
+
+instance ToJSON Variant
+
+instance FromJSON Variant
+
+-- | ---------------------------------------------------------------------------
+-- | Product
+-- | ---------------------------------------------------------------------------
 data Product = Product
-  { id :: !Int
-  , title :: !Text
-  , variants :: ![Variant]
-  , image :: !Image
-  } deriving (Generic, Show)
+  { _pId :: !Pid
+  , _pTitle :: !Text
+  , _pVariants :: ![Variant]
+  , _pImage :: !Image
+  } deriving (Eq, Generic, Show)
 
+makeLenses ''Product
+
+instance ToJSON Product
+
+instance FromJSON Product
+
+-- | ---------------------------------------------------------------------------
+-- | Bucket
+-- | ---------------------------------------------------------------------------
+data Bucket = Bucket
+  { _bBucketId :: !BucketId
+  , _bSvid :: !Svid
+  , _bPrice :: !Price
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''Bucket
+
+instance ToJSON Bucket
+
+instance FromJSON Bucket
+
+-- | ---------------------------------------------------------------------------
+-- | Experiment
+-- | ---------------------------------------------------------------------------
+data Experiment = Experiment
+  { _eExpId :: !ExpId
+  , _eSku :: !Sku
+  , _eName :: !Text
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''Experiment
+
+-- | ---------------------------------------------------------------------------
+-- | ExperimentBuckets
+-- | ---------------------------------------------------------------------------
+data ExperimentBuckets = ExperimentBuckets
+  { _ebExpId :: !ExpId
+  , _ebSku :: !Sku
+  , _ebName :: !Text
+  , _ebBuckets :: ![Bucket]
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''ExperimentBuckets
+
+instance ToJSON ExperimentBuckets
+
+-- | ---------------------------------------------------------------------------
+-- | UserBucket
+-- | ---------------------------------------------------------------------------
+data UserBucket = UserBucket
+  { _uUserId :: !UserId
+  , _uBucketSku :: !Sku
+  , _uBucketSvid :: !Svid
+  , _uBucketPrice :: !Price
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''UserBucket
+
+instance ToJSON UserBucket
+
+-- | ---------------------------------------------------------------------------
+-- | CreateExperiment
+-- | ---------------------------------------------------------------------------
 data CreateExperiment = CreateExperiment
-  { productId :: !Int
-  , price :: !Price
-  , name :: !Text
-  } deriving (Generic, Show)
+  { _ceProductId :: !Pid
+  , _cePrice :: !Price
+  , _ceName :: !Text
+  } deriving (Eq, Generic, Show)
 
+makeLenses ''CreateExperiment
+
+instance ToJSON CreateExperiment
+
+instance FromJSON CreateExperiment
+
+-- | ---------------------------------------------------------------------------
+-- | ProductDetailsView
+-- | ---------------------------------------------------------------------------
 data ProductDetailsView = ProductDetailsView
   { campaign :: Maybe Text
   , page :: !Text -- product
@@ -48,6 +140,13 @@ data ProductDetailsView = ProductDetailsView
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+instance FromJSON ProductDetailsView
+
+instance ToJSON ProductDetailsView
+
+-- | ---------------------------------------------------------------------------
+-- | ProductListingsView
+-- | ---------------------------------------------------------------------------
 data ProductListingsView = ProductListingsView
   { campaign :: Maybe Text
   , page :: Text -- collection
@@ -56,6 +155,13 @@ data ProductListingsView = ProductListingsView
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+instance FromJSON ProductListingsView
+
+instance ToJSON ProductListingsView
+
+-- | ---------------------------------------------------------------------------
+-- | CollectionListingsView
+-- | ---------------------------------------------------------------------------
 data CollectionListingsView = CollectionListingsView
   { campaign :: Maybe Text
   , page :: Text -- collections
@@ -63,11 +169,26 @@ data CollectionListingsView = CollectionListingsView
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+instance FromJSON CollectionListingsView
+
+instance ToJSON CollectionListingsView
+
+-- | ---------------------------------------------------------------------------
+-- | LineItem
+-- | ---------------------------------------------------------------------------
 data LineItem = LineItem
   { product_id :: Int
   , variant_id :: Int
   } deriving (Generic, Show)
 
+instance FromJSON LineItem where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
+
+instance ToJSON LineItem
+
+-- | ---------------------------------------------------------------------------
+-- | CheckoutEvent
+-- | ---------------------------------------------------------------------------
 data CheckoutEvent = CheckoutEvent
   { lineItems :: [LineItem]
   , page :: Text -- checkout
@@ -77,6 +198,13 @@ data CheckoutEvent = CheckoutEvent
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+instance FromJSON CheckoutEvent
+
+instance ToJSON CheckoutEvent
+
+-- | ---------------------------------------------------------------------------
+-- | UnknownView
+-- | ---------------------------------------------------------------------------
 data UnknownView = UnknownView
   { campaign :: Maybe Text
   , page :: Text -- unknown
@@ -84,6 +212,13 @@ data UnknownView = UnknownView
   , userId :: Maybe Text
   } deriving (Generic, Show)
 
+instance FromJSON UnknownView
+
+instance ToJSON UnknownView
+
+-- | ---------------------------------------------------------------------------
+-- | TrackView
+-- | ---------------------------------------------------------------------------
 data TrackView
   = Details ProductDetailsView
   | Listing ProductListingsView
@@ -91,48 +226,6 @@ data TrackView
   | Checkout CheckoutEvent
   | Unknown UnknownView
   deriving (Show)
-
-instance ToJSON Variant
-
-instance FromJSON Variant where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
-
-instance ToJSON Image
-
-instance FromJSON Image
-
-instance ToJSON Product
-
-instance FromJSON Product
-
-instance FromJSON ProductDetailsView
-
-instance ToJSON ProductDetailsView
-
-instance FromJSON ProductListingsView
-
-instance ToJSON ProductListingsView
-
-instance FromJSON CollectionListingsView
-
-instance ToJSON CollectionListingsView
-
-instance FromJSON UnknownView
-
-instance ToJSON UnknownView
-
-instance ToJSON CreateExperiment
-
-instance FromJSON CreateExperiment
-
-instance FromJSON LineItem where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
-
-instance ToJSON LineItem
-
-instance FromJSON CheckoutEvent
-
-instance ToJSON CheckoutEvent
 
 instance FromJSON TrackView where
   parseJSON val =
@@ -155,11 +248,14 @@ instance ToJSON TrackView where
       Checkout a -> toJSON a
       Unknown a -> toJSON a
 
---
--- Response types
---
+-- | ---------------------------------------------------------------------------
+-- | TrackView
+-- | ---------------------------------------------------------------------------
 data OkResponse = OkResponse
   { message :: Text
-  } deriving (Generic, Show)
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON OkResponse
+
+eventTypeToText :: EventType -> Text
+eventTypeToText View = "view"

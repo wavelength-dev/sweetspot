@@ -2,9 +2,10 @@ module Supple.Component.Form.Experiment where
 
 import Prelude
 
-import Data.Array (head, find)
+import Data.Array (find, head, insert)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (class Newtype)
+import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Time.Duration (Milliseconds(..))
 import Debug.Trace (trace)
@@ -19,35 +20,36 @@ import Supple.Component.Form.Button as Button
 import Supple.Component.Form.Select as Select
 import Supple.Component.Form.TextField as TextField
 import Supple.Component.Form.Validation (Error, isGtZero, isNonEmpty, isNumber)
-import Supple.Component.Util (css)
-import Supple.Data.Api (Product, Products)
 import Supple.Component.Polaris as P
+import Supple.Component.Util (css)
+import Data.Lens
+import Supple.Data.Api
 
 newtype ExperimentForm r f = ExperimentForm (r
-  ( name :: f Error String String
-  , productId :: f Error String Number
-  , price:: f Error String Number
+  ( _ceName :: f Error String String
+  , _ceProductId :: f Error String Number
+  , _cePrice:: f Error String Number
   ))
 
 derive instance newtypeForm :: Newtype (ExperimentForm r f) _
 
 validators :: forall m. Monad m => ExperimentForm Record (F.Validation ExperimentForm m)
 validators = ExperimentForm
-  { name: isNonEmpty
-  , productId: isNumber >>> isGtZero
-  , price: isNumber >>> isGtZero
+  { _ceName: isNonEmpty
+  , _ceProductId: isNumber >>> isGtZero
+  , _cePrice: isNumber >>> isGtZero
   }
 
 renderFormlessWith
   :: forall m
    . MonadAff m
-  => Products
+  => Array Product
   -> F.State ExperimentForm m
   -> F.HTML' ExperimentForm m
 renderFormlessWith products =
   \fstate ->
     let selectedProduct = case (F.getResult _productId fstate.form) of
-          F.Success pid -> find (\p -> p.id == pid) products
+          F.Success pid -> find (\p -> p ^. pId == pid) products
           _ -> Nothing
         productSelected = isJust selectedProduct
     in
@@ -86,18 +88,18 @@ renderFormlessWith products =
           ]
       ]
       where
-        _name = SProxy :: SProxy "name"
-        _productId = SProxy :: SProxy "productId"
-        _price = SProxy :: SProxy "price"
+        _name = SProxy :: SProxy "_ceName"
+        _productId = SProxy :: SProxy "_ceProductId"
+        _price = SProxy :: SProxy "_cePrice"
         debounceTime = Milliseconds 300.0
 
 type State =
-  { products :: Products }
+  { products :: Array Product }
 
 data Query a
   = HandleForm (F.Message' ExperimentForm) a
 
-type Input = Products
+type Input = Array Product
 
 type ChildQuery m = F.Query' ExperimentForm m
 
@@ -128,33 +130,36 @@ component = H.parentComponent
       ]
     where
       defaultPid = case head products of
-        Just p -> show $ _.id p
+        Just p -> show $ p ^. pId
         Nothing -> ""
       initialInputs :: ExperimentForm Record F.InputField
-      initialInputs = F.wrapInputFields { name: "", productId: defaultPid, price: "" }
+      initialInputs = F.wrapInputFields
+        { _ceName: "", _ceProductId: defaultPid, _cePrice: "" }
 
 
   eval :: Query ~> H.ParentDSL State Query (ChildQuery m) ChildSlot Void m
   eval (HandleForm m a) = case m of
     F.Submitted formOutput -> a <$ do
       let experiment = F.unwrapOutputFields formOutput
-      createExperiment experiment
+      createExperiment $ CreateExperiment experiment
 
     -- TODO implement
     F.Changed  form -> pure a
     F.Emit form -> pure a
 
 
-toOpts :: Products -> Array Select.Option
-toOpts ps = (\p -> { value: show p.id, label: p.title }) <$> ps
+toOpts :: Array Product -> Array Select.Option
+toOpts ps = pickFields <$> ps
+  where
+    pickFields = \p -> { label: p ^. pTitle, value: show (p ^. pId) }
 
 renderProductImage :: forall i p. Product -> HH.HTML i p
-renderProductImage { image, title } =
-  P.card
-    title
-    [ HH.div
-      [ css "thumbnail" ]
-      [ HH.img
-        [ HP.src image ]
+renderProductImage p =
+    P.card
+      (p ^. pTitle)
+      [ HH.div
+        [ css "thumbnail" ]
+        [ HH.img
+          [ HP.src (p ^. pImage) ]
+        ]
       ]
-    ]

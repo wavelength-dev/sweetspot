@@ -1,16 +1,25 @@
 module Main where
 
-import Language.PureScript.Bridge (buildBridge, mkSumType, writePSTypes)
-import Supple.Data.Api (CreateExperiment, OkResponse)
+import Language.PureScript.Bridge (buildBridge, equal, mkSumType, writePSTypes)
+import qualified Supple.Data.Api as Api
 
 import Data.Proxy (Proxy(..))
 import TypeBridges (suppleBridge)
 
 main :: IO ()
-main =
-  writePSTypes "../frontend/dashboard/src" (buildBridge suppleBridge) myTypes
+main = writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
   where
     myTypes =
-      [ mkSumType (Proxy :: Proxy OkResponse)
-      , mkSumType (Proxy :: Proxy CreateExperiment)
+      [ let p = (Proxy :: Proxy Api.Bucket)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Experiment)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Product)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Variant)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.CreateExperiment)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.OkResponse)
+         in equal p (mkSumType p)
       ]

@@ -39,10 +39,10 @@ dependencies:
 - wreq
 - lens
 - scientific
-- dotenv
 - utf8-string
 - purescript-bridge
 - casing
+- envy
 
 library:
   source-dirs: src

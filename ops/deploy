@@ -1,0 +1,48 @@
+#!/bin/bash
+
+ENV=${1:-staging}
+CLUSTER=$(kubectl config current-context)
+DATE=$(date -u "+%F")
+COMMIT=$(git rev-parse --short HEAD)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+IMAGE_NAME="gcr.io/supple/supple:${DATE}-${COMMIT}"
+
+exit_on_failure() {
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
+}
+
+if [ ${CURRENT_BRANCH} != "master" ]; then
+  echo "You're on ${CURRENT_BRANCH}, deploy from master"
+  exit 1
+fi
+
+if ! git diff-index --quiet origin/master api; then
+  echo "Stash or commit, and push your changes before deploying"
+  exit 1
+fi
+
+echo "👉 Deployment parameters are:"
+echo "kubectl context: ${CLUSTER}"
+echo "env: ${ENV}"
+echo ""
+
+echo "💪 Deploying Supple to ${ENV}"
+# docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
+exit_on_failure
+echo "🏁 Finished building api build image"
+echo "👷 Building executable image"
+docker build --file "api/build/Dockerfile" --tag supple --quiet ./api
+exit_on_failure
+echo "🚀 Pushing image to registry"
+docker tag supple $IMAGE_NAME
+docker push $IMAGE_NAME
+exit_on_failure
+echo "🔨 Applying new image"
+kubectl set image deploy/supple supple=$IMAGE_NAME
+exit_on_failure
+echo "👀 Watching supple deployment for the next 10s"
+timeout --preserve-status --signal INT 10s kubectl get --watch deploy supple; exit 0
+exit_on_failure
+echo "🙌 Done!"

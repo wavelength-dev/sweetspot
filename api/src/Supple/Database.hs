@@ -36,8 +36,10 @@ data DbConfig = DbConfig
 
 getDbConnection :: DbConfig -> IO Connection
 getDbConnection DbConfig {..} = do
-  Right connection <- Connection.acquire connectionSettings
-  return connection
+  res <- Connection.acquire connectionSettings
+  case res of
+    Left err -> error $ maybe "Unknown error during connection aquire" show err
+    Right connection -> return connection
   where
     connectionSettings =
       Connection.settings

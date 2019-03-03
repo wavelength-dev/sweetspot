@@ -29,6 +29,19 @@ echo "| env: ${ENV}"
 echo "--"
 
 echo "=> Deploying Supple to ${ENV}"
+
+# Injectable
+echo "=> Building injectables"
+cd injectable/
+yarn --silent lint
+exit_on_failure
+yarn --silent test --ci
+exit_on_failure
+yarn --silent build
+exit_on_failure
+cd ..
+echo "=> Finished building injectables"
+
 docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
 exit_on_failure
 echo "=> Finished building api build image"

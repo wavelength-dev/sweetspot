@@ -47,8 +47,8 @@ getBucketsSession = do
 insertEventSession :: (EventType, Value) -> Session ()
 insertEventSession input = Session.statement input insertEventStatement
 
-createExperimentSession :: (Sku, Svid, Price, Text) -> Session ()
-createExperimentSession (sku, svid, price, name) = do
-  expId <- Session.statement (sku, name) insertExperimentStatement
+createExperimentSession :: (Sku, Svid, Price, CampaignId, Text) -> Session ()
+createExperimentSession (sku, svid, price, cmp, name) = do
+  expId <- Session.statement (sku, cmp, name) insertExperimentStatement
   bucketId <- Session.statement (svid, sku, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement

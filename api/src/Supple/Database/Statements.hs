@@ -86,18 +86,21 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
             Experiment
               {_eExpId = ExpId $ fromIntegral exp_id, _eSku = Sku sku, _eName = name}
 
-insertExperimentStatement :: Statement (Sku, Text) ExpId
+insertExperimentStatement :: Statement (Sku, CampaignId, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "INSERT INTO experiments (sku, name) "
-        , "VALUES ($1, $2) RETURNING exp_id;"
+        [ "INSERT INTO experiments (sku, campaign_id, name) "
+        , "VALUES ($1, $2, $3) RETURNING exp_id;"
         ]
     encoder =
       (getSku >$< Encoders.param Encoders.text) <>
-      (snd >$< Encoders.param Encoders.text)
-    getSku (Sku txt, _) = txt
+      (getCmp >$< Encoders.param Encoders.text) <>
+      (getName >$< Encoders.param Encoders.text)
+    getSku (Sku txt, _, _) = txt
+    getCmp (_, CampaignId id, _) = id
+    getName (_, _, name) = name
     decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
     wrapExpId id = ExpId $ fromIntegral id
 

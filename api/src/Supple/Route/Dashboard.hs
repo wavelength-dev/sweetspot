@@ -59,10 +59,10 @@ createExperimentHandler ce = do
         svid = variant ^. vId
         price = ce ^. cePrice
         name = ce ^. ceName
-
+        campaignId = ce ^. ceCampaignId
 
       dbconn <- asks _getDbConn
-      liftIO $ createExperiment dbconn sku svid price name
+      liftIO $ createExperiment dbconn sku svid price campaignId name
       return OkResponse {message = "Created experiment"}
 
     Nothing -> throwError $ err500 {errBody = "Something went wrong"}

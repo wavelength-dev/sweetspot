@@ -15,8 +15,7 @@ import Servant
 import Supple.AppM (AppCtx(..), AppM, LogMessage(..))
 import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
 import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
-import Supple.Data.Api (OkResponse(..), TrackView)
-import Supple.Data.Api (UserBucket)
+import Supple.Data.Api (OkResponse(..), TrackView, UserBucket)
 import Supple.Data.Common
 
 type UserBucketRoute

@@ -33,6 +33,7 @@ dependencies:
 - mtl
 - purescript-bridge
 - scientific
+- servant
 - servant-server
 - text
 - time

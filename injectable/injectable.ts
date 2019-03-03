@@ -8,10 +8,10 @@ console.time("supple_dom_ready")
 log("init")
 
 interface ApiExperiment {
-  readonly bucket_price: number
-  readonly bucket_sku: string
-  readonly bucket_svid: number
-  readonly user_id: number
+  readonly _uBucketPrice: number
+  readonly _uBucketSku: string
+  readonly _uBucketSvid: number
+  readonly _uUserId: number
 }
 
 interface Experiment {
@@ -147,12 +147,12 @@ Promise.all([DOMPromise, expPromise])
   .then(([_, apiExps]) => ({
     exps: (apiExps as ApiExperiment[]).map(
       (exp: ApiExperiment): Experiment => ({
-        price: exp.bucket_price,
-        sku: exp.bucket_sku,
-        svid: exp.bucket_svid,
+        price: exp._uBucketPrice,
+        sku: exp._uBucketSku,
+        svid: exp._uBucketSvid,
       }),
     ),
-    userId: (apiExps as ApiExperiment[])[0].user_id,
+    userId: (apiExps as ApiExperiment[])[0]._uUserId,
   }))
   .then(({ userId, exps }) => {
     // TODO: carefully consider when to set the userId

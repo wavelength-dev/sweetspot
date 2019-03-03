@@ -19,7 +19,7 @@ if [ ${CURRENT_BRANCH} != "master" ]; then
 fi
 
 if ! git diff-index --quiet origin/master api; then
-  echo "Stash or commit, and push your changes before deploying"
+  echo "Stash or, commit and push your changes, before deploying"
   exit 1
 fi
 
@@ -42,16 +42,23 @@ exit_on_failure
 cd ..
 echo "=> Finished building injectables"
 
+# API
+echo "=> Building api build image"
 docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
 exit_on_failure
 echo "=> Finished building api build image"
 echo "=> Building executable image"
 docker build --file "api/build/Dockerfile" --tag supple --quiet ./api
 exit_on_failure
+echo "=> Finished building api executable image"
+
+# Push to Google Container Registry
 echo "=> Pushing image to registry"
 docker tag supple $IMAGE_NAME
 docker push $IMAGE_NAME
 exit_on_failure
+
+# Update supple deployment to latest image
 echo "=> Applying new image"
 kubectl set image deploy/supple supple=$IMAGE_NAME
 exit_on_failure

@@ -10,7 +10,7 @@ import Debug.Trace (trace)
 import Network.Wreq
 import Prelude hiding (product)
 import Supple.Data.Api (Image(..), Product(..), Variant(..))
-import Supple.Data.Common (Pid)
+import Supple.Data.Common (Pid(..))
 
 apiRoot =
   "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"
@@ -57,7 +57,7 @@ fetchProducts = do
       Error e -> trace e Nothing
 
 fetchProduct :: Pid -> IO Value
-fetchProduct pid = do
+fetchProduct (Pid pid) = do
   r <- get $ apiRoot ++ "/products/" ++ show pid ++ ".json"
   json <- asJSON r
   return $ json ^. responseBody

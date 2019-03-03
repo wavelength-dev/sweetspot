@@ -14,6 +14,8 @@ main = writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
          in equal p (mkSumType p)
       , let p = (Proxy :: Proxy Api.Experiment)
          in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.ExperimentBuckets)
+         in equal p (mkSumType p)
       , let p = (Proxy :: Proxy Api.Product)
          in equal p (mkSumType p)
       , let p = (Proxy :: Proxy Api.Variant)

@@ -249,7 +249,7 @@ instance ToJSON TrackView where
       Unknown a -> toJSON a
 
 -- | ---------------------------------------------------------------------------
--- | TrackView
+-- | OkResponse
 -- | ---------------------------------------------------------------------------
 data OkResponse = OkResponse
   { message :: Text

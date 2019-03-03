@@ -1,27 +1,26 @@
 apiVersion: v1
 kind: Service
 metadata:
+  creationTimestamp: "2019-03-03T14:43:32Z"
   labels:
     app: supple
-  name: supple-service
+    env: staging
+  name: supple
   namespace: default
-  selfLink: /api/v1/namespaces/default/services/supple-service
-  uid: 3da1ed98-383d-11e9-b31c-42010a8401dd
+  resourceVersion: "1437576"
+  selfLink: /api/v1/namespaces/default/services/supple
+  uid: b7625c1c-3dc2-11e9-a1d2-42010a840076
 spec:
-  clusterIP: 10.39.254.145
+  clusterIP: 10.39.241.250
   externalTrafficPolicy: Cluster
   ports:
-  - name: 443-8082
-    nodePort: 30591
-    port: 443
+  - nodePort: 32559
+    port: 8082
     protocol: TCP
     targetPort: 8082
   selector:
     app: supple
   sessionAffinity: None
-  type: LoadBalancer
+  type: NodePort
 status:
-  loadBalancer:
-    ingress:
-    - ip: 34.76.64.45
-
+  loadBalancer: {}

@@ -49,7 +49,7 @@ CREATE TABLE events
 
 INSERT INTO users (user_id) VALUES (DEFAULT);
 INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);
-INSERT INTO experiments (exp_id, sku, name) VALUES (DEFAULT, '3', 'Kanpeki uber knife experiment');
+INSERT INTO experiments (exp_id, sku, name, campaign_id) VALUES (DEFAULT, '3', 'Kanpeki uber knife experiment', 'knp123');
 INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 18765024952384, '3', 19.90);
 INSERT INTO buckets (bucket_id, svid, sku, price) VALUES (DEFAULT, 18764920946752, '3', 29.90);
 INSERT INTO experiment_group_users (exp_group_id, user_id) VALUES (1, 1);

@@ -134,7 +134,7 @@ instance FromJSON CreateExperiment
 -- | ProductDetailsView
 -- | ---------------------------------------------------------------------------
 data ProductDetailsView = ProductDetailsView
-  { campaign :: !(Maybe Text)
+  { campaignId :: !(Maybe CampaignId)
   , page :: !Text -- product
   , pageUrl :: !Text
   , productId :: Int
@@ -149,7 +149,7 @@ instance ToJSON ProductDetailsView
 -- | ProductListingsView
 -- | ---------------------------------------------------------------------------
 data ProductListingsView = ProductListingsView
-  { campaign :: !Text
+  { campaignId :: !(Maybe CampaignId)
   , page :: !Text -- collection
   , pageUrl :: !Text
   , productIds :: ![Int]
@@ -164,7 +164,7 @@ instance ToJSON ProductListingsView
 -- | CollectionListingsView
 -- | ---------------------------------------------------------------------------
 data CollectionListingsView = CollectionListingsView
-  { campaign :: !(Maybe Text)
+  { campaignId :: !(Maybe CampaignId)
   , page :: !Text -- collections
   , pageUrl :: !Text
   , userId :: !(Maybe Text)
@@ -207,7 +207,7 @@ instance ToJSON CheckoutEvent
 -- | UnknownView
 -- | ---------------------------------------------------------------------------
 data UnknownView = UnknownView
-  { campaign :: !(Maybe Text)
+  { campaignId :: !(Maybe CampaignId)
   , page :: !Text -- unknown
   , pageUrl :: !Text
   , userId :: !(Maybe Text)

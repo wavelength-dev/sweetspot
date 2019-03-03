@@ -23,26 +23,26 @@ if ! git diff-index --quiet origin/master api; then
   exit 1
 fi
 
-echo "👉 Deployment parameters are:"
-echo "kubectl context: ${CLUSTER}"
-echo "env: ${ENV}"
-echo ""
+echo "[note] Deployment parameters are:"
+echo "| kubectl context: ${CLUSTER}"
+echo "| env: ${ENV}"
+echo "--"
 
-echo "💪 Deploying Supple to ${ENV}"
-# docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
+echo "=> Deploying Supple to ${ENV}"
+docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
 exit_on_failure
-echo "🏁 Finished building api build image"
-echo "👷 Building executable image"
+echo "=> Finished building api build image"
+echo "=> Building executable image"
 docker build --file "api/build/Dockerfile" --tag supple --quiet ./api
 exit_on_failure
-echo "🚀 Pushing image to registry"
+echo "=> Pushing image to registry"
 docker tag supple $IMAGE_NAME
 docker push $IMAGE_NAME
 exit_on_failure
-echo "🔨 Applying new image"
+echo "=> Applying new image"
 kubectl set image deploy/supple supple=$IMAGE_NAME
 exit_on_failure
-echo "👀 Watching supple deployment for the next 10s"
-timeout --preserve-status --signal INT 10s kubectl get --watch deploy supple; exit 0
+echo "=> Watching supple deployment for the next 30s"
+timeout --preserve-status --signal INT 30s kubectl get --watch deploy supple; exit 0
 exit_on_failure
-echo "🙌 Done!"
+echo "=> Done!"

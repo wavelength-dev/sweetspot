@@ -133,11 +133,11 @@ instance FromJSON CreateExperiment
 -- | ProductDetailsView
 -- | ---------------------------------------------------------------------------
 data ProductDetailsView = ProductDetailsView
-  { campaign :: Maybe Text
+  { campaign :: !(Maybe Text)
   , page :: !Text -- product
   , pageUrl :: !Text
   , productId :: Int
-  , userId :: Maybe Text
+  , userId :: !(Maybe Text)
   } deriving (Generic, Show)
 
 instance FromJSON ProductDetailsView
@@ -148,11 +148,11 @@ instance ToJSON ProductDetailsView
 -- | ProductListingsView
 -- | ---------------------------------------------------------------------------
 data ProductListingsView = ProductListingsView
-  { campaign :: Maybe Text
-  , page :: Text -- collection
-  , pageUrl :: Text
-  , productIds :: [Int]
-  , userId :: Maybe Text
+  { campaign :: !Text
+  , page :: !Text -- collection
+  , pageUrl :: !Text
+  , productIds :: ![Int]
+  , userId :: !(Maybe Text)
   } deriving (Generic, Show)
 
 instance FromJSON ProductListingsView
@@ -163,10 +163,10 @@ instance ToJSON ProductListingsView
 -- | CollectionListingsView
 -- | ---------------------------------------------------------------------------
 data CollectionListingsView = CollectionListingsView
-  { campaign :: Maybe Text
-  , page :: Text -- collections
-  , pageUrl :: Text
-  , userId :: Maybe Text
+  { campaign :: !(Maybe Text)
+  , page :: !Text -- collections
+  , pageUrl :: !Text
+  , userId :: !(Maybe Text)
   } deriving (Generic, Show)
 
 instance FromJSON CollectionListingsView
@@ -177,8 +177,8 @@ instance ToJSON CollectionListingsView
 -- | LineItem
 -- | ---------------------------------------------------------------------------
 data LineItem = LineItem
-  { product_id :: Int
-  , variant_id :: Int
+  { product_id :: !Int
+  , variant_id :: !Int
   } deriving (Generic, Show)
 
 instance FromJSON LineItem where
@@ -190,12 +190,12 @@ instance ToJSON LineItem
 -- | CheckoutEvent
 -- | ---------------------------------------------------------------------------
 data CheckoutEvent = CheckoutEvent
-  { lineItems :: [LineItem]
-  , page :: Text -- checkout
-  , pageUrl :: Text
-  , step :: Maybe Text
-  , token :: Maybe Text
-  , userId :: Maybe Text
+  { lineItems :: ![LineItem]
+  , page :: !Text -- checkout
+  , pageUrl :: !Text
+  , step :: !(Maybe Text)
+  , token :: !(Maybe Text)
+  , userId :: !(Maybe Text)
   } deriving (Generic, Show)
 
 instance FromJSON CheckoutEvent
@@ -206,10 +206,10 @@ instance ToJSON CheckoutEvent
 -- | UnknownView
 -- | ---------------------------------------------------------------------------
 data UnknownView = UnknownView
-  { campaign :: Maybe Text
-  , page :: Text -- unknown
-  , pageUrl :: Text
-  , userId :: Maybe Text
+  { campaign :: !(Maybe Text)
+  , page :: !Text -- unknown
+  , pageUrl :: !Text
+  , userId :: !(Maybe Text)
   } deriving (Generic, Show)
 
 instance FromJSON UnknownView

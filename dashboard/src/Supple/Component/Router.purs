@@ -15,7 +15,7 @@ import Halogen.HTML as HH
 import Partial.Unsafe (unsafePartial)
 import Supple.AppM (Env)
 import Supple.Capability.Experiment (class ManageExperiments, getExperiments, getProducts)
-import Supple.Capability.Navigate (class Navigate)
+import Supple.Capability.Navigate (class Navigate, navigate)
 import Supple.Component.Experiment as Experiment
 import Supple.Component.Home as Home
 import Supple.Component.Create as Create
@@ -63,6 +63,8 @@ component =
     eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Void m
     eval = case _ of
       Initialize a -> do
+        { route } <- H.get
+        navigate route
         exps <- getExperiments
         prods <- getProducts
         H.modify_ _ { experiments = exps, products = prods }

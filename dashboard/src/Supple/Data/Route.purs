@@ -26,7 +26,7 @@ instance showRoute :: Show Route where
 
 routeCodec :: RouteDuplex' Route
 routeCodec = root $ sum
-  { "HomeRoute": "dashboard" / noArgs
+  { "HomeRoute": noArgs
   , "CreateRoute": "experiment" / "create" / noArgs
   , "ExperimentRoute": "experiment" / experimentId segment
   }

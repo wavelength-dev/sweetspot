@@ -7,6 +7,7 @@
     "build": "run-p build:*",
     "build:main": "browserify injectable.ts -p tsify -o ../dist/supple-inj.js",
     "build:checkout": "browserify checkout.ts -p tsify -o ../dist/supple-ch-inj.js",
+    "lint": "tslint --project . --format stylish",
     "start": "run-p start:*",
     "start:main": "watchify injectable.ts -p tsify -o ../dist/supple-inj.js -v",
     "start:checkout": "watchify checkout.ts -p tsify -o ../dist/supple-ch-inj.js -v",

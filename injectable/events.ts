@@ -38,7 +38,7 @@ type Page = "product" | "collection" | "collections" | "checkout"
 /* Location WebAPI pathname */
 type Pathname = string
 interface BaseViewEvent {
-  campaign: string | null
+  expId: number | null
   page: Page
   pageUrl: string
   userId: string | null
@@ -58,7 +58,7 @@ interface CheckoutViewEvent extends BaseViewEvent {
   page: "checkout"
 }
 interface UnknownViewEvent {
-  campaign: string | null
+  expId: number | null
   page: "unknown"
   pageUrl: string
   userId: string | null
@@ -238,13 +238,12 @@ const getViewMeta = (baseMeta: BaseViewEvent): ViewEvent => {
   }
 }
 
-export const trackView = (): void => {
-  const campaign = detectCampaign()
+export const trackView = (expId: number | null): void => {
   const userId = localStorage.getItem("supple_uid")
   const page = detectPage()
 
   const baseMeta = {
-    campaign,
+    expId,
     pageUrl: window.location.href,
     userId,
   }
@@ -277,7 +276,7 @@ declare global {
         customer_locale?: string
         discount?: null
         email?: string
-        gift_cards?: unknown[]
+        gift_cards?: Array<unknown>
         line_items?: LineItem[]
         location_id?: number | null
         order_id?: number
@@ -295,7 +294,7 @@ declare global {
         source_url?: unknown
         subtotal_price?: string
         tax_exempt?: false
-        tax_lines?: unknown[]
+        tax_lines?: Array<unknown>
         taxes_included: boolean
         token?: string
         total_price?: string

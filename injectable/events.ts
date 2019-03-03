@@ -1,10 +1,6 @@
-import { isSome } from "./option"
-
-import { map } from "./option"
-
 import { eventsUrl } from "./constants"
 import { log } from "./logging"
-import { none, Option, some } from "./option"
+import { isSome, map, none, Option, some } from "./option"
 import { isElementsFound } from "./util"
 
 // Shopify --
@@ -281,7 +277,7 @@ declare global {
         customer_locale?: string
         discount?: null
         email?: string
-        gift_cards?: Array<unknown>
+        gift_cards?: unknown[]
         line_items?: LineItem[]
         location_id?: number | null
         order_id?: number
@@ -299,7 +295,7 @@ declare global {
         source_url?: unknown
         subtotal_price?: string
         tax_exempt?: false
-        tax_lines?: Array<unknown>
+        tax_lines?: unknown[]
         taxes_included: boolean
         token?: string
         total_price?: string

@@ -43,10 +43,8 @@ CREATE TABLE experiment_buckets
 CREATE TABLE events
 (id SERIAL,
  type TEXT,
- exp_id SERIAL,
  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
- payload JSONB,
- FOREIGN KEY (exp_id) REFERENCES experiments(exp_id));
+ payload JSONB);
 
 INSERT INTO users (user_id) VALUES (DEFAULT);
 INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);

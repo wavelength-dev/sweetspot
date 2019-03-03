@@ -1,49 +1,73 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: supple
+  creationTimestamp: "2019-02-24T14:09:14Z"
   labels:
     app: supple
     env: staging
+  name: supple
+  namespace: default
+  selfLink: /apis/apps/v1/namespaces/default/deployments/supple
+  uid: c402c670-383d-11e9-b31c-42010a8401dd
 spec:
+  progressDeadlineSeconds: 600
   replicas: 2
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: supple
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
   template:
     metadata:
+      creationTimestamp: null
       labels:
         app: supple
         env: staging
     spec:
       containers:
-      - name: supple
-        image: gcr.io/supple/supple
-        ports:
-        - containerPort: 8082
-        env:
+      - env:
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: supple
               key: dbHost
+              name: supple
         - name: DB_NAME
           valueFrom:
             configMapKeyRef:
-              name: supple
               key: dbName
+              name: supple
         - name: DB_PORT
           valueFrom:
             configMapKeyRef:
-              name: supple
               key: dbPort
+              name: supple
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: supple
               key: dbPassword
+              name: supple
         - name: DB_USER
           valueFrom:
             configMapKeyRef:
-              name: supple
               key: dbUser
+              name: supple
+        image: gcr.io/supple/supple
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8082
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: supple
+        ports:
+        - containerPort: 8082
+          protocol: TCP

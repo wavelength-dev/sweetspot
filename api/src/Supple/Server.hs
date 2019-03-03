@@ -27,15 +27,16 @@ import Supple.Database (DbConfig(..), getDbConnection)
 import Supple.Env (getEnvConfig, EnvConfig(..))
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
+import Supple.Route.Static (StaticAPI, staticHandler)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
-type RootAPI = DashboardAPI :<|> InjectableAPI
+type RootAPI = DashboardAPI :<|> InjectableAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server :: ServerT RootAPI AppM
-server = dashboardHandler :<|> injectableHandler
+server = dashboardHandler :<|> injectableHandler :<|> staticHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

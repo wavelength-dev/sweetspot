@@ -276,7 +276,7 @@ declare global {
         customer_locale?: string
         discount?: null
         email?: string
-        gift_cards?: Array<unknown>
+        gift_cards?: unknown[]
         line_items?: LineItem[]
         location_id?: number | null
         order_id?: number
@@ -294,7 +294,7 @@ declare global {
         source_url?: unknown
         subtotal_price?: string
         tax_exempt?: false
-        tax_lines?: Array<unknown>
+        tax_lines?: unknown[]
         taxes_included: boolean
         token?: string
         total_price?: string

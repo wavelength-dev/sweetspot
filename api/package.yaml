@@ -20,29 +20,29 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- text
-- servant-server
-- wai
-- wai-extra
-- wai-cors
-- warp
-- load-env
 - aeson
-- lens-aeson
-- transformers
-- hasql
-- contravariant
-- fast-logger
-- mtl
-- time
-- data-default
-- wreq
-- lens
-- scientific
-- utf8-string
-- purescript-bridge
 - casing
+- contravariant
+- data-default
 - envy
+- fast-logger
+- hasql
+- lens
+- lens-aeson
+- load-env
+- mtl
+- purescript-bridge
+- scientific
+- servant-server
+- text
+- time
+- transformers
+- utf8-string
+- wai
+- wai-cors
+- wai-extra
+- warp
+- wreq
 
 library:
   source-dirs: src

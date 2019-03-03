@@ -6,7 +6,7 @@ import Affjax as AX
 import Affjax.RequestBody as RequestBody
 import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut.Core (Json)
-import Data.Argonaut.Encode (encodeJson)
+import Supple.Data.Codec (encodeCreateExperiment)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -27,7 +27,7 @@ mkRequest endpoint = do
 
 
   res <- case endpoint of
-    CreateExperimentE body -> liftAff $ AX.post ResponseFormat.json path (RequestBody.json $ encodeJson body)
+    CreateExperimentE body -> liftAff $ AX.post ResponseFormat.json path (RequestBody.json $ encodeCreateExperiment body)
     _ -> liftAff $ AX.get ResponseFormat.json path
 
   case res.body of

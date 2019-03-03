@@ -1,11 +1,11 @@
 module Supple.AppM where
 
+import Debug.Trace
 import Prelude
 
 import Control.Monad.Reader.Trans (class MonadAsk, ReaderT, asks, runReaderT)
-import Data.Argonaut.Decode (decodeJson)
 import Data.Either (hush)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, invincible)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Routing.Duplex (print)
@@ -13,6 +13,7 @@ import Routing.Hash (setHash)
 import Supple.Api.Request (Endpoint(..), mkRequest)
 import Supple.Capability.Experiment (class ManageExperiments)
 import Supple.Capability.Navigate (class Navigate)
+import Supple.Data.Codec (decodeExperimentsRes, decodeProductsRes)
 import Supple.Data.Route as Route
 import Type.Equality (class TypeEquals, from)
 
@@ -46,11 +47,11 @@ instance navigateAppM :: Navigate AppM where
 instance manageExperimentsAppM :: ManageExperiments AppM where
   getExperiments =
     mkRequest ExperimentsE >>=
-      \json -> pure $ json >>= (hush <<< decodeJson)
+      \json -> pure $ json >>= (hush <<< decodeExperimentsRes)
 
   getProducts =
     mkRequest ProductsE >>=
-      \json -> pure $ json >>= (hush <<< decodeJson)
+      \json -> pure $ json >>= (hush <<< decodeProductsRes)
 
   createExperiment exp =
     mkRequest (CreateExperimentE exp) >>=

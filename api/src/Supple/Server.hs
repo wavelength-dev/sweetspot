@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -31,13 +32,13 @@ import Supple.Route.Static (StaticAPI, staticHandler)
 import Supple.Route.Health (HealthAPI, healthHandler)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
-type RootAPI = DashboardAPI :<|> InjectableAPI :<|> HealthAPI :<|> StaticAPI
+type RootAPI = "api" :> (DashboardAPI :<|> InjectableAPI) :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server :: ServerT RootAPI AppM
-server = dashboardHandler :<|> injectableHandler :<|> healthHandler :<|> staticHandler
+server = (dashboardHandler :<|> injectableHandler) :<|> healthHandler :<|> staticHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

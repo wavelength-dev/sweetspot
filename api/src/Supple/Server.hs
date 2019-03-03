@@ -40,7 +40,7 @@ server = dashboardHandler :<|> injectableHandler
 createApp :: AppCtx -> Application
 createApp ctx =
   corsMiddleware $
-  serve rootAPI $ hoistServer rootAPI (flip runReaderT ctx) server
+  serve rootAPI $ hoistServer rootAPI (`runReaderT` ctx) server
   where
     corsMiddleware :: Middleware
     corsMiddleware =

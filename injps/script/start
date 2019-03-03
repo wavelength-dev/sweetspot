@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo "🔁 Continuously building PureScript Injectable"
-pulp --watch build --to ../dist/injectable.js
+echo "=> Watching & building PureScript injectables"
+pulp --watch build --to ../dist/supple-inj.js

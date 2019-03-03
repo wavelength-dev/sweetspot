@@ -5,24 +5,24 @@ print_filesize() {
   echo "${FILE_SIZE}K -- $2"
 }
 
-echo "🚀 Building PureScript Injectable"
+echo "=> Building PureScript injectables"
 START=$(date +%s)
-pulp build --to ../dist/injectable.js
+pulp build --to ../dist/supple-inj.js
 if [ $? -ne 0 ]; then
     exit 1
 fi
-npx --quiet uglify-js --compress --mangle --output ../dist/injectable.min.js -- ../dist/injectable.js
+npx --quiet uglify-js --compress --mangle --output ../dist/supple-inj.min.js -- ../dist/supple-inj.js
 if [ $? -ne 0 ]; then
     exit 1
 fi
-gzip --keep --force ../dist/injectable.min.js
+gzip --keep --force ../dist/supple-inj.min.js
 if [ $? -ne 0 ]; then
     exit 1
 fi
 END=$(date +%s)
 BUILD_TIME=$(( $END - $START ))
-echo "👌 Finished build in ${BUILD_TIME}s"
-echo "🗜 Build size:"
-print_filesize "injectable.js" "Raw Output"
-print_filesize "injectable.min.js" "Minified"
-print_filesize "injectable.min.js.gz" "Minified and Compressed"
+echo "=> Finished build in ${BUILD_TIME}s"
+echo "=> Build size:"
+print_filesize "supple-inj.js" "Raw Output"
+print_filesize "supple-inj.min.js" "Minified"
+print_filesize "supple-inj.min.js.gz" "Minified and Compressed"

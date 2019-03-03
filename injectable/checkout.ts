@@ -26,11 +26,11 @@ const trackCheckout = (): void => {
 
   fetch(eventsUrl, {
     body: JSON.stringify({
+      lineItems: lineItems || null,
       page,
       pageUrl,
       step: step || null,
       token: token || null,
-      lineItems: lineItems || null,
     }),
     headers: {
       "Content-Type": "application/json",

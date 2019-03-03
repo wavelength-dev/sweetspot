@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "🔁 Continuously building PureScript Injectable"
+pulp --watch build --to ../dist/injectable.js

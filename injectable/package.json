@@ -27,5 +27,6 @@
     "tslint-config-prettier": "^1.17.0",
     "typescript": "^3.2.2",
     "watchify": "^3.11.0"
+    "typescript-tslint-plugin": "^0.3.1",
   }
 }

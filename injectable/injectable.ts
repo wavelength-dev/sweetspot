@@ -12,12 +12,14 @@ interface ApiExperiment {
   readonly _ubSku: string
   readonly _ubSvid: number
   readonly _ubUserId: number
+  readonly _ubExpId: number
 }
 
 interface Experiment {
   price: number
   sku: string
   svid: number
+  expId: number
 }
 
 // Assumes non-empty list
@@ -141,12 +143,11 @@ const getDOMContentLoaded = () =>
 const DOMPromise = getDOMContentLoaded()
 const expPromise = getExperiments()
 
-DOMPromise.then(trackView)
-
 Promise.all([DOMPromise, expPromise])
   .then(([_, apiExps]) => ({
     exps: (apiExps as ApiExperiment[]).map(
       (exp: ApiExperiment): Experiment => ({
+        expId: exp._ubExpId,
         price: exp._ubPrice,
         sku: exp._ubSku,
         svid: exp._ubSvid,
@@ -158,6 +159,11 @@ Promise.all([DOMPromise, expPromise])
     // TODO: carefully consider when to set the userId
     localStorage.setItem("supple_uid", String(userId))
     applyExperiments(exps)
+
+    // Assumes there's only one experiment running per user
+    const expId: number | null = (exps[0] || {}).expId || null
+    trackView(expId)
+
     log("success!")
     console.timeEnd("supple_complete")
   })

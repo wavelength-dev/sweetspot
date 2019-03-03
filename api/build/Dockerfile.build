@@ -1,4 +1,0 @@
-FROM fpco/stack-build:lts-13.5
-RUN mkdir /opt/build
-COPY . /opt/build
-RUN cd /opt/build && stack build --system-ghc --verbosity warn

@@ -43,14 +43,10 @@ cd ..
 echo "=> Finished building injectables"
 
 # API
-echo "=> Building api build image"
-docker build --file "api/build/Dockerfile.build" --tag supple/build --quiet ./api
+echo "=> Building image"
+docker build --quiet --tag supple .
 exit_on_failure
-echo "=> Finished building api build image"
-echo "=> Building executable image"
-docker build --file "api/build/Dockerfile" --tag supple --quiet ./api
-exit_on_failure
-echo "=> Finished building api executable image"
+echo "=> Finished building image"
 
 # Push to Google Container Registry
 echo "=> Pushing image to registry"

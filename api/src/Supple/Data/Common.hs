@@ -7,60 +7,96 @@ import Data.Scientific (Scientific)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
+-- | ---------------------------------------------------------------------------
+-- | Price
+-- | ---------------------------------------------------------------------------
 newtype Price =
   Price Scientific
-  deriving (Eq, Show, Generic)
-
-newtype Svid =
-  Svid Int
-  deriving (Eq, Show, Generic)
-
-newtype Pid =
-  Pid Int deriving (Eq, Show, Generic)
-
-newtype Sku =
-  Sku Text
-  deriving (Eq, Show, Generic)
-
-newtype UserId =
-  UserId Int
-  deriving (Eq, Show, Generic)
-
-newtype ExpId =
-  ExpId Int
-  deriving (Eq, Show, Generic)
-
-newtype BucketId =
-  BucketId Int
   deriving (Eq, Show, Generic)
 
 instance ToJSON Price
 
 instance FromJSON Price
 
-instance ToJSON Pid
-
-instance FromJSON Pid
+-- | ---------------------------------------------------------------------------
+-- | Svid
+-- | ---------------------------------------------------------------------------
+newtype Svid =
+  Svid Int
+  deriving (Eq, Show, Generic)
 
 instance ToJSON Svid
 
 instance FromJSON Svid
 
+-- | ---------------------------------------------------------------------------
+-- | Pid
+-- | ---------------------------------------------------------------------------
+newtype Pid =
+  Pid Int
+  deriving (Eq, Show, Generic)
+
+instance ToJSON Pid
+
+instance FromJSON Pid
+
+-- | ---------------------------------------------------------------------------
+-- | Sku
+-- | ---------------------------------------------------------------------------
+newtype Sku =
+  Sku Text
+  deriving (Eq, Show, Generic)
+
 instance ToJSON Sku
 
 instance FromJSON Sku
+
+-- | ---------------------------------------------------------------------------
+-- | UserId
+-- | ---------------------------------------------------------------------------
+newtype UserId =
+  UserId Int
+  deriving (Eq, Show, Generic)
 
 instance ToJSON UserId
 
 instance FromJSON UserId
 
+-- | ---------------------------------------------------------------------------
+-- | ExpId
+-- | ---------------------------------------------------------------------------
+newtype ExpId =
+  ExpId Int
+  deriving (Eq, Show, Generic)
+
 instance ToJSON ExpId
 
 instance FromJSON ExpId
+
+-- | ---------------------------------------------------------------------------
+-- | BucketId
+-- | ---------------------------------------------------------------------------
+newtype BucketId =
+  BucketId Int
+  deriving (Eq, Show, Generic)
 
 instance ToJSON BucketId
 
 instance FromJSON BucketId
 
+-- | ---------------------------------------------------------------------------
+-- | CampaignId
+-- | ---------------------------------------------------------------------------
+newtype CampaignId =
+  CampaignId Text
+  deriving (Eq, Show, Generic)
+
+instance ToJSON CampaignId
+
+instance FromJSON CampaignId
+
+-- | ---------------------------------------------------------------------------
+-- | EventType
+-- | ---------------------------------------------------------------------------
 data EventType =
   View

@@ -81,11 +81,11 @@ insertEvent conn tv = do
   where
     input = (View, toJSON tv)
 
-createExperiment :: Connection -> Sku -> Svid -> Price -> Text -> IO ()
-createExperiment conn sku svid price name = do
+createExperiment :: Connection -> Sku -> Svid -> Price -> CampaignId -> Text -> IO ()
+createExperiment conn sku svid price cmp name = do
   res <-
     Session.run
-      (createExperimentSession (sku, svid, price, name))
+      (createExperimentSession (sku, svid, price, cmp, name))
       conn
   case res of
     Right _ -> return ()

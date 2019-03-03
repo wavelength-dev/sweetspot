@@ -6,6 +6,7 @@ CREATE TABLE experiment_groups
 
 CREATE TABLE experiments
 (exp_id SERIAL PRIMARY KEY,
+ campaign_id TEXT,
  sku TEXT,
  name TEXT);
 
@@ -42,6 +43,7 @@ CREATE TABLE experiment_buckets
 CREATE TABLE events
 (id SERIAL,
  type TEXT,
+ FOREIGN KEY (campaign_id) REFERENCES experiments(campaign_id),
  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  payload JSONB);
 

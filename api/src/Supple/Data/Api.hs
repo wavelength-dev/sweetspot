@@ -104,10 +104,10 @@ instance ToJSON ExperimentBuckets
 -- | UserBucket
 -- | ---------------------------------------------------------------------------
 data UserBucket = UserBucket
-  { _uUserId :: !UserId
-  , _uBucketSku :: !Sku
-  , _uBucketSvid :: !Svid
-  , _uBucketPrice :: !Price
+  { _ubUserId :: !UserId
+  , _ubSku :: !Sku
+  , _ubSvid :: !Svid
+  , _ubPrice :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''UserBucket

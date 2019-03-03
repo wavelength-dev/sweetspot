@@ -33,10 +33,10 @@ userBucketsStatement = Statement sql encoder decoder True
         toUserBucket =
           \(uid, sku, svid, price) ->
             UserBucket
-              { _uUserId = UserId $ fromIntegral uid
-              , _uBucketSku = Sku sku
-              , _uBucketSvid = Svid $ fromIntegral svid
-              , _uBucketPrice = Price price
+              { _ubUserId = UserId $ fromIntegral uid
+              , _ubSku = Sku sku
+              , _ubSvid = Svid $ fromIntegral svid
+              , _ubPrice = Price price
               }
     unwrapUserId (UserId uid) = fromIntegral uid
 

@@ -42,6 +42,7 @@ newtype Experiment =
       _eExpId :: Number
     , _eSku :: String
     , _eName :: String
+    , _eCampaignId :: String
     }
 
 derive instance eqExperiment :: Eq Experiment
@@ -49,7 +50,7 @@ derive instance genericExperiment :: Generic Experiment _
 derive instance newtypeExperiment :: Newtype Experiment _
 
 --------------------------------------------------------------------------------
-_Experiment :: Iso' Experiment { _eExpId :: Number, _eSku :: String, _eName :: String}
+_Experiment :: Iso' Experiment { _eExpId :: Number, _eSku :: String, _eName :: String, _eCampaignId :: String}
 _Experiment = _Newtype
 
 eExpId :: Lens' Experiment Number
@@ -61,12 +62,16 @@ eSku = _Newtype <<< prop (SProxy :: SProxy "_eSku")
 eName :: Lens' Experiment String
 eName = _Newtype <<< prop (SProxy :: SProxy "_eName")
 
+eCampaignId :: Lens' Experiment String
+eCampaignId = _Newtype <<< prop (SProxy :: SProxy "_eCampaignId")
+
 --------------------------------------------------------------------------------
 newtype ExperimentBuckets =
     ExperimentBuckets {
       _ebExpId :: Number
     , _ebSku :: String
     , _ebName :: String
+    , _ebCampaignId :: String
     , _ebBuckets :: Array Bucket
     }
 
@@ -75,7 +80,7 @@ derive instance genericExperimentBuckets :: Generic ExperimentBuckets _
 derive instance newtypeExperimentBuckets :: Newtype ExperimentBuckets _
 
 --------------------------------------------------------------------------------
-_ExperimentBuckets :: Iso' ExperimentBuckets { _ebExpId :: Number, _ebSku :: String, _ebName :: String, _ebBuckets :: Array Bucket}
+_ExperimentBuckets :: Iso' ExperimentBuckets { _ebExpId :: Number, _ebSku :: String, _ebName :: String, _ebCampaignId :: String, _ebBuckets :: Array Bucket}
 _ExperimentBuckets = _Newtype
 
 ebExpId :: Lens' ExperimentBuckets Number
@@ -86,6 +91,9 @@ ebSku = _Newtype <<< prop (SProxy :: SProxy "_ebSku")
 
 ebName :: Lens' ExperimentBuckets String
 ebName = _Newtype <<< prop (SProxy :: SProxy "_ebName")
+
+ebCampaignId :: Lens' ExperimentBuckets String
+ebCampaignId = _Newtype <<< prop (SProxy :: SProxy "_ebCampaignId")
 
 ebBuckets :: Lens' ExperimentBuckets (Array Bucket)
 ebBuckets = _Newtype <<< prop (SProxy :: SProxy "_ebBuckets")

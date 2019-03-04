@@ -25,7 +25,8 @@ decodeExperiment json = do
   _eExpId <- o .: "_ebExpId"
   _eSku <- o .: "_ebSku"
   _eName <- o .: "_ebName"
-  pure $ Experiment { _eExpId, _eSku, _eName }
+  _eCampaignId <- o .: "_ebCampaignId"
+  pure $ Experiment { _eExpId, _eSku, _eName, _eCampaignId }
 
 decodeVariant :: Json -> Either String Variant
 decodeVariant json = do

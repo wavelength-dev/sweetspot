@@ -13,6 +13,7 @@ interface ApiExperiment {
   readonly _ubSvid: number
   readonly _ubUserId: number
   readonly _ubExpId: number
+  readonly _ubBucketId: number
 }
 
 interface Experiment {
@@ -20,6 +21,7 @@ interface Experiment {
   sku: string
   svid: number
   expId: number
+  bucketId: number
 }
 
 // Assumes non-empty list
@@ -147,6 +149,7 @@ Promise.all([DOMPromise, expPromise])
   .then(([_, apiExps]) => ({
     exps: (apiExps as ApiExperiment[]).map(
       (exp: ApiExperiment): Experiment => ({
+        bucketId: exp._ubBucketId,
         expId: exp._ubExpId,
         price: exp._ubPrice,
         sku: exp._ubSku,
@@ -161,8 +164,10 @@ Promise.all([DOMPromise, expPromise])
     applyExperiments(exps)
 
     // Assumes there's only one experiment running per user
-    const expId: number | null = (exps[0] || {}).expId || null
-    trackView(expId)
+    const exp: Experiment | undefined = exps[0]
+    const expId: number | null = (exp && exp.expId) || null
+    const bucketId: number | null = (exp && exp.bucketId) || null
+    trackView(expId, bucketId)
 
     log("success!")
     console.timeEnd("supple_complete")

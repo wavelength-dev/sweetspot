@@ -111,6 +111,7 @@ data UserBucket = UserBucket
   , _ubSvid :: !Svid
   , _ubPrice :: !Price
   , _ubExpId :: !ExpId
+  , _ubBucketId :: !BucketId
   } deriving (Eq, Generic, Show)
 
 makeLenses ''UserBucket
@@ -138,6 +139,7 @@ instance FromJSON CreateExperiment
 -- | ---------------------------------------------------------------------------
 data ProductDetailsView = ProductDetailsView
   { expId :: !(Maybe ExpId)
+  , bucketId :: !(Maybe BucketId)
   , page :: !Text -- product
   , pageUrl :: !Text
   , productId :: Int
@@ -153,6 +155,7 @@ instance ToJSON ProductDetailsView
 -- | ---------------------------------------------------------------------------
 data ProductListingsView = ProductListingsView
   { expId :: !(Maybe ExpId)
+  , bucketId :: !(Maybe BucketId)
   , page :: !Text -- collection
   , pageUrl :: !Text
   , productIds :: ![Int]
@@ -168,6 +171,7 @@ instance ToJSON ProductListingsView
 -- | ---------------------------------------------------------------------------
 data CollectionListingsView = CollectionListingsView
   { expId :: !(Maybe ExpId)
+  , bucketId :: !(Maybe BucketId)
   , page :: !Text -- collections
   , pageUrl :: !Text
   , userId :: !(Maybe Text)
@@ -211,6 +215,7 @@ instance ToJSON CheckoutEvent
 -- | ---------------------------------------------------------------------------
 data UnknownView = UnknownView
   { expId :: !(Maybe ExpId)
+  , bucketId :: !(Maybe BucketId)
   , page :: !Text -- unknown
   , pageUrl :: !Text
   , userId :: !(Maybe Text)

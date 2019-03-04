@@ -238,11 +238,15 @@ const getViewMeta = (baseMeta: BaseViewEvent): ViewEvent => {
   }
 }
 
-export const trackView = (expId: number | null): void => {
+export const trackView = (
+  expId: number | null,
+  bucketId: number | null,
+): void => {
   const userId = localStorage.getItem("supple_uid")
   const page = detectPage()
 
   const baseMeta = {
+    bucketId,
     expId,
     pageUrl: window.location.href,
     userId,

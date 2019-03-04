@@ -25,7 +25,7 @@ userBucketsStatement = Statement sql encoder decoder True
          , "INNER JOIN experiment_buckets ON experiment_buckets.bucket_id = buckets.bucket_id "
          , "WHERE users.user_id = $1;"
          ])
-    encoder = unwrapUserId >$< Encoders.param Encoders.int8
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.rowList $ toUserBucket <$> row
       where
         row =
@@ -73,10 +73,8 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
   where
     sql = "INSERT INTO bucket_users (user_id, bucket_id) VALUES ($1, $2);"
     encoder =
-      (getUid . fst >$< Encoders.param Encoders.int8) <>
-      (getBuid . snd >$< Encoders.param Encoders.int8)
-    getUid (UserId id) = fromIntegral id
-    getBuid (BucketId id) = fromIntegral id
+      (toDatabaseInt . fst >$< Encoders.param Encoders.int8) <>
+      (toDatabaseInt . snd >$< Encoders.param Encoders.int8)
 
 getExperimentStatement :: Statement ExpId Experiment
 getExperimentStatement = Statement sql encoder decoder True
@@ -84,8 +82,7 @@ getExperimentStatement = Statement sql encoder decoder True
     sql = mconcat
       [ "SELECT exp_id, sku, name, campaign_id FROM experiments "
       , "WHERE exp_id = $1;"]
-    encoder = unwrapId >$< Encoders.param Encoders.int8
-    unwrapId (ExpId id) = fromIntegral id
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ toExperiment <$> row
       where
         row =
@@ -152,7 +149,7 @@ insertBucketStatement = Statement sql encoder decoder True
       (getPrice >$< Encoders.param Encoders.numeric)
     decoder = Decoders.singleRow $ wrapBuid <$> Decoders.column Decoders.int8
     wrapBuid buid = BucketId $ fromIntegral buid
-    getSvid (Svid s, _, _) = fromIntegral s
+    getSvid (s, _, _) = toDatabaseInt s
     getSku (_, Sku s, _) = s
     getPrice (_, _, (Price p)) = p
 
@@ -165,10 +162,8 @@ insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
         , "VALUES ($1, $2);"
         ]
     encoder =
-      (getExpId . fst >$< Encoders.param Encoders.int8) <>
-      (getBuId . snd >$< Encoders.param Encoders.int8)
-    getExpId (ExpId id) = fromIntegral id
-    getBuId (BucketId id) = fromIntegral id
+      (toDatabaseInt . fst >$< Encoders.param Encoders.int8) <>
+      (toDatabaseInt . snd >$< Encoders.param Encoders.int8)
 
 getBucketsForExperimentStatement :: Statement ExpId [Bucket]
 getBucketsForExperimentStatement = Statement sql encoder decoder True
@@ -180,7 +175,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
         , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
         , "WHERE ebs.exp_id = $1;"
         ]
-    encoder = unwrapExpId >$< Encoders.param Encoders.int8
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.rowList $ toBucket <$> row
       where
         row =
@@ -194,7 +189,6 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
               , _bPrice = Price p
               , _bSvid = Svid $ fromIntegral sv
               }
-    unwrapExpId (ExpId id) = fromIntegral id
 
 insertEventStatement :: Statement (EventType, Value) ()
 insertEventStatement = Statement sql encoder decoder True
@@ -209,9 +203,8 @@ getBucketUserCountStatement :: Statement BucketId Int
 getBucketUserCountStatement = Statement sql encoder decoder True
   where
     sql = "SELECT COUNT(DISTINCT user_id) FROM bucket_users WHERE bucket_id = $1;"
-    encoder = unwrapId >$< Encoders.param Encoders.int8
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
-    unwrapId (BucketId id) = fromIntegral id
 
 getBucketImpressionCountStatement :: Statement BucketId Int
 getBucketImpressionCountStatement = Statement sql encoder decoder True
@@ -219,6 +212,5 @@ getBucketImpressionCountStatement = Statement sql encoder decoder True
     sql = mconcat
       [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
       , "AND (payload->>'bucketId')::int = $1;"]
-    encoder = unwrapId >$< Encoders.param Encoders.int8
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
-    unwrapId (BucketId id) = fromIntegral id

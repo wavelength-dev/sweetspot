@@ -3,9 +3,13 @@
 module Supple.Data.Common where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Int (Int64)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import GHC.Generics (Generic)
+
+class ToDatabaseInt a where
+  toDatabaseInt :: a -> Int64
 
 -- | ---------------------------------------------------------------------------
 -- | Price
@@ -28,6 +32,9 @@ newtype Svid =
 instance ToJSON Svid
 
 instance FromJSON Svid
+
+instance ToDatabaseInt Svid where
+  toDatabaseInt (Svid i) = fromIntegral i
 
 -- | ---------------------------------------------------------------------------
 -- | Pid
@@ -62,6 +69,9 @@ instance ToJSON UserId
 
 instance FromJSON UserId
 
+instance ToDatabaseInt UserId where
+  toDatabaseInt (UserId i) = fromIntegral i
+
 -- | ---------------------------------------------------------------------------
 -- | ExpId
 -- | ---------------------------------------------------------------------------
@@ -73,6 +83,9 @@ instance ToJSON ExpId
 
 instance FromJSON ExpId
 
+instance ToDatabaseInt ExpId where
+  toDatabaseInt (ExpId i) = fromIntegral i
+
 -- | ---------------------------------------------------------------------------
 -- | BucketId
 -- | ---------------------------------------------------------------------------
@@ -83,6 +96,9 @@ newtype BucketId =
 instance ToJSON BucketId
 
 instance FromJSON BucketId
+
+instance ToDatabaseInt BucketId where
+  toDatabaseInt (BucketId i) = fromIntegral i
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignId

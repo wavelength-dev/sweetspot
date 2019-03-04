@@ -41,6 +41,7 @@ getBucketsSession = do
             { _ebExpId = id
             , _ebSku = exp ^. eSku
             , _ebName = exp ^. eName
+            , _ebCampaignId = exp ^. eCampaignId
             , _ebBuckets = bs
             }
 

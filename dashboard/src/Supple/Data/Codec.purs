@@ -57,4 +57,5 @@ encodeCreateExperiment ce =
   "_ceProductId" := ce ^. ceProductId
   ~> "_cePrice" := ce ^. cePrice
   ~> "_ceName" := ce ^. ceName
+  ~> "_ceCampaignId" := ce ^. ceCampaignId
   ~> jsonEmptyObject

@@ -43,7 +43,7 @@ component =
     renderExperiment :: forall i p . Experiment -> HH.HTML i p
     renderExperiment e =
       HH.a
-        [HP.href $ "/#/experiment/" <> show (e ^. eExpId)]
+        [HP.href $ "#/experiment/" <> show (e ^. eExpId)]
         [HH.text $ e ^. eName ]
 
     render :: State -> H.ComponentHTML Query
@@ -58,6 +58,6 @@ component =
 
         , HH.div_ $ renderExperiment <$> state.experiments
         , HH.a
-            [HP.href "/#/experiment/create"]
+            [HP.href "#/experiment/create"]
             [HH.text "Create experiment"]
         ]

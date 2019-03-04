@@ -11,7 +11,7 @@ import qualified Hasql.Session as Session
 import Supple.Data.Common
 import Supple.Database.Statements
 import Supple.Data.Api
-import Control.Lens ((^.))
+import Control.Lens ((^.), (^..), (&))
 
 getUserBucketSession :: UserId -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketsStatement
@@ -53,3 +53,27 @@ createExperimentSession (sku, svid, price, cmp, name) = do
   expId <- Session.statement (sku, cmp, name) insertExperimentStatement
   bucketId <- Session.statement (svid, sku, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement
+
+getExperimentStatsSession :: ExpId -> Session ExperimentStats
+getExperimentStatsSession expId = do
+  exp <- Session.statement expId getExperimentStatement
+  bs <- Session.statement expId getBucketsForExperimentStatement
+  bstats <- mapM getBucketStats bs
+  return $ ExperimentStats
+    { _esExpId = exp ^. eExpId
+    , _esUserCount = bstats ^.. traverse . bsUserCount & sum
+    , _esImpressionCount = bstats ^.. traverse . bsImpressionCount & sum
+    , _esBuckets = bstats
+    }
+
+  where
+    getBucketStats :: Bucket -> Session BucketStats
+    getBucketStats b = do
+      let id = b ^. bBucketId
+      users <- Session.statement id getBucketUserCountStatement
+      impressions <- Session.statement id getBucketImpressionCountStatement
+      return $ BucketStats
+        { _bsBucketId = id
+        , _bsUserCount = users
+        , _bsImpressionCount = impressions
+        }

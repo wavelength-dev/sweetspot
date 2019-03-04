@@ -119,6 +119,31 @@ makeLenses ''UserBucket
 instance ToJSON UserBucket
 
 -- | ---------------------------------------------------------------------------
+-- | BucketStats
+-- | ---------------------------------------------------------------------------
+data BucketStats = BucketStats
+  { _bsBucketId :: !BucketId
+  , _bsUserCount :: !Int
+  , _bsImpressionCount :: !Int
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''BucketStats
+
+instance ToJSON BucketStats
+
+-- | ---------------------------------------------------------------------------
+-- | ExperimentStats
+-- | ---------------------------------------------------------------------------
+data ExperimentStats = ExperimentStats
+  { _esExpId :: !ExpId
+  , _esUserCount :: !Int
+  , _esImpressionCount :: !Int
+  , _esBuckets :: ![BucketStats]
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON ExperimentStats
+
+-- | ---------------------------------------------------------------------------
 -- | CreateExperiment
 -- | ---------------------------------------------------------------------------
 data CreateExperiment = CreateExperiment

@@ -9,6 +9,7 @@ module Supple.Database
   , createExperiment
   , getNewUserBuckets
   , getExperimentBuckets
+  , getExperimentStats
   , DbConfig(..)
   , insertEvent
   ) where
@@ -18,9 +19,8 @@ import Data.ByteString.UTF8 (fromString)
 import Data.Text (Text)
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Supple.Data.Api (TrackView)
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
-import Supple.Data.Api (ExperimentBuckets, UserBucket)
+import Supple.Data.Api
 import Supple.Database.Sessions
 import Supple.Data.Common
 
@@ -90,3 +90,12 @@ createExperiment conn sku svid price cmp name = do
   case res of
     Right _ -> return ()
     Left err -> (putStrLn . show) err *> return ()
+
+getExperimentStats :: Connection -> ExpId -> IO ExperimentStats
+getExperimentStats conn expId = do
+  res <- Session.run (getExperimentStatsSession expId) conn
+  case res of
+    Right res -> return res
+    Left err -> do
+      print err
+      undefined

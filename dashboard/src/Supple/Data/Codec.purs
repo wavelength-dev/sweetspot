@@ -1,6 +1,5 @@
 module Supple.Data.Codec where
 
-import Debug.Trace
 import Prelude
 import Supple.Data.Api
 import Data.Argonaut.Core (Json, jsonEmptyObject)
@@ -9,7 +8,6 @@ import Data.Argonaut.Encode ((:=), (~>))
 import Data.Either (Either)
 import Data.Lens ((^.))
 import Data.Traversable (sequence)
-
 
 decodeBucket :: Json -> Either String Bucket
 decodeBucket json = do

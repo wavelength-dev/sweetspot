@@ -154,6 +154,7 @@ newtype CreateExperiment =
       _ceProductId :: Number
     , _cePrice :: Number
     , _ceName :: String
+    , _ceCampaignId :: String
     }
 
 derive instance eqCreateExperiment :: Eq CreateExperiment
@@ -161,7 +162,7 @@ derive instance genericCreateExperiment :: Generic CreateExperiment _
 derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
 
 --------------------------------------------------------------------------------
-_CreateExperiment :: Iso' CreateExperiment { _ceProductId :: Number, _cePrice :: Number, _ceName :: String}
+_CreateExperiment :: Iso' CreateExperiment { _ceProductId :: Number, _cePrice :: Number, _ceName :: String, _ceCampaignId :: String}
 _CreateExperiment = _Newtype
 
 ceProductId :: Lens' CreateExperiment Number
@@ -172,6 +173,9 @@ cePrice = _Newtype <<< prop (SProxy :: SProxy "_cePrice")
 
 ceName :: Lens' CreateExperiment String
 ceName = _Newtype <<< prop (SProxy :: SProxy "_ceName")
+
+ceCampaignId :: Lens' CreateExperiment String
+ceCampaignId = _Newtype <<< prop (SProxy :: SProxy "_ceCampaignId")
 
 --------------------------------------------------------------------------------
 newtype OkResponse =

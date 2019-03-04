@@ -1,6 +1,8 @@
 module Supple.Component.Form.Experiment where
 
+import Data.Lens
 import Prelude
+import Supple.Data.Api
 
 import Data.Array (find, head, insert)
 import Data.Maybe (Maybe(..), isJust)
@@ -22,13 +24,12 @@ import Supple.Component.Form.TextField as TextField
 import Supple.Component.Form.Validation (Error, isGtZero, isNonEmpty, isNumber)
 import Supple.Component.Polaris as P
 import Supple.Component.Util (css)
-import Data.Lens
-import Supple.Data.Api
 
 newtype ExperimentForm r f = ExperimentForm (r
   ( _ceName :: f Error String String
   , _ceProductId :: f Error String Number
-  , _cePrice:: f Error String Number
+  , _cePrice :: f Error String Number
+  , _ceCampaignId :: f Error String String
   ))
 
 derive instance newtypeForm :: Newtype (ExperimentForm r f) _
@@ -38,6 +39,7 @@ validators = ExperimentForm
   { _ceName: isNonEmpty
   , _ceProductId: isNumber >>> isGtZero
   , _cePrice: isNumber >>> isGtZero
+  , _ceCampaignId: isNonEmpty
   }
 
 renderFormlessWith
@@ -80,6 +82,12 @@ renderFormlessWith products =
                 , onUpdate: HE.input $ F.asyncSetValidate debounceTime _price
                 }
 
+            , TextField.component
+                { placeholder: "Campaign id"
+                , value: F.getInput _campaignId fstate.form
+                , onUpdate: HE.input $ F.asyncSetValidate debounceTime _campaignId
+                }
+
             , Button.component
                 { label: "Submit"
                 , onClick: HE.input_ F.submit
@@ -91,6 +99,7 @@ renderFormlessWith products =
         _name = SProxy :: SProxy "_ceName"
         _productId = SProxy :: SProxy "_ceProductId"
         _price = SProxy :: SProxy "_cePrice"
+        _campaignId = SProxy :: SProxy "_ceCampaignId"
         debounceTime = Milliseconds 300.0
 
 type State =
@@ -134,7 +143,7 @@ component = H.parentComponent
         Nothing -> ""
       initialInputs :: ExperimentForm Record F.InputField
       initialInputs = F.wrapInputFields
-        { _ceName: "", _ceProductId: defaultPid, _cePrice: "" }
+        { _ceName: "", _ceProductId: defaultPid, _cePrice: "", _ceCampaignId: ""}
 
 
   eval :: Query ~> H.ParentDSL State Query (ChildQuery m) ChildSlot Void m

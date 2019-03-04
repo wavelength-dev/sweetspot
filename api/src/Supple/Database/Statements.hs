@@ -17,7 +17,8 @@ userBucketsStatement = Statement sql encoder decoder True
   where
     sql =
       (mconcat
-         [ "SELECT users.user_id, buckets.sku, buckets.svid, buckets.price, experiment_buckets.exp_id "
+         [ "SELECT users.user_id, buckets.sku, buckets.svid, buckets.price, "
+         , "experiment_buckets.exp_id, buckets.bucket_id "
          , "FROM bucket_users "
          , "INNER JOIN users ON bucket_users.user_id = users.user_id "
          , "INNER JOIN buckets ON bucket_users.bucket_id = buckets.bucket_id "
@@ -28,19 +29,21 @@ userBucketsStatement = Statement sql encoder decoder True
     decoder = Decoders.rowList $ toUserBucket <$> row
       where
         row =
-          (,,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.numeric <*>
+          Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.int8
         toUserBucket =
-          \(uid, sku, svid, price, expId) ->
+          \(uid, sku, svid, price, expId, bucketId) ->
             UserBucket
               { _ubUserId = UserId $ fromIntegral uid
               , _ubSku = Sku sku
               , _ubSvid = Svid $ fromIntegral svid
               , _ubPrice = Price price
               , _ubExpId = ExpId $ fromIntegral expId
+              , _ubBucketId = BucketId $ fromIntegral bucketId
               }
     unwrapUserId (UserId uid) = fromIntegral uid
 

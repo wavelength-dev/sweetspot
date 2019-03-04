@@ -15,9 +15,13 @@ import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
-import Supple.Data.Common ()
 import Supple.Data.Api
-import Supple.Database (createExperiment, getExperimentBuckets)
+import Supple.Data.Common
+import Supple.Database
+  ( createExperiment
+  , getExperimentBuckets
+  , getExperimentStats
+  )
 import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
@@ -27,8 +31,11 @@ type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
 type CreateExperimentRoute
    = "experiments" :> ReqBody '[ JSON] CreateExperiment :> Post '[ JSON] OkResponse
 
+type ExperimentStatsRoute
+   = "experiments" :> Capture "expId" Int :> "stats" :> Get '[ JSON] ExperimentStats
+
 type DashboardAPI
-   = ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute
+   = ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> ExperimentStatsRoute
 
 getProductsHandler :: AppM [Product]
 getProductsHandler = do
@@ -53,19 +60,23 @@ createExperimentHandler ce = do
 
   case maybeNewProduct of
     Just newProduct -> do
-      let
-        variant = newProduct ^?! pVariants . element 0
-        sku = variant ^. vSku
-        svid = variant ^. vId
-        price = ce ^. cePrice
-        name = ce ^. ceName
-        campaignId = ce ^. ceCampaignId
+      let variant = newProduct ^?! pVariants . element 0
+          sku = variant ^. vSku
+          svid = variant ^. vId
+          price = ce ^. cePrice
+          name = ce ^. ceName
+          campaignId = ce ^. ceCampaignId
 
       dbconn <- asks _getDbConn
       liftIO $ createExperiment dbconn sku svid price campaignId name
       return OkResponse {message = "Created experiment"}
-
     Nothing -> throwError $ err500 {errBody = "Something went wrong"}
 
+getExperimentStatsHandler :: Int -> AppM ExperimentStats
+getExperimentStatsHandler expId = do
+  dbconn <- asks _getDbConn
+  liftIO $ getExperimentStats dbconn (ExpId expId)
+
 dashboardHandler =
-  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler
+  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|>
+  getExperimentStatsHandler

@@ -78,6 +78,29 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
     getUid (UserId id) = fromIntegral id
     getBuid (BucketId id) = fromIntegral id
 
+getExperimentStatement :: Statement ExpId Experiment
+getExperimentStatement = Statement sql encoder decoder True
+  where
+    sql = mconcat
+      [ "SELECT exp_id, sku, name, campaign_id FROM experiments "
+      , "WHERE exp_id = $1;"]
+    encoder = unwrapId >$< Encoders.param Encoders.int8
+    unwrapId (ExpId id) = fromIntegral id
+    decoder = Decoders.singleRow $ toExperiment <$> row
+      where
+        row =
+          (,,,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text <*>
+          Decoders.column Decoders.text <*>
+          Decoders.column Decoders.text
+        toExperiment =
+          \(expId, sku, name, cmpId) ->
+            Experiment
+              { _eExpId = ExpId $ fromIntegral expId
+              , _eSku = Sku sku
+              , _eName = name
+              , _eCampaignId = CampaignId cmpId}
+
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
   where
@@ -181,3 +204,21 @@ insertEventStatement = Statement sql encoder decoder True
       (eventTypeToText . fst >$< Encoders.param Encoders.text) <>
       (snd >$< Encoders.param Encoders.jsonb)
     decoder = Decoders.unit
+
+getBucketUserCountStatement :: Statement BucketId Int
+getBucketUserCountStatement = Statement sql encoder decoder True
+  where
+    sql = "SELECT COUNT(DISTINCT user_id) FROM bucket_users WHERE bucket_id = $1;"
+    encoder = unwrapId >$< Encoders.param Encoders.int8
+    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+    unwrapId (BucketId id) = fromIntegral id
+
+getBucketImpressionCountStatement :: Statement BucketId Int
+getBucketImpressionCountStatement = Statement sql encoder decoder True
+  where
+    sql = mconcat
+      [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
+      , "AND (payload->>'bucketId')::int = $1;"]
+    encoder = unwrapId >$< Encoders.param Encoders.int8
+    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+    unwrapId (BucketId id) = fromIntegral id

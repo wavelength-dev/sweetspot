@@ -82,6 +82,7 @@ data Experiment = Experiment
   { _eExpId :: !ExpId
   , _eSku :: !Sku
   , _eName :: !Text
+  , _eCampaignId :: !CampaignId
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Experiment
@@ -93,6 +94,7 @@ data ExperimentBuckets = ExperimentBuckets
   { _ebExpId :: !ExpId
   , _ebSku :: !Sku
   , _ebName :: !Text
+  , _ebCampaignId :: !CampaignId
   , _ebBuckets :: ![Bucket]
   } deriving (Eq, Generic, Show)
 

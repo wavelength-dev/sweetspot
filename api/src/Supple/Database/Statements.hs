@@ -78,17 +78,21 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
   where
-    sql = "SELECT exp_id, sku, name FROM experiments;"
+    sql = "SELECT exp_id, sku, name, campaign_id FROM experiments;"
     decoder = Decoders.rowList $ toExperiment <$> row
       where
         row =
-          (,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.text
         toExperiment =
-          \(exp_id, sku, name) ->
+          \(expId, sku, name, cmpId) ->
             Experiment
-              {_eExpId = ExpId $ fromIntegral exp_id, _eSku = Sku sku, _eName = name}
+              { _eExpId = ExpId $ fromIntegral expId
+              , _eSku = Sku sku
+              , _eName = name
+              , _eCampaignId = CampaignId cmpId}
 
 insertExperimentStatement :: Statement (Sku, CampaignId, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True

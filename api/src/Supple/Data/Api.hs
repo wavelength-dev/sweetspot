@@ -125,6 +125,7 @@ data BucketStats = BucketStats
   { _bsBucketId :: !BucketId
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
+  , _bsConversionCount :: !Int
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats

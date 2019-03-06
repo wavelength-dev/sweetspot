@@ -211,6 +211,19 @@ getBucketImpressionCountStatement = Statement sql encoder decoder True
   where
     sql = mconcat
       [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
-      , "AND (payload->>'bucketId')::int = $1;"]
+      , "AND (payload->>'bucketId')::int = $1;"
+      ]
+    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
+    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+
+getBucketConversionCountStatement :: Statement BucketId Int
+getBucketConversionCountStatement = Statement sql encoder decoder True
+  where
+    sql = mconcat
+      [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
+      , "AND (payload->>'bucketId')::int = $1 "
+      , "AND (payload->>'page')::text = 'checkout' "
+      , "AND (payload->>'step')::text = 'thank_you';"
+      ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8

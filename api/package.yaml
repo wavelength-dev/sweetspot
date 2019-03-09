@@ -41,7 +41,6 @@ dependencies:
 - utf8-string
 - wai
 - wai-cors
-- wai-extra
 - warp
 - wreq
 

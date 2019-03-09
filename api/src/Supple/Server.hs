@@ -7,7 +7,6 @@ module Supple.Server
   ) where
 
 import Control.Monad.Reader (runReaderT)
-import Data.Default (def)
 import Network.Wai (Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors
@@ -20,8 +19,6 @@ import Network.Wai.Middleware.Cors
   , simpleHeaders
   , simpleMethods
   )
-import Network.Wai.Middleware.RequestLogger
-import Network.Wai.Middleware.RequestLogger.JSON (formatAsJSON)
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Database (DbConfig(..), getDbConnection)
@@ -60,11 +57,6 @@ createApp ctx =
               Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
           }
 
-jsonRequestLogger :: IO Middleware
-jsonRequestLogger =
-  mkRequestLogger $
-  def {outputFormat = CustomOutputFormatWithDetails formatAsJSON}
-
 runServer :: IO ()
 runServer = do
   result <- getEnvConfig
@@ -80,8 +72,7 @@ runServer = do
           , user = dbUser envConfig
           }
   dbconn <- getDbConnection dbConfig
-  warpLogger <- jsonRequestLogger
   appLogger <- newStdoutLoggerSet defaultBufSize
   let config = AppConfig "dev" "0.1"
       ctx = AppCtx config appLogger dbconn
-  Warp.run 8082 $ warpLogger $ createApp ctx
+  Warp.run 8082 $ createApp ctx

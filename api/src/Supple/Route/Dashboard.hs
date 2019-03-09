@@ -53,7 +53,7 @@ getExperimentsHandler = do
   case res of
     Right exps -> return exps
     Left err -> do
-      L.log $ "Error getting experiments " <> err
+      L.error $ "Error getting experiments " <> err
       throwError internalServerErr
 
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
@@ -78,10 +78,10 @@ createExperimentHandler ce = do
       res <- liftIO $ createExperiment dbconn sku svid price campaignId name
       case res of
         Right _ -> do
-          L.log "Created experiment"
+          L.info "Created experiment"
           return OkResponse {message = "Created experiment"}
         Left err -> do
-          L.log $ "Error creating experiment " <> err
+          L.error $ "Error creating experiment " <> err
           throwError internalServerErr
     Nothing -> throwError internalServerErr
 
@@ -90,9 +90,9 @@ getExperimentStatsHandler expId = do
   dbconn <- asks _getDbConn
   res <- liftIO $ getExperimentStats dbconn (ExpId expId)
   case res of
-    Right exps -> L.log "Got experiment stats" >> return exps
+    Right exps -> L.info "Got experiment stats" >> return exps
     Left err -> do
-      L.log $ "Error getting experiment stats " <> err
+      L.error $ "Error getting experiment stats " <> err
       throwError internalServerErr
 
 dashboardHandler =

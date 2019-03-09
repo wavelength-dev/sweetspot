@@ -32,18 +32,18 @@ getUserBucketHandler (Just uid) = do
   res <- liftIO $ getUserBuckets dbconn (UserId uid)
   case res of
     Right res -> do
-      L.log $ "Got bucket for userId: " <> (T.pack $ show uid)
+      L.info $ "Got bucket for userId: " <> (T.pack $ show uid)
       return res
     Left err -> do
-      L.log $ "Error getting user bucket: " <> err
+      L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
 getUserBucketHandler Nothing = do
   dbconn <- asks _getDbConn
   res <- liftIO $ getNewUserBuckets dbconn
   case res of
-    Right res -> L.log "Assigned user to bucket" >> return res
+    Right res -> L.info "Assigned user to bucket" >> return res
     Left err -> do
-      L.log $ "Error assigning user to bucket " <> err
+      L.error $ "Error assigning user to bucket " <> err
       throwError internalServerErr
 
 trackViewHandler :: TrackView -> AppM OkResponse
@@ -52,9 +52,9 @@ trackViewHandler tv = do
   res <- liftIO $ insertEvent dbconn tv
   case res of
     Right _ ->
-      L.log "Tracked view" >> return OkResponse {message = "Event received"}
+      L.info "Tracked view" >> return OkResponse {message = "Event received"}
     Left err -> do
-      L.log $ "Error tracking view " <> err
+      L.error $ "Error tracking view " <> err
       throwError internalServerErr
 
 injectableHandler = getUserBucketHandler :<|> trackViewHandler

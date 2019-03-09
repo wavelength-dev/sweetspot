@@ -87,10 +87,14 @@ getExperimentStatsHandler expId = do
   pool <- asks _getDbPool
   res <- liftIO $ getExperimentStats pool (ExpId expId)
   case res of
-    Right exps -> L.info "Got experiment stats" >> return exps
+    Right exps ->
+      L.info ("Got experiment stats for expId: " <> eid) >> return exps
     Left err -> do
-      L.error $ "Error getting experiment stats " <> err
+      L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
+        err
       throwError internalServerErr
+  where
+    eid = T.pack $ show expId
 
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|>

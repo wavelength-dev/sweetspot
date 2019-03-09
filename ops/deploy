@@ -18,7 +18,7 @@ if [ ${CURRENT_BRANCH} != "master" ]; then
   exit 1
 fi
 
-if ! git diff-index --quiet origin/master api; then
+if ! git diff-index --quiet origin/master; then
   echo "Stash or, commit and push your changes, before deploying"
   exit 1
 fi

@@ -1,6 +1,6 @@
-import { experimentsURL } from './constants';
-import { log } from "./logging"
+import { experimentsURL } from "./constants"
 import { trackView } from "./events"
+import { log } from "./logging"
 
 /* Unix Timestamp in miliseconds */
 type Timestamp = number

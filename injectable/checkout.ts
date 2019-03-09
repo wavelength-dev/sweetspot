@@ -3,10 +3,10 @@ import { detectPage } from "./events"
 import { log } from "./logging"
 
 const trackCheckout = (): void => {
-  log("Tracking checkout")
+  log({ message: "Tracking checkout" })
   const page = detectPage()
   if (page !== "checkout") {
-    log("Not a checkout page, skipping tracking")
+    log({ message: "Not a checkout page, severity: skipping tracking" })
     return
   }
 
@@ -38,7 +38,7 @@ const trackCheckout = (): void => {
     },
     method: "POST",
   }).catch(err => {
-    log(err, "error")
+    log({ message: err, severity: "error" })
   })
 }
 

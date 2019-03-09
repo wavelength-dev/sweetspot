@@ -1,24 +1,48 @@
+import { logURL } from "./constants"
+
 type Severity = "info" | "warn" | "error"
-type LogFn = (msg: string, severity?: Severity) => void
+interface Log {
+  message: string
+  payload?: {}
+  severity?: Severity
+}
+type LogFn = (arg0: Log) => void
 
-const DEBUG = true
-const noop = () => undefined
-
-const consoleLog = (msg: string, severity = "info") => {
+const consoleLog: LogFn = ({ message, payload, severity }: Log) => {
   switch (severity) {
     case "error": {
-      console.error(msg)
+      console.error(message, payload)
       break
     }
     case "info": {
-      console.log(msg)
+      console.log(message, payload)
       break
     }
     case "warn": {
-      console.warn(msg)
+      console.warn(message, payload)
       break
     }
   }
 }
 
-export const log: LogFn = DEBUG ? consoleLog : noop
+const transportOverHTTPLog: LogFn = ({ message, payload, severity }: Log) => {
+  fetch(logURL, {
+    body: JSON.stringify({ message, payload, severity }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  })
+  // .catch
+  // Well this is bad. We're in the dark.
+  // Is there something we could still do?
+}
+
+// injected by envify
+declare var process: {
+  env: {
+    ENV: "production" | "staging" | "development",
+  },
+}
+export const log: LogFn =
+  process.env.ENV === "staging" ? transportOverHTTPLog : consoleLog

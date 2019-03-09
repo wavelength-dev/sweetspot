@@ -9,12 +9,18 @@ module Supple.Route.Injectable
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
+import Data.Aeson (Value)
 import Data.Text as T
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (OkResponse(..), TrackView, UserBucket)
 import Supple.Data.Common
-import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
+import Supple.Database
+  ( getNewUserBuckets
+  , getUserBuckets
+  , insertEvent
+  , insertLogEvent
+  )
 import qualified Supple.Logger as L
 import Supple.Route.Util (internalServerErr)
 
@@ -24,7 +30,9 @@ type UserBucketRoute
 type EventRoute
    = "event" :> ReqBody '[ JSON] TrackView :> Post '[ JSON] OkResponse
 
-type InjectableAPI = UserBucketRoute :<|> EventRoute
+type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
+
+type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
 
 getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
 getUserBucketHandler (Just uid) = do
@@ -57,4 +65,17 @@ trackViewHandler tv = do
       L.error $ "Error tracking view " <> err
       throwError internalServerErr
 
-injectableHandler = getUserBucketHandler :<|> trackViewHandler
+trackLogMessageHandler :: Value -> AppM OkResponse
+trackLogMessageHandler val = do
+  pool <- asks _getDbPool
+  res <- liftIO $ insertLogEvent pool val
+  case res of
+    Right _ ->
+      L.info "Tracked log event" >>
+      return OkResponse {message = "Event received"}
+    Left err -> do
+      L.error $ "Error tracking log event " <> err
+      throwError internalServerErr
+
+injectableHandler =
+  getUserBucketHandler :<|> trackViewHandler :<|> trackLogMessageHandler

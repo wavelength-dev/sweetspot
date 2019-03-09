@@ -14,15 +14,16 @@ module Supple.Database
   , insertEvent
   ) where
 
+import Control.Lens (_Left, over)
 import Data.Aeson (toJSON)
 import Data.ByteString.UTF8 (fromString)
-import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Hasql.Connection as Connection
 import qualified Hasql.Session as Session
-import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Api
-import Supple.Database.Sessions
+import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Common
+import Supple.Database.Sessions
 
 type Connection = Connection.Connection
 
@@ -49,53 +50,45 @@ getDbConnection DbConfig {..} = do
         (fromString password)
         (fromString name)
 
-getUserBuckets :: Connection -> UserId -> IO [UserBucket]
-getUserBuckets conn userId = do
-  Right res <- Session.run (getUserBucketSession userId) conn
-  return res
+wrapQueryError :: Session.QueryError -> T.Text
+wrapQueryError = T.pack . show
 
-getNewUserBuckets :: Connection -> IO [UserBucket]
+getUserBuckets :: Connection -> UserId -> IO (Either T.Text [UserBucket])
+getUserBuckets conn userId = do
+  res <- Session.run (getUserBucketSession userId) conn
+  return $ over _Left wrapQueryError res
+
+getNewUserBuckets :: Connection -> IO (Either T.Text [UserBucket])
 getNewUserBuckets conn = do
   res <- Session.run assignAndGetUserBucketSession conn
-  case res of
-    Right res -> return res
-    Left err -> do
-      print err
-      return []
+  return $ over _Left wrapQueryError res
 
-getExperimentBuckets :: Connection -> IO [ExperimentBuckets]
+getExperimentBuckets :: Connection -> IO (Either T.Text [ExperimentBuckets])
 getExperimentBuckets conn = do
   res <- Session.run getBucketsSession conn
-  case res of
-    Right res -> return res
-    Left err -> do
-      print err
-      return []
+  return $ over _Left wrapQueryError res
 
-insertEvent :: Connection -> TrackView -> IO ()
+insertEvent :: Connection -> TrackView -> IO (Either T.Text ())
 insertEvent conn tv = do
   res <- Session.run (insertEventSession input) conn
-  case res of
-    Right _ -> return ()
-    Left err -> print err >> return ()
+  return $ over _Left wrapQueryError res
   where
     input = (View, toJSON tv)
 
-createExperiment :: Connection -> Sku -> Svid -> Price -> CampaignId -> Text -> IO ()
+createExperiment ::
+     Connection
+  -> Sku
+  -> Svid
+  -> Price
+  -> CampaignId
+  -> T.Text
+  -> IO (Either T.Text ())
 createExperiment conn sku svid price cmp name = do
   res <-
-    Session.run
-      (createExperimentSession (sku, svid, price, cmp, name))
-      conn
-  case res of
-    Right _ -> return ()
-    Left err -> print err >> return ()
+    Session.run (createExperimentSession (sku, svid, price, cmp, name)) conn
+  return $ over _Left wrapQueryError res
 
-getExperimentStats :: Connection -> ExpId -> IO ExperimentStats
+getExperimentStats :: Connection -> ExpId -> IO (Either T.Text ExperimentStats)
 getExperimentStats conn expId = do
   res <- Session.run (getExperimentStatsSession expId) conn
-  case res of
-    Right res -> return res
-    Left err -> do
-      print err
-      undefined
+  return $ over _Left wrapQueryError res

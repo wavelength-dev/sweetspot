@@ -23,6 +23,8 @@ import Supple.Database
   , getExperimentStats
   )
 import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
+import Supple.Route.Util (internalServerErr)
+import qualified Supple.Logger as L
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -42,12 +44,17 @@ getProductsHandler = do
   maybeProducts <- liftIO fetchProducts
   case maybeProducts of
     Just ps -> return ps
-    Nothing -> throwError $ err500 {errBody = "Something went wrong"}
+    Nothing -> throwError internalServerErr
 
 getExperimentsHandler :: AppM [ExperimentBuckets]
 getExperimentsHandler = do
   dbconn <- asks _getDbConn
-  liftIO $ getExperimentBuckets dbconn
+  res <- liftIO $ getExperimentBuckets dbconn
+  case res of
+    Right exps -> return exps
+    Left err -> do
+      L.log $ "Error getting experiments " <> err
+      throwError internalServerErr
 
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
@@ -68,14 +75,25 @@ createExperimentHandler ce = do
           campaignId = ce ^. ceCampaignId
 
       dbconn <- asks _getDbConn
-      liftIO $ createExperiment dbconn sku svid price campaignId name
-      return OkResponse {message = "Created experiment"}
-    Nothing -> throwError $ err500 {errBody = "Something went wrong"}
+      res <- liftIO $ createExperiment dbconn sku svid price campaignId name
+      case res of
+        Right _ -> do
+          L.log "Created experiment"
+          return OkResponse {message = "Created experiment"}
+        Left err -> do
+          L.log $ "Error creating experiment " <> err
+          throwError internalServerErr
+    Nothing -> throwError internalServerErr
 
 getExperimentStatsHandler :: Int -> AppM ExperimentStats
 getExperimentStatsHandler expId = do
   dbconn <- asks _getDbConn
-  liftIO $ getExperimentStats dbconn (ExpId expId)
+  res <- liftIO $ getExperimentStats dbconn (ExpId expId)
+  case res of
+    Right exps -> L.log "Got experiment stats" >> return exps
+    Left err -> do
+      L.log $ "Error getting experiment stats " <> err
+      throwError internalServerErr
 
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|>

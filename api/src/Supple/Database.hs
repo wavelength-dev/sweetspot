@@ -60,7 +60,7 @@ getNewUserBuckets conn = do
   case res of
     Right res -> return res
     Left err -> do
-      putStrLn $ show err
+      print err
       return []
 
 getExperimentBuckets :: Connection -> IO [ExperimentBuckets]
@@ -69,7 +69,7 @@ getExperimentBuckets conn = do
   case res of
     Right res -> return res
     Left err -> do
-      putStrLn $ show err
+      print err
       return []
 
 insertEvent :: Connection -> TrackView -> IO ()
@@ -77,7 +77,7 @@ insertEvent conn tv = do
   res <- Session.run (insertEventSession input) conn
   case res of
     Right _ -> return ()
-    Left err -> (putStrLn . show) err *> return ()
+    Left err -> print err >> return ()
   where
     input = (View, toJSON tv)
 
@@ -89,7 +89,7 @@ createExperiment conn sku svid price cmp name = do
       conn
   case res of
     Right _ -> return ()
-    Left err -> (putStrLn . show) err *> return ()
+    Left err -> print err >> return ()
 
 getExperimentStats :: Connection -> ExpId -> IO ExperimentStats
 getExperimentStats conn expId = do

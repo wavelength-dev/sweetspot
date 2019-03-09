@@ -2,8 +2,18 @@ import { experimentsUrl } from "./constants"
 import { trackView } from "./events"
 import { log } from "./logging"
 
-console.time("supple_complete")
-console.time("supple_dom_ready")
+/* Unix Timestamp in miliseconds */
+type Timestamp = number
+
+interface Timing {
+  key: string
+  startTime: Timestamp
+  endTime: Timestamp | null
+}
+const timings: { [key: string]: Timing } = {
+  domReady: { key: "domReady", startTime: Date.now(), endTime: null },
+  injWorkload: { key: "injWorkload", startTime: Date.now(), endTime: null },
+}
 
 log("init")
 
@@ -132,7 +142,7 @@ const applyExperiments = (exps: Experiment[]): void => {
 const getDOMContentLoaded = () =>
   new Promise(resolve => {
     document.addEventListener("DOMContentLoaded", () => {
-      console.timeEnd("supple_dom_ready")
+      timings.domReady.endTime = Date.now()
       resolve()
     })
   })
@@ -170,7 +180,7 @@ Promise.all([DOMPromise, expPromise])
     trackView(expId, bucketId)
 
     log("success!")
-    console.timeEnd("supple_complete")
+    timings.injWorkload.endTime = Date.now()
   })
   // Experiments failed to resolve, unhide base price
   .catch(err => {

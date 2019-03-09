@@ -38,11 +38,4 @@ const transportOverHTTPLog: LogFn = ({ message, payload, severity }: Log) => {
   // Is there something we could still do?
 }
 
-// injected by envify
-declare var process: {
-  env: {
-    ENV: "production" | "staging" | "development",
-  },
-}
-export const log: LogFn =
-  process.env.ENV === "staging" ? transportOverHTTPLog : consoleLog
+export const log: LogFn = transportOverHTTPLog

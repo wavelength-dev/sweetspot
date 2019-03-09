@@ -1,6 +1,6 @@
-import { experimentsUrl } from "./constants"
-import { trackView } from "./events"
+import { experimentsURL } from './constants';
 import { log } from "./logging"
+import { trackView } from "./events"
 
 /* Unix Timestamp in miliseconds */
 type Timestamp = number
@@ -39,7 +39,7 @@ const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = typeof uid === "string" ? `?uid=${uid}` : ""
   log("fetching experiments")
-  return fetch(`${experimentsUrl}${qs}`).then(res => {
+  return fetch(`${experimentsURL}${qs}`).then(res => {
     if (res.status !== 200) {
       throw new Error(`failed to fetch experiments, got ${res.status}`)
     }

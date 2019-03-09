@@ -1,3 +1,3 @@
-const apiUrl = "https://app.getsweetspot.com/api/"
-export const experimentsUrl = `${apiUrl}bucket`
-export const eventsUrl = `${apiUrl}event`
+const apiURL = "https://app.getsweetspot.com/api/"
+export const experimentsURL = `${apiURL}bucket`
+export const eventsURL = `${apiURL}event`

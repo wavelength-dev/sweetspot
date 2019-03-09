@@ -1,4 +1,4 @@
-import { eventsUrl } from "./constants"
+import { eventsURL } from "./constants"
 import { log } from "./logging"
 import { isSome, map, none, Option, some } from "./option"
 import { isElementsFound } from "./util"
@@ -314,7 +314,7 @@ declare global {
 export const trackEvent = (event: ViewEvent | CheckoutEvent): void => {
   log("Tracking event")
   log(JSON.stringify(event))
-  fetch(eventsUrl, {
+  fetch(eventsURL, {
     body: JSON.stringify(event),
     headers: {
       "Content-Type": "application/json",

@@ -59,6 +59,5 @@ echo "=> Applying new image"
 kubectl set image deploy/supple supple=$IMAGE_NAME
 exit_on_failure
 echo "=> Watching supple deployment for the next 30s"
-timeout --preserve-status --signal INT 30s kubectl get --watch deploy supple; exit 0
-exit_on_failure
+timeout --preserve-status --signal INT 30s kubectl get --watch deployments supple; exit 0
 echo "=> Done!"

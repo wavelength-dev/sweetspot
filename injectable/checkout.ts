@@ -16,17 +16,18 @@ const trackCheckout = (): void => {
       ? window.Shopify.Checkout
       : { step: null, token: null }
 
-  const { line_items: lineItems } =
+  const { line_items: lineItems, order_id: orderId } =
     typeof window.Shopify === "object" &&
     typeof window.Shopify.checkout === "object"
       ? window.Shopify.checkout
-      : { line_items: null }
+      : { line_items: null, order_id: null }
 
   const pageUrl = window.location.href
 
   fetch(eventsURL, {
     body: JSON.stringify({
       lineItems: lineItems || null,
+      orderId: orderId || null,
       page,
       pageUrl,
       step: step || null,

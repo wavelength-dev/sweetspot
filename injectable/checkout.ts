@@ -1,4 +1,4 @@
-import { eventsUrl } from "./constants"
+import { eventsURL } from "./constants"
 import { detectPage } from "./events"
 import { log } from "./logging"
 
@@ -24,7 +24,7 @@ const trackCheckout = (): void => {
 
   const pageUrl = window.location.href
 
-  fetch(eventsUrl, {
+  fetch(eventsURL, {
     body: JSON.stringify({
       lineItems: lineItems || null,
       page,

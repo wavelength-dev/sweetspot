@@ -3,6 +3,7 @@
 
 module Supple.Logger
   ( info
+  , info'
   , warn
   , error
   ) where
@@ -19,9 +20,9 @@ import Data.Aeson
 import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
-import Prelude hiding (log, error)
+import Prelude hiding (error, log)
 import Supple.AppM (AppCtx(..), AppM)
-import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
+import System.Log.FastLogger (LoggerSet, ToLogStr(..), pushLogStrLn)
 
 data LogLevel
   = Info
@@ -30,10 +31,11 @@ data LogLevel
   deriving (Eq, Show)
 
 instance ToJSON LogLevel where
-  toJSON lvl = case lvl of
-    Info -> "info"
-    Warn -> "warn"
-    Error -> "error"
+  toJSON lvl =
+    case lvl of
+      Info -> "info"
+      Warn -> "warn"
+      Error -> "error"
 
 data LogMessage = LogMessage
   { level :: !LogLevel
@@ -57,6 +59,12 @@ log lvl msg = do
 
 info :: Text -> AppM ()
 info msg = log Info msg
+
+info' :: LoggerSet -> Text -> IO ()
+info' logset msg = do
+  ts <- getCurrentTime
+  pushLogStrLn logset $
+    toLogStr LogMessage {level = Info, message = msg, timestamp = ts}
 
 warn :: Text -> AppM ()
 warn msg = log Warn msg

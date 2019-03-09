@@ -12,10 +12,11 @@ module Supple.Database
   , getExperimentStats
   , DbConfig(..)
   , insertEvent
+  , insertLogEvent
   ) where
 
 import Control.Lens (_Left, over)
-import Data.Aeson (toJSON)
+import Data.Aeson (Value, toJSON)
 import Data.ByteString.UTF8 (fromString)
 import qualified Data.Text as T
 import qualified Hasql.Connection as Connection
@@ -73,6 +74,13 @@ insertEvent pool tv = do
   return $ over _Left wrapQueryError res
   where
     input = (View, toJSON tv)
+
+insertLogEvent :: Pool -> Value -> IO (Either T.Text ())
+insertLogEvent pool val = do
+  res <- Pool.use pool (insertEventSession input)
+  return $ over _Left wrapQueryError res
+  where
+    input = (Log, val)
 
 createExperiment ::
      Pool

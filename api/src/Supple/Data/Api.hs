@@ -287,10 +287,11 @@ instance ToJSON TrackView where
 -- | OkResponse
 -- | ---------------------------------------------------------------------------
 data OkResponse = OkResponse
-  { message :: Text
+  { message :: !Text
   } deriving (Eq, Generic, Show)
 
 instance ToJSON OkResponse
 
 eventTypeToText :: EventType -> Text
 eventTypeToText View = "view"
+eventTypeToText Log = "log"

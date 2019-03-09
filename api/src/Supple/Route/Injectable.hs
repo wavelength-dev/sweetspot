@@ -7,16 +7,16 @@ module Supple.Route.Injectable
   , injectableHandler
   ) where
 
-import Data.Functor (($>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
-import Data.Time.Clock (getCurrentTime)
+import Data.Text as T
 import Servant
-import Supple.AppM (AppCtx(..), AppM, LogMessage(..))
-import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
-import System.Log.FastLogger (ToLogStr(..), pushLogStrLn)
+import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (OkResponse(..), TrackView, UserBucket)
 import Supple.Data.Common
+import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
+import Supple.Route.Util (internalServerErr)
+import qualified Supple.Logger as L
 
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
@@ -29,21 +29,32 @@ type InjectableAPI = UserBucketRoute :<|> EventRoute
 getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
 getUserBucketHandler (Just uid) = do
   dbconn <- asks _getDbConn
-  logset <- asks _getLogger
-  ts <- liftIO getCurrentTime
   res <- liftIO $ getUserBuckets dbconn (UserId uid)
-  liftIO $
-    pushLogStrLn logset $
-    toLogStr LogMessage {logMessage = "Got user bucket", timestamp = ts}
-  return res
+  case res of
+    Right res -> do
+      L.log $ "Got bucket for userId: " <> (T.pack $ show uid)
+      return res
+    Left err -> do
+      L.log $ "Error getting user bucket: " <> err
+      throwError internalServerErr
 getUserBucketHandler Nothing = do
   dbconn <- asks _getDbConn
-  liftIO $ getNewUserBuckets dbconn
+  res <- liftIO $ getNewUserBuckets dbconn
+  case res of
+    Right res -> L.log "Assigned user to bucket" >> return res
+    Left err -> do
+      L.log $ "Error assigning user to bucket " <> err
+      throwError internalServerErr
 
 trackViewHandler :: TrackView -> AppM OkResponse
 trackViewHandler tv = do
   dbconn <- asks _getDbConn
-  liftIO $
-    insertEvent dbconn tv $> OkResponse {message = "Event received"}
+  res <- liftIO $ insertEvent dbconn tv
+  case res of
+    Right _ ->
+      L.log "Tracked view" >> return OkResponse {message = "Event received"}
+    Left err -> do
+      L.log $ "Error tracking view " <> err
+      throwError internalServerErr
 
 injectableHandler = getUserBucketHandler :<|> trackViewHandler

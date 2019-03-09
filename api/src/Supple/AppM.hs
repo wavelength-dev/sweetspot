@@ -31,7 +31,7 @@ data AppCtx = AppCtx
   }
 
 data LogMessage = LogMessage
-  { logMessage :: !Text
+  { message :: !Text
   , timestamp :: !UTCTime
   } deriving (Eq, Show, Generic)
 

@@ -1,3 +1,3 @@
-const apiUrl = "https://34.76.64.45/api/"
+const apiUrl = "https://app.getsweetspot.com/api/"
 export const experimentsUrl = `${apiUrl}bucket`
 export const eventsUrl = `${apiUrl}event`

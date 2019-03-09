@@ -1,9 +1,7 @@
 import { experimentsURL } from "./constants"
 import { trackView } from "./events"
 import { log } from "./logging"
-
-/* Unix Timestamp in miliseconds */
-type Timestamp = number
+import { Timestamp } from "./types"
 
 interface Timing {
   key: string
@@ -15,7 +13,7 @@ const timings: { [key: string]: Timing } = {
   injWorkload: { key: "injWorkload", startTime: Date.now(), endTime: null },
 }
 
-log("init")
+log({ message: "init" })
 
 interface ApiExperiment {
   readonly _ubPrice: number
@@ -38,7 +36,7 @@ interface Experiment {
 const getExperiments = async (): Promise<ApiExperiment[]> => {
   const uid = localStorage.getItem("supple_uid")
   const qs = typeof uid === "string" ? `?uid=${uid}` : ""
-  log("fetching experiments")
+  log({ message: "fetching experiments" })
   return fetch(`${experimentsURL}${qs}`).then(res => {
     if (res.status !== 200) {
       throw new Error(`failed to fetch experiments, got ${res.status}`)
@@ -50,15 +48,15 @@ const getExperiments = async (): Promise<ApiExperiment[]> => {
 
 const revealProductPrice = (el: Element, price: number | null) => {
   if (typeof price === "number") {
-    log("loading local price")
+    log({ message: "loading local price" })
     el.innerHTML = String(price)
     el.classList.add("supple__price--exp")
   } else {
-    log("loading non-local price")
+    log({ message: "loading non-local price" })
     el.classList.add("supple__price--no-exp")
   }
 
-  log("revealing price")
+  log({ message: "revealing price" })
   el.classList.remove("supple__price--hidden")
 }
 
@@ -93,16 +91,19 @@ const getIdFromPriceElement = (el: Element) => {
 const getIsDebutCheckout = (): boolean => {
   const el = document.getElementById("ProductSelect-product-template")
   if (!(el instanceof HTMLSelectElement)) {
-    log("not a debut checkout")
+    log({ message: "not a debut checkout" })
     return false
   }
   const option = el.children[0]
   if (!(option instanceof HTMLOptionElement)) {
-    log("failed to descend what looks like a Debut checkout", "warn")
+    log({
+      message: "failed to descend what looks like a Debut checkout",
+      severity: "warn",
+    })
     return false
   }
 
-  log("detected debut checkout")
+  log({ message: "detected debut checkout" })
   return true
 }
 
@@ -114,7 +115,10 @@ const applyExperiments = (exps: Experiment[]): void => {
   els.forEach(el => {
     const id = getIdFromPriceElement(el)
     if (id === null) {
-      log("SUPPLE -- hidden price with no id! Unhiding price as-is", "error")
+      log({
+        message: "SUPPLE -- hidden price with no id! Unhiding price as-is",
+        severity: "error",
+      })
       revealProductPrice(el, null)
       return
     }
@@ -122,10 +126,11 @@ const applyExperiments = (exps: Experiment[]): void => {
     const exp = exps.find(e => e.sku === id)
 
     if (exp === undefined) {
-      log(
-        "SUPPLE -- price with no matching experiment! Unhiding price as-is",
-        "warn",
-      )
+      log({
+        message:
+          "SUPPLE -- price with no matching experiment! Unhiding price as-is",
+        severity: "warn",
+      })
       revealProductPrice(el, null)
       return
     }
@@ -179,12 +184,15 @@ Promise.all([DOMPromise, expPromise])
     const bucketId: number | null = (exp && exp.bucketId) || null
     trackView(expId, bucketId)
 
-    log("success!")
+    log({ message: "success!" })
     timings.injWorkload.endTime = Date.now()
   })
   // Experiments failed to resolve, unhide base price
   .catch(err => {
-    log("Experiments failed to resolve, unhiding price", "error")
+    log({
+      message: "Experiments failed to resolve, unhiding price",
+      severity: "error",
+    })
     applyExperiments([])
     throw err
   })

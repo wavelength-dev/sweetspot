@@ -2,18 +2,23 @@ module Main where
 
 import Prelude
 
-import Data.Array (index)
-import Data.Either (Either(Left, Right), note)
+import Data.Array (toUnfoldable)
+import Data.Either (Either(Left, Right), isRight, note)
+import Data.Foldable (null, traverse_)
 import Data.HTTP.Method (Method(GET))
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.List (List)
 import Effect (Effect)
-import Effect.Aff (Aff, Canceler(Canceler), launchAff_, makeAff, nonCanceler)
+import Effect.Aff (Aff, Canceler(Canceler), attempt, launchAff_, makeAff, nonCanceler)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
+import Effect.Console (log, warn)
 import Effect.Exception (error)
+import Milkis as M
+import Milkis.Impl.Window (windowFetch)
+import Test.Spec.Assertions (shouldEqual)
 import Web.DOM.Document (getElementsByClassName)
-import Web.DOM.Element (className)
+import Web.DOM.Element (removeAttribute)
 import Web.DOM.HTMLCollection (toArray)
+import Web.DOM.Internal.Types (Element)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
@@ -62,21 +67,41 @@ getDOMReady =
     addEventListener domcontentloaded listener false (toEventTarget doc)
     pure nonCanceler
 
+hiddenPriceId :: String
+hiddenPriceId = "supple__price--hidden"
+
+collectPriceEls :: Effect (List Element)
+collectPriceEls = do
+  doc <- (window >>= document)
+  els <- getElementsByClassName hiddenPriceId (toDocument doc)
+  elArr <- toArray els
+  pure $ toUnfoldable elArr
+
 unhidePrice :: Effect Unit
 unhidePrice = do
-  doc <- (window >>= document)
-  els <- getElementsByClassName "supple__price--hidden" (toDocument doc)
-  elsArray <- toArray els
-  classNames <- case (index elsArray 0) of
-       Nothing -> pure Nothing
-       Just el -> (className el) >>= (\c -> pure $ Just c)
-  log $ fromMaybe "no el" classNames
-  pure unit
-  -- mempty $ map (removeAttribute "supple__price--hidden") elsArray
+  els <- collectPriceEls
+  if (null els)
+    then warn $ "expected to unhide prices but no elements with class " <> hiddenPriceId <>" found."
+    else traverse_ (removeAttribute hiddenPriceId) els
+
+fetch :: M.Fetch
+fetch = M.fetch windowFetch
+
+trackView :: Aff Unit
+trackView = do
+  let
+    opts =
+      { method: M.getMethod
+      , body: "{}"
+      , headers: M.makeHeaders { "Content-Type": "application/json" }
+      }
+  result <- attempt $ fetch (M.URL "localhost:8082/health") opts
+  isRight result `shouldEqual` true
 
 main :: Effect Unit
 main = launchAff_ do
   _ <- getDOMReady
   -- exp <- getExperiments
   _ <- liftEffect unhidePrice
+  _ <- trackView
   liftEffect $ log "Done!"

@@ -3,8 +3,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Supple.Database
-  ( Connection
-  , getDbConnection
+  ( Pool
+  , getDbPool
   , getUserBuckets
   , createExperiment
   , getNewUserBuckets
@@ -19,13 +19,13 @@ import Data.Aeson (toJSON)
 import Data.ByteString.UTF8 (fromString)
 import qualified Data.Text as T
 import qualified Hasql.Connection as Connection
-import qualified Hasql.Session as Session
+import qualified Hasql.Pool as Pool
 import Supple.Data.Api
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Common
 import Supple.Database.Sessions
 
-type Connection = Connection.Connection
+type Pool = Pool.Pool
 
 data DbConfig = DbConfig
   { host :: String
@@ -35,13 +35,12 @@ data DbConfig = DbConfig
   , password :: String
   }
 
-getDbConnection :: DbConfig -> IO Connection
-getDbConnection DbConfig {..} = do
-  res <- Connection.acquire connectionSettings
-  case res of
-    Left err -> error $ maybe "Unknown error during connection aquire" show err
-    Right connection -> return connection
+getDbPool :: DbConfig -> IO Pool
+getDbPool DbConfig {..} = do
+  Pool.acquire (poolSize, timeoutMs, connectionSettings)
   where
+    poolSize = 10
+    timeoutMs = 2000
     connectionSettings =
       Connection.settings
         (fromString host)
@@ -50,45 +49,44 @@ getDbConnection DbConfig {..} = do
         (fromString password)
         (fromString name)
 
-wrapQueryError :: Session.QueryError -> T.Text
+wrapQueryError :: Pool.UsageError -> T.Text
 wrapQueryError = T.pack . show
 
-getUserBuckets :: Connection -> UserId -> IO (Either T.Text [UserBucket])
-getUserBuckets conn userId = do
-  res <- Session.run (getUserBucketSession userId) conn
+getUserBuckets :: Pool -> UserId -> IO (Either T.Text [UserBucket])
+getUserBuckets pool userId = do
+  res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBuckets :: Connection -> IO (Either T.Text [UserBucket])
-getNewUserBuckets conn = do
-  res <- Session.run assignAndGetUserBucketSession conn
+getNewUserBuckets :: Pool -> IO (Either T.Text [UserBucket])
+getNewUserBuckets pool = do
+  res <- Pool.use pool assignAndGetUserBucketSession
   return $ over _Left wrapQueryError res
 
-getExperimentBuckets :: Connection -> IO (Either T.Text [ExperimentBuckets])
-getExperimentBuckets conn = do
-  res <- Session.run getBucketsSession conn
+getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])
+getExperimentBuckets pool = do
+  res <- Pool.use pool getBucketsSession
   return $ over _Left wrapQueryError res
 
-insertEvent :: Connection -> TrackView -> IO (Either T.Text ())
-insertEvent conn tv = do
-  res <- Session.run (insertEventSession input) conn
+insertEvent :: Pool -> TrackView -> IO (Either T.Text ())
+insertEvent pool tv = do
+  res <- Pool.use pool (insertEventSession input)
   return $ over _Left wrapQueryError res
   where
     input = (View, toJSON tv)
 
 createExperiment ::
-     Connection
+     Pool
   -> Sku
   -> Svid
   -> Price
   -> CampaignId
   -> T.Text
   -> IO (Either T.Text ())
-createExperiment conn sku svid price cmp name = do
-  res <-
-    Session.run (createExperimentSession (sku, svid, price, cmp, name)) conn
+createExperiment pool sku svid price cmp name = do
+  res <- Pool.use pool (createExperimentSession (sku, svid, price, cmp, name))
   return $ over _Left wrapQueryError res
 
-getExperimentStats :: Connection -> ExpId -> IO (Either T.Text ExperimentStats)
-getExperimentStats conn expId = do
-  res <- Session.run (getExperimentStatsSession expId) conn
+getExperimentStats :: Pool -> ExpId -> IO (Either T.Text ExperimentStats)
+getExperimentStats pool expId = do
+  res <- Pool.use pool (getExperimentStatsSession expId)
   return $ over _Left wrapQueryError res

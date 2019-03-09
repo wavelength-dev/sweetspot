@@ -21,7 +21,7 @@ import Network.Wai.Middleware.Cors
   )
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
-import Supple.Database (DbConfig(..), getDbConnection)
+import Supple.Database (DbConfig(..), getDbPool)
 import Supple.Env (getEnvConfig, EnvConfig(..))
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
@@ -72,9 +72,9 @@ runServer = do
           , port = dbPort envConfig
           , user = dbUser envConfig
           }
-  dbconn <- getDbConnection dbConfig
+  dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
   let config = AppConfig "dev" "0.1"
-      ctx = AppCtx config appLogger dbconn
+      ctx = AppCtx config appLogger dbPool
   L.info' appLogger "Listening on port 8082..."
   Warp.run 8082 $ createApp ctx

@@ -6,7 +6,7 @@ import Control.Monad.Reader (ReaderT)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Servant (Handler)
-import Supple.Database (Connection)
+import Supple.Database (Pool)
 import System.Log.FastLogger (LoggerSet)
 
 data AppConfig = AppConfig
@@ -17,7 +17,7 @@ data AppConfig = AppConfig
 data AppCtx = AppCtx
   { _getConfig :: !AppConfig
   , _getLogger :: !LoggerSet
-  , _getDbConn :: !Connection
+  , _getDbPool :: !Pool
   }
 
 type AppM = ReaderT AppCtx Handler

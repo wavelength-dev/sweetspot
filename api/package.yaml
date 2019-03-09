@@ -43,6 +43,7 @@ dependencies:
 - wai-cors
 - warp
 - wreq
+- hasql-pool
 
 library:
   source-dirs: src

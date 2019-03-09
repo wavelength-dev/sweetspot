@@ -15,8 +15,8 @@ import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (OkResponse(..), TrackView, UserBucket)
 import Supple.Data.Common
 import Supple.Database (getNewUserBuckets, getUserBuckets, insertEvent)
-import Supple.Route.Util (internalServerErr)
 import qualified Supple.Logger as L
+import Supple.Route.Util (internalServerErr)
 
 type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
@@ -28,8 +28,8 @@ type InjectableAPI = UserBucketRoute :<|> EventRoute
 
 getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
 getUserBucketHandler (Just uid) = do
-  dbconn <- asks _getDbConn
-  res <- liftIO $ getUserBuckets dbconn (UserId uid)
+  pool <- asks _getDbPool
+  res <- liftIO $ getUserBuckets pool (UserId uid)
   case res of
     Right res -> do
       L.info $ "Got bucket for userId: " <> (T.pack $ show uid)
@@ -38,8 +38,8 @@ getUserBucketHandler (Just uid) = do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
 getUserBucketHandler Nothing = do
-  dbconn <- asks _getDbConn
-  res <- liftIO $ getNewUserBuckets dbconn
+  pool <- asks _getDbPool
+  res <- liftIO $ getNewUserBuckets pool
   case res of
     Right res -> L.info "Assigned user to bucket" >> return res
     Left err -> do
@@ -48,8 +48,8 @@ getUserBucketHandler Nothing = do
 
 trackViewHandler :: TrackView -> AppM OkResponse
 trackViewHandler tv = do
-  dbconn <- asks _getDbConn
-  res <- liftIO $ insertEvent dbconn tv
+  pool <- asks _getDbPool
+  res <- liftIO $ insertEvent pool tv
   case res of
     Right _ ->
       L.info "Tracked view" >> return OkResponse {message = "Event received"}

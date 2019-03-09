@@ -22,9 +22,9 @@ import Supple.Database
   , getExperimentBuckets
   , getExperimentStats
   )
-import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
-import Supple.Route.Util (internalServerErr)
 import qualified Supple.Logger as L
+import Supple.Route.Util (internalServerErr)
+import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -48,8 +48,8 @@ getProductsHandler = do
 
 getExperimentsHandler :: AppM [ExperimentBuckets]
 getExperimentsHandler = do
-  dbconn <- asks _getDbConn
-  res <- liftIO $ getExperimentBuckets dbconn
+  pool <- asks _getDbPool
+  res <- liftIO $ getExperimentBuckets pool
   case res of
     Right exps -> return exps
     Left err -> do
@@ -62,9 +62,7 @@ createExperimentHandler ce = do
   let priceLens = key "product" . key "variants" . nth 0 . key "price" . _String
       textPrice = T.pack . show $ ce ^. cePrice
       withNewPrice = priceLens .~ textPrice $ json
-
   maybeNewProduct <- liftIO $ createProduct withNewPrice
-
   case maybeNewProduct of
     Just newProduct -> do
       let variant = newProduct ^?! pVariants . element 0
@@ -73,9 +71,8 @@ createExperimentHandler ce = do
           price = ce ^. cePrice
           name = ce ^. ceName
           campaignId = ce ^. ceCampaignId
-
-      dbconn <- asks _getDbConn
-      res <- liftIO $ createExperiment dbconn sku svid price campaignId name
+      pool <- asks _getDbPool
+      res <- liftIO $ createExperiment pool sku svid price campaignId name
       case res of
         Right _ -> do
           L.info "Created experiment"
@@ -87,8 +84,8 @@ createExperimentHandler ce = do
 
 getExperimentStatsHandler :: Int -> AppM ExperimentStats
 getExperimentStatsHandler expId = do
-  dbconn <- asks _getDbConn
-  res <- liftIO $ getExperimentStats dbconn (ExpId expId)
+  pool <- asks _getDbPool
+  res <- liftIO $ getExperimentStats pool (ExpId expId)
   case res of
     Right exps -> L.info "Got experiment stats" >> return exps
     Left err -> do

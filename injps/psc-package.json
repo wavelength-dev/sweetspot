@@ -10,6 +10,7 @@
     , "effect"
     , "generics-rep"
     , "milkis"
+    , "numbers"
     , "prelude"
     , "psci-support"
     , "spec"

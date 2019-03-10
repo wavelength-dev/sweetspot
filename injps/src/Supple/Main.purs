@@ -77,10 +77,7 @@ setUserId st uid = St.setItem uidStorageKey (show uid) st
 main :: Effect Unit
 main = launchAff_ do
   _ <- getDOMReady
-  uid <- liftEffect $ do
-    w <-  window
-    storage <- localStorage w
-    getUserId storage
+  uid <- liftEffect $ window >>= localStorage >>= getUserId
   bs <- fetchUserBuckets uid
   liftEffect $ case bs of
     Just _ -> log "got something"

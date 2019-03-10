@@ -1,19 +1,19 @@
 module Supple.Request where
 
 import Prelude
-import Supple.Data.Api (UserBucket)
-import Supple.Data.Codec (decodeResponse)
 
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
+import Supple.Data.Api (UserBucket(..))
+import Supple.Data.Codec (decodeResponse)
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
 
-fetchUserBuckets :: Maybe String -> Aff (Maybe (Array UserBucket))
+fetchUserBuckets :: Maybe String -> Aff (Maybe UserBucket)
 fetchUserBuckets uid = do
   let
     opts =

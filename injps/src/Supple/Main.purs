@@ -1,11 +1,13 @@
 module Supple.Main where
 
+import Debug.Trace
 import Prelude
-import Data.Array (toUnfoldable)
+
+import Data.Array as A
 import Data.Either (Either(Right))
 import Data.Foldable (null, traverse_)
-import Data.List (List)
 import Data.Maybe (Maybe(..))
+import Data.Number (fromString)
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
@@ -34,12 +36,14 @@ getDOMReady =
 hiddenPriceId :: String
 hiddenPriceId = "supple__price--hidden"
 
-collectPriceEls :: Effect (List Element)
+uidStorageKey :: String
+uidStorageKey = "supple_uid"
+
+collectPriceEls :: Effect (Array Element)
 collectPriceEls = do
-  doc <- (window >>= document)
+  doc <- window >>= document
   els <- getElementsByClassName hiddenPriceId (toDocument doc)
-  elArr <- toArray els
-  pure $ toUnfoldable elArr
+  toArray els
 
 removeClass :: String -> Element -> Effect Unit
 removeClass className el = do
@@ -57,7 +61,18 @@ unhidePrice = do
     else traverse_ (removeClass hiddenPriceId) els
 
 getUserId :: St.Storage -> Effect (Maybe String)
-getUserId = St.getItem "supple_uid"
+getUserId = St.getItem uidStorageKey
+
+getIdFromPriceElement :: Element -> Effect (Maybe Number)
+getIdFromPriceElement el = do
+  classNames <- (S.split $ S.Pattern " ") <$> E.className el
+  let
+    match = A.find (S.contains $ S.Pattern "supple__price_id--") classNames
+    pid = fromString =<< A.last =<< (S.split $ S.Pattern "--") <$> match
+  pure pid
+
+setUserId :: St.Storage -> Number -> Effect Unit
+setUserId st uid = St.setItem uidStorageKey (show uid) st
 
 main :: Effect Unit
 main = launchAff_ do

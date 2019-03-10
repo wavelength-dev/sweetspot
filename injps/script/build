@@ -7,7 +7,7 @@ print_filesize() {
 
 echo "=> Building PureScript injectables"
 START=$(date +%s)
-pulp build --to ../dist/supple-inj.js
+pulp build --main Supple.Main --to ../dist/supple-inj.js
 if [ $? -ne 0 ]; then
     exit 1
 fi

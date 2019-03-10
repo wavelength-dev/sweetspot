@@ -1,13 +1,30 @@
 module Main where
 
-import Language.PureScript.Bridge (buildBridge, equal, mkSumType, writePSTypes)
+import Language.PureScript.Bridge
+  ( buildBridge
+  , equal
+  , mkSumType
+  , noLenses
+  , writePSTypes
+  , writePSTypesWith
+  )
 import qualified Supple.Data.Api as Api
 
 import Data.Proxy (Proxy(..))
 import TypeBridges (suppleBridge)
 
-main :: IO ()
-main = writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
+writeInjectableTypes :: IO ()
+writeInjectableTypes =
+  writePSTypesWith noLenses "../injps/src" (buildBridge suppleBridge) myTypes
+  where
+    myTypes =
+      [ let p = (Proxy :: Proxy Api.UserBucket)
+         in equal p (mkSumType p)
+      ]
+
+writeDashboardTypes :: IO ()
+writeDashboardTypes =
+  writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
   where
     myTypes =
       [ let p = (Proxy :: Proxy Api.Bucket)
@@ -25,3 +42,6 @@ main = writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
       , let p = (Proxy :: Proxy Api.OkResponse)
          in equal p (mkSumType p)
       ]
+
+main :: IO ()
+main = writeInjectableTypes >> writeDashboardTypes

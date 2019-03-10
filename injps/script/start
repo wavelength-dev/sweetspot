@@ -1,4 +1,4 @@
 #!/bin/bash
 
 echo "=> Watching & building PureScript injectables"
-pulp --watch build --to ../dist/supple-inj.js
+pulp --watch build --main Supple.Main --to ../dist/supple-inj.js

@@ -16,3 +16,4 @@ suppleBridge = defaultBridge
   <|> (typeName ^== "Pid" >> return psNumber)
   <|> (typeName ^== "Image" >> return psString)
   <|> (typeName ^== "CampaignId" >> return psString)
+  <|> (typeName ^== "UserId" >> return psNumber)

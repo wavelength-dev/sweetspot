@@ -9,3 +9,4 @@ class Monad m <= AppCapability m where
   getUserId :: m (Maybe String)
   setUserId :: String -> m Unit
   getUserBuckets :: Maybe String -> m UserBucket
+  log :: String -> m Unit

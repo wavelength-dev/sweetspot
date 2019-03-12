@@ -13,17 +13,28 @@ import Supple.Data.Codec (decodeResponse)
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
 
-fetchUserBuckets :: Maybe String -> Aff (Maybe UserBucket)
+jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
+
+fetchUserBuckets :: Maybe String -> Aff (Either String UserBucket)
 fetchUserBuckets uid = do
   let
     opts =
       { method: M.getMethod
-      , headers: M.makeHeaders { "Content-Type": "application/json" }
+      , headers: jsonHeader
       }
     qs = maybe "" ((<>) "?uid=") uid
-  result <- attempt $ fetch (M.URL $ "https://b62c97ea.ngrok.io/api/bucket" <> qs) opts
-  case result of
-    Right res -> do
-      s <- M.text res
-      pure $ hush $ decodeResponse s
-    Left _ -> pure Nothing
+  response <- attempt $ fetch (M.URL $ "https://b62c97ea.ngrok.io/api/bucket" <> qs) opts
+  case response of
+    Right res -> M.text res >>= decodeResponse >>> pure
+    Left err -> pure $ Left $ show err
+
+postLogPayload :: String -> Aff Unit
+postLogPayload msg = do
+  let
+    opts =
+      { method: M.postMethod
+      , headers: jsonHeader
+      , body: "{\"message\": \"" <> msg <> "\"}"
+      }
+  _ <- attempt $ fetch (M.URL "https://b62c97ea.ngrok.io/api/log") opts
+  pure unit

@@ -1,19 +1,20 @@
 module Supple.Main where
 
-import Debug.Trace
 import Prelude
+import Supple.AppM (AppM, runAppM)
+import Supple.Data.Api (UserBucket(..))
 
 import Data.Array as A
 import Data.Either (Either(Right))
 import Data.Foldable (null, traverse_)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Number (fromString)
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
-import Effect.Class (liftEffect)
-import Effect.Console (log, warn)
-import Supple.Request (fetchUserBuckets)
+import Effect.Aff.Class (liftAff)
+import Effect.Console (warn)
+import Supple.Capability (getUserBuckets, getUserId)
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -22,7 +23,7 @@ import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
-import Web.HTML.Window (document, localStorage)
+import Web.HTML.Window (document)
 import Web.Storage.Storage as St
 
 getDOMReady :: Aff Unit
@@ -60,9 +61,6 @@ unhidePrice = do
     then warn $ "expected to unhide prices but no elements with class " <> hiddenPriceId <>" found."
     else traverse_ (removeClass hiddenPriceId) els
 
-getUserId :: St.Storage -> Effect (Maybe String)
-getUserId = St.getItem uidStorageKey
-
 getIdFromPriceElement :: Element -> Effect (Maybe Number)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
@@ -74,13 +72,16 @@ getIdFromPriceElement el = do
 setUserId :: St.Storage -> Number -> Effect Unit
 setUserId st uid = St.setItem uidStorageKey (show uid) st
 
+f :: UserBucket -> String
+f (UserBucket ub) = ub._ubSku
+
+app :: AppM Unit
+app = do
+  liftAff getDOMReady
+  uid <- getUserId
+  bs <- getUserBuckets uid
+  a <- pure $ f bs
+  pure unit
+
 main :: Effect Unit
-main = launchAff_ do
-  _ <- getDOMReady
-  uid <- liftEffect $ window >>= localStorage >>= getUserId
-  bs <- fetchUserBuckets uid
-  liftEffect $ case bs of
-    Just _ -> log "got something"
-    Nothing -> log "got nothing"
-  _ <- liftEffect unhidePrice
-  liftEffect $ log "Done!"
+main = launchAff_ $ runAppM { logLevel: "info" } app

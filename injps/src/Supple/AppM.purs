@@ -4,19 +4,21 @@ import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Control.Monad.Reader.Trans (class MonadAsk, ReaderT, asks, runReaderT)
-import Data.Either (Either)
-import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
+import Data.Either (Either(..))
+import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Supple.Capability (class AppCapability)
-import Supple.Request (fetchUserBuckets)
+import Supple.Request (fetchUserBuckets, postLogPayload)
 import Type.Equality (class TypeEquals, from)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem)
 
-newtype ClientErr = ClientErr { message :: String }
+newtype ClientErr = ClientErr
+  { message :: String
+  , payload :: String
+  }
 
 type Env = { logLevel :: String }
 
@@ -45,5 +47,10 @@ instance appCapabilityAppM :: AppCapability AppM where
   getUserBuckets uid = do
     bucket <- liftAff $ fetchUserBuckets uid
     case bucket of
-      Just b -> pure b
-      Nothing -> throwError (ClientErr { message: "Error fetching user bucket" })
+      Right b -> pure b
+      Left err -> throwError (ClientErr { message: "Error fetching user bucket", payload: err })
+
+  log msg = do
+    -- Fork aff since we don't care about result
+    _ <- liftAff $ forkAff $ postLogPayload msg
+    pure unit

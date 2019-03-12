@@ -14,7 +14,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
 import Effect.Console (warn)
-import Supple.Capability (getUserBuckets, getUserId)
+import Supple.Capability (getUserBuckets, getUserId, log)
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -80,7 +80,7 @@ app = do
   liftAff getDOMReady
   uid <- getUserId
   bs <- getUserBuckets uid
-  a <- pure $ f bs
+  log $ f bs
   pure unit
 
 main :: Effect Unit

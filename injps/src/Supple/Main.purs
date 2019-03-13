@@ -89,4 +89,4 @@ app = do
   pure unit
 
 main :: Effect Unit
-main = launchAff_ $ runAppM { logLevel: "info" } app
+main = launchAff_ $ runAppM app

@@ -2,15 +2,14 @@ module Supple.Data.Codec where
 
 import Prelude
 
-import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson, (.:))
 import Data.Argonaut.Parser (jsonParser)
-import Data.Array (head)
-import Data.Either (Either, note)
+import Data.Either (Either)
 import Supple.Data.Api (UserBucket(..))
 
-decodeUserBucket :: Json -> Either String UserBucket
-decodeUserBucket json = do
+decodeUserBucket :: String -> Either String UserBucket
+decodeUserBucket str = do
+  json <- jsonParser str
   o <- decodeJson json
   _ubUserId <- o .: "_ubUserId"
   _ubSku  <- o .: "_ubSku"
@@ -20,10 +19,3 @@ decodeUserBucket json = do
   _ubBucketId  <- o .: "_ubBucketId"
   pure $ UserBucket
    { _ubUserId , _ubSku , _ubSvid , _ubPrice , _ubExpId , _ubBucketId}
-
-decodeResponse :: String -> Either String UserBucket
-decodeResponse s = do
-  json <- jsonParser s
-  arr <- decodeJson json
-  b <- note "Empty array" (head arr)
-  decodeUserBucket b

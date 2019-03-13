@@ -8,7 +8,7 @@ import Effect.Aff (Aff, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Codec (decodeResponse)
+import Supple.Data.Codec (decodeUserBucket)
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
@@ -25,7 +25,7 @@ fetchUserBuckets uid = do
     qs = maybe "" ((<>) "?uid=") uid
   response <- attempt $ fetch (M.URL $ "https://b62c97ea.ngrok.io/api/bucket" <> qs) opts
   case response of
-    Right res -> M.text res >>= decodeResponse >>> pure
+    Right res -> M.text res >>= decodeUserBucket >>> pure
     Left err -> pure $ Left $ show err
 
 postLogPayload :: String -> Aff Unit

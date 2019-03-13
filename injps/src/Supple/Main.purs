@@ -1,30 +1,30 @@
 module Supple.Main where
 
 import Prelude
-import Supple.AppM (AppM, runAppM)
-import Supple.Data.Api (UserBucket(..))
 
 import Data.Array as A
 import Data.Either (Either(Right))
-import Data.Foldable (null, traverse_)
-import Data.Maybe (Maybe)
-import Data.Number (fromString)
+import Data.Foldable (traverse_)
+import Data.Maybe (Maybe(..))
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
-import Effect.Console (warn)
-import Supple.Capability (getUserBuckets, getUserId, log)
+import Effect.Class (liftEffect)
+import Supple.AppM (AppM, runAppM)
+import Supple.Capability (getUserBucket, getUserId)
+import Supple.Data.Api (UserBucket(..))
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
 import Web.DOM.Internal.Types (Element)
+import Web.DOM.Node as N
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
 import Web.HTML.Window (document)
-import Web.Storage.Storage as St
+
 
 getDOMReady :: Aff Unit
 getDOMReady =
@@ -54,33 +54,38 @@ removeClass className el = do
     pattern = S.Pattern className
     replacement = S.Replacement ""
 
-unhidePrice :: Effect Unit
-unhidePrice = do
-  els <- collectPriceEls
-  if (null els)
-    then warn $ "expected to unhide prices but no elements with class " <> hiddenPriceId <>" found."
-    else traverse_ (removeClass hiddenPriceId) els
-
-getIdFromPriceElement :: Element -> Effect (Maybe Number)
+getIdFromPriceElement :: Element -> Effect (Maybe String)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
     match = A.find (S.contains $ S.Pattern "supple__price_id--") classNames
-    pid = fromString =<< A.last =<< (S.split $ S.Pattern "--") <$> match
-  pure pid
+    sku = A.last =<< (S.split $ S.Pattern "--") <$> match
+  pure sku
 
-setUserId :: St.Storage -> Number -> Effect Unit
-setUserId st uid = St.setItem uidStorageKey (show uid) st
 
-f :: UserBucket -> String
-f (UserBucket ub) = ub._ubSku
+applyExperiment :: UserBucket -> AppM Unit
+applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
+  els <- liftEffect collectPriceEls
+  liftEffect $ traverse_ maybeInjectPrice els
+  liftEffect $ traverse_ (removeClass hiddenPriceId) els
+
+  where
+    textPrice = show _ubPrice
+
+    maybeInjectPrice :: Element -> Effect Unit
+    maybeInjectPrice el = do
+      sku <- getIdFromPriceElement el
+      match <- pure $ ((==) _ubSku) <$> sku
+      case match of
+        Just true -> N.setTextContent textPrice (E.toNode el)
+        _ ->  pure unit
 
 app :: AppM Unit
 app = do
   liftAff getDOMReady
   uid <- getUserId
-  bs <- getUserBuckets uid
-  log $ f bs
+  bucket <- getUserBucket uid
+  applyExperiment bucket
   pure unit
 
 main :: Effect Unit

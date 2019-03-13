@@ -44,7 +44,7 @@ instance appCapabilityAppM :: AppCapability AppM where
 
   setUserId uid = liftEffect $ window >>= localStorage >>= setItem "supple_uid" uid
 
-  getUserBuckets uid = do
+  getUserBucket uid = do
     bucket <- liftAff $ fetchUserBuckets uid
     case bucket of
       Right b -> pure b

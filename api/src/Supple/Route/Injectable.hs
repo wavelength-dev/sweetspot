@@ -25,7 +25,7 @@ import qualified Supple.Logger as L
 import Supple.Route.Util (internalServerErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
+   = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] UserBucket
 
 type EventRoute
    = "event" :> ReqBody '[ JSON] TrackView :> Post '[ JSON] OkResponse
@@ -34,14 +34,14 @@ type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
 type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
 
-getUserBucketHandler :: Maybe Int -> AppM [UserBucket]
+getUserBucketHandler :: Maybe Int -> AppM UserBucket
 getUserBucketHandler (Just uid) = do
   pool <- asks _getDbPool
   res <- liftIO $ getUserBuckets pool (UserId uid)
   case res of
     Right res -> do
       L.info $ "Got bucket for userId: " <> (T.pack $ show uid)
-      return res
+      return $ res !! 0
     Left err -> do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
@@ -49,7 +49,7 @@ getUserBucketHandler Nothing = do
   pool <- asks _getDbPool
   res <- liftIO $ getNewUserBuckets pool
   case res of
-    Right res -> L.info "Assigned user to bucket" >> return res
+    Right res -> L.info "Assigned user to bucket" >> (return $ res !! 0)
     Left err -> do
       L.error $ "Error assigning user to bucket " <> err
       throwError internalServerErr

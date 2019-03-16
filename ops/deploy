@@ -32,12 +32,8 @@ echo "=> Deploying Supple to ${ENV}"
 
 # Injectable
 echo "=> Building injectables"
-cd injectable/
-yarn --silent lint
-exit_on_failure
-yarn --silent test --ci
-exit_on_failure
-yarn --silent build
+cd injps/
+./script/build
 exit_on_failure
 cd ..
 echo "=> Finished building injectables"

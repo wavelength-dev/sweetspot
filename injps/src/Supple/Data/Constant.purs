@@ -5,6 +5,9 @@ import Data.String as S
 hiddenPriceId :: String
 hiddenPriceId = "supple__price--hidden"
 
+productClass :: String
+productClass = "supple__product"
+
 uidStorageKey :: String
 uidStorageKey = "supple_uid"
 

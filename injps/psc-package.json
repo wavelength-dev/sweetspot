@@ -18,6 +18,12 @@
     , "web-dom"
     , "web-html"
     , "web-xhr"
-    , "web-storage"
+    , "web-storage",
+    "foreign",
+    "foreign-generic",
+    "web-dom",
+    "web-html",
+    "web-storage",
+    "web-xhr"
   ]
 }

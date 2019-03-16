@@ -7,6 +7,7 @@ import Data.Either (Either(..))
 import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Console as C
 import Supple.Capability (class AppCapability)
 import Supple.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
@@ -46,4 +47,4 @@ instance appCapabilityAppM :: AppCapability AppM where
   log msg = do
     -- Fork aff since we don't care about result
     _ <- liftAff $ forkAff $ postLogPayload msg
-    pure unit
+    liftEffect $ C.log msg

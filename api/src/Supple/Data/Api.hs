@@ -5,15 +5,11 @@
 
 module Supple.Data.Api where
 
-import Control.Lens
 import Control.Lens.TH (makeLenses)
-import Data.Aeson (FromJSON(..), ToJSON(..), genericParseJSON)
-import Data.Aeson.Lens
-import Data.Aeson.Types (defaultOptions, fieldLabelModifier, typeMismatch)
+import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common
-import Text.Casing (quietSnake)
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -159,129 +155,6 @@ makeLenses ''CreateExperiment
 instance ToJSON CreateExperiment
 
 instance FromJSON CreateExperiment
-
--- | ---------------------------------------------------------------------------
--- | ProductDetailsView
--- | ---------------------------------------------------------------------------
-data ProductDetailsView = ProductDetailsView
-  { expId :: !(Maybe ExpId)
-  , bucketId :: !(Maybe BucketId)
-  , page :: !Text -- product
-  , pageUrl :: !Text
-  , productId :: Int
-  , userId :: !(Maybe Text)
-  } deriving (Generic, Show)
-
-instance FromJSON ProductDetailsView
-
-instance ToJSON ProductDetailsView
-
--- | ---------------------------------------------------------------------------
--- | ProductListingsView
--- | ---------------------------------------------------------------------------
-data ProductListingsView = ProductListingsView
-  { expId :: !(Maybe ExpId)
-  , bucketId :: !(Maybe BucketId)
-  , page :: !Text -- collection
-  , pageUrl :: !Text
-  , productIds :: ![Int]
-  , userId :: !(Maybe Text)
-  } deriving (Generic, Show)
-
-instance FromJSON ProductListingsView
-
-instance ToJSON ProductListingsView
-
--- | ---------------------------------------------------------------------------
--- | CollectionListingsView
--- | ---------------------------------------------------------------------------
-data CollectionListingsView = CollectionListingsView
-  { expId :: !(Maybe ExpId)
-  , bucketId :: !(Maybe BucketId)
-  , page :: !Text -- collections
-  , pageUrl :: !Text
-  , userId :: !(Maybe Text)
-  } deriving (Generic, Show)
-
-instance FromJSON CollectionListingsView
-
-instance ToJSON CollectionListingsView
-
--- | ---------------------------------------------------------------------------
--- | LineItem
--- | ---------------------------------------------------------------------------
-data LineItem = LineItem
-  { product_id :: !Int
-  , variant_id :: !Int
-  } deriving (Generic, Show)
-
-instance FromJSON LineItem where
-  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = quietSnake}
-
-instance ToJSON LineItem
-
--- | ---------------------------------------------------------------------------
--- | CheckoutEvent
--- | ---------------------------------------------------------------------------
-data CheckoutEvent = CheckoutEvent
-  { lineItems :: ![LineItem]
-  , page :: !Text -- checkout
-  , pageUrl :: !Text
-  , step :: !(Maybe Text)
-  , token :: !(Maybe Text)
-  , userId :: !(Maybe Text)
-  } deriving (Generic, Show)
-
-instance FromJSON CheckoutEvent
-
-instance ToJSON CheckoutEvent
-
--- | ---------------------------------------------------------------------------
--- | UnknownView
--- | ---------------------------------------------------------------------------
-data UnknownView = UnknownView
-  { expId :: !(Maybe ExpId)
-  , bucketId :: !(Maybe BucketId)
-  , page :: !Text -- unknown
-  , pageUrl :: !Text
-  , userId :: !(Maybe Text)
-  } deriving (Generic, Show)
-
-instance FromJSON UnknownView
-
-instance ToJSON UnknownView
-
--- | ---------------------------------------------------------------------------
--- | TrackView
--- | ---------------------------------------------------------------------------
-data TrackView
-  = Details ProductDetailsView
-  | Listing ProductListingsView
-  | Collection CollectionListingsView
-  | Checkout CheckoutEvent
-  | Unknown UnknownView
-  deriving (Show)
-
-instance FromJSON TrackView where
-  parseJSON val =
-    case page of
-      "product" -> Details <$> parseJSON val
-      "collection" -> Listing <$> parseJSON val
-      "collections" -> Collection <$> parseJSON val
-      "checkout" -> Checkout <$> parseJSON val
-      "unknown" -> Unknown <$> parseJSON val
-      _ -> typeMismatch "TrackView" val
-    where
-      page = val ^. key "page" . _String
-
-instance ToJSON TrackView where
-  toJSON view =
-    case view of
-      Details a -> toJSON a
-      Listing a -> toJSON a
-      Collection a -> toJSON a
-      Checkout a -> toJSON a
-      Unknown a -> toJSON a
 
 -- | ---------------------------------------------------------------------------
 -- | OkResponse

@@ -6,7 +6,7 @@ const trackCheckout = (): void => {
   log({ message: "Tracking checkout" })
   const page = detectPage()
   if (page !== "checkout") {
-    log({ message: "Not a checkout page, severity: skipping tracking" })
+    log({ message: "Not a checkout page, skipping tracking", severity: 'warn' })
     return
   }
 

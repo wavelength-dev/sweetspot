@@ -3,24 +3,20 @@
   "set": "psc-0.12.3",
   "source": "https://github.com/purescript/package-sets.git",
   "depends": [
-      "aff"
-    , "argonaut"
-    , "console"
-    , "debug"
-    , "effect"
-    , "generics-rep"
-    , "milkis"
-    , "numbers"
-    , "prelude"
-    , "psci-support"
-    , "spec"
-    , "tuples"
-    , "web-dom"
-    , "web-html"
-    , "web-xhr"
-    , "web-storage",
+    "aff",
+    "argonaut",
+    "console",
+    "debug",
+    "effect",
     "foreign",
     "foreign-generic",
+    "generics-rep",
+    "milkis",
+    "numbers",
+    "prelude",
+    "psci-support",
+    "spec",
+    "tuples",
     "web-dom",
     "web-html",
     "web-storage",

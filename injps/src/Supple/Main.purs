@@ -13,6 +13,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Supple.AppM (AppM, runAppM)
 import Supple.Capability (getUserBucket, getUserId)
+import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Supple.Data.Api (UserBucket(..))
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
@@ -34,11 +35,6 @@ getDOMReady =
     addEventListener domcontentloaded listener false (toEventTarget doc)
     pure nonCanceler
 
-hiddenPriceId :: String
-hiddenPriceId = "supple__price--hidden"
-
-uidStorageKey :: String
-uidStorageKey = "supple_uid"
 
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do
@@ -58,7 +54,7 @@ getIdFromPriceElement :: Element -> Effect (Maybe String)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
-    match = A.find (S.contains $ S.Pattern "supple__price_id--") classNames
+    match = A.find (S.contains idClassPattern) classNames
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
 

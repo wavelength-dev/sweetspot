@@ -2,14 +2,16 @@ module Supple.Request where
 
 import Prelude
 
+import Data.Argonaut.Core (stringify)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe, maybe)
 import Effect.Aff (Aff, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Supple.Data.Api (UserBucket)
+import Supple.Data.Codec (decodeUserBucket, encodeViewEvent)
 import Supple.Data.Constant (apiRoot)
-import Supple.Data.Codec (decodeUserBucket)
+import Supple.Data.Event (ViewEvent)
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
@@ -40,3 +42,15 @@ postLogPayload msg = do
       }
   _ <- attempt $ fetch (M.URL $ apiRoot <> "/log") opts
   pure unit
+
+postEventPayload :: ViewEvent -> Aff Unit
+postEventPayload tv =
+  let
+    opts =
+      { method: M.postMethod
+      , headers: jsonHeader
+      , body:  stringify $ encodeViewEvent tv
+      }
+    in do
+      _ <- attempt $ fetch (M.URL $ apiRoot <> "/event") opts
+      pure unit

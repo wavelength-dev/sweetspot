@@ -16,6 +16,7 @@ import Supple.AppM (AppM, ClientErr(..), runAppM)
 import Supple.Capability (getUserBucket, getUserId, log)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (hiddenPriceId, idClassPattern)
+import Supple.Event (trackView)
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -83,6 +84,7 @@ app = do
   uid <- getUserId
   bucket <- getUserBucket uid
   applyExperiment bucket
+  trackView bucket
   log "Successfully applied experiments."
 
 main :: Effect Unit

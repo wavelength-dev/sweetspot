@@ -3,7 +3,7 @@ module Supple.Main where
 import Prelude
 
 import Data.Array as A
-import Data.Either (Either(Right))
+import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.String as S
@@ -11,10 +11,11 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Supple.AppM (AppM, runAppM)
-import Supple.Capability (getUserBucket, getUserId)
-import Supple.Data.Constant (hiddenPriceId, idClassPattern)
+import Effect.Console as C
+import Supple.AppM (AppM, ClientErr(..), runAppM)
+import Supple.Capability (getUserBucket, getUserId, log)
 import Supple.Data.Api (UserBucket(..))
+import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -82,7 +83,11 @@ app = do
   uid <- getUserId
   bucket <- getUserBucket uid
   applyExperiment bucket
-  pure unit
+  log "Successfully applied experiments."
 
 main :: Effect Unit
-main = launchAff_ $ runAppM app
+main = launchAff_ $ do
+  res <- runAppM app
+  liftEffect $ case res of
+    Right _ -> C.log "Successfully ran app."
+    Left (ClientErr { message }) -> C.error $ "Failed to apply experiments: " <> message

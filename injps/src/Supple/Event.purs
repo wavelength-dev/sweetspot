@@ -5,19 +5,23 @@ import Prelude
 import Data.Array as A
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe)
+import Effect.Aff (forkAff)
 import Data.String as S
 import Data.String.Regex (Regex, regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Supple.AppM (AppM)
 import Supple.Capability (getUserId)
+import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Codec (decodeProduct)
 import Supple.Data.Constant (productClass)
 import Supple.Data.Event (Page(..))
 import Supple.Data.Shopify (Product)
+import Supple.Request (postEventPayload)
 import Web.DOM.Document as D
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -109,8 +113,8 @@ detectCampaign :: Effect (Maybe String)
 detectCampaign =
   window >>= location >>= search >>= (pure <<< parseCampaignId)
 
-trackView :: (Maybe Number) -> (Maybe Number) -> AppM Unit
-trackView expId bucketId = do
+trackView :: UserBucket -> AppM Unit
+trackView (UserBucket { _ubExpId, _ubBucketId }) = do
   userId <- getUserId
   viewEvent <- liftEffect $ do
       page <- detectPage
@@ -118,7 +122,8 @@ trackView expId bucketId = do
       products <- readInjectedProducts
       let
         productIds = (map _.id) <$> products
-        productId = A.head <$> productIds
-      pure { page, pageUrl, expId, userId, bucketId, productId, productIds }
+        productId = productIds >>= A.head
+      pure { page, pageUrl, expId: _ubExpId, userId, bucketId: _ubBucketId, productId, productIds }
 
+  _ <- liftAff $ forkAff $ postEventPayload viewEvent
   pure unit

@@ -17,7 +17,8 @@ instance showPage :: Show Page where
 data Step = ThankYou | PaymentMethod
 
 type ViewEvent =
-  { expId :: Maybe Number
+  { expId :: Number
+  , bucketId :: Number
   , page :: Page
   , pageUrl :: String
   , userId :: Maybe String

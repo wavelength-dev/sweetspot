@@ -13,7 +13,7 @@ import Data.Aeson (Value)
 import Data.Text as T
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
-import Supple.Data.Api (OkResponse(..), TrackView, UserBucket)
+import Supple.Data.Api (OkResponse(..), UserBucket)
 import Supple.Data.Common
 import Supple.Database
   ( getNewUserBuckets
@@ -28,7 +28,7 @@ type UserBucketRoute
    = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] UserBucket
 
 type EventRoute
-   = "event" :> ReqBody '[ JSON] TrackView :> Post '[ JSON] OkResponse
+   = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
 type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
@@ -54,10 +54,10 @@ getUserBucketHandler Nothing = do
       L.error $ "Error assigning user to bucket " <> err
       throwError internalServerErr
 
-trackViewHandler :: TrackView -> AppM OkResponse
-trackViewHandler tv = do
+trackViewHandler :: Value -> AppM OkResponse
+trackViewHandler val = do
   pool <- asks _getDbPool
-  res <- liftIO $ insertEvent pool tv
+  res <- liftIO $ insertEvent pool val
   case res of
     Right _ ->
       L.info "Tracked view" >> return OkResponse {message = "Event received"}

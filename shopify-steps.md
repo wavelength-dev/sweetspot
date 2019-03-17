@@ -2,7 +2,7 @@
 Steps to take manually to integrate supple with a shopify store.
 
 ## Add hide price class
-Find product-price.liquid
+Find product-prices.liquid
 Store SKU in variable
 ```
 {%- assign supple_sku = product.first_available_variant.sku -%}

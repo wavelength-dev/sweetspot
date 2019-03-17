@@ -33,7 +33,7 @@ getDOMReady :: Aff Unit
 getDOMReady =
   makeAff \cb -> do
     listener <- eventListener (\_ -> cb (Right unit))
-    doc <- (window >>= document)
+    doc <- window >>= document
     addEventListener domcontentloaded listener false (toEventTarget doc)
     pure nonCanceler
 

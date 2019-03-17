@@ -106,12 +106,12 @@ parseCampaignId qs =
     campaignPred = S.contains (S.Pattern "campaign=")
     match = A.find campaignPred pairs
   in
-   match >>= (pure <<< (S.split $ S.Pattern "=")) >>= (flip A.index 1)
+   match >>= pure <<< (S.split $ S.Pattern "=") >>= flip A.index 1
 
 
 detectCampaign :: Effect (Maybe String)
 detectCampaign =
-  window >>= location >>= search >>= (pure <<< parseCampaignId)
+  window >>= location >>= search >>= pure <<< parseCampaignId
 
 trackView :: UserBucket -> AppM Unit
 trackView (UserBucket { _ubExpId, _ubBucketId }) = do

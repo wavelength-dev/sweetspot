@@ -20,5 +20,5 @@ RUN apt-get update --quiet && apt-get install -y --quiet \
   libgmp-dev \
   libpq-dev
 COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-13.5/8.6.3/bin/supple-exe .
-COPY ./dist /opt/supple/dist
+COPY ./dist /opt/dist
 CMD ["/opt/supple/supple-exe"]

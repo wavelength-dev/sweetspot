@@ -94,7 +94,10 @@ getPageUrl = window >>= location >>= href
 trackCheckout :: Aff Unit
 trackCheckout = do
   pageUrl <- liftEffect $ getPageUrl
-  userId <- liftEffect $ window >>= localStorage >>= getItem "supple_uid" >>= (\mUid -> pure $ (mUid >>= fromString))
+  userId <- liftEffect $ window
+    >>= localStorage
+    >>= getItem "supple_uid"
+    >>= (\mUid -> pure $ (mUid >>= fromString))
   let r1 = getCheckoutState checkoutA checkoutB
   let r2 = { page: Checkout
            , pageUrl

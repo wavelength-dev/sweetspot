@@ -24,7 +24,7 @@ idClassPattern = S.Pattern "supple__price_id--"
 
 apiRoot ::
   String
-apiRoot = "https://73c54f32.ngrok.io/api"
+apiRoot = "https://app.getsweetspot.com/api"
 
 eventEndpoint ::
   String

@@ -79,9 +79,13 @@ type CheckoutA
 type CheckoutB
   = Foreign
 
+-- Shopify global with information on the current state of the checkout process.
+-- Think step, payment provider, checkout id.
 foreign import checkoutA ::
   CheckoutA
 
+-- Shopify global with information about the initiated checkout.
+-- Think basket, customer details, product id.
 foreign import checkoutB ::
   CheckoutB
 

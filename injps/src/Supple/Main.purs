@@ -8,7 +8,7 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.String as S
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
+import Effect.Aff (Aff, forkAff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console as C
@@ -17,6 +17,7 @@ import Supple.Capability (ensureDeps, getUserBucket, getUserId, log, setUserId)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Supple.Event (trackView)
+import Supple.Request (postLogPayload)
 import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
@@ -99,5 +100,6 @@ main = launchAff_ $ do
   liftEffect $ case res of
     Right _ -> C.log "Successfully ran app."
     Left (ClientErr { message }) -> do
-      C.error $ "Failed to apply experiments: " <> message
       unhidePrice
+      C.error $ "Failed to apply experiments: " <> message
+      launchAff_ $ forkAff $ postLogPayload message

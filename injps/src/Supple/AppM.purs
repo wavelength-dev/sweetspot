@@ -4,11 +4,13 @@ import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
+import Data.Number.Format (toString)
 import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import Supple.Capability (class AppCapability)
+import Supple.Data.Api (UserBucket(..))
 import Supple.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -36,7 +38,8 @@ runAppM (AppM m) = runExceptT m
 instance appCapabilityAppM :: AppCapability AppM where
   getUserId = liftEffect $ window >>= localStorage >>= getItem "supple_uid"
 
-  setUserId uid = liftEffect $ window >>= localStorage >>= setItem "supple_uid" uid
+  setUserId (UserBucket b) =
+    liftEffect $ window >>= localStorage >>= setItem "supple_uid" (toString b._ubUserId)
 
   getUserBucket uid = do
     bucket <- liftAff $ fetchUserBuckets uid

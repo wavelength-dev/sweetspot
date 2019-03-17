@@ -13,7 +13,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console as C
 import Supple.AppM (AppM, ClientErr(..), runAppM)
-import Supple.Capability (getUserBucket, getUserId, log)
+import Supple.Capability (getUserBucket, getUserId, log, setUserId)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Supple.Event (trackView)
@@ -83,6 +83,7 @@ app = do
   liftAff getDOMReady
   uid <- getUserId
   bucket <- getUserBucket uid
+  setUserId bucket
   applyExperiment bucket
   trackView bucket
   log "Successfully applied experiments."

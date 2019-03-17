@@ -3,6 +3,7 @@ module Supple.Data.Event where
 import Prelude
 
 import Data.Maybe (Maybe)
+import Foreign (Foreign)
 
 data Page = Product | Collection | Collections | Checkout | Unknown
 
@@ -14,8 +15,6 @@ instance showPage :: Show Page where
     Checkout -> "checkout"
     Unknown -> "unknown"
 
-data Step = ThankYou | PaymentMethod
-
 type ViewEvent =
   { expId :: Number
   , bucketId :: Number
@@ -26,14 +25,16 @@ type ViewEvent =
   , productId :: Maybe Number
   }
 
-type LineItem =
-  { productId :: Number
-  , variantId :: Number
-  }
+type LineItem = Foreign
+  -- { productId :: Number
+  -- , variantId :: Number
+  -- }
 
 type CheckoutEvent =
-  { page :: Page
+  { lineItems :: Maybe (Array LineItem)
+  , step :: Maybe String
   , token :: Maybe String
-  , step :: Maybe Step
-  , lineItems :: Maybe (Array LineItem)
+  , page :: Page
+  , pageUrl :: String
+  , orderId :: Maybe Number
   }

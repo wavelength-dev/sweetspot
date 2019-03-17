@@ -16,8 +16,8 @@ import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api (OkResponse(..), UserBucket)
 import Supple.Data.Common
 import Supple.Database
-  ( getNewUserBuckets
-  , getUserBuckets
+  ( getNewUserBucket
+  , getUserBucket
   , insertEvent
   , insertLogEvent
   )
@@ -37,19 +37,19 @@ type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
 getUserBucketHandler :: Maybe Int -> AppM UserBucket
 getUserBucketHandler (Just uid) = do
   pool <- asks _getDbPool
-  res <- liftIO $ getUserBuckets pool (UserId uid)
+  res <- liftIO $ getUserBucket pool (UserId uid)
   case res of
     Right res -> do
       L.info $ "Got bucket for userId: " <> (T.pack $ show uid)
-      return $ res !! 0
+      return res
     Left err -> do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
 getUserBucketHandler Nothing = do
   pool <- asks _getDbPool
-  res <- liftIO $ getNewUserBuckets pool
+  res <- liftIO $ getNewUserBucket pool
   case res of
-    Right res -> L.info "Assigned user to bucket" >> (return $ res !! 0)
+    Right res -> L.info "Assigned user to bucket" >> return res
     Left err -> do
       L.error $ "Error assigning user to bucket " <> err
       throwError internalServerErr

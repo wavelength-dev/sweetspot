@@ -5,11 +5,13 @@ import Prelude
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
 import Data.Number.Format (toString)
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import Supple.Capability (class AppCapability)
+import Supple.Compatibility (hasFetch, hasPromise)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
@@ -36,6 +38,17 @@ runAppM :: forall a. AppM a -> Aff (Either ClientErr a)
 runAppM (AppM m) = runExceptT m
 
 instance appCapabilityAppM :: AppCapability AppM where
+  ensureDeps =
+    case Tuple promise fetch of
+      Tuple true true -> pure unit
+      Tuple _ _ ->
+        throwError (ClientErr { message: "Missing required dependencies"
+                              , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
+                              })
+   where
+     promise = hasPromise
+     fetch = hasFetch
+
   getUserId = liftEffect $ window >>= localStorage >>= getItem "supple_uid"
 
   setUserId (UserBucket b) =

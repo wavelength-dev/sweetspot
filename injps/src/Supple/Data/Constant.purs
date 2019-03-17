@@ -1,20 +1,29 @@
 module Supple.Data.Constant where
 
+import Prelude
+  ( (<>)
+  )
+
 import Data.String as S
 
-hiddenPriceId :: String
+hiddenPriceId ::
+  String
 hiddenPriceId = "supple__price--hidden"
 
-productClass :: String
+productClass ::
+  String
 productClass = "supple__product"
 
-uidStorageKey :: String
+uidStorageKey ::
+  String
 uidStorageKey = "supple_uid"
 
-idClassPattern :: S.Pattern
+idClassPattern ::
+  S.Pattern
 idClassPattern = S.Pattern "supple__price_id--"
 
-apiRoot :: String
+apiRoot ::
+  String
 apiRoot = "https://73c54f32.ngrok.io/api"
 
 eventEndpoint ::

@@ -116,4 +116,5 @@ instance FromJSON CampaignId
 -- | ---------------------------------------------------------------------------
 data EventType
   = View
+  | Checkout
   | Log

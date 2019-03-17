@@ -166,5 +166,6 @@ data OkResponse = OkResponse
 instance ToJSON OkResponse
 
 eventTypeToText :: EventType -> Text
-eventTypeToText View = "view"
+eventTypeToText Checkout = "checkout"
 eventTypeToText Log = "log"
+eventTypeToText View = "view"

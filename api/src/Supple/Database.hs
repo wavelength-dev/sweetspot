@@ -15,8 +15,9 @@ module Supple.Database
   , insertLogEvent
   ) where
 
-import Control.Lens (_Left, over)
+import Control.Lens (_Left, over, (^?))
 import Data.Aeson (Value)
+import Data.Aeson.Lens (key, _String)
 import Data.ByteString.UTF8 (fromString)
 import qualified Data.Text as T
 import qualified Hasql.Connection as Connection
@@ -73,7 +74,13 @@ insertEvent pool val = do
   res <- Pool.use pool (insertEventSession input)
   return $ over _Left wrapQueryError res
   where
-    input = (View, val)
+    pageType = val ^? key "page" . _String
+    step = val ^? key "step" . _String
+      -- Relies on show instance of page in injectable
+    input =
+      case (pageType, step) of
+        (Just "checkout", Just "thank_you") -> (Checkout, val)
+        _ -> (View, val)
 
 insertLogEvent :: Pool -> Value -> IO (Either T.Text ())
 insertLogEvent pool val = do

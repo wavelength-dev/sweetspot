@@ -1,8 +1,6 @@
 module Supple.Data.Codec where
 
 import Prelude
-import Supple.Data.Event (ViewEvent)
-import Supple.Data.Shopify (Product, Variant)
 
 import Data.Argonaut.Core (Json, jsonEmptyObject)
 import Data.Argonaut.Decode (decodeJson, (.:))
@@ -11,6 +9,8 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either)
 import Data.Traversable (sequence)
 import Supple.Data.Api (UserBucket(..))
+import Supple.Data.Event (CheckoutEvent, ViewEvent)
+import Supple.Data.Shopify (Product, Variant)
 
 
 -- | ---------------------------------------------------------------------------
@@ -57,4 +57,14 @@ encodeViewEvent ve =
   ~> "userId" := ve.userId
   ~> "productId" := ve.productId
   ~> "productIds" := ve.productIds
+  ~> jsonEmptyObject
+
+encodeCheckoutEvent :: CheckoutEvent -> Json
+encodeCheckoutEvent ve =
+  "page" := (show ve.page)
+  ~> "pageUrl" := ve.pageUrl
+  ~> "step" := ve.step
+  ~> "token" := ve.token
+  ~> "orderId" := ve.orderId
+  ~> "lineItems" := ve.lineItems
   ~> jsonEmptyObject

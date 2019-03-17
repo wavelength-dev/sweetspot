@@ -2,8 +2,8 @@ module Supple.Data.Event where
 
 import Prelude
 
+import Data.Argonaut (class EncodeJson, (:=), (~>))
 import Data.Maybe (Maybe)
-import Foreign (Foreign)
 
 data Page = Product | Collection | Collections | Checkout | Unknown
 
@@ -25,10 +25,15 @@ type ViewEvent =
   , productId :: Maybe Number
   }
 
-type LineItem = Foreign
-  -- { productId :: Number
-  -- , variantId :: Number
-  -- }
+newtype LineItem = LineItem
+  { productId :: Number
+  , variantId :: Number
+  }
+
+instance encodeLineItemJson :: EncodeJson LineItem where
+  encodeJson (LineItem li) =
+    "productId" := li.productId
+    ~> "variantId" := li.variantId
 
 type CheckoutEvent =
   { lineItems :: Maybe (Array LineItem)

@@ -3,21 +3,23 @@ module Supple.Checkout where
 import Prelude
 
 import Control.Monad.Except (runExcept)
+import Data.Argonaut (stringify)
 import Data.Either (Either(..), hush)
 import Data.List (foldr)
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, attempt, launchAff_)
 import Effect.Class (liftEffect)
-import Foreign (Foreign, readArray, readNumber, readString, renderForeignError)
-import Foreign.Index (readProp)
-import Global.Unsafe (unsafeStringify)
+import Foreign (Foreign, F, readArray, readNumber, readString, renderForeignError)
+import Foreign.Index (readProp, (!))
 import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
+import Supple.Data.Codec (encodeCheckoutEvent)
 import Supple.Data.Constant (eventEndpoint)
-import Supple.Data.Event (CheckoutEvent, Page(..))
+import Supple.Data.Event (CheckoutEvent, LineItem(..), Page(..))
 import Supple.Request (jsonHeader, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (href)
@@ -39,11 +41,17 @@ foreign import checkoutA :: CheckoutA
 foreign import checkoutB :: CheckoutB
 
 type CheckoutState =
-  { lineItems :: Maybe (Array Foreign)
+  { lineItems :: Maybe (Array LineItem)
   , step :: Maybe String
   , token :: Maybe String
   , orderId :: Maybe Number
   }
+
+readLineItem :: Foreign -> F LineItem
+readLineItem value = do
+  productId <- value ! "product_id" >>= readNumber
+  variantId <- value ! "variant_id" >>= readNumber
+  pure $ LineItem { productId, variantId }
 
 getCheckoutStateIssues :: CheckoutA -> CheckoutB -> Maybe String
 getCheckoutStateIssues chA chB = case mErr of
@@ -54,7 +62,7 @@ getCheckoutStateIssues chA chB = case mErr of
   mErr = runExcept do
     step <- readProp "step" chA >>= readString
     token <- readProp "token" chA >>= readString
-    lineItems <- readProp "line_items" chB
+    lineItems <- readProp "line_items" chB >>= readArray >>= traverse readLineItem
     orderId <- readProp "order_id" chB >>= readNumber
     pure unit
 
@@ -67,16 +75,15 @@ getCheckoutState chA chB = { step
   where
   step = hush $ runExcept $ readProp "step" chA >>= readString
   token = hush $ runExcept $ readProp "token" chA >>= readString
-  lineItems = hush $ runExcept $ readProp "line_items" chB >>= readArray
+  lineItems = hush $ runExcept $ readProp "line_items" chB >>= readArray >>= traverse readLineItem
   orderId = hush $ runExcept $ readProp "order_id" chB >>= readNumber
 
 trackEvent :: CheckoutEvent -> Aff (Either Error Response)
 trackEvent event = attempt $ fetch (M.URL eventEndpoint) opts
   where
-  strBody = (unsafeStringify event)
   opts = { method: M.postMethod
          , headers: jsonHeader
-         , body: strBody
+         , body: stringify $ encodeCheckoutEvent event
          }
 
 getPageUrl :: Effect String

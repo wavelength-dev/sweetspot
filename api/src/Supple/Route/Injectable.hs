@@ -54,15 +54,15 @@ getUserBucketHandler Nothing = do
       L.error $ "Error assigning user to bucket " <> err
       throwError internalServerErr
 
-trackViewHandler :: Value -> AppM OkResponse
-trackViewHandler val = do
+trackEventHandler :: Value -> AppM OkResponse
+trackEventHandler val = do
   pool <- asks _getDbPool
   res <- liftIO $ insertEvent pool val
   case res of
     Right _ ->
-      L.info "Tracked view" >> return OkResponse {message = "Event received"}
+      L.info "Tracked event" >> return OkResponse {message = "Event received"}
     Left err -> do
-      L.error $ "Error tracking view " <> err
+      L.error $ "Error tracking event " <> err
       throwError internalServerErr
 
 trackLogMessageHandler :: Value -> AppM OkResponse
@@ -78,4 +78,4 @@ trackLogMessageHandler val = do
       throwError internalServerErr
 
 injectableHandler =
-  getUserBucketHandler :<|> trackViewHandler :<|> trackLogMessageHandler
+  getUserBucketHandler :<|> trackEventHandler :<|> trackLogMessageHandler

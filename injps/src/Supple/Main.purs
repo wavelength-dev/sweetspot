@@ -22,7 +22,6 @@ import Web.DOM.Document (getElementsByClassName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
 import Web.DOM.Internal.Types (Element)
-import Web.DOM.Node as N
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
@@ -53,6 +52,11 @@ removeClass className el = do
     pattern = S.Pattern className
     replacement = S.Replacement ""
 
+addClass :: String -> Element -> Effect Unit
+addClass className el = do
+  current <- E.className el
+  E.setClassName (current <> " " <> className) el
+
 getIdFromPriceElement :: Element -> Effect (Maybe String)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
@@ -73,14 +77,14 @@ applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
   liftEffect $ traverse_ (removeClass hiddenPriceId) els
 
   where
-    textPrice = show _ubPrice
+    textPrice = "supple__match--" <> show _ubPrice
 
     maybeInjectPrice :: Element -> Effect Unit
     maybeInjectPrice el = do
       sku <- getIdFromPriceElement el
       match <- pure $ ((==) _ubSku) <$> sku
       case match of
-        Just true -> N.setTextContent textPrice (E.toNode el)
+        Just true -> addClass textPrice el
         _ ->  pure unit
 
 app :: AppM Unit
@@ -92,14 +96,14 @@ app = do
   setUserId bucket
   applyExperiment bucket
   trackView bucket
-  log "Successfully applied experiments."
+  --log "Successfully applied experiments."
 
 main :: Effect Unit
 main = launchAff_ $ do
   res <- runAppM app
   liftEffect $ case res of
-    Right _ -> C.log "Successfully ran app."
+    Right _ -> pure unit
     Left (ClientErr { message }) -> do
       unhidePrice
-      C.error $ "Failed to apply experiments: " <> message
+      --C.error $ "Failed to apply experiments: " <> message
       launchAff_ $ forkAff $ postLogPayload message

@@ -29,7 +29,7 @@ import Web.DOM.Internal.Types (Element)
 import Web.DOM.Node as N
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
-import Web.HTML.Location (pathname, search, href)
+import Web.HTML.Location (pathname, href)
 import Web.HTML.Window (document, location)
 
 extractInjectedProductJSON :: Element -> Effect (Maybe Product)
@@ -109,9 +109,9 @@ parseCampaignId qs =
    match >>= pure <<< (S.split $ S.Pattern "=") >>= flip A.index 1
 
 
-detectCampaign :: Effect (Maybe String)
-detectCampaign =
-  window >>= location >>= search >>= pure <<< parseCampaignId
+-- detectCampaign :: Effect (Maybe String)
+-- detectCampaign =
+--   window >>= location >>= search >>= pure <<< parseCampaignId
 
 trackView :: UserBucket -> AppM Unit
 trackView (UserBucket { _ubExpId, _ubBucketId }) = do

@@ -50,7 +50,7 @@ createApp ctx =
         simpleCorsResourcePolicy
           { corsOrigins =
               Just
-                ( ["https://kamikoto.com/", "https://libertyprice.myshopify.com", "http://localhost:8082"]
+                ( ["https://kamikoto.com", "https://libertyprice.myshopify.com", "http://localhost:8082"]
                 , True)
           , corsRequestHeaders = "Content-Type" : simpleHeaders
           , corsMethods = simpleMethods

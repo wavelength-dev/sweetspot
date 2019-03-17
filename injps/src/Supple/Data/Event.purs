@@ -41,5 +41,6 @@ type CheckoutEvent =
   , token :: Maybe String
   , page :: Page
   , pageUrl :: String
+  , userId :: Maybe Number
   , orderId :: Maybe Number
   }

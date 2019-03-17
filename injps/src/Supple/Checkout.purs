@@ -7,6 +7,7 @@ import Data.Argonaut (stringify)
 import Data.Either (Either(..), hush)
 import Data.List (foldr)
 import Data.Maybe (Maybe(..))
+import Data.Number (fromString)
 import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, attempt, launchAff_)
@@ -23,7 +24,8 @@ import Supple.Data.Event (CheckoutEvent, LineItem(..), Page(..))
 import Supple.Request (jsonHeader, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (href)
-import Web.HTML.Window (location)
+import Web.HTML.Window (localStorage, location)
+import Web.Storage.Storage (getItem)
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
@@ -92,9 +94,11 @@ getPageUrl = window >>= location >>= href
 trackCheckout :: Aff Unit
 trackCheckout = do
   pageUrl <- liftEffect $ getPageUrl
+  userId <- liftEffect $ window >>= localStorage >>= getItem "supple_uid" >>= (\mUid -> pure $ (mUid >>= fromString))
   let r1 = getCheckoutState checkoutA checkoutB
   let r2 = { page: Checkout
            , pageUrl
+           , userId
            }
   void $ trackEvent $ merge r1 r2
 

@@ -13,12 +13,14 @@ if [ $? -ne 0 ]; then
   echo "=> Failed to build main"
   exit 1
 fi
+echo "=> Finished building main"
 
 pulp build --main Supple.Checkout --to ../dist/supple-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to build checkout"
   exit 1
 fi
+echo "=> Finished building checkout"
 
 npx --quiet uglify-js --compress --mangle --output ../dist/supple-main.min.js -- ../dist/supple-main.js
 if [ $? -ne 0 ]; then

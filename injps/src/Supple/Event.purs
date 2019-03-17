@@ -88,7 +88,7 @@ isCheckoutUrl path =
   where regexes = Tuple <$> checkoutUrlRegex <*> ordersUrlRegex
 
 detectPage :: Effect Page
-detectPage = window >>= location >>= pathname >>= (pure <<< getPage)
+detectPage = window >>= location >>= pathname >>= pure <<< getPage
   where
     getPage :: String -> Page
     getPage path

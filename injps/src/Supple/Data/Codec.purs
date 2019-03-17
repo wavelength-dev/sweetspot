@@ -29,9 +29,8 @@ decodeUserBucket str = do
   pure $ UserBucket
    { _ubUserId , _ubSku , _ubSvid , _ubPrice , _ubExpId , _ubBucketId}
 
-decodeVariant :: String -> Either String Variant
-decodeVariant str = do
-  json <- jsonParser str
+decodeVariant :: Json -> Either String Variant
+decodeVariant json = do
   o <- decodeJson json
   id <- o .: "id"
   sku <- o .: "sku"

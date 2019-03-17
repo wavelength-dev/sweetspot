@@ -18,3 +18,12 @@ Add code to inject product data
 ```
 <div class="supple__product" style="display: none">{{ product | json }}</div>
 ```
+
+## Add checkout script
+Open settings. (lower left, in the admin)
+Go to checkout settings.
+Scroll to additional scripts.
+Add
+```
+<script src="https://app.getsweetspot.com/static/supple-checkout.min.js"></script>
+```

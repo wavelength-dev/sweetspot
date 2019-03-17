@@ -40,7 +40,7 @@ echo "=> Finished building injectables"
 
 # API
 echo "=> Building image"
-docker build --quiet --tag supple .
+docker build --tag supple .
 exit_on_failure
 echo "=> Finished building image"
 

@@ -67,4 +67,5 @@ encodeCheckoutEvent ve =
   ~> "token" := ve.token
   ~> "orderId" := ve.orderId
   ~> "lineItems" := ve.lineItems
+  ~> "userId" := ve.userId
   ~> jsonEmptyObject

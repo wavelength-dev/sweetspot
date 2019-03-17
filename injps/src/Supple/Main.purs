@@ -13,7 +13,7 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console as C
 import Supple.AppM (AppM, ClientErr(..), runAppM)
-import Supple.Capability (getUserBucket, getUserId, log, setUserId)
+import Supple.Capability (ensureDeps, getUserBucket, getUserId, log, setUserId)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Supple.Event (trackView)
@@ -81,6 +81,7 @@ applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
 app :: AppM Unit
 app = do
   liftAff getDOMReady
+  ensureDeps
   uid <- getUserId
   bucket <- getUserBucket uid
   setUserId bucket

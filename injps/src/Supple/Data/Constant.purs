@@ -16,3 +16,15 @@ idClassPattern = S.Pattern "supple__price_id--"
 
 apiRoot :: String
 apiRoot = "https://73c54f32.ngrok.io/api"
+
+eventEndpoint ::
+  String
+eventEndpoint = apiRoot <> "/event"
+
+logEndpoint ::
+  String
+logEndpoint = apiRoot <> "/log"
+
+experimentEndpoint ::
+  String
+experimentEndpoint = apiRoot <> "/bucket"

@@ -10,7 +10,7 @@ import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Supple.Data.Api (UserBucket)
 import Supple.Data.Codec (decodeUserBucket, encodeViewEvent)
-import Supple.Data.Constant (apiRoot)
+import Supple.Data.Constant (eventEndpoint, experimentEndpoint, logEndpoint)
 import Supple.Data.Event (ViewEvent)
 
 fetch :: M.Fetch
@@ -27,7 +27,7 @@ fetchUserBuckets uid = do
       , headers: jsonHeader
       }
     qs = maybe "" ((<>) "?uid=") uid
-  response <- attempt $ fetch (M.URL $ apiRoot <> "/bucket" <> qs) opts
+  response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
     Right res -> M.text res >>= decodeUserBucket >>> pure
     Left err -> pure $ Left $ show err
@@ -40,7 +40,7 @@ postLogPayload msg = do
       , headers: jsonHeader
       , body: "{\"message\": \"" <> msg <> "\"}"
       }
-  _ <- attempt $ fetch (M.URL $ apiRoot <> "/log") opts
+  _ <- attempt $ fetch (M.URL logEndpoint) opts
   pure unit
 
 postEventPayload :: ViewEvent -> Aff Unit
@@ -52,5 +52,5 @@ postEventPayload tv =
       , body:  stringify $ encodeViewEvent tv
       }
     in do
-      _ <- attempt $ fetch (M.URL $ apiRoot <> "/event") opts
+      _ <- attempt $ fetch (M.URL eventEndpoint) opts
       pure unit

@@ -13,10 +13,10 @@ import Supple.Database.Statements
 import Supple.Data.Api
 import Control.Lens ((^.), (^..), (&))
 
-getUserBucketSession :: UserId -> Session [UserBucket]
-getUserBucketSession userId = Session.statement userId userBucketsStatement
+getUserBucketSession :: UserId -> Session UserBucket
+getUserBucketSession userId = Session.statement userId userBucketStatement
 
-assignAndGetUserBucketSession :: Session [UserBucket]
+assignAndGetUserBucketSession :: Session UserBucket
 assignAndGetUserBucketSession = do
   uid <- Session.statement () insertUserStatement
   randBs <- Session.statement () randomBucketPerExpStatement
@@ -24,7 +24,7 @@ assignAndGetUserBucketSession = do
     randBs
     (\(_, bucketId) ->
        Session.statement (uid, bucketId) assignUserToBucketStatement)
-  Session.statement uid userBucketsStatement
+  Session.statement uid userBucketStatement
 
 getBucketsSession :: Session [ExperimentBuckets]
 getBucketsSession = do

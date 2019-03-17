@@ -5,9 +5,9 @@
 module Supple.Database
   ( Pool
   , getDbPool
-  , getUserBuckets
+  , getUserBucket
   , createExperiment
-  , getNewUserBuckets
+  , getNewUserBucket
   , getExperimentBuckets
   , getExperimentStats
   , DbConfig(..)
@@ -53,13 +53,13 @@ getDbPool DbConfig {..} = do
 wrapQueryError :: Pool.UsageError -> T.Text
 wrapQueryError = T.pack . show
 
-getUserBuckets :: Pool -> UserId -> IO (Either T.Text [UserBucket])
-getUserBuckets pool userId = do
+getUserBucket :: Pool -> UserId -> IO (Either T.Text UserBucket)
+getUserBucket pool userId = do
   res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBuckets :: Pool -> IO (Either T.Text [UserBucket])
-getNewUserBuckets pool = do
+getNewUserBucket :: Pool -> IO (Either T.Text UserBucket)
+getNewUserBucket pool = do
   res <- Pool.use pool assignAndGetUserBucketSession
   return $ over _Left wrapQueryError res
 

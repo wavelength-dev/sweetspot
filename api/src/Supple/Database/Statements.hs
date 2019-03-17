@@ -11,8 +11,8 @@ import Hasql.Statement (Statement(..))
 import Supple.Data.Common
 import Supple.Data.Api
 
-userBucketsStatement :: Statement UserId [UserBucket]
-userBucketsStatement = Statement sql encoder decoder True
+userBucketStatement :: Statement UserId UserBucket
+userBucketStatement = Statement sql encoder decoder True
   where
     sql =
       (mconcat
@@ -25,7 +25,7 @@ userBucketsStatement = Statement sql encoder decoder True
          , "WHERE users.user_id = $1;"
          ])
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
-    decoder = Decoders.rowList $ toUserBucket <$> row
+    decoder = Decoders.singleRow $ toUserBucket <$> row
       where
         row =
           (,,,,,) <$> Decoders.column Decoders.int8 <*>

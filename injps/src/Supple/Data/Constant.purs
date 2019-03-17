@@ -15,4 +15,4 @@ idClassPattern :: S.Pattern
 idClassPattern = S.Pattern "supple__price_id--"
 
 apiRoot :: String
-apiRoot = "https://7d685827.ngrok.io/api"
+apiRoot = "https://73c54f32.ngrok.io/api"

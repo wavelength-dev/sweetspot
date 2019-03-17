@@ -60,6 +60,10 @@ getIdFromPriceElement el = do
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
 
+unhidePrice :: Effect Unit
+unhidePrice = do
+  els <- collectPriceEls
+  traverse_ (removeClass hiddenPriceId) els
 
 applyExperiment :: UserBucket -> AppM Unit
 applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
@@ -94,4 +98,6 @@ main = launchAff_ $ do
   res <- runAppM app
   liftEffect $ case res of
     Right _ -> C.log "Successfully ran app."
-    Left (ClientErr { message }) -> C.error $ "Failed to apply experiments: " <> message
+    Left (ClientErr { message }) -> do
+      C.error $ "Failed to apply experiments: " <> message
+      unhidePrice

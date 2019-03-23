@@ -49,7 +49,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-gzip --keep --force ../dist/supple-main.min.js
+gzip --keep --force ../dist/supple-checkout.min.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to gzip checkout"
   exit 1

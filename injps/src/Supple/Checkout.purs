@@ -53,7 +53,8 @@ readLineItem :: Foreign -> F LineItem
 readLineItem value = do
   productId <- value ! "product_id" >>= readNumber
   variantId <- value ! "variant_id" >>= readNumber
-  pure $ LineItem { productId, variantId }
+  sku <- value ! "sku" >>= readString
+  pure $ LineItem { productId, variantId, sku }
 
 getCheckoutStateIssues :: CheckoutA -> CheckoutB -> Maybe String
 getCheckoutStateIssues chA chB = case mErr of

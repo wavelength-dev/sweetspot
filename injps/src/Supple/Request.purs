@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut.Core (stringify)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe, maybe)
-import Effect.Aff (Aff, attempt)
+import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Supple.Data.Api (UserBucket)
@@ -33,24 +33,21 @@ fetchUserBuckets uid = do
     Left err -> pure $ Left $ show err
 
 postLogPayload :: String -> Aff Unit
-postLogPayload msg = do
-  let
+postLogPayload msg = apathize $ fetch url opts
+  where
+    url = (M.URL logEndpoint)
     opts =
       { method: M.postMethod
       , headers: jsonHeader
       , body: "{\"message\": \"" <> msg <> "\"}"
       }
-  _ <- attempt $ fetch (M.URL logEndpoint) opts
-  pure unit
 
 postEventPayload :: ViewEvent -> Aff Unit
-postEventPayload tv =
-  let
+postEventPayload tv = apathize $ fetch url opts
+  where
+    url = (M.URL eventEndpoint)
     opts =
       { method: M.postMethod
       , headers: jsonHeader
       , body:  stringify $ encodeViewEvent tv
       }
-    in do
-      _ <- attempt $ fetch (M.URL eventEndpoint) opts
-      pure unit

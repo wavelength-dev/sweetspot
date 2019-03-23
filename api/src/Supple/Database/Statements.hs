@@ -8,8 +8,9 @@ import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
-import Supple.Data.Common
 import Supple.Data.Api
+import Supple.Data.Common
+import Supple.Data.Domain (CheckoutEvent(..))
 
 userBucketStatement :: Statement UserId UserBucket
 userBucketStatement = Statement sql encoder decoder True
@@ -78,9 +79,11 @@ assignUserToBucketStatement = Statement sql encoder Decoders.unit True
 getExperimentStatement :: Statement ExpId Experiment
 getExperimentStatement = Statement sql encoder decoder True
   where
-    sql = mconcat
-      [ "SELECT exp_id, sku, name, campaign_id FROM experiments "
-      , "WHERE exp_id = $1;"]
+    sql =
+      mconcat
+        [ "SELECT exp_id, sku, name, campaign_id FROM experiments "
+        , "WHERE exp_id = $1;"
+        ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ toExperiment <$> row
       where
@@ -95,7 +98,8 @@ getExperimentStatement = Statement sql encoder decoder True
               { _eExpId = ExpId $ fromIntegral expId
               , _eSku = Sku sku
               , _eName = name
-              , _eCampaignId = CampaignId cmpId}
+              , _eCampaignId = CampaignId cmpId
+              }
 
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
@@ -114,7 +118,8 @@ getExperimentsStatement = Statement sql Encoders.unit decoder True
               { _eExpId = ExpId $ fromIntegral expId
               , _eSku = Sku sku
               , _eName = name
-              , _eCampaignId = CampaignId cmpId}
+              , _eCampaignId = CampaignId cmpId
+              }
 
 insertExperimentStatement :: Statement (Sku, CampaignId, Text) ExpId
 insertExperimentStatement = Statement sql encoder decoder True
@@ -201,28 +206,49 @@ insertEventStatement = Statement sql encoder decoder True
 getBucketUserCountStatement :: Statement BucketId Int
 getBucketUserCountStatement = Statement sql encoder decoder True
   where
-    sql = "SELECT COUNT(DISTINCT user_id) FROM bucket_users WHERE bucket_id = $1;"
+    sql =
+      "SELECT COUNT(DISTINCT user_id) FROM bucket_users WHERE bucket_id = $1;"
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
-    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+    decoder =
+      Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
 
 getBucketImpressionCountStatement :: Statement BucketId Int
 getBucketImpressionCountStatement = Statement sql encoder decoder True
   where
-    sql = mconcat
-      [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
-      , "AND (payload->>'bucketId')::int = $1;"
-      ]
+    sql =
+      mconcat
+        [ "SELECT COUNT(*) FROM events AS e INNER JOIN bucket_users as bu "
+        , "ON bu.user_id = (e.payload->>'userId')::int "
+        , "WHERE type = 'view' AND bu.bucket_id = $1;"
+        ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
-    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+    decoder =
+      Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
 
-getBucketConversionCountStatement :: Statement BucketId Int
-getBucketConversionCountStatement = Statement sql encoder decoder True
+getCheckoutEventsForBucket :: Statement BucketId [CheckoutEvent]
+getCheckoutEventsForBucket = Statement sql encoder decoder True
   where
-    sql = mconcat
-      [ "SELECT COUNT(*) FROM events WHERE type = 'view' "
-      , "AND (payload->>'bucketId')::int = $1 "
-      , "AND (payload->>'page')::text = 'checkout' "
-      , "AND (payload->>'step')::text = 'thank_you';"
-      ]
+    sql =
+      mconcat
+        [ "SELECT e.id, e.timestamp, bu.user_id, bu.bucket_id, e.payload->>'orderId' "
+        , "FROM events AS e INNER JOIN bucket_users AS bu "
+        , "ON bu.user_id = (e.payload->>'userId')::int "
+        , "WHERE type = 'checkout' AND bu.bucket_id = $1;"
+        ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
-    decoder = Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
+    decoder = Decoders.rowList $ toCheckoutEvent <$> row
+    row =
+      (,,,,) <$> Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.timestamptz <*>
+      Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.int8
+    toCheckoutEvent =
+      \(id, ts, userId, bucketId, orderId) ->
+        CheckoutEvent
+          { _chkId = EventId $ fromIntegral id
+          , _chkTimestamp = ts
+          , _chkUserId = UserId $ fromIntegral userId
+          , _chkBucketId = BucketId $ fromIntegral bucketId
+          , _chkOrderId = OrderId $ fromIntegral orderId
+          }

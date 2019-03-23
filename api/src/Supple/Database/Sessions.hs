@@ -72,10 +72,10 @@ getExperimentStatsSession expId = do
       let id = b ^. bBucketId
       users <- Session.statement id getBucketUserCountStatement
       impressions <- Session.statement id getBucketImpressionCountStatement
-      conversions <- Session.statement id getBucketConversionCountStatement
+      checkouts <- Session.statement id getCheckoutEventsForBucket
       return $ BucketStats
         { _bsBucketId = id
         , _bsUserCount = users
         , _bsImpressionCount = impressions
-        , _bsConversionCount = conversions
+        , _bsConversionCount = length checkouts
         }

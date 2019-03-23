@@ -47,6 +47,7 @@ echo "=> Build size main:"
 print_filesize "supple-main.js" "Raw Output"
 print_filesize "supple-main.min.js" "Minified"
 print_filesize "supple-main.min.js.gz" "Minified and Compressed"
+rm ../dist/supple-main.min.js.gz
 
 echo "=> Build size:"
 print_filesize "supple-checkout.js" "Raw Output"

@@ -19,6 +19,8 @@ import Network.Wai.Middleware.Cors
   , simpleHeaders
   , simpleMethods
   )
+import Network.Wai.Middleware.Gzip (def, gzip, gzipFiles, GzipFiles(GzipCacheFolder))
+import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Database (DbConfig(..), getDbPool)
@@ -38,10 +40,17 @@ rootAPI = Proxy
 server :: ServerT RootAPI AppM
 server = (dashboardHandler :<|> injectableHandler) :<|> healthHandler :<|> staticHandler
 
+
+-- WAI doesn't seem to want to know about routing.
+-- This should probably move into a Servant handler somehow.
+gzipStatic :: Middleware
+gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
+  where settings = def { gzipFiles = GzipCacheFolder "../dist/" }
+
 createApp :: AppCtx -> Application
 createApp ctx =
   corsMiddleware $
-  serve rootAPI $ hoistServer rootAPI (`runReaderT` ctx) server
+  gzipStatic $ serve rootAPI $ hoistServer rootAPI (`runReaderT` ctx) server
   where
     corsMiddleware :: Middleware
     corsMiddleware =

@@ -27,6 +27,7 @@ dependencies:
 - envy
 - fast-logger
 - hasql
+- hasql-pool
 - lens
 - lens-aeson
 - load-env
@@ -41,9 +42,9 @@ dependencies:
 - utf8-string
 - wai
 - wai-cors
+- wai-extra
 - warp
 - wreq
-- hasql-pool
 
 library:
   source-dirs: src

@@ -24,22 +24,24 @@ import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Database (DbConfig(..), getDbPool)
-import Supple.Env (getEnvConfig, EnvConfig(..))
+import Supple.Env (EnvConfig(..), getEnvConfig)
+import qualified Supple.Logger as L
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
+import Supple.Route.Health (HealthAPI, healthHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
 import Supple.Route.Static (StaticAPI, staticHandler)
-import Supple.Route.Health (HealthAPI, healthHandler)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
-import qualified Supple.Logger as L
 
-type RootAPI = "api" :> (DashboardAPI :<|> InjectableAPI) :<|> HealthAPI :<|> StaticAPI
+type RootAPI
+   = "api" :> (DashboardAPI :<|> InjectableAPI) :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server :: ServerT RootAPI AppM
-server = (dashboardHandler :<|> injectableHandler) :<|> healthHandler :<|> staticHandler
-
+server =
+  (dashboardHandler :<|> injectableHandler) :<|> healthHandler :<|>
+  staticHandler
 
 -- WAI doesn't seem to want to know about routing.
 -- This should probably move into a Servant handler somehow.
@@ -59,7 +61,10 @@ createApp ctx =
         simpleCorsResourcePolicy
           { corsOrigins =
               Just
-                ( ["https://kamikoto.com", "https://libertyprice.myshopify.com", "http://localhost:8082"]
+                ( [ "https://kamikoto.com"
+                  , "https://libertyprice.myshopify.com"
+                  , "http://localhost:8082"
+                  ]
                 , True)
           , corsRequestHeaders = "Content-Type" : simpleHeaders
           , corsMethods = simpleMethods
@@ -70,9 +75,10 @@ createApp ctx =
 runServer :: IO ()
 runServer = do
   result <- getEnvConfig
-  envConfig <- case result of
-    Left msg -> error msg
-    Right envConfig' -> return envConfig'
+  envConfig <-
+    case result of
+      Left msg -> error msg
+      Right envConfig' -> return envConfig'
   let dbConfig =
         DbConfig
           { host = dbHost envConfig

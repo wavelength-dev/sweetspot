@@ -212,6 +212,8 @@ getBucketUserCountStatement = Statement sql encoder decoder True
     decoder =
       Decoders.singleRow $ fromIntegral <$> Decoders.column Decoders.int8
 
+-- | The below two queries assume there will only exist one bucket per user
+-- | at a time.
 getBucketImpressionCountStatement :: Statement BucketId Int
 getBucketImpressionCountStatement = Statement sql encoder decoder True
   where

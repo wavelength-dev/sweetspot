@@ -23,6 +23,7 @@ import qualified Hasql.Connection as Connection
 import qualified Hasql.Pool as Pool
 import Supple.Data.Api
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
+import Supple.Data.Domain (DBExperimentStats)
 import Supple.Data.Common
 import Supple.Database.Sessions
 
@@ -92,7 +93,7 @@ createExperiment pool sku svid price cmp name = do
   res <- Pool.use pool (createExperimentSession (sku, svid, price, cmp, name))
   return $ over _Left wrapQueryError res
 
-getExperimentStats :: Pool -> ExpId -> IO (Either T.Text ExperimentStats)
+getExperimentStats :: Pool -> ExpId -> IO (Either T.Text DBExperimentStats)
 getExperimentStats pool expId = do
   res <- Pool.use pool (getExperimentStatsSession expId)
   return $ over _Left wrapQueryError res

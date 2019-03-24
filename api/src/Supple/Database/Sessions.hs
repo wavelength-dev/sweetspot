@@ -5,8 +5,6 @@ module Supple.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Aeson (Value)
-import Data.Maybe (isJust)
-import qualified Data.List as L
 import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
@@ -14,7 +12,7 @@ import Supple.Data.Common
 import Supple.Database.Statements
 import Supple.Data.Domain
 import Supple.Data.Api
-import Control.Lens ((^.), (^..), (&))
+import Control.Lens ((^.))
 
 getUserBucketSession :: UserId -> Session UserBucket
 getUserBucketSession userId = Session.statement userId userBucketStatement
@@ -57,20 +55,18 @@ createExperimentSession (sku, svid, price, cmp, name) = do
   bucketId <- Session.statement (svid, sku, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement
 
-getExperimentStatsSession :: ExpId -> Session ExperimentStats
+getExperimentStatsSession :: ExpId -> Session DBExperimentStats
 getExperimentStatsSession expId = do
   exp <- Session.statement expId getExperimentStatement
   bs <- Session.statement expId getBucketsForExperimentStatement
   bstats <- mapM getBucketStats bs
-  return $ ExperimentStats
-    { _esExpId = exp ^. eExpId
-    , _esUserCount = bstats ^.. traverse . bsUserCount & sum
-    , _esImpressionCount = bstats ^.. traverse . bsImpressionCount & sum
-    , _esBuckets = bstats
+  return $ DBExperimentStats
+    { _desExpId = exp ^. eExpId
+    , _desBuckets = bstats
     }
 
   where
-    getBucketStats :: Bucket -> Session BucketStats
+    getBucketStats :: Bucket -> Session DBBucketStats
     getBucketStats b = do
       let
         id = b ^. bBucketId
@@ -78,14 +74,10 @@ getExperimentStatsSession expId = do
       users <- Session.statement id getBucketUserCountStatement
       impressions <- Session.statement id getBucketImpressionCountStatement
       checkouts <- Session.statement id getCheckoutEventsForBucket
-      return $ BucketStats
-        { _bsBucketId = id
-        , _bsUserCount = users
-        , _bsImpressionCount = impressions
-        , _bsConversionCount =
-            checkouts ^.. traverse . chkLineItems
-              & fmap (isJust . L.find (== svid))
-              & filter (== True)
-              & length
-        , _bsCheckoutEvents = checkouts
+      return $ DBBucketStats
+        { _dbsBucketId = id
+        , _dbsSvid = svid
+        , _dbsUserCount = users
+        , _dbsImpressionCount = impressions
+        , _dbsCheckoutEvents = checkouts
         }

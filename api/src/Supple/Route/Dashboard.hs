@@ -7,7 +7,7 @@ module Supple.Route.Dashboard
   , dashboardHandler
   ) where
 
-import Control.Lens ((.~), (^.), (^?!), element)
+import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Aeson.Lens (_String, key, nth)
@@ -17,6 +17,7 @@ import Servant
 import Supple.AppM (AppCtx(..), AppM)
 import Supple.Data.Api
 import Supple.Data.Common
+import Supple.Data.Domain
 import Supple.Database
   ( createExperiment
   , getExperimentBuckets
@@ -87,8 +88,9 @@ getExperimentStatsHandler expId = do
   pool <- asks _getDbPool
   res <- liftIO $ getExperimentStats pool (ExpId expId)
   case res of
-    Right exps ->
-      L.info ("Got experiment stats for expId: " <> eid) >> return exps
+    Right dbStats ->
+      L.info ("Got experiment stats for expId: " <> eid) >>
+      (return $ enhanceDBStats dbStats)
     Left err -> do
       L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
         err

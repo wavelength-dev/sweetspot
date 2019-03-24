@@ -10,6 +10,7 @@ import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common
+import Supple.Data.Domain (CheckoutEvent)
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -122,6 +123,7 @@ data BucketStats = BucketStats
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
+  , _bsCheckoutEvents :: ![CheckoutEvent]
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats

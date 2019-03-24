@@ -5,11 +5,14 @@ module Supple.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Aeson (Value)
+import Data.Maybe (isJust)
+import qualified Data.List as L
 import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
 import Supple.Data.Common
 import Supple.Database.Statements
+import Supple.Data.Domain
 import Supple.Data.Api
 import Control.Lens ((^.), (^..), (&))
 
@@ -69,7 +72,9 @@ getExperimentStatsSession expId = do
   where
     getBucketStats :: Bucket -> Session BucketStats
     getBucketStats b = do
-      let id = b ^. bBucketId
+      let
+        id = b ^. bBucketId
+        svid = b ^. bSvid
       users <- Session.statement id getBucketUserCountStatement
       impressions <- Session.statement id getBucketImpressionCountStatement
       checkouts <- Session.statement id getCheckoutEventsForBucket
@@ -77,6 +82,10 @@ getExperimentStatsSession expId = do
         { _bsBucketId = id
         , _bsUserCount = users
         , _bsImpressionCount = impressions
-        , _bsConversionCount = length checkouts
+        , _bsConversionCount =
+            checkouts ^.. traverse . chkLineItems
+              & fmap (isJust . L.find (== svid))
+              & filter (== True)
+              & length
         , _bsCheckoutEvents = checkouts
         }

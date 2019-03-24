@@ -17,31 +17,23 @@ CREATE TABLE buckets
  price NUMERIC(12, 2));
 
 CREATE TABLE bucket_users
-(bucket_id SERIAL,
- user_id SERIAL,
- FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id),
- FOREIGN KEY (user_id) REFERENCES users(user_id));
+(bucket_id SERIAL REFERENCES buckets(bucket_id),
+ user_id SERIAL REFERENCES users(user_id));
 
 CREATE TABLE experiment_group_users
-(exp_group_id SERIAL,
- user_id SERIAL,
- FOREIGN KEY (exp_group_id) REFERENCES experiment_groups(exp_group_id),
- FOREIGN KEY (user_id) REFERENCES users(user_id));
+(exp_group_id SERIAL REFERENCES experiment_groups(exp_group_id),
+ user_id SERIAL REFERENCES users(user_id));
 
 CREATE TABLE experiment_group_experiments
-(exp_group_id SERIAL,
- exp_id SERIAL,
- FOREIGN KEY (exp_group_id) REFERENCES experiment_groups(exp_group_id),
- FOREIGN KEY (exp_id) REFERENCES experiments(exp_id));
+(exp_group_id SERIAL REFERENCES experiment_groups(exp_group_id),
+ exp_id SERIAL REFERENCES experiments(exp_id));
 
 CREATE TABLE experiment_buckets
-(exp_id SERIAL,
- bucket_id SERIAL,
- FOREIGN KEY (exp_id) REFERENCES experiments(exp_id),
- FOREIGN KEY (bucket_id) REFERENCES buckets(bucket_id));
+(exp_id SERIAL REFERENCES experiments(exp_id),
+ bucket_id SERIAL REFERENCES buckets(bucket_id));
 
 CREATE TABLE events
-(id SERIAL,
+(id SERIAL PRIMARY KEY,
  type TEXT,
  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  payload JSONB);

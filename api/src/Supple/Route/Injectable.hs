@@ -7,7 +7,9 @@ module Supple.Route.Injectable
   , injectableHandler
   ) where
 
+import Control.Lens ((^?))
 import Control.Monad.IO.Class (liftIO)
+import Data.Aeson.Lens (key, _String)
 import Control.Monad.Reader (asks)
 import Data.Aeson (Value)
 import Data.Text as T
@@ -56,8 +58,17 @@ getUserBucketHandler Nothing = do
 
 trackEventHandler :: Value -> AppM OkResponse
 trackEventHandler val = do
+  let
+    pageType = val ^? key "page" . _String
+    step = val ^? key "step" . _String
+      -- Relies on show instance of page in injectable
+    input =
+      case (pageType, step) of
+        (Just "checkout", Just "thank_you") -> (Checkout, val)
+        _ -> (View, val)
+
   pool <- asks _getDbPool
-  res <- liftIO $ insertEvent pool val
+  res <- liftIO $ insertEvent pool input
   case res of
     Right _ ->
       L.info "Tracked event" >> return OkResponse {message = "Event received"}

@@ -78,4 +78,5 @@ getExperimentStatsSession expId = do
         , _bsUserCount = users
         , _bsImpressionCount = impressions
         , _bsConversionCount = length checkouts
+        , _bsCheckoutEvents = checkouts
         }

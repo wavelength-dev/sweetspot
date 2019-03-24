@@ -2,7 +2,9 @@
 
 module Supple.Database.Statements where
 
+import Control.Lens ((&), (^..))
 import Data.Aeson (Value)
+import Data.Aeson.Lens (_Integer, key, values)
 import Data.Functor.Contravariant ((>$<))
 import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
@@ -232,7 +234,8 @@ getCheckoutEventsForBucket = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT e.id, e.timestamp, bu.user_id, bu.bucket_id, e.payload->>'orderId' "
+        [ "SELECT e.id, e.timestamp, bu.user_id, bu.bucket_id, e.payload->>'orderId', "
+        , "e.payload->>'lineItems' "
         , "FROM events AS e INNER JOIN bucket_users AS bu "
         , "ON bu.user_id = (e.payload->>'userId')::int "
         , "WHERE type = 'checkout' AND bu.bucket_id = $1;"
@@ -240,17 +243,21 @@ getCheckoutEventsForBucket = Statement sql encoder decoder True
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.rowList $ toCheckoutEvent <$> row
     row =
-      (,,,,) <$> Decoders.column Decoders.int8 <*>
+      (,,,,,) <$> Decoders.column Decoders.int8 <*>
       Decoders.column Decoders.timestamptz <*>
       Decoders.column Decoders.int8 <*>
       Decoders.column Decoders.int8 <*>
-      Decoders.column Decoders.int8
+      Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.json
     toCheckoutEvent =
-      \(id, ts, userId, bucketId, orderId) ->
+      \(id, ts, userId, bucketId, orderId, lineItems) ->
         CheckoutEvent
           { _chkId = EventId $ fromIntegral id
           , _chkTimestamp = ts
           , _chkUserId = UserId $ fromIntegral userId
           , _chkBucketId = BucketId $ fromIntegral bucketId
           , _chkOrderId = OrderId $ fromIntegral orderId
+          , _chkLineItems =
+              lineItems ^.. values . key "variantId" . _Integer
+                & fmap (Svid . fromIntegral)
           }

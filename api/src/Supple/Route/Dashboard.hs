@@ -15,9 +15,9 @@ import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
+import Supple.Calc (enhanceDBStats)
 import Supple.Data.Api
 import Supple.Data.Common
-import Supple.Data.Domain
 import Supple.Database
   ( createExperiment
   , getExperimentBuckets

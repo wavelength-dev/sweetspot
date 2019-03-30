@@ -10,6 +10,7 @@ import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Supple.Data.Common
+import Statistics.Types (Estimate, ConfInt)
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -122,7 +123,9 @@ data BucketStats = BucketStats
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
-  , _bsConversionRate :: !Double
+  , _bsConversionRate :: !Float
+  , _bsConfidenceInterval :: !(Estimate ConfInt Double)
+  , _bsEstSamplesToSig :: !Int
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats
@@ -137,6 +140,7 @@ data ExperimentStats = ExperimentStats
   , _esUserCount :: !Int
   , _esImpressionCount :: !Int
   , _esConversionCount :: !Int
+  , _esConversionRate :: !Float
   , _esBuckets :: ![BucketStats]
   } deriving (Eq, Generic, Show)
 

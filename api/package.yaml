@@ -25,6 +25,7 @@ dependencies:
 - contravariant
 - data-default
 - envy
+- erf
 - fast-logger
 - hasql
 - hasql-pool
@@ -36,6 +37,7 @@ dependencies:
 - scientific
 - servant
 - servant-server
+- statistics
 - text
 - time
 - transformers

@@ -122,6 +122,7 @@ data BucketStats = BucketStats
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
+  , _bsConversionRate :: !Double
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats

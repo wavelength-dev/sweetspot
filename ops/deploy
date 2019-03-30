@@ -33,7 +33,7 @@ echo "=> Deploying Supple to ${ENV}"
 # Injectable
 echo "=> Building injectables"
 cd injps/
-. ./script/build
+./script/build $ENV
 exit_on_failure
 cd ..
 echo "=> Finished building injectables"

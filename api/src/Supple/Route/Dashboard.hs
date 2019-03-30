@@ -94,7 +94,7 @@ getExperimentStatsHandler expId = do
     Left err -> do
       L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
         err
-      throwError internalServerErr
+      throwError err404 { errBody = "Could not find experiment" }
   where
     eid = T.pack $ show expId
 

@@ -58,6 +58,7 @@ makeLenses ''DBExperimentStats
 enhanceDBBucketStats :: DBBucketStats -> BucketStats
 enhanceDBBucketStats stats =
   let variantId = stats ^. dbsSvid
+      userCount = stats ^. dbsUserCount
     -- | TODO Maybe ping shopify to check fulfillment status
       conversionCount =
         stats ^. dbsCheckoutEvents
@@ -65,9 +66,11 @@ enhanceDBBucketStats stats =
           & length
    in BucketStats
         { _bsBucketId = stats ^. dbsBucketId
-        , _bsUserCount = stats ^. dbsUserCount
+        , _bsUserCount = userCount
         , _bsImpressionCount = stats ^. dbsImpressionCount
         , _bsConversionCount = conversionCount
+        , _bsConversionRate =
+          (fromIntegral conversionCount) / (fromIntegral userCount) & (* 100)
         }
 
 enhanceDBStats :: DBExperimentStats -> ExperimentStats

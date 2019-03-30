@@ -38,7 +38,7 @@ type ExperimentStatsRoute
    = "experiments" :> Capture "expId" Int :> "stats" :> Get '[ JSON] ExperimentStats
 
 type DashboardAPI
-   = ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> ExperimentStatsRoute
+   = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> ExperimentStatsRoute)
 
 getProductsHandler :: AppM [Product]
 getProductsHandler = do

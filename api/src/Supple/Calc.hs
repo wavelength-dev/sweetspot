@@ -53,7 +53,7 @@ enhanceDBStats :: DBExperimentStats -> ExperimentStats
 enhanceDBStats stats =
   let buckets = stats ^. desBuckets
       totalUserCount = buckets ^.. traverse . dbsUserCount & sum
-      totalImpressionCount = buckets ^.. traverse . dbsUserCount & sum
+      totalImpressionCount = buckets ^.. traverse . dbsImpressionCount & sum
       enhancedBucketStats = enhanceDBBucketStats <$> stats ^. desBuckets
       totalConversionCount =
         enhancedBucketStats & fmap (^. bsConversionCount) & sum
@@ -63,6 +63,6 @@ enhanceDBStats stats =
         , _esImpressionCount = totalImpressionCount
         , _esConversionCount = totalConversionCount
         , _esConversionRate =
-          calculateConversionRate totalUserCount totalConversionCount
+          calculateConversionRate totalConversionCount totalUserCount
         , _esBuckets = enhancedBucketStats
         }

@@ -5,10 +5,18 @@ print_filesize() {
   echo "${FILE_SIZE}K -- $2"
 }
 
-echo "=> Building PureScript injectables"
+ENV=${1:-dev}
+echo "=> Building PureScript injectables for ${ENV}"
 START=$(date +%s)
 
-pulp build --main Supple.Main --to ../dist/supple-main.js
+# Source env vars
+if [[ $ENV == "staging" ]]; then
+  source .env.staging
+elif [[ $ENV == "production" ]]; then
+  source .env.production
+fi
+
+pulp browserify --main Supple.Main --optimise --transform envify --to ../dist/supple-main.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to build main"
   exit 1
@@ -36,7 +44,7 @@ print_filesize "supple-main.min.js" "Minified"
 print_filesize "supple-main.min.js.gz" "Minified and Compressed"
 rm ../dist/supple-main.min.js.gz
 
-pulp build --main Supple.Checkout --to ../dist/supple-checkout.js
+pulp browserify --main Supple.Checkout --optimise --transform envify --to ../dist/supple-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to build checkout"
   exit 1
@@ -58,5 +66,5 @@ fi
 echo "=> Build size checkout:"
 print_filesize "supple-checkout.js" "Raw Output"
 print_filesize "supple-checkout.min.js" "Minified"
-print_filesize "supple-checkout.min.js.gz"
+print_filesize "supple-checkout.min.js.gz" "Minified and Compressed"
 rm ../dist/supple-checkout.min.js.gz

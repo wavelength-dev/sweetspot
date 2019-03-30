@@ -1,10 +1,8 @@
 module Supple.Data.Constant where
 
-import Prelude
-  ( (<>)
-  )
-
 import Data.String as S
+import Prelude ((<>))
+import Supple.Env (apiURL) as Env
 
 hiddenPriceId ::
   String
@@ -22,18 +20,14 @@ idClassPattern ::
   S.Pattern
 idClassPattern = S.Pattern "supple__price_id--"
 
-apiRoot ::
-  String
-apiRoot = "https://app.getsweetspot.com/api"
-
 eventEndpoint ::
   String
-eventEndpoint = apiRoot <> "/event"
+eventEndpoint = Env.apiURL <> "/event"
 
 logEndpoint ::
   String
-logEndpoint = apiRoot <> "/log"
+logEndpoint = Env.apiURL <> "/log"
 
 experimentEndpoint ::
   String
-experimentEndpoint = apiRoot <> "/bucket"
+experimentEndpoint = Env.apiURL <> "/bucket"

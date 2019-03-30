@@ -5,3 +5,5 @@
 .spago/
 node_modules/
 output/
+.env.staging
+.env.production

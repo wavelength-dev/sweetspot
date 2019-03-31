@@ -98,6 +98,8 @@ getExperimentStatsHandler expId = do
   where
     eid = T.pack $ show expId
 
+dashboardHandler ::
+     AppM [Product] :<|> (AppM [ExperimentBuckets] :<|> ((CreateExperiment -> AppM OkResponse) :<|> (Int -> AppM ExperimentStats)))
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|>
   getExperimentStatsHandler

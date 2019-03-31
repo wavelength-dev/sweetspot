@@ -14,7 +14,7 @@ productClass = "supple__product"
 
 uidStorageKey ::
   String
-uidStorageKey = "supple_uid"
+uidStorageKey = "supple_uid_1554053013187"
 
 idClassPattern ::
   S.Pattern

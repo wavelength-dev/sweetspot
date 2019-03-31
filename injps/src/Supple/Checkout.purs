@@ -19,7 +19,7 @@ import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
 import Supple.Data.Codec (encodeCheckoutEvent)
-import Supple.Data.Constant (eventEndpoint)
+import Supple.Data.Constant (eventEndpoint, uidStorageKey)
 import Supple.Data.Event (CheckoutEvent, LineItem(..), Page(..))
 import Supple.Request (jsonHeader, postLogPayload)
 import Web.HTML (window)
@@ -97,7 +97,7 @@ trackCheckout = do
   pageUrl <- liftEffect $ getPageUrl
   userId <- liftEffect $ window
     >>= localStorage
-    >>= getItem "supple_uid"
+    >>= getItem uidStorageKey
     >>= (\mUid -> pure $ (mUid >>= fromString))
   let r1 = getCheckoutState checkoutA checkoutB
   let r2 = { page: Checkout

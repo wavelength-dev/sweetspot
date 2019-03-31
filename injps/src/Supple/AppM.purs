@@ -13,6 +13,7 @@ import Effect.Console as C
 import Supple.Capability (class AppCapability)
 import Supple.Compatibility (hasFetch, hasPromise)
 import Supple.Data.Api (UserBucket(..))
+import Supple.Data.Constant (uidStorageKey)
 import Supple.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -49,10 +50,10 @@ instance appCapabilityAppM :: AppCapability AppM where
      promise = hasPromise
      fetch = hasFetch
 
-  getUserId = liftEffect $ window >>= localStorage >>= getItem "supple_uid"
+  getUserId = liftEffect $ window >>= localStorage >>= getItem uidStorageKey
 
   setUserId (UserBucket b) =
-    liftEffect $ window >>= localStorage >>= setItem "supple_uid" (toString b._ubUserId)
+    liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
   getUserBucket uid = do
     bucket <- liftAff $ fetchUserBuckets uid

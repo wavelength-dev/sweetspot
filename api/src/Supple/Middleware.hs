@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Supple.Middleware
-  ( appMiddleware
+  ( getMiddleware
   ) where
 
 import Network.Wai (Middleware)
@@ -23,6 +23,8 @@ import Network.Wai.Middleware.Gzip
   )
 import Network.Wai.Middleware.HttpAuth (basicAuth)
 import Network.Wai.Middleware.Routed (routedMiddleware)
+import Supple.AppM (AppCtx)
+import Supple.Route.Injectable (experimentShield)
 
 -- WAI doesn't seem to want to know about routing.
 -- This should probably move into a Servant handler somehow.
@@ -55,5 +57,5 @@ corsMiddleware =
           Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
       }
 
-appMiddleware :: Middleware
-appMiddleware = corsMiddleware . gzipStatic . auth
+getMiddleware :: AppCtx -> Middleware
+getMiddleware ctx = corsMiddleware . gzipStatic . auth . (experimentShield ctx)

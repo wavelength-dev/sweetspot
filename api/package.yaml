@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- bytestring
 - casing
 - contravariant
 - data-default
@@ -31,6 +32,7 @@ dependencies:
 - hasql-migration
 - hasql-pool
 - hasql-transaction
+- http-types
 - lens
 - lens-aeson
 - load-env

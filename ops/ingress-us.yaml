@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/backends: '{"k8s-be-32559--4943d07e34b336c7":"HEALTHY"}'
+    ingress.kubernetes.io/forwarding-rule: k8s-fw-default-supple-ingress--4943d07e34b336c7
+    ingress.kubernetes.io/target-proxy: k8s-tp-default-supple-ingress--4943d07e34b336c7
+    ingress.kubernetes.io/url-map: k8s-um-default-supple-ingress--4943d07e34b336c7
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"ingress.kubernetes.io/backends":"{\"k8s-be-32559--4943d07e34b336c7\":\"HEALTHY\"}","ingress.kubernetes.io/forwarding-rule":"k8s-fw-default-supple-ingress--4943d07e34b336c7","ingress.kubernetes.io/target-proxy":"k8s-tp-default-supple-ingress--4943d07e34b336c7","ingress.kubernetes.io/url-map":"k8s-um-default-supple-ingress--4943d07e34b336c7"},"creationTimestamp":"2019-03-31T09:58:48Z","generation":1,"name":"supple-ingress","namespace":"default","resourceVersion":"16575","selfLink":"/apis/extensions/v1beta1/namespaces/default/ingresses/supple-ingress","uid":"9486a576-539b-11e9-b475-42010a800153"},"spec":{"backend":{"serviceName":"supple","servicePort":8082}},"status":{"loadBalancer":{"ingress":[{"ip":"35.244.215.40"}]}}}
+  creationTimestamp: "2019-03-31T09:58:48Z"
+  generation: 1
+  name: supple-ingress
+  namespace: default
+  resourceVersion: "17143"
+  selfLink: /apis/extensions/v1beta1/namespaces/default/ingresses/supple-ingress
+  uid: 9486a576-539b-11e9-b475-42010a800153
+spec:
+  backend:
+    serviceName: supple
+    servicePort: 8082
+status:
+  loadBalancer:
+    ingress:
+    - ip: 35.244.215.40

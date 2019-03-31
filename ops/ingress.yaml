@@ -2,12 +2,6 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: supple-ingress
-  annotations:
-    ingress.kubernetes.io/backends: '{"k8s-be-32559--0ee99a749d433761":"HEALTHY"}'
-    ingress.kubernetes.io/forwarding-rule: k8s-fw-default-supple-ingress--0ee99a749d433761
-    ingress.kubernetes.io/target-proxy: k8s-tp-default-supple-ingress--0ee99a749d433761
-    ingress.kubernetes.io/url-map: k8s-um-default-supple-ingress--0ee99a749d433761
-    kubernetes.io/ingress.global-static-ip-name: supple-static-ip
 spec:
   backend:
     serviceName: supple

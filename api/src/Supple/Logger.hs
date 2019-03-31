@@ -6,6 +6,7 @@ module Supple.Logger
   , info'
   , warn
   , error
+  , error'
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -60,14 +61,21 @@ log lvl msg = do
 info :: Text -> AppM ()
 info msg = log Info msg
 
-info' :: LoggerSet -> Text -> IO ()
-info' logset msg = do
-  ts <- getCurrentTime
-  pushLogStrLn logset $
-    toLogStr LogMessage {level = Info, message = msg, timestamp = ts}
-
 warn :: Text -> AppM ()
 warn msg = log Warn msg
 
 error :: Text -> AppM ()
 error msg = log Error msg
+
+
+log' :: LogLevel -> LoggerSet -> Text -> IO ()
+log' lvl logset msg = do
+  ts <- getCurrentTime
+  pushLogStrLn logset $
+    toLogStr LogMessage {level = lvl, message = msg, timestamp = ts}
+
+info' :: LoggerSet -> Text -> IO ()
+info' = log' Info
+
+error' :: LoggerSet -> Text -> IO ()
+error' = log' Error

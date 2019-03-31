@@ -13,18 +13,26 @@ module Supple.Database
   , DbConfig(..)
   , insertEvent
   , insertLogEvent
+  , migrate
   ) where
 
 import Control.Lens (_Left, over)
+import Control.Monad (mapM)
 import Data.Aeson (Value)
 import Data.ByteString.UTF8 (fromString)
 import qualified Data.Text as T
 import qualified Hasql.Connection as Connection
+import Hasql.Migration
+  ( MigrationCommand(..)
+  , loadMigrationsFromDirectory
+  , runMigration
+  )
 import qualified Hasql.Pool as Pool
+import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
 import Supple.Data.Api
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
-import Supple.Data.Domain (DBExperimentStats)
 import Supple.Data.Common
+import Supple.Data.Domain (DBExperimentStats)
 import Supple.Database.Sessions
 
 type Pool = Pool.Pool
@@ -97,3 +105,15 @@ getExperimentStats :: Pool -> ExpId -> IO (Either T.Text DBExperimentStats)
 getExperimentStats pool expId = do
   res <- Pool.use pool (getExperimentStatsSession expId)
   return $ over _Left wrapQueryError res
+
+migrate :: Pool -> IO (Either T.Text ())
+migrate pool = do
+  ms <- loadMigrationsFromDirectory "migrations"
+  tx <- return . fmap sequence . mapM runMigration $ MigrationInitialization : ms
+  res <- Pool.use pool (transaction ReadCommitted Write tx)
+  return $
+    case res of
+      Right Nothing -> Right ()
+      Right (Just errors) ->
+        Left $ T.intercalate ", " (T.pack . show <$> errors)
+      Left err -> Left $ wrapQueryError err

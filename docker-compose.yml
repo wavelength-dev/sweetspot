@@ -9,8 +9,6 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_DB=supple
-    volumes:
-      - ./api/migrations:/docker-entrypoint-initdb.d
 
   supple-api:
     container_name: supple-api

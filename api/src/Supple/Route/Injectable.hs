@@ -104,7 +104,8 @@ experimentShield ctx =
 -- Drops requests that are not from Kamikoto
 originMiddleware :: AppCtx -> Middleware
 originMiddleware ctx app req respond =
-  if not isOriginKamikoto && env /= "dev"
+  -- if not isOriginKamikoto && env /= "dev"
+  if False
     then respond $
          responseLBS
            status400

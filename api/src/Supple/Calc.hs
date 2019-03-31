@@ -6,6 +6,8 @@ import Data.Maybe (isJust)
 import Data.Number.Erf (inverf)
 import Statistics.ConfidenceInt (binomialCI)
 import Statistics.Types
+import qualified Statistics.Distribution as D
+import Statistics.Distribution.Normal
 import Supple.Data.Domain
 import Supple.Data.Api
 
@@ -19,14 +21,21 @@ binomialSampleSize sampleProp =
     marginOfError = 0.0025
     confidenceLvl = 0.95
 
+-- p = sample proportion, n = sample size
+variance :: Float -> Int -> Float
+variance p n = p * (1 - p) / fromIntegral n
+
+standardDeviation :: Float -> Int -> Float
+standardDeviation p n = sqrt $ variance p n
+
 -- Get ratio between test/control conversion rates needed for
 -- given improvement in profit
-getConversionRatio :: Float -> Float -> Float -> Float
-getConversionRatio marginTest marginControl profitImprovement =
+conversionRatio :: Float -> Float -> Float -> Float
+conversionRatio marginTest marginControl profitImprovement =
   marginControl * profitImprovement / marginTest
 
-calculateConversionRate :: Int -> Int -> Float
-calculateConversionRate conversions users =
+conversionRate :: Int -> Int -> Float
+conversionRate conversions users =
   (fromIntegral conversions) / (fromIntegral users)
 
 enhanceDBBucketStats :: DBBucketStats -> BucketStats
@@ -38,15 +47,15 @@ enhanceDBBucketStats stats =
         stats ^. dbsCheckoutEvents
           & filter (\e -> e ^. chkLineItems & L.find (== variantId) & isJust)
           & length
-      conversionRate = calculateConversionRate conversionCount userCount
+      conversion = conversionRate conversionCount userCount
    in BucketStats
         { _bsBucketId = stats ^. dbsBucketId
         , _bsUserCount = userCount
         , _bsImpressionCount = stats ^. dbsImpressionCount
         , _bsConversionCount = conversionCount
-        , _bsConversionRate = conversionRate
+        , _bsConversionRate = conversion
         , _bsConfidenceInterval = binomialCI cl95 userCount conversionCount
-        , _bsEstSamplesToSig = userCount - binomialSampleSize conversionRate
+        , _bsEstSamplesToSig = userCount - binomialSampleSize conversion
         }
 
 enhanceDBStats :: DBExperimentStats -> ExperimentStats
@@ -63,6 +72,6 @@ enhanceDBStats stats =
         , _esImpressionCount = totalImpressionCount
         , _esConversionCount = totalConversionCount
         , _esConversionRate =
-          calculateConversionRate totalConversionCount totalUserCount
+          conversionRate totalConversionCount totalUserCount
         , _esBuckets = enhancedBucketStats
         }

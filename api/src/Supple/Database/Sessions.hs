@@ -29,22 +29,22 @@ assignAndGetUserBucketSession = do
 
 getBucketsSession :: Session [ExperimentBuckets]
 getBucketsSession = do
-  exps <- Session.statement () getExperimentsStatement
-  expBuckets <- forM exps addBuckets
+  experiments <- Session.statement () getExperimentsStatement
+  expBuckets <- forM experiments addBuckets
   return expBuckets
   where
     addBuckets =
-      \exp -> do
-        let id = exp ^. eExpId
-        bs <- Session.statement id getBucketsForExperimentStatement
+      \experiment -> do
+        let experimentId = experiment ^. eExpId
+        bs <- Session.statement experimentId getBucketsForExperimentStatement
         return
           ExperimentBuckets
-            { _ebExpId = id
-            , _ebSku = exp ^. eSku
-            , _ebName = exp ^. eName
-            , _ebCampaignId = exp ^. eCampaignId
-            , _ebMinProfitIncrease = exp ^. eMinProfitIncrease
+            { _ebExpId = experimentId
             , _ebBuckets = bs
+            , _ebCampaignId = experiment ^. eCampaignId
+            , _ebMinProfitIncrease = experiment ^. eMinProfitIncrease
+            , _ebName = experiment ^. eName
+            , _ebSku = experiment ^. eSku
             }
 
 insertEventSession :: (EventType, Value) -> Session ()
@@ -59,12 +59,12 @@ createExperimentSession (sku, svid, price, cmp, name) = do
 
 getExperimentStatsSession :: ExpId -> Session DBExperimentStats
 getExperimentStatsSession expId = do
-  exp <- Session.statement expId getExperimentStatement
+  experiment <- Session.statement expId getExperimentStatement
   bs <- Session.statement expId getBucketsForExperimentStatement
   bstats <- mapM getBucketStats bs
   return $ DBExperimentStats
-    { _desExpId = exp ^. eExpId
-    , _desMinProfitIncrease = exp ^. eMinProfitIncrease
+    { _desExpId = experiment ^. eExpId
+    , _desMinProfitIncrease = experiment ^. eMinProfitIncrease
     , _desBuckets = bstats
     }
 
@@ -72,13 +72,13 @@ getExperimentStatsSession expId = do
     getBucketStats :: Bucket -> Session DBBucketStats
     getBucketStats b = do
       let
-        id = b ^. bBucketId
+        bucketId = b ^. bBucketId
         svid = b ^. bSvid
-      users <- Session.statement id getBucketUserCountStatement
-      impressions <- Session.statement id getBucketImpressionCountStatement
-      checkouts <- Session.statement id getCheckoutEventsForBucket
+      users <- Session.statement bucketId getBucketUserCountStatement
+      impressions <- Session.statement bucketId getBucketImpressionCountStatement
+      checkouts <- Session.statement bucketId getCheckoutEventsForBucket
       return $ DBBucketStats
-        { _dbsBucketId = id
+        { _dbsBucketId = bucketId
         , _dbsBucketType = b ^. bBucketType
         , _dbsSvid = svid
         , _dbsUserCount = users

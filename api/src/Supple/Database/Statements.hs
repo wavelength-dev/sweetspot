@@ -83,44 +83,48 @@ getExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT exp_id, sku, name, campaign_id FROM experiments "
+        [ "SELECT exp_id, sku, name, campaign_id, min_profit_increase FROM experiments "
         , "WHERE exp_id = $1;"
         ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder = Decoders.singleRow $ toExperiment <$> row
       where
         row =
-          (,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.text <*>
-          Decoders.column Decoders.text
+          Decoders.column Decoders.text <*>
+          Decoders.column Decoders.int8
         toExperiment =
-          \(expId, sku, name, cmpId) ->
+          \(expId, sku, name, cmpId, increase) ->
             Experiment
               { _eExpId = ExpId $ fromIntegral expId
               , _eSku = Sku sku
               , _eName = name
               , _eCampaignId = CampaignId cmpId
+              , _eMinProfitIncrease = fromIntegral increase
               }
 
 getExperimentsStatement :: Statement () [Experiment]
 getExperimentsStatement = Statement sql Encoders.unit decoder True
   where
-    sql = "SELECT exp_id, sku, name, campaign_id FROM experiments;"
+    sql = "SELECT exp_id, sku, name, campaign_id, min_profit_increase FROM experiments;"
     decoder = Decoders.rowList $ toExperiment <$> row
       where
         row =
-          (,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.text <*>
-          Decoders.column Decoders.text
+          Decoders.column Decoders.text <*>
+          Decoders.column Decoders.int8
         toExperiment =
-          \(expId, sku, name, cmpId) ->
+          \(expId, sku, name, cmpId, increase) ->
             Experiment
               { _eExpId = ExpId $ fromIntegral expId
               , _eSku = Sku sku
               , _eName = name
               , _eCampaignId = CampaignId cmpId
+              , _eMinProfitIncrease = fromIntegral increase
               }
 
 insertExperimentStatement :: Statement (Sku, CampaignId, Text) ExpId
@@ -141,23 +145,25 @@ insertExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
     wrapExpId id = ExpId $ fromIntegral id
 
-insertBucketStatement :: Statement (Svid, Sku, Price) BucketId
+insertBucketStatement :: Statement (BucketType, Svid, Sku, Price) BucketId
 insertBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "INSERT INTO buckets (svid, sku, price) "
+        [ "INSERT INTO buckets (bucket_type, svid, sku, price) "
         , "VALUES ($1, $2, $3) RETURNING bucket_id;"
         ]
     encoder =
+      (getBucketType >$< Encoders.param Encoders.text) <>
       (getSvid >$< Encoders.param Encoders.int8) <>
       (getSku >$< Encoders.param Encoders.text) <>
       (getPrice >$< Encoders.param Encoders.numeric)
     decoder = Decoders.singleRow $ wrapBuid <$> Decoders.column Decoders.int8
     wrapBuid buid = BucketId $ fromIntegral buid
-    getSvid (s, _, _) = toDatabaseInt s
-    getSku (_, Sku s, _) = s
-    getPrice (_, _, (Price p)) = p
+    getBucketType (t, _, _, _) = bucketTypeToText t
+    getSvid (_, s, _, _) = toDatabaseInt s
+    getSku (_, _, Sku s, _) = s
+    getPrice (_, _, _, (Price p)) = p
 
 insertExperimentBucketStatement :: Statement (ExpId, BucketId) ()
 insertExperimentBucketStatement = Statement sql encoder Decoders.unit True
@@ -176,7 +182,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT bs.bucket_id, bs.price, bs.svid "
+        [ "SELECT bs.bucket_id, bs.bucket_type, bs.price, bs.svid "
         , "FROM experiment_buckets as ebs "
         , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
         , "WHERE ebs.exp_id = $1;"
@@ -185,13 +191,15 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.rowList $ toBucket <$> row
       where
         row =
-          (,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,) <$> Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text <*>
           Decoders.column Decoders.numeric <*>
           Decoders.column Decoders.int8
         toBucket =
-          \(bid, p, sv) ->
+          \(bid, btype, p, sv) ->
             Bucket
               { _bBucketId = BucketId $ fromIntegral bid
+              , _bBucketType = bucketTypeFromText btype
               , _bPrice = Price p
               , _bSvid = Svid $ fromIntegral sv
               }

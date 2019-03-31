@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Supple.Data.Common where
 
@@ -136,3 +137,28 @@ data EventType
   = View
   | Checkout
   | Log
+
+eventTypeToText :: EventType -> Text
+eventTypeToText Checkout = "checkout"
+eventTypeToText Log = "log"
+eventTypeToText View = "view"
+
+-- | ---------------------------------------------------------------------------
+-- | BucketType
+-- | ---------------------------------------------------------------------------
+data BucketType
+  = Control
+  | Test
+  deriving (Eq, Generic, Show)
+
+instance ToJSON BucketType
+
+instance FromJSON BucketType
+
+bucketTypeToText :: BucketType -> Text
+bucketTypeToText Control = "control"
+bucketTypeToText Test = "test"
+
+bucketTypeFromText :: Text -> BucketType
+bucketTypeFromText "control" = Control
+bucketTypeFromText _ = Test

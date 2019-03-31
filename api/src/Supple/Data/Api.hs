@@ -62,6 +62,7 @@ instance FromJSON Product
 -- | ---------------------------------------------------------------------------
 data Bucket = Bucket
   { _bBucketId :: !BucketId
+  , _bBucketType :: !BucketType
   , _bSvid :: !Svid
   , _bPrice :: !Price
   } deriving (Eq, Generic, Show)
@@ -80,6 +81,7 @@ data Experiment = Experiment
   , _eSku :: !Sku
   , _eName :: !Text
   , _eCampaignId :: !CampaignId
+  , _eMinProfitIncrease :: !Int
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Experiment
@@ -92,6 +94,7 @@ data ExperimentBuckets = ExperimentBuckets
   , _ebSku :: !Sku
   , _ebName :: !Text
   , _ebCampaignId :: !CampaignId
+  , _ebMinProfitIncrease :: !Int
   , _ebBuckets :: ![Bucket]
   } deriving (Eq, Generic, Show)
 
@@ -170,8 +173,3 @@ data OkResponse = OkResponse
   } deriving (Eq, Generic, Show)
 
 instance ToJSON OkResponse
-
-eventTypeToText :: EventType -> Text
-eventTypeToText Checkout = "checkout"
-eventTypeToText Log = "log"
-eventTypeToText View = "view"

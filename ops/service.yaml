@@ -1,17 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  creationTimestamp: "2019-03-03T14:43:32Z"
   labels:
     app: supple
     env: staging
+    region: us
   name: supple
   namespace: default
-  resourceVersion: "1437576"
   selfLink: /api/v1/namespaces/default/services/supple
-  uid: b7625c1c-3dc2-11e9-a1d2-42010a840076
 spec:
-  clusterIP: 10.39.241.250
   externalTrafficPolicy: Cluster
   ports:
   - nodePort: 32559

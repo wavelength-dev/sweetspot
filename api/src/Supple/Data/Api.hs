@@ -123,10 +123,11 @@ instance ToJSON UserBucket
 -- | ---------------------------------------------------------------------------
 data BucketStats = BucketStats
   { _bsBucketId :: !BucketId
+  , _bsBucketType :: !BucketType
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
-  , _bsConversionRate :: !Float
+  , _bsConversionRate :: !Double
   , _bsConfidenceInterval :: !(Estimate ConfInt Double)
   , _bsEstSamplesToSig :: !Int
   } deriving (Eq, Generic, Show)
@@ -143,7 +144,9 @@ data ExperimentStats = ExperimentStats
   , _esUserCount :: !Int
   , _esImpressionCount :: !Int
   , _esConversionCount :: !Int
-  , _esConversionRate :: !Float
+  , _esConversionRate :: !Double
+  , _esPMinCR :: !Double
+  , _esCRp95 :: !Double
   , _esBuckets :: ![BucketStats]
   } deriving (Eq, Generic, Show)
 

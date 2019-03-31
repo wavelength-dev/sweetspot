@@ -4,14 +4,14 @@ metadata:
   creationTimestamp: "2019-02-24T14:09:14Z"
   labels:
     app: supple
-    env: staging
   name: supple
   namespace: default
-  selfLink: /apis/apps/v1/namespaces/default/deployments/supple
-  uid: c402c670-383d-11e9-b31c-42010a8401dd
+  resourceVersion: "97458"
+  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/supple
+  uid: 00378692-5398-11e9-b475-42010a800153
 spec:
   progressDeadlineSeconds: 600
-  replicas: 2
+  replicas: 3
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -27,47 +27,21 @@ spec:
       labels:
         app: supple
         env: staging
+        region: us
     spec:
       containers:
-      - env:
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              key: dbHost
-              name: supple
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              key: dbName
-              name: supple
-        - name: DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              key: dbPort
-              name: supple
+      - image: gcr.io/supple/supple:2019-03-31-cfd7fb9
+        imagePullPolicy: IfNotPresent
+        name: supple
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        envFrom:
+        - configMapRef:
+            name: supple
+        env:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: dbPassword
-              name: supple
-        - name: DB_USER
-          valueFrom:
-            configMapKeyRef:
-              key: dbUser
-              name: supple
-        image: gcr.io/supple/supple
-        imagePullPolicy: Always
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /health
-            port: 8082
-            scheme: HTTP
-          initialDelaySeconds: 3
-          periodSeconds: 3
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: supple
-        ports:
-        - containerPort: 8082
-          protocol: TCP
+              name: supple-db
+              key: DB_PASSWORD

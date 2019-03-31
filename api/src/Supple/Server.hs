@@ -8,13 +8,14 @@ module Supple.Server
 
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
+import Data.Text as T
 import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Database (DbConfig(..), getDbPool, migrate)
-import Supple.Env (EnvConfig(..), getEnvConfig)
+import Supple.Env as Env (EnvConfig(..), getEnvConfig)
 import qualified Supple.Logger as L
-import Supple.Middleware (appMiddleware)
+import Supple.Middleware (getMiddleware)
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
 import Supple.Route.Health (HealthAPI, healthHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
@@ -35,7 +36,7 @@ server =
 
 createApp :: AppCtx -> Application
 createApp ctx =
-  appMiddleware $
+  getMiddleware ctx $
   serve rootAPI $ hoistServer rootAPI (`runReaderT` ctx) server
 
 runServer :: IO ()
@@ -55,7 +56,8 @@ runServer = do
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
-  let config = AppConfig "dev" "0.1"
+  let env = T.pack (Env.environment envConfig)
+      config = AppConfig env "0.1"
       ctx = AppCtx config appLogger dbPool
 
   L.info' appLogger "Running migrations"

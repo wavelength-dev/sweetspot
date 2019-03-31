@@ -9,6 +9,7 @@ data EnvConfig = EnvConfig
   , dbPassword :: String
   , dbPort :: Int
   , dbUser :: String
+  , environment :: String
   } deriving (Show)
 
 instance FromEnv EnvConfig where
@@ -17,7 +18,8 @@ instance FromEnv EnvConfig where
     envMaybe "DB_NAME" .!= "supple" <*>
     envMaybe "DB_PASSWORD" .!= "" <*>
     envMaybe "DB_PORT" .!= 5432 <*>
-    envMaybe "DB_USER" .!= "supple"
+    envMaybe "DB_USER" .!= "supple" <*>
+    envMaybe "ENVIRONMENT" .!= "dev"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

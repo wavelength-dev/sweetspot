@@ -54,7 +54,7 @@ insertUserStatement = Statement sql Encoders.unit decoder True
   where
     sql = "INSERT INTO users (user_id) VALUES (DEFAULT) RETURNING user_id;"
     decoder = Decoders.singleRow $ wrapUserId <$> Decoders.column Decoders.int8
-    wrapUserId id = UserId $ fromIntegral id
+    wrapUserId userId = UserId $ fromIntegral userId
 
 randomBucketPerExpStatement :: Statement () [(ExpId, BucketId)]
 randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
@@ -140,10 +140,10 @@ insertExperimentStatement = Statement sql encoder decoder True
       (getCmp >$< Encoders.param Encoders.text) <>
       (getName >$< Encoders.param Encoders.text)
     getSku (Sku txt, _, _) = txt
-    getCmp (_, CampaignId id, _) = id
+    getCmp (_, CampaignId cid, _) = cid
     getName (_, _, name) = name
     decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
-    wrapExpId id = ExpId $ fromIntegral id
+    wrapExpId eid = ExpId $ fromIntegral eid
 
 insertBucketStatement :: Statement (BucketType, Svid, Sku, Price) BucketId
 insertBucketStatement = Statement sql encoder decoder True
@@ -258,9 +258,9 @@ getCheckoutEventsForBucket = Statement sql encoder decoder True
       Decoders.column Decoders.int8 <*>
       Decoders.column Decoders.json
     toCheckoutEvent =
-      \(id, ts, userId, bucketId, orderId, lineItems) ->
+      \(chkId, ts, userId, bucketId, orderId, lineItems) ->
         CheckoutEvent
-          { _chkId = EventId $ fromIntegral id
+          { _chkId = EventId $ fromIntegral chkId
           , _chkTimestamp = ts
           , _chkUserId = UserId $ fromIntegral userId
           , _chkBucketId = BucketId $ fromIntegral bucketId

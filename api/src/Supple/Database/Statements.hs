@@ -47,7 +47,6 @@ userBucketStatement = Statement sql encoder decoder True
               , _ubExpId = ExpId $ fromIntegral expId
               , _ubBucketId = BucketId $ fromIntegral bucketId
               }
-    unwrapUserId (UserId uid) = fromIntegral uid
 
 insertUserStatement :: Statement () UserId
 insertUserStatement = Statement sql Encoders.unit decoder True

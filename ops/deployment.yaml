@@ -4,14 +4,12 @@ metadata:
   creationTimestamp: "2019-02-24T14:09:14Z"
   labels:
     app: supple
+    env: staging
+    region: us
   name: supple
-  namespace: default
-  resourceVersion: "97458"
-  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/supple
-  uid: 00378692-5398-11e9-b475-42010a800153
 spec:
   progressDeadlineSeconds: 600
-  replicas: 3
+  replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -30,7 +28,7 @@ spec:
         region: us
     spec:
       containers:
-      - image: gcr.io/supple/supple:2019-03-31-cfd7fb9
+      - image: gcr.io/supple/supple:latest
         imagePullPolicy: IfNotPresent
         name: supple
         resources: {}

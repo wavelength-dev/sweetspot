@@ -64,6 +64,7 @@ getExperimentStatsSession expId = do
   bstats <- mapM getBucketStats bs
   return $ DBExperimentStats
     { _desExpId = exp ^. eExpId
+    , _desMinProfitIncrease = exp ^. eMinProfitIncrease
     , _desBuckets = bstats
     }
 
@@ -78,6 +79,7 @@ getExperimentStatsSession expId = do
       checkouts <- Session.statement id getCheckoutEventsForBucket
       return $ DBBucketStats
         { _dbsBucketId = id
+        , _dbsBucketType = b ^. bBucketType
         , _dbsSvid = svid
         , _dbsUserCount = users
         , _dbsImpressionCount = impressions

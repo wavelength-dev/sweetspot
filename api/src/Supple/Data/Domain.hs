@@ -30,6 +30,7 @@ instance ToJSON CheckoutEvent
 -- | ---------------------------------------------------------------------------
 data DBBucketStats = DBBucketStats
   { _dbsBucketId :: !BucketId
+  , _dbsBucketType :: !BucketType
   , _dbsSvid :: !Svid
   , _dbsUserCount :: !Int
   , _dbsImpressionCount :: !Int
@@ -43,6 +44,7 @@ makeLenses ''DBBucketStats
 -- | ---------------------------------------------------------------------------
 data DBExperimentStats = DBExperimentStats
   { _desExpId :: !ExpId
+  , _desMinProfitIncrease :: !Int
   , _desBuckets :: ![DBBucketStats]
   } deriving (Eq, Generic, Show)
 

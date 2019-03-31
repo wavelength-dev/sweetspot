@@ -43,6 +43,7 @@ getBucketsSession = do
             , _ebSku = exp ^. eSku
             , _ebName = exp ^. eName
             , _ebCampaignId = exp ^. eCampaignId
+            , _ebMinProfitIncrease = exp ^. eMinProfitIncrease
             , _ebBuckets = bs
             }
 
@@ -52,7 +53,8 @@ insertEventSession input = Session.statement input insertEventStatement
 createExperimentSession :: (Sku, Svid, Price, CampaignId, Text) -> Session ()
 createExperimentSession (sku, svid, price, cmp, name) = do
   expId <- Session.statement (sku, cmp, name) insertExperimentStatement
-  bucketId <- Session.statement (svid, sku, price) insertBucketStatement
+  -- TODO: create both test and control here
+  bucketId <- Session.statement (Test, svid, sku, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement
 
 getExperimentStatsSession :: ExpId -> Session DBExperimentStats

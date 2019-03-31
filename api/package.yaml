@@ -28,7 +28,9 @@ dependencies:
 - erf
 - fast-logger
 - hasql
+- hasql-migration
 - hasql-pool
+- hasql-transaction
 - lens
 - lens-aeson
 - load-env

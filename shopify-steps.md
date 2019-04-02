@@ -25,5 +25,5 @@ Go to checkout settings.
 Scroll to additional scripts.
 Add
 ```
-<script src="https://app.getsweetspot.com/static/supple-checkout.min.js"></script>
+<script src="https://app-staging.supple.dev/static/supple-checkout.min.js"></script>
 ```

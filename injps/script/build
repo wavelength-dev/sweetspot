@@ -17,7 +17,7 @@ elif [[ $ENV == "production" ]]; then
 fi
 
 pulp build --main Supple.Main --optimise --to ./output/supple-main.js
-npx browserify --transform envify output/supple-main.js > ../dist/supple-main.js
+yarn --silent browserify --transform envify --outfile ../dist/supple-main.js ./output/supple-main.js
 
 if [ $? -ne 0 ]; then
   echo "=> Failed to build main"
@@ -25,7 +25,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "=> Finished building main"
 
-npx --quiet uglify-js --compress --mangle --output ../dist/supple-main.min.js -- ../dist/supple-main.js
+yarn --silent uglifyjs --compress --mangle --output ../dist/supple-main.min.js ../dist/supple-main.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify main"
   exit 1
@@ -47,7 +47,7 @@ print_filesize "supple-main.min.js.gz" "Minified and Compressed"
 rm ../dist/supple-main.min.js.gz
 
 pulp build --main Supple.Checkout --to ./output/supple-checkout.js
-npx browserify --transform envify ./output/supple-checkout.js > ../dist/supple-checkout.js
+yarn --silent browserify --transform envify --outfile ../dist/supple-checkout.js ./output/supple-checkout.js
 
 if [ $? -ne 0 ]; then
   echo "=> Failed to build checkout"
@@ -55,7 +55,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "=> Finished building checkout"
-npx --quiet uglify-js --compress --mangle --output ../dist/supple-checkout.min.js -- ../dist/supple-checkout.js
+yarn --silent uglifyjs --compress --mangle --output ../dist/supple-checkout.min.js ../dist/supple-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify checkout"
   exit 1

@@ -10,4 +10,4 @@ import Servant
 
 type StaticAPI = "static" :> Raw
 
-staticHandler = serveDirectoryFileServer "../dist/"
+staticHandler = serveDirectoryWebApp "../dist/"

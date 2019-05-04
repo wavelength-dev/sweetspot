@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: "2019-02-24T14:09:14Z"
   labels:
     app: supple
     env: staging

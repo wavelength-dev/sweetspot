@@ -2,7 +2,6 @@
 module Supple.Data.Api where
 
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Prim (Number, String)
 

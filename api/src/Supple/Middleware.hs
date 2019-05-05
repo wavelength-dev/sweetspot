@@ -47,6 +47,7 @@ corsMiddleware =
       { corsOrigins =
           Just
             ( [ "https://kamikoto.com"
+              , "https://longvadon.com"
               , "https://libertyprice.myshopify.com"
               , "http://localhost:8082"
               ]

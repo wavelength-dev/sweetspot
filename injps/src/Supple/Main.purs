@@ -42,6 +42,7 @@ collectPriceEls = do
   els <- getElementsByClassName hiddenPriceId (toDocument doc)
   toArray els
 
+-- Consider using DOM classList.remove method
 removeClass :: String -> Element -> Effect Unit
 removeClass className el = do
   current <- E.className el

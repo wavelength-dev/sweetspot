@@ -68,6 +68,7 @@ unhidePrice = do
   els <- collectPriceEls
   traverse_ (removeClass hiddenPriceId) els
 
+-- We assume all elements with a hidden price also have a class identifying which SKU the price belongs to.
 applyExperiment :: UserBucket -> AppM Unit
 applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
   els <- liftEffect collectPriceEls

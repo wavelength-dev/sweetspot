@@ -27,7 +27,6 @@ import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
 import Web.HTML.Window (document)
 
-
 getDOMReady :: Aff Unit
 getDOMReady =
   makeAff \cb -> do

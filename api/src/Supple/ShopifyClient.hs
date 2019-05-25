@@ -16,7 +16,9 @@ import Supple.Data.Api (Image(..), Product(..), Variant(..))
 import Supple.Data.Common (Pid(..))
 
 apiRoot =
-  "https://e5fe5ceef1de7aef78b0893aaf7ada3b:beefeeb2fc8474121f3de3eac32e026c@libertyprice.myshopify.com/admin"
+  "https://libertyprice.myshopify.com/admin"
+
+opts = defaults & header "X-Shopify-Access-Token" .~ ["705fdddbc12654ca0ecf353e0b2421d5"]
 
 parseImage :: Value -> Parser Image
 parseImage =
@@ -49,7 +51,7 @@ parseProduct v = parse parser v
 
 fetchProducts :: IO (Maybe [Product])
 fetchProducts = do
-  r <- get $ apiRoot ++ "/products.json?fields=id,title,variants,image"
+  r <- getWith opts $ apiRoot ++ "/products.json?fields=id,title,variants,image"
   json <- asValue r
   let result =
         (json ^?! responseBody . key "products") ^.. values & fmap parseProduct &
@@ -61,13 +63,13 @@ fetchProducts = do
 
 fetchProduct :: Pid -> IO Value
 fetchProduct (Pid pid) = do
-  r <- get $ apiRoot ++ "/products/" ++ show pid ++ ".json"
+  r <- getWith opts $ apiRoot ++ "/products/" ++ show pid ++ ".json"
   json <- asJSON r
   return $ json ^. responseBody
 
 createProduct :: Value -> IO (Maybe Product)
 createProduct v = do
-  r <- post url v
+  r <- postWith opts url v
   json <- asValue r
   let result = json ^?! responseBody . key "product" & parseProduct
   return $
@@ -88,7 +90,7 @@ instance ToJSON ExchangeBody
 
 exchangeAccessToken :: Text -> IO Text
 exchangeAccessToken code = do
-  r <- post url body
+  r <- post (apiRoot ++ "/oauth/access_token") body
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String
   where
@@ -97,4 +99,3 @@ exchangeAccessToken code = do
       , client_secret = "***REMOVED***"
       , code = code
       }
-    url = "https://libertyprice.myshopify.com/admin/oauth/access_token"

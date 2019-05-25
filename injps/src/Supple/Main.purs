@@ -42,6 +42,38 @@ collectPriceEls = do
   els <- getElementsByClassName hiddenPriceId (toDocument doc)
   toArray els
 
+collectCheckoutOptions :: Array String -> Effect (Array Element)
+collectCheckoutOptions variantIds = do
+  doc <- window >>= document
+  els <- getElementsByTagName "option" (toDocument doc) >>= toArray
+  -- return any element with a value attribute value equal to one of variantIds
+  A.filterA getIsKnownVariantOption els
+  where
+    getIsKnownVariantOption :: Element -> Effect Boolean
+    getIsKnownVariantOption el = do
+       optionId <- E.getAttribute "value" el
+       pure $ case optionId of
+            Nothing -> false
+            Just id -> A.elem id variantIds
+
+swapCheckoutVariantId :: Array UserBucket -> Array Element -> Effect Unit
+swapCheckoutVariantId userBuckets els =
+  traverse_ (\el -> getSuppleVariantId el >>= (\variantId ->
+              case variantId of
+                 Nothing -> pure unit
+                 Just vId -> (setAttribute "value" (toString vId) el))
+             ) els
+  where
+    getSuppleVariantId :: Element -> Effect (Maybe Number)
+    getSuppleVariantId el = do
+       attrValue <- getAttribute "value" el
+       pure $ case attrValue of
+         Nothing -> Nothing
+         Just id -> case (A.find (\(UserBucket x) -> x._ubSvid == (readFloat id)) userBuckets) of
+                      Nothing -> Nothing
+                      Just (UserBucket ub) -> Just ub._ubSvid
+
+
 -- Consider using DOM classList.remove method
 removeClass :: String -> Element -> Effect Unit
 removeClass className el = do

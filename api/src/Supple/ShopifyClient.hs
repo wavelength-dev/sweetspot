@@ -1,12 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Supple.ShopifyClient where
 
 import Control.Lens
 import Data.Aeson
-import Data.Aeson.Lens (key, values)
+import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (Parser, parse)
+import Data.Text (Text)
 import Debug.Trace (trace)
+import GHC.Generics (Generic)
 import Network.Wreq
 import Prelude hiding (product)
 import Supple.Data.Api (Image(..), Product(..), Variant(..))
@@ -73,3 +76,25 @@ createProduct v = do
       _ -> Nothing
   where
     url = apiRoot ++ "/products.json"
+
+
+data ExchangeBody = ExchangeBody
+  { client_id :: Text
+  , client_secret :: Text
+  , code :: Text
+  } deriving (Generic)
+
+instance ToJSON ExchangeBody
+
+exchangeAccessToken :: Text -> IO Text
+exchangeAccessToken code = do
+  r <- post url body
+  json <- asValue r
+  return $ json ^?! responseBody . key "access_token" . _String
+  where
+    body = encode $ ExchangeBody
+      { client_id = "b0009d8ea123077cd98b4e0dafaee303"
+      , client_secret = "***REMOVED***"
+      , code = code
+      }
+    url = "https://libertyprice.myshopify.com/admin/oauth/access_token"

@@ -20,18 +20,19 @@ import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
 import Supple.Route.Health (HealthAPI, healthHandler)
 import Supple.Route.Injectable (InjectableAPI, injectableHandler)
 import Supple.Route.Static (StaticAPI, staticHandler)
+import Supple.Route.OAuth (OAuthAPI, oauthHandler)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 import System.Exit (exitWith, ExitCode(..))
 
 type RootAPI
-   = "api" :> (DashboardAPI :<|> InjectableAPI) :<|> HealthAPI :<|> StaticAPI
+   = "api" :> (DashboardAPI :<|> InjectableAPI :<|> OAuthAPI) :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server :: ServerT RootAPI AppM
 server =
-  (dashboardHandler :<|> injectableHandler) :<|> healthHandler :<|>
+  (dashboardHandler :<|> injectableHandler :<|> oauthHandler) :<|> healthHandler :<|>
   staticHandler
 
 createApp :: AppCtx -> Application

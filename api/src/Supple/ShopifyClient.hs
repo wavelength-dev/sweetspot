@@ -92,7 +92,7 @@ exchangeAccessToken code = do
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String
   where
-    body = encode $ ExchangeBody
+    body = toJSON $ ExchangeBody
       { client_id = "b0009d8ea123077cd98b4e0dafaee303"
       , client_secret = "***REMOVED***"
       , code = code

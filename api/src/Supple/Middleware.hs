@@ -5,16 +5,6 @@ module Supple.Middleware
   ) where
 
 import Network.Wai (Middleware)
-import Network.Wai.Middleware.Cors
-  ( cors
-  , corsExposedHeaders
-  , corsMethods
-  , corsOrigins
-  , corsRequestHeaders
-  , simpleCorsResourcePolicy
-  , simpleHeaders
-  , simpleMethods
-  )
 import Network.Wai.Middleware.Gzip
   ( GzipFiles(GzipCacheFolder)
   , def
@@ -39,24 +29,5 @@ auth = routedMiddleware ("dashboard" `elem`) mw
     check = (\u p -> return $ u == "sweetspot" && p == "***REMOVED***")
     mw = basicAuth check "Dashboard realm"
 
-corsMiddleware :: Middleware
-corsMiddleware =
-  cors $ \_ ->
-    Just $
-    simpleCorsResourcePolicy
-      { corsOrigins =
-          Just
-            ( [ "https://kamikoto.com"
-              , "https://longvadon.com"
-              , "https://libertyprice.myshopify.com"
-              , "http://localhost:8082"
-              ]
-            , True)
-      , corsRequestHeaders = "Content-Type" : simpleHeaders
-      , corsMethods = simpleMethods
-      , corsExposedHeaders =
-          Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
-      }
-
 getMiddleware :: AppCtx -> Middleware
-getMiddleware ctx = corsMiddleware . gzipStatic . auth . (experimentShield ctx)
+getMiddleware ctx = gzipStatic . auth . (experimentShield ctx)

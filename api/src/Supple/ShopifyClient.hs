@@ -16,7 +16,7 @@ import Supple.Data.Api (Image(..), Product(..), Variant(..))
 import Supple.Data.Common (Pid(..))
 
 apiRoot =
-  "https://libertyprice.myshopify.com/admin"
+  "https://monvadon.myshopify.com/admin"
 
 opts = defaults & header "X-Shopify-Access-Token" .~ ["705fdddbc12654ca0ecf353e0b2421d5"]
 

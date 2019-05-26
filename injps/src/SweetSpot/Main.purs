@@ -125,8 +125,8 @@ app :: AppM Unit
 app = do
   liftAff getDOMReady
   ensureDeps
-  ensureCampaign
   uid <- getUserId
+  ensureCampaign uid
   bucket <- getUserBucket uid
   setUserId bucket
   applyExperiment bucket

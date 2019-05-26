@@ -80,8 +80,11 @@ instance appCapabilityAppM :: AppCapability AppM where
     _ <- liftAff $ forkAff $ postLogPayload msg
     liftEffect $ C.log msg
 
-  ensureCampaign = do
-    campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
-    case campaignId of
-      Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
+  ensureCampaign mUid = do
+    case mUid of
       Just _ -> pure unit
+      Nothing -> do
+        campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
+        case campaignId of
+          Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
+          Just _ -> pure unit

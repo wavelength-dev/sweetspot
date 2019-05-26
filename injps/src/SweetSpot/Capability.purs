@@ -11,4 +11,4 @@ class Monad m <= AppCapability m where
   setUserId :: UserBucket -> m Unit
   getUserBucket :: Maybe String -> m UserBucket
   log :: String -> m Unit
-  ensureCampaign :: m Unit
+  ensureCampaign :: Maybe String -> m Unit

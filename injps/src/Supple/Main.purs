@@ -6,18 +6,22 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
+import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, forkAff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Global (readFloat)
 import Supple.AppM (AppM, ClientErr(..), runAppM)
-import Supple.Capability (ensureDeps, getUserBucket, getUserId, setUserId)
+import Supple.Capability (ensureCampaign, ensureDeps, getUserBucket, getUserId, setUserId)
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (hiddenPriceId, idClassPattern)
 import Supple.Event (trackView)
 import Supple.Request (postLogPayload)
-import Web.DOM.Document (getElementsByClassName)
+import Web.DOM.Document (getElementsByClassName, getElementsByTagName)
+import Web.DOM.Element (getAttribute, setAttribute)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
 import Web.DOM.Internal.Types (Element)
@@ -109,20 +113,19 @@ applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
   liftEffect $ traverse_ (removeClass hiddenPriceId) els
 
   where
-    textPrice = "supple__match--" <> show _ubPrice
-
     maybeInjectPrice :: Element -> Effect Unit
     maybeInjectPrice el = do
       sku <- getIdFromPriceElement el
       match <- pure $ ((==) _ubSku) <$> sku
       case match of
-        Just true -> addClass textPrice el
-        _ ->  pure unit
+        Just true -> log $ "Found match for " <> _ubSku <> " price would be " <> (toString _ubPrice)
+        _ -> pure unit
 
 app :: AppM Unit
 app = do
   liftAff getDOMReady
   ensureDeps
+  ensureCampaign
   uid <- getUserId
   bucket <- getUserBucket uid
   setUserId bucket

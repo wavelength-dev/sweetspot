@@ -5,13 +5,13 @@ import Prelude
 import Data.Array as A
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe)
-import Effect.Aff (forkAff)
 import Data.String as S
 import Data.String.Regex (Regex, regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.Traversable (sequence)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Aff (forkAff)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Supple.AppM (AppM)
@@ -29,7 +29,7 @@ import Web.DOM.Internal.Types (Element)
 import Web.DOM.Node as N
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
-import Web.HTML.Location (pathname, href)
+import Web.HTML.Location (href, pathname, search)
 import Web.HTML.Window (document, location)
 
 extractInjectedProductJSON :: Element -> Effect (Maybe Product)
@@ -97,21 +97,6 @@ detectPage = window >>= location >>= pathname >>= pure <<< getPage
       | isProductDetailsUrl path = Product
       | isCheckoutUrl path = Checkout
       | otherwise = Unknown
-
-parseCampaignId :: String -> Maybe String
-parseCampaignId qs =
-  let
-    clean = S.drop 1 qs
-    pairs = S.split (S.Pattern "&") clean
-    campaignPred = S.contains (S.Pattern "campaign=")
-    match = A.find campaignPred pairs
-  in
-   match >>= pure <<< (S.split $ S.Pattern "=") >>= flip A.index 1
-
-
--- detectCampaign :: Effect (Maybe String)
--- detectCampaign =
---   window >>= location >>= search >>= pure <<< parseCampaignId
 
 trackView :: UserBucket -> AppM Unit
 trackView (UserBucket { _ubExpId, _ubBucketId }) = do

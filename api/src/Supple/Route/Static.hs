@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Supple.Route.Static
   ( StaticAPI
@@ -7,7 +8,11 @@ module Supple.Route.Static
   ) where
 
 import Servant
+import WaiAppStatic.Types
+import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 
 type StaticAPI = "static" :> Raw
 
-staticHandler = serveDirectoryWebApp "../dist/"
+-- staticHandler = serveDirectoryWebApp "../dist/"
+staticHandler = serveDirectoryWith defaultOptions { ssMaxAge = MaxAgeSeconds 1800 }
+  where defaultOptions = defaultWebAppSettings "../dist"

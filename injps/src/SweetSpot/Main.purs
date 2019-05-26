@@ -5,7 +5,7 @@ import Prelude
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
@@ -20,6 +20,7 @@ import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, idClassPattern)
 import SweetSpot.Event (trackView)
 import SweetSpot.Request (postLogPayload)
+import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByClassName, getElementsByTagName)
 import Web.DOM.Element (getAttribute, setAttribute)
 import Web.DOM.Element as E
@@ -29,6 +30,7 @@ import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
+import Web.HTML.HTMLElement (classList, fromElement)
 import Web.HTML.Window (document)
 
 getDOMReady :: Aff Unit
@@ -77,15 +79,11 @@ swapCheckoutVariantId userBuckets els =
                       Nothing -> Nothing
                       Just (UserBucket ub) -> Just ub._ubSvid
 
-
--- Consider using DOM classList.remove method
 removeClass :: String -> Element -> Effect Unit
-removeClass className el = do
-  current <- E.className el
-  E.setClassName (S.replace pattern replacement current) el
+removeClass className el =
+  maybe (pure unit) (classList >=> remove' className) (fromElement el)
   where
-    pattern = S.Pattern className
-    replacement = S.Replacement ""
+    remove' = flip DTL.remove
 
 addClass :: String -> Element -> Effect Unit
 addClass className el = do

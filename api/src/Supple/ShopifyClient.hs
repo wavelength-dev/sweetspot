@@ -95,7 +95,7 @@ exchangeAccessToken code = do
   return $ json ^?! responseBody . key "access_token" . _String
   where
     body = toJSON $ ExchangeBody
-      { client_id = "b0009d8ea123077cd98b4e0dafaee303"
-      , client_secret = "b1b262b6466f7e37d40436876944027e"
+      { client_id = "634b531a6568d6eb076c2ad5c7e0265a"
+      , client_secret = "bd382d7ebb6c489bb24de3aefdb2498d"
       , code = code
       }

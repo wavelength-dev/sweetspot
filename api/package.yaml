@@ -47,6 +47,7 @@ dependencies:
 - transformers
 - utf8-string
 - wai
+- wai-app-static
 - wai-cors
 - wai-extra
 - warp

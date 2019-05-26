@@ -1,4 +1,4 @@
-module Supple.Checkout where
+module SweetSpot.Checkout where
 
 import Prelude
 
@@ -18,10 +18,10 @@ import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
-import Supple.Data.Codec (encodeCheckoutEvent)
-import Supple.Data.Constant (eventEndpoint, uidStorageKey)
-import Supple.Data.Event (CheckoutEvent, LineItem(..), Page(..))
-import Supple.Request (jsonHeader, postLogPayload)
+import SweetSpot.Data.Codec (encodeCheckoutEvent)
+import SweetSpot.Data.Constant (eventEndpoint, uidStorageKey)
+import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
+import SweetSpot.Request (jsonHeader, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)

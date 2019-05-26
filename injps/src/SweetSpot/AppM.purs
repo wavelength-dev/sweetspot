@@ -1,4 +1,4 @@
-module Supple.AppM where
+module SweetSpot.AppM where
 
 import Prelude
 
@@ -13,11 +13,11 @@ import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
-import Supple.Capability (class AppCapability)
-import Supple.Compatibility (hasFetch, hasPromise)
-import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Constant (uidStorageKey)
-import Supple.Request (fetchUserBuckets, postLogPayload)
+import SweetSpot.Capability (class AppCapability)
+import SweetSpot.Compatibility (hasFetch, hasPromise)
+import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Constant (uidStorageKey)
+import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (search)
 import Web.HTML.Window (localStorage, location)

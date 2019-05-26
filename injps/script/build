@@ -16,8 +16,8 @@ elif [[ $ENV == "production" ]]; then
   source .env.production
 fi
 
-pulp build --main Supple.Main --optimise --to ./output/supple-main.js
-yarn --silent browserify --transform envify --outfile ../dist/supple-main.js ./output/supple-main.js
+pulp build --main SweetSpot.Main --optimise --to ./output/sweetspot-main.js
+yarn --silent browserify --transform envify --outfile ../dist/sweetspot-main.js ./output/sweetspot-main.js
 
 if [ $? -ne 0 ]; then
   echo "=> Failed to build main"
@@ -25,13 +25,13 @@ if [ $? -ne 0 ]; then
 fi
 echo "=> Finished building main"
 
-yarn --silent uglifyjs --compress --mangle --output ../dist/supple-main.min.js ../dist/supple-main.js
+yarn --silent uglifyjs --compress --mangle --output ../dist/sweetspot-main.min.js ../dist/sweetspot-main.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify main"
   exit 1
 fi
 
-gzip --keep --force ../dist/supple-main.min.js
+gzip --keep --force ../dist/sweetspot-main.min.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to gzip main"
   exit 1
@@ -41,13 +41,13 @@ END=$(date +%s)
 BUILD_TIME=$(( $END - $START ))
 echo "=> Finished build in ${BUILD_TIME}s"
 echo "=> Build size main:"
-print_filesize "supple-main.js" "Raw Output"
-print_filesize "supple-main.min.js" "Minified"
-print_filesize "supple-main.min.js.gz" "Minified and Compressed"
-rm ../dist/supple-main.min.js.gz
+print_filesize "sweetspot-main.js" "Raw Output"
+print_filesize "sweetspot-main.min.js" "Minified"
+print_filesize "sweetspot-main.min.js.gz" "Minified and Compressed"
+rm ../dist/sweetspot-main.min.js.gz
 
-pulp build --main Supple.Checkout --to ./output/supple-checkout.js
-yarn --silent browserify --transform envify --outfile ../dist/supple-checkout.js ./output/supple-checkout.js
+pulp build --main SweetSpot.Checkout --to ./output/sweetspot-checkout.js
+yarn --silent browserify --transform envify --outfile ../dist/sweetspot-checkout.js ./output/sweetspot-checkout.js
 
 if [ $? -ne 0 ]; then
   echo "=> Failed to build checkout"
@@ -55,20 +55,20 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "=> Finished building checkout"
-yarn --silent uglifyjs --compress --mangle --output ../dist/supple-checkout.min.js ../dist/supple-checkout.js
+yarn --silent uglifyjs --compress --mangle --output ../dist/sweetspot-checkout.min.js ../dist/sweetspot-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify checkout"
   exit 1
 fi
 
-gzip --keep --force ../dist/supple-checkout.min.js
+gzip --keep --force ../dist/sweetspot-checkout.min.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to gzip checkout"
   exit 1
 fi
 
 echo "=> Build size checkout:"
-print_filesize "supple-checkout.js" "Raw Output"
-print_filesize "supple-checkout.min.js" "Minified"
-print_filesize "supple-checkout.min.js.gz" "Minified and Compressed"
-rm ../dist/supple-checkout.min.js.gz
+print_filesize "sweetspot-checkout.js" "Raw Output"
+print_filesize "sweetspot-checkout.min.js" "Minified"
+print_filesize "sweetspot-checkout.min.js.gz" "Minified and Compressed"
+rm ../dist/sweetspot-checkout.min.js.gz

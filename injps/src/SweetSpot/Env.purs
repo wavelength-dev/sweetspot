@@ -1,3 +1,3 @@
-module Supple.Env where
+module SweetSpot.Env where
 
 foreign import apiURL :: String

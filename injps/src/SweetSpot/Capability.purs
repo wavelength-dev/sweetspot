@@ -1,9 +1,9 @@
-module Supple.Capability where
+module SweetSpot.Capability where
 
 import Prelude
 
 import Data.Maybe (Maybe)
-import Supple.Data.Api (UserBucket)
+import SweetSpot.Data.Api (UserBucket)
 
 class Monad m <= AppCapability m where
   ensureDeps :: m Unit

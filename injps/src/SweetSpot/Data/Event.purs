@@ -1,4 +1,4 @@
-module Supple.Data.Event where
+module SweetSpot.Data.Event where
 
 import Prelude
 

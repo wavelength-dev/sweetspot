@@ -1,4 +1,4 @@
-module Supple.Data.Shopify where
+module SweetSpot.Data.Shopify where
 
 type Price = Number
 type ProductId = Number

@@ -1,4 +1,4 @@
-module Supple.Event (trackView) where
+module SweetSpot.Event (trackView) where
 
 import Prelude
 
@@ -14,14 +14,14 @@ import Effect (Effect)
 import Effect.Aff (forkAff)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Supple.AppM (AppM)
-import Supple.Capability (getUserId)
-import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Codec (decodeProduct)
-import Supple.Data.Constant (productClass)
-import Supple.Data.Event (Page(..))
-import Supple.Data.Shopify (Product)
-import Supple.Request (postEventPayload)
+import SweetSpot.AppM (AppM)
+import SweetSpot.Capability (getUserId)
+import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Codec (decodeProduct)
+import SweetSpot.Data.Constant (productClass)
+import SweetSpot.Data.Event (Page(..))
+import SweetSpot.Data.Shopify (Product)
+import SweetSpot.Request (postEventPayload)
 import Web.DOM.Document as D
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)

@@ -1,4 +1,4 @@
-module Supple.Main where
+module SweetSpot.Main where
 
 import Prelude
 
@@ -14,12 +14,12 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Global (readFloat)
-import Supple.AppM (AppM, ClientErr(..), runAppM)
-import Supple.Capability (ensureCampaign, ensureDeps, getUserBucket, getUserId, setUserId)
-import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Constant (hiddenPriceId, idClassPattern)
-import Supple.Event (trackView)
-import Supple.Request (postLogPayload)
+import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
+import SweetSpot.Capability (ensureCampaign, ensureDeps, getUserBucket, getUserId, setUserId)
+import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Constant (hiddenPriceId, idClassPattern)
+import SweetSpot.Event (trackView)
+import SweetSpot.Request (postLogPayload)
 import Web.DOM.Document (getElementsByClassName, getElementsByTagName)
 import Web.DOM.Element (getAttribute, setAttribute)
 import Web.DOM.Element as E

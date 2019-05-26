@@ -1,4 +1,4 @@
-module Supple.Request where
+module SweetSpot.Request where
 
 import Prelude
 
@@ -8,10 +8,10 @@ import Data.Maybe (Maybe, maybe)
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
-import Supple.Data.Api (UserBucket)
-import Supple.Data.Codec (decodeUserBucket, encodeViewEvent)
-import Supple.Data.Constant (eventEndpoint, experimentEndpoint, logEndpoint)
-import Supple.Data.Event (ViewEvent)
+import SweetSpot.Data.Api (UserBucket)
+import SweetSpot.Data.Codec (decodeUserBucket, encodeViewEvent)
+import SweetSpot.Data.Constant (eventEndpoint, experimentEndpoint, logEndpoint)
+import SweetSpot.Data.Event (ViewEvent)
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch

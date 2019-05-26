@@ -1,8 +1,8 @@
-module Supple.Data.Constant where
+module SweetSpot.Data.Constant where
 
 import Data.String as S
 import Prelude ((<>))
-import Supple.Env (apiURL) as Env
+import SweetSpot.Env (apiURL) as Env
 
 hiddenPriceId ::
   String

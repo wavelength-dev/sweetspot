@@ -1,4 +1,4 @@
-module Supple.Data.Codec where
+module SweetSpot.Data.Codec where
 
 import Prelude
 
@@ -8,9 +8,9 @@ import Data.Argonaut.Encode ((:=), (~>))
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either)
 import Data.Traversable (sequence)
-import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Event (CheckoutEvent, ViewEvent)
-import Supple.Data.Shopify (Product, Variant)
+import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Event (CheckoutEvent, ViewEvent)
+import SweetSpot.Data.Shopify (Product, Variant)
 
 
 -- | ---------------------------------------------------------------------------

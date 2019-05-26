@@ -14,5 +14,5 @@ import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 type StaticAPI = "static" :> Raw
 
 -- staticHandler = serveDirectoryWebApp "../dist/"
-staticHandler = serveDirectoryWith defaultOptions { ssMaxAge = MaxAgeSeconds 1800 }
+staticHandler = serveDirectoryWith defaultOptions { ssMaxAge = MaxAgeSeconds 600 }
   where defaultOptions = defaultWebAppSettings "../dist"

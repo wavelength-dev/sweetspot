@@ -3,8 +3,11 @@ module Supple.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
+import Data.Array as A
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Data.Number.Format (toString)
+import Data.String as S
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -16,7 +19,8 @@ import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Constant (uidStorageKey)
 import Supple.Request (fetchUserBuckets, postLogPayload)
 import Web.HTML (window)
-import Web.HTML.Window (localStorage)
+import Web.HTML.Location (search)
+import Web.HTML.Window (localStorage, location)
 import Web.Storage.Storage (getItem, setItem)
 
 newtype ClientErr = ClientErr
@@ -37,6 +41,16 @@ derive newtype instance monadThrowAppM :: MonadThrow ClientErr AppM
 
 runAppM :: forall a. AppM a -> Aff (Either ClientErr a)
 runAppM (AppM m) = runExceptT m
+
+parseCampaignId :: String -> Maybe String
+parseCampaignId qs =
+  let
+    clean = S.drop 1 qs
+    pairs = S.split (S.Pattern "&") clean
+    campaignPred = S.contains (S.Pattern "campaign=")
+    match = A.find campaignPred pairs
+  in
+   match >>= pure <<< (S.split $ S.Pattern "=") >>= flip A.index 1
 
 instance appCapabilityAppM :: AppCapability AppM where
   ensureDeps =
@@ -65,3 +79,9 @@ instance appCapabilityAppM :: AppCapability AppM where
     -- Fork aff since we don't care about result
     _ <- liftAff $ forkAff $ postLogPayload msg
     liftEffect $ C.log msg
+
+  ensureCampaign = do
+    campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
+    case campaignId of
+      Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
+      Just _ -> pure unit

@@ -26,8 +26,8 @@ gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
 auth :: Middleware
 auth = routedMiddleware ("dashboard" `elem`) mw
   where
-    check = (\u p -> return $ u == "sweetspot" && p == "***REMOVED***")
+    check u p = return $ u == "sweetspot" && p == "***REMOVED***"
     mw = basicAuth check "Dashboard realm"
 
 getMiddleware :: AppCtx -> Middleware
-getMiddleware ctx = gzipStatic . auth . (experimentShield ctx)
+getMiddleware ctx = gzipStatic . auth . experimentShield ctx

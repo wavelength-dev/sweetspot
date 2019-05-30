@@ -127,7 +127,6 @@ app = do
   setUserId bucket
   applyExperiment bucket
   trackView bucket
-  --log "Successfully applied experiments."
 
 main :: Effect Unit
 main = launchAff_ $ do

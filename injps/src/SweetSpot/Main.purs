@@ -122,8 +122,8 @@ app = do
   liftAff getDOMReady
   ensureDeps
   uid <- getUserId
-  ensureCampaign uid
-  bucket <- getUserBucket uid
+  campaignId <- ensureCampaign uid
+  bucket <- getUserBucket uid campaignId
   setUserId bucket
   applyExperiment bucket
   trackView bucket

@@ -69,8 +69,8 @@ instance appCapabilityAppM :: AppCapability AppM where
   setUserId (UserBucket b) =
     liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
-  getUserBucket uid = do
-    bucket <- liftAff $ fetchUserBuckets uid
+  getUserBucket uid campaignId = do
+    bucket <- liftAff $ fetchUserBuckets uid campaignId
     case bucket of
       Right b -> pure b
       Left err -> throwError (ClientErr { message: "Error fetching user bucket", payload: err })
@@ -82,9 +82,9 @@ instance appCapabilityAppM :: AppCapability AppM where
 
   ensureCampaign mUid = do
     case mUid of
-      Just _ -> pure unit
+      Just _ -> pure Nothing
       Nothing -> do
         campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
         case campaignId of
           Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
-          Just _ -> pure unit
+          Just id -> pure $ Just id

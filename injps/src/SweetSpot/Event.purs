@@ -47,19 +47,19 @@ readInjectedProducts = do
   pure $ sequence maybePs
 
 collectionUrlRegex :: Either String Regex
-collectionUrlRegex = regex "^/collections/\\w+$" ignoreCase
+collectionUrlRegex = regex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
 
 collectionsUrlRegex :: Either String Regex
-collectionsUrlRegex = regex "^/collections$" ignoreCase
+collectionsUrlRegex = regex "^/collections/?$" ignoreCase
 
 productDetailsUrlRegex :: Either String Regex
-productDetailsUrlRegex = regex "^/collections/\\w+/products" ignoreCase
+productDetailsUrlRegex = regex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
 
 ordersUrlRegex :: Either String Regex
-ordersUrlRegex = regex "^/\\w+/orders/" ignoreCase
+ordersUrlRegex = regex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
 
 checkoutUrlRegex :: Either String Regex
-checkoutUrlRegex = regex "^/\\w+/checkouts/" ignoreCase
+checkoutUrlRegex = regex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
 
 isCollectionUrl :: String -> Boolean
 isCollectionUrl path =

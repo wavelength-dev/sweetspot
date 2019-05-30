@@ -12,7 +12,6 @@ import Effect (Effect)
 import Effect.Aff (Aff, forkAff, launchAff_, makeAff, nonCanceler)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Global (readFloat)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
 import SweetSpot.Capability (ensureCampaign, ensureDeps, getUserBucket, getUserId, setUserId)
@@ -40,7 +39,6 @@ getDOMReady =
     doc <- window >>= document
     addEventListener domcontentloaded listener false (toEventTarget doc)
     pure nonCanceler
-
 
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do
@@ -109,14 +107,14 @@ applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
   els <- liftEffect collectPriceEls
   liftEffect $ traverse_ maybeInjectPrice els
   liftEffect $ traverse_ (removeClass hiddenPriceId) els
-
   where
+    matchStr = "sweetspot-match-" <> (toString _ubPrice)
     maybeInjectPrice :: Element -> Effect Unit
     maybeInjectPrice el = do
-      sku <- getIdFromPriceElement el
-      match <- pure $ ((==) _ubSku) <$> sku
+      mSku <- getIdFromPriceElement el
+      match <- pure $ ((==) _ubSku) <$> mSku
       case match of
-        Just true -> log $ "Found match for " <> _ubSku <> " price would be " <> (toString _ubPrice)
+        Just true -> addClass matchStr el
         _ -> pure unit
 
 app :: AppM Unit

@@ -6,19 +6,19 @@ import SweetSpot.Env (apiURL) as Env
 
 hiddenPriceId ::
   String
-hiddenPriceId = "supple__price--hidden"
+hiddenPriceId = "sweetspot__price--hidden"
 
 productClass ::
   String
-productClass = "supple__product"
+productClass = "sweetspot__product"
 
 uidStorageKey ::
   String
-uidStorageKey = "supple_uid_1554053013187"
+uidStorageKey = "sweetspot_uid_1554053013187"
 
 idClassPattern ::
   S.Pattern
-idClassPattern = S.Pattern "supple__price_id--"
+idClassPattern = S.Pattern "sweetspot__price_id--"
 
 eventEndpoint ::
   String

@@ -5,7 +5,6 @@ import Prelude
 import Data.Array as A
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe)
-import Data.String as S
 import Data.String.Regex (Regex, regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.Traversable (sequence)
@@ -29,7 +28,7 @@ import Web.DOM.Internal.Types (Element)
 import Web.DOM.Node as N
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
-import Web.HTML.Location (href, pathname, search)
+import Web.HTML.Location (href, pathname)
 import Web.HTML.Window (document, location)
 
 extractInjectedProductJSON :: Element -> Effect (Maybe Product)

@@ -4,7 +4,8 @@ import Prelude
 
 import Data.Argonaut.Core (stringify)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe, maybe)
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
@@ -19,14 +20,18 @@ fetch = M.fetch windowFetch
 jsonHeader :: M.Headers
 jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
 
-fetchUserBuckets :: Maybe String -> Aff (Either String UserBucket)
-fetchUserBuckets uid = do
+fetchUserBuckets :: Maybe String -> Maybe String -> Aff (Either String UserBucket)
+fetchUserBuckets mUid mCampaignId = do
   let
     opts =
       { method: M.getMethod
       , headers: jsonHeader
       }
-    qs = maybe "" ((<>) "?uid=") uid
+    qs = case Tuple mUid mCampaignId of
+      Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid
+      Tuple (Just uid) _ -> "?uid=" <> uid
+      Tuple _ (Just campaignId) -> "?campaignId=" <> campaignId
+      Tuple Nothing Nothing -> ""
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
     Right res -> M.text res >>= decodeUserBucket >>> pure

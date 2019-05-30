@@ -85,3 +85,10 @@ getExperimentStatsSession expId = do
         , _dbsImpressionCount = impressions
         , _dbsCheckoutEvents = checkouts
         }
+
+validateCampaignSession :: CampaignId -> Session Bool
+validateCampaignSession cmpId = do
+  mExpId <- Session.statement cmpId getExperimentIdByCampaignId
+  return $ case mExpId of
+    Just _ -> True
+    Nothing -> False

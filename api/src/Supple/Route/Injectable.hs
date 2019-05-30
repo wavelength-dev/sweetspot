@@ -27,12 +27,13 @@ import Supple.Database
   , getUserBucket
   , insertEvent
   , insertLogEvent
+  , validateCampaign
   )
 import qualified Supple.Logger as L
-import Supple.Route.Util (internalServerErr)
+import Supple.Route.Util (internalServerErr, badRequestErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "uid" Int :> Get '[ JSON] UserBucket
+   = "bucket" :> QueryParam "campaignId" Text :> QueryParam "uid" Int :> Get '[ JSON] UserBucket
 
 type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
@@ -43,8 +44,8 @@ type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
 originProtectedRoutes :: [Text]
 originProtectedRoutes = ["bucket", "event", "log"]
 
-getUserBucketHandler :: Maybe Int -> AppM UserBucket
-getUserBucketHandler (Just uid) = do
+getUserBucketHandler :: Maybe Text -> Maybe Int -> AppM UserBucket
+getUserBucketHandler _ (Just uid) = do
   pool <- asks _getDbPool
   res <- liftIO $ getUserBucket pool (UserId uid)
   case res of
@@ -54,16 +55,28 @@ getUserBucketHandler (Just uid) = do
     Left err -> do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
-getUserBucketHandler Nothing = do
+getUserBucketHandler (Just cmpId) Nothing = do
   pool <- asks _getDbPool
-  res <- liftIO $ getNewUserBucket pool
-  case res of
-    Right body -> do
-      L.info "Assigned user to bucket"
-      return body
+  isValidCampaign <- liftIO $ validateCampaign pool (CampaignId cmpId)
+  case isValidCampaign of
+    Right True -> do
+      res <- liftIO $ getNewUserBucket pool
+      L.info $ "Got campaign " <> cmpId
+      case res of
+        Right body -> do
+          L.info "Assigned user to bucket"
+          return body
+        Left err -> do
+          L.error $ "Error assigning user to bucket " <> err
+          throwError internalServerErr
+    Right False -> do
+      L.info $ "Got invalid campaign id " <> cmpId
+      throwError badRequestErr
     Left err -> do
-      L.error $ "Error assigning user to bucket " <> err
+      L.error $ "Error checking campaign id validity " <> err
       throwError internalServerErr
+getUserBucketHandler _ _ = do
+  throwError badRequestErr
 
 trackEventHandler :: Value -> AppM OkResponse
 trackEventHandler val = do
@@ -120,7 +133,5 @@ originMiddleware ctx app req respond =
         Nothing -> False
         Just referer -> "kamikoto" `BS.isInfixOf` referer
 
-injectableHandler ::
-     (Maybe Int -> AppM UserBucket) :<|> ((Value -> AppM OkResponse) :<|> (Value -> AppM OkResponse))
 injectableHandler =
   getUserBucketHandler :<|> trackEventHandler :<|> trackLogMessageHandler

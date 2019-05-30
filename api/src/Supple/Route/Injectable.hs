@@ -131,7 +131,7 @@ originMiddleware ctx app req respond =
     isOriginKamikoto =
       case lookup "referer" headers of
         Nothing -> False
-        Just referer -> "kamikoto" `BS.isInfixOf` referer
+        Just referer -> "longvadon" `BS.isInfixOf` referer
 
 injectableHandler =
   getUserBucketHandler :<|> trackEventHandler :<|> trackLogMessageHandler

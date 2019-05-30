@@ -72,3 +72,6 @@ print_filesize "sweetspot-checkout.js" "Raw Output"
 print_filesize "sweetspot-checkout.min.js" "Minified"
 print_filesize "sweetspot-checkout.min.js.gz" "Minified and Compressed"
 rm ../dist/sweetspot-checkout.min.js.gz
+
+echo "=> Cleaning up cached gziped files"
+rm ../dist/___dist_*

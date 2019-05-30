@@ -268,3 +268,14 @@ getCheckoutEventsForBucket = Statement sql encoder decoder True
               lineItems ^.. values . key "variantId" . _Integer
                 & fmap (Svid . fromIntegral)
           }
+
+getExperimentIdByCampaignId :: Statement CampaignId (Maybe ExpId)
+getExperimentIdByCampaignId = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+        [ "SELECT exp_id FROM experiments WHERE campaign_id = $1"]
+    encoder = getCmpId >$< Encoders.param Encoders.text
+      where getCmpId (CampaignId id) = id
+    decoder = Decoders.rowMaybe $ wrapExpId <$> (Decoders.column Decoders.int8)
+    wrapExpId eid = ExpId $ fromIntegral eid

@@ -14,6 +14,7 @@ module Supple.Database
   , insertEvent
   , insertLogEvent
   , migrate
+  , validateCampaign
   ) where
 
 import Control.Lens (_Left, over)
@@ -67,7 +68,7 @@ getUserBucket pool userId = do
   res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBucket :: Pool -> IO (Either T.Text UserBucket)
+getNewUserBucket :: Pool ->  IO (Either T.Text UserBucket)
 getNewUserBucket pool = do
   res <- Pool.use pool assignAndGetUserBucketSession
   return $ over _Left wrapQueryError res
@@ -117,3 +118,8 @@ migrate pool = do
       Right (Just errors) ->
         Left $ T.intercalate ", " (T.pack . show <$> errors)
       Left err -> Left $ wrapQueryError err
+
+validateCampaign :: Pool -> CampaignId -> IO (Either T.Text Bool)
+validateCampaign pool cmpId = do
+  res <- Pool.use pool (validateCampaignSession cmpId)
+  return $ over _Left wrapQueryError res

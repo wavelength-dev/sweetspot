@@ -46,7 +46,7 @@ collectPriceEls = do
   els <- getElementsByClassName hiddenPriceId (toDocument doc)
   toArray els
 
-collectCheckoutOptions :: Array String -> Effect (Array Element)
+collectCheckoutOptions :: Array Number -> Effect (Array Element)
 collectCheckoutOptions variantIds = do
   doc <- window >>= document
   els <- getElementsByTagName "option" (toDocument doc) >>= toArray
@@ -58,21 +58,23 @@ collectCheckoutOptions variantIds = do
        optionId <- E.getAttribute "value" el
        pure $ case optionId of
             Nothing -> false
-            Just id -> A.elem id variantIds
+            Just id -> A.elem (readFloat id) variantIds
 
 swapCheckoutVariantId :: Array UserBucket -> Array Element -> Effect Unit
 swapCheckoutVariantId userBuckets els =
-  traverse_ (\el -> getSuppleVariantId el >>= (\variantId ->
-              case variantId of
-                 Nothing -> pure unit
-                 Just vId -> (setAttribute "value" (toString vId) el))
-             ) els
+  traverse_ swapCheckoutIds els
   where
+    swapCheckoutIds el = getSuppleVariantId el >>= (\variantId ->
+      case variantId of
+        Nothing -> pure unit
+        -- Just vId -> (setAttribute "value" (toString vId) el))
+        Just vId -> addClass ("sweetspot-swap-" <> (toString vId)) el)
     getSuppleVariantId :: Element -> Effect (Maybe Number)
     getSuppleVariantId el = do
        attrValue <- getAttribute "value" el
        pure $ case attrValue of
          Nothing -> Nothing
+         -- This line is wrong, the ubSvid is the new price variant id, we need to know the id of the original
          Just id -> case (A.find (\(UserBucket x) -> x._ubSvid == (readFloat id)) userBuckets) of
                       Nothing -> Nothing
                       Just (UserBucket ub) -> Just ub._ubSvid
@@ -103,10 +105,13 @@ unhidePrice = do
 
 -- We assume all elements with a hidden price also have a class identifying which SKU the price belongs to.
 applyExperiment :: UserBucket -> AppM Unit
-applyExperiment (UserBucket { _ubSku, _ubPrice }) = do
+applyExperiment ub@(UserBucket { _ubSku, _ubPrice, _ubSvid }) = do
   els <- liftEffect collectPriceEls
   liftEffect $ traverse_ maybeInjectPrice els
   liftEffect $ traverse_ (removeClass hiddenPriceId) els
+  -- This line is wrong, the ubSvid is the new price variant id, we need to know the id of the original
+  checkoutOptions <- liftEffect $ collectCheckoutOptions [_ubSvid]
+  liftEffect $ swapCheckoutVariantId [ub] checkoutOptions
   where
     matchStr = "sweetspot-match-" <> (toString _ubPrice)
     maybeInjectPrice :: Element -> Effect Unit

@@ -108,6 +108,7 @@ instance ToJSON ExperimentBuckets
 data UserBucket = UserBucket
   { _ubUserId :: !UserId
   , _ubSku :: !Sku
+  , _ubOriginalSvid :: !Svid
   , _ubTestSvid :: !Svid
   , _ubPrice :: !Price
   , _ubExpId :: !ExpId

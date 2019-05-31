@@ -14,6 +14,7 @@ CREATE TABLE experiments
 CREATE TABLE buckets
 (bucket_id SERIAL PRIMARY KEY,
  bucket_type TEXT NOT NULL,
+ original_svid BIGINT,
  test_svid BIGINT,
  sku TEXT,
  price NUMERIC(12, 2));

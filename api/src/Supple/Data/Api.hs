@@ -63,7 +63,7 @@ instance FromJSON Product
 data Bucket = Bucket
   { _bBucketId :: !BucketId
   , _bBucketType :: !BucketType
-  , _bSvid :: !Svid
+  , _bTestSvid :: !Svid
   , _bPrice :: !Price
   } deriving (Eq, Generic, Show)
 
@@ -108,7 +108,7 @@ instance ToJSON ExperimentBuckets
 data UserBucket = UserBucket
   { _ubUserId :: !UserId
   , _ubSku :: !Sku
-  , _ubSvid :: !Svid
+  , _ubTestSvid :: !Svid
   , _ubPrice :: !Price
   , _ubExpId :: !ExpId
   , _ubBucketId :: !BucketId

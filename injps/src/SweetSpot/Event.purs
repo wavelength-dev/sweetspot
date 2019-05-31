@@ -3,16 +3,16 @@ module SweetSpot.Event (trackView) where
 import Prelude
 
 import Data.Array as A
-import Data.Either (Either(..), hush)
+import Data.Either (fromRight, hush)
 import Data.Maybe (Maybe)
 import Data.String.Regex (Regex, regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.Traversable (sequence)
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (forkAff)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
 import SweetSpot.AppM (AppM)
 import SweetSpot.Capability (getUserId)
 import SweetSpot.Data.Api (UserBucket(..))
@@ -46,55 +46,34 @@ readInjectedProducts = do
 
   pure $ sequence maybePs
 
-collectionUrlRegex :: Either String Regex
-collectionUrlRegex = regex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
+collectionUrlRegex :: Regex
+collectionUrlRegex = unsafePartial $ fromRight $ regex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
 
-collectionsUrlRegex :: Either String Regex
-collectionsUrlRegex = regex "^/collections/?$" ignoreCase
+collectionsUrlRegex :: Regex
+collectionsUrlRegex = unsafePartial $ fromRight $ regex "^/collections/?$" ignoreCase
 
-productDetailsUrlRegex :: Either String Regex
-productDetailsUrlRegex = regex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
+productDetailsUrlRegex :: Regex
+productDetailsUrlRegex = unsafePartial $ fromRight $ regex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
 
-ordersUrlRegex :: Either String Regex
-ordersUrlRegex = regex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
+ordersUrlRegex :: Regex
+ordersUrlRegex = unsafePartial $ fromRight $ regex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
 
-checkoutUrlRegex :: Either String Regex
-checkoutUrlRegex = regex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
+checkoutUrlRegex :: Regex
+checkoutUrlRegex = unsafePartial $ fromRight $ regex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
 
-isCollectionUrl :: String -> Boolean
-isCollectionUrl path =
-  case collectionUrlRegex of
-    Right r -> test r path
-    Left _ -> false
-
-isCollectionsUrl :: String -> Boolean
-isCollectionsUrl path =
-  case collectionsUrlRegex of
-    Right r -> test r path
-    Left _ -> false
-
-isProductDetailsUrl :: String -> Boolean
-isProductDetailsUrl path =
-  case productDetailsUrlRegex of
-    Right r -> test r path
-    Left _ -> false
-
-isCheckoutUrl :: String -> Boolean
-isCheckoutUrl path =
-  case regexes of
-    Right (Tuple cr or) -> test cr path || test or path
-    Left _ -> false
-  where regexes = Tuple <$> checkoutUrlRegex <*> ordersUrlRegex
+homeUrlRegex :: Regex
+homeUrlRegex = unsafePartial $ fromRight $ regex "^/?$" ignoreCase
 
 detectPage :: Effect Page
 detectPage = window >>= location >>= pathname >>= pure <<< getPage
   where
     getPage :: String -> Page
     getPage path
-      | isCollectionUrl path = Collection
-      | isCollectionsUrl path = Collections
-      | isProductDetailsUrl path = Product
-      | isCheckoutUrl path = Checkout
+      | test collectionUrlRegex path = Collection
+      | test collectionsUrlRegex path = Collections
+      | test productDetailsUrlRegex path = Product
+      | test checkoutUrlRegex path || test ordersUrlRegex path = Checkout
+      | test homeUrlRegex path = Home
       | otherwise = Unknown
 
 trackView :: UserBucket -> AppM Unit

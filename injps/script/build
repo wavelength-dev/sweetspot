@@ -16,7 +16,7 @@ elif [[ $ENV == "production" ]]; then
   source .env.production
 fi
 
-pulp build --main SweetSpot.Main --optimise --to ./output/sweetspot-main.js
+spago bundle-app --main SweetSpot.Main --to ./output/sweetspot-main.js
 yarn --silent browserify --transform envify --outfile ../dist/sweetspot-main.js ./output/sweetspot-main.js
 
 if [ $? -ne 0 ]; then
@@ -46,7 +46,7 @@ print_filesize "sweetspot-main.min.js" "Minified"
 print_filesize "sweetspot-main.min.js.gz" "Minified and Compressed"
 rm ../dist/sweetspot-main.min.js.gz
 
-pulp build --main SweetSpot.Checkout --to ./output/sweetspot-checkout.js
+spago bundle-app --main SweetSpot.Checkout --to ./output/sweetspot-checkout.js
 yarn --silent browserify --transform envify --outfile ../dist/sweetspot-checkout.js ./output/sweetspot-checkout.js
 
 if [ $? -ne 0 ]; then

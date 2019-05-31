@@ -8,14 +8,16 @@ import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
-import Prim (Array, Number, String)
+import Prim (Array, Int, Number, String)
+import Supple.Data.Common (BucketType)
 
 import Prelude
 
 newtype Bucket =
     Bucket {
       _bBucketId :: Number
-    , _bSvid :: Number
+    , _bBucketType :: BucketType
+    , _bTestSvid :: Number
     , _bPrice :: Number
     }
 
@@ -24,14 +26,17 @@ derive instance genericBucket :: Generic Bucket _
 derive instance newtypeBucket :: Newtype Bucket _
 
 --------------------------------------------------------------------------------
-_Bucket :: Iso' Bucket { _bBucketId :: Number, _bSvid :: Number, _bPrice :: Number}
+_Bucket :: Iso' Bucket { _bBucketId :: Number, _bBucketType :: BucketType, _bTestSvid :: Number, _bPrice :: Number}
 _Bucket = _Newtype
 
 bBucketId :: Lens' Bucket Number
 bBucketId = _Newtype <<< prop (SProxy :: SProxy "_bBucketId")
 
-bSvid :: Lens' Bucket Number
-bSvid = _Newtype <<< prop (SProxy :: SProxy "_bSvid")
+bBucketType :: Lens' Bucket BucketType
+bBucketType = _Newtype <<< prop (SProxy :: SProxy "_bBucketType")
+
+bTestSvid :: Lens' Bucket Number
+bTestSvid = _Newtype <<< prop (SProxy :: SProxy "_bTestSvid")
 
 bPrice :: Lens' Bucket Number
 bPrice = _Newtype <<< prop (SProxy :: SProxy "_bPrice")
@@ -43,6 +48,7 @@ newtype Experiment =
     , _eSku :: String
     , _eName :: String
     , _eCampaignId :: String
+    , _eMinProfitIncrease :: Int
     }
 
 derive instance eqExperiment :: Eq Experiment
@@ -50,7 +56,7 @@ derive instance genericExperiment :: Generic Experiment _
 derive instance newtypeExperiment :: Newtype Experiment _
 
 --------------------------------------------------------------------------------
-_Experiment :: Iso' Experiment { _eExpId :: Number, _eSku :: String, _eName :: String, _eCampaignId :: String}
+_Experiment :: Iso' Experiment { _eExpId :: Number, _eSku :: String, _eName :: String, _eCampaignId :: String, _eMinProfitIncrease :: Int}
 _Experiment = _Newtype
 
 eExpId :: Lens' Experiment Number
@@ -65,6 +71,9 @@ eName = _Newtype <<< prop (SProxy :: SProxy "_eName")
 eCampaignId :: Lens' Experiment String
 eCampaignId = _Newtype <<< prop (SProxy :: SProxy "_eCampaignId")
 
+eMinProfitIncrease :: Lens' Experiment Int
+eMinProfitIncrease = _Newtype <<< prop (SProxy :: SProxy "_eMinProfitIncrease")
+
 --------------------------------------------------------------------------------
 newtype ExperimentBuckets =
     ExperimentBuckets {
@@ -72,6 +81,7 @@ newtype ExperimentBuckets =
     , _ebSku :: String
     , _ebName :: String
     , _ebCampaignId :: String
+    , _ebMinProfitIncrease :: Int
     , _ebBuckets :: Array Bucket
     }
 
@@ -80,7 +90,7 @@ derive instance genericExperimentBuckets :: Generic ExperimentBuckets _
 derive instance newtypeExperimentBuckets :: Newtype ExperimentBuckets _
 
 --------------------------------------------------------------------------------
-_ExperimentBuckets :: Iso' ExperimentBuckets { _ebExpId :: Number, _ebSku :: String, _ebName :: String, _ebCampaignId :: String, _ebBuckets :: Array Bucket}
+_ExperimentBuckets :: Iso' ExperimentBuckets { _ebExpId :: Number, _ebSku :: String, _ebName :: String, _ebCampaignId :: String, _ebMinProfitIncrease :: Int, _ebBuckets :: Array Bucket}
 _ExperimentBuckets = _Newtype
 
 ebExpId :: Lens' ExperimentBuckets Number
@@ -94,6 +104,9 @@ ebName = _Newtype <<< prop (SProxy :: SProxy "_ebName")
 
 ebCampaignId :: Lens' ExperimentBuckets String
 ebCampaignId = _Newtype <<< prop (SProxy :: SProxy "_ebCampaignId")
+
+ebMinProfitIncrease :: Lens' ExperimentBuckets Int
+ebMinProfitIncrease = _Newtype <<< prop (SProxy :: SProxy "_ebMinProfitIncrease")
 
 ebBuckets :: Lens' ExperimentBuckets (Array Bucket)
 ebBuckets = _Newtype <<< prop (SProxy :: SProxy "_ebBuckets")

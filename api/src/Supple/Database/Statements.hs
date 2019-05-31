@@ -19,7 +19,7 @@ userBucketStatement = Statement sql encoder decoder True
   where
     sql =
       (mconcat
-         [ "SELECT users.user_id, buckets.sku, buckets.svid, buckets.price, "
+         [ "SELECT users.user_id, buckets.sku, buckets.test_svid, buckets.price, "
          , "experiment_buckets.exp_id, buckets.bucket_id "
          , "FROM bucket_users "
          , "INNER JOIN users ON bucket_users.user_id = users.user_id "
@@ -38,11 +38,11 @@ userBucketStatement = Statement sql encoder decoder True
           Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.int8
         toUserBucket =
-          \(uid, sku, svid, price, expId, bucketId) ->
+          \(uid, sku, test_svid, price, expId, bucketId) ->
             UserBucket
               { _ubUserId = UserId $ fromIntegral uid
               , _ubSku = Sku sku
-              , _ubSvid = Svid $ fromIntegral svid
+              , _ubTestSvid = Svid $ fromIntegral test_svid
               , _ubPrice = Price price
               , _ubExpId = ExpId $ fromIntegral expId
               , _ubBucketId = BucketId $ fromIntegral bucketId
@@ -149,7 +149,7 @@ insertBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "INSERT INTO buckets (bucket_type, svid, sku, price) "
+        [ "INSERT INTO buckets (bucket_type, test_svid, sku, price) "
         , "VALUES ($1, $2, $3) RETURNING bucket_id;"
         ]
     encoder =
@@ -181,7 +181,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT bs.bucket_id, bs.bucket_type, bs.price, bs.svid "
+        [ "SELECT bs.bucket_id, bs.bucket_type, bs.price, bs.test_svid "
         , "FROM experiment_buckets as ebs "
         , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
         , "WHERE ebs.exp_id = $1;"
@@ -200,7 +200,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
               { _bBucketId = BucketId $ fromIntegral bid
               , _bBucketType = bucketTypeFromText btype
               , _bPrice = Price p
-              , _bSvid = Svid $ fromIntegral sv
+              , _bTestSvid = Svid $ fromIntegral sv
               }
 
 insertEventStatement :: Statement (EventType, Value) ()

@@ -73,7 +73,7 @@ getExperimentStatsSession expId = do
     getBucketStats b = do
       let
         bucketId = b ^. bBucketId
-        svid = b ^. bSvid
+        svid = b ^. bTestSvid
       users <- Session.statement bucketId getBucketUserCountStatement
       impressions <- Session.statement bucketId getBucketImpressionCountStatement
       checkouts <- Session.statement bucketId getCheckoutEventsForBucket

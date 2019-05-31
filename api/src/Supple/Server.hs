@@ -12,7 +12,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Database (DbConfig(..), getDbPool, migrate)
-import Supple.Env as Env (EnvConfig(..), getEnvConfig)
+import qualified Supple.Env as Env
 import qualified Supple.Logger as L
 import Supple.Middleware (getMiddleware)
 import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
@@ -41,25 +41,34 @@ createApp ctx =
 
 runServer :: IO ()
 runServer = do
-  result <- getEnvConfig
+  result <- Env.getEnvConfig
   envConfig <-
     case result of
       Left msg -> error msg
       Right envConfig' -> return envConfig'
   let dbConfig =
         DbConfig
-          { host = dbHost envConfig
-          , name = dbName envConfig
-          , password = dbPassword envConfig
-          , port = dbPort envConfig
-          , user = dbUser envConfig
+          { host = Env.dbHost envConfig
+          , name = Env.dbName envConfig
+          , password = Env.dbPassword envConfig
+          , port = Env.dbPort envConfig
+          , user = Env.dbUser envConfig
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
-  let env = Env.environment envConfig
-      shopifyApiRoot = Env.shopifyApiRoot envConfig
-      config = AppConfig env shopifyApiRoot
-      ctx = AppCtx config appLogger dbPool
+  let
+    config = AppConfig
+      { environment = Env.environment envConfig
+      , shopifyApiRoot = Env.shopifyApiRoot envConfig
+      , shopifyClientId = Env.shopifyClientId envConfig
+      , shopifyClientSecret = Env.shopifyClientSecret envConfig
+      , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken envConfig
+      }
+    ctx = AppCtx
+      { _getConfig = config
+      , _getLogger = appLogger
+      , _getDbPool = dbPool
+      }
 
   L.info' appLogger "Running migrations"
   res <- migrate dbPool

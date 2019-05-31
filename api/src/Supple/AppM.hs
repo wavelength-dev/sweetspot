@@ -11,6 +11,9 @@ import System.Log.FastLogger (LoggerSet)
 data AppConfig = AppConfig
   { environment :: !String
   , shopifyApiRoot :: !String
+  , shopifyClientId :: !String
+  , shopifyClientSecret :: !String
+  , shopifyOAuthAccessToken :: !String
   } deriving (Generic, Show)
 
 data AppCtx = AppCtx

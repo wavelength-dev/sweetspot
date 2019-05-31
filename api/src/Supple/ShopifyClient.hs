@@ -9,7 +9,8 @@ import Control.Monad.Reader (asks)
 import Data.Aeson
 import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (Parser, parse)
-import Data.Text (Text)
+import qualified Data.ByteString.UTF8 as BLU
+import Data.Text (Text, pack)
 import Debug.Trace (trace)
 import GHC.Generics (Generic)
 import Network.Wreq
@@ -17,8 +18,6 @@ import Prelude hiding (product)
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Data.Api (Image(..), Product(..), Variant(..))
 import Supple.Data.Common (Pid(..))
-
-opts = defaults & header "X-Shopify-Access-Token" .~ ["705fdddbc12654ca0ecf353e0b2421d5"]
 
 parseImage :: Value -> Parser Image
 parseImage =
@@ -49,9 +48,17 @@ parseProduct v = parse parser v
           Product
             {_pId = id, _pTitle = title, _pImage = image, _pVariants = variants}
 
+getOpts :: AppM Network.Wreq.Options
+getOpts = do
+  oauthToken <- asks (shopifyOAuthAccessToken . _getConfig)
+  let token = BLU.fromString oauthToken
+  return $ defaults & header "X-Shopify-Access-Token" .~ [token]
+
+
 fetchProducts :: AppM (Maybe [Product])
 fetchProducts = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
+  opts <- getOpts
   r <- liftIO $ getWith opts $ apiRoot <> "/products.json?fields=id,title,variants,image"
   json <- asValue r
   let result =
@@ -66,6 +73,7 @@ fetchProducts = do
 fetchProduct :: Pid -> AppM Value
 fetchProduct (Pid pid) = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
+  opts <- getOpts
   r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> show pid <> ".json"
   json <- asJSON r
   return $ json ^. responseBody
@@ -73,6 +81,7 @@ fetchProduct (Pid pid) = do
 createProduct :: Value -> AppM (Maybe Product)
 createProduct v = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
+  opts <- getOpts
   r <- liftIO $ postWith opts (apiRoot <> "/products.json") v
   json <- asValue r
   let result = json ^?! responseBody . key "product" & parseProduct
@@ -91,13 +100,14 @@ instance ToJSON ExchangeBody
 
 exchangeAccessToken :: Text -> AppM Text
 exchangeAccessToken code = do
-  apiRoot <- asks (shopifyApiRoot . _getConfig)
+  config <- asks _getConfig
+  let
+    apiRoot = shopifyApiRoot config
+    body = toJSON $ ExchangeBody
+      { client_id = pack $ shopifyClientId config
+      , client_secret = pack $ shopifyClientSecret config
+      , code = code
+      }
   r <- liftIO $ post (apiRoot <> "/oauth/access_token") body
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String
-  where
-    body = toJSON $ ExchangeBody
-      { client_id = "634b531a6568d6eb076c2ad5c7e0265a"
-      , client_secret = "***REMOVED***"
-      , code = code
-      }

@@ -47,22 +47,22 @@ readInjectedProducts = do
   pure $ sequence maybePs
 
 collectionUrlRegex :: Regex
-collectionUrlRegex = unsafePartial $ fromRight $ regex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
+collectionUrlRegex = unsafeRegex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
 
 collectionsUrlRegex :: Regex
-collectionsUrlRegex = unsafePartial $ fromRight $ regex "^/collections/?$" ignoreCase
+collectionsUrlRegex = unsafeRegex "^/collections/?$" ignoreCase
 
 productDetailsUrlRegex :: Regex
-productDetailsUrlRegex = unsafePartial $ fromRight $ regex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
+productDetailsUrlRegex = unsafeRegex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
 
 ordersUrlRegex :: Regex
-ordersUrlRegex = unsafePartial $ fromRight $ regex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
+ordersUrlRegex = unsafeRegex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
 
 checkoutUrlRegex :: Regex
-checkoutUrlRegex = unsafePartial $ fromRight $ regex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
+checkoutUrlRegex = unsafeRegex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
 
 homeUrlRegex :: Regex
-homeUrlRegex = unsafePartial $ fromRight $ regex "^/?$" ignoreCase
+homeUrlRegex = unsafeRegex "^/?$" ignoreCase
 
 detectPage :: Effect Page
 detectPage = window >>= location >>= pathname >>= pure <<< getPage

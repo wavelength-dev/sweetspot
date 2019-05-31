@@ -7,7 +7,6 @@ module Supple.Route.OAuth
   , oauthHandler
   ) where
 
-import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text)
 import Servant
 import Supple.AppM (AppM)
@@ -31,7 +30,7 @@ redirectHandler ::
 redirectHandler code hmac timestamp state shop = do
   case code of
     Just c -> do
-      permCode <- liftIO $ exchangeAccessToken c
+      permCode <- exchangeAccessToken c
       L.info $ "Got code: " <> permCode
       return $ OkResponse { message = "Authenticated app" }
     Nothing -> throwError internalServerErr

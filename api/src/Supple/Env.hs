@@ -10,7 +10,11 @@ data EnvConfig = EnvConfig
   , dbPort :: Int
   , dbUser :: String
   , environment :: String
+  , shopifyApiRoot :: String
   } deriving (Show)
+
+
+libertyPriceApiRoot = "https://libertyprice.myshopify.com/admin"
 
 instance FromEnv EnvConfig where
   fromEnv =
@@ -19,7 +23,8 @@ instance FromEnv EnvConfig where
     envMaybe "DB_PASSWORD" .!= "" <*>
     envMaybe "DB_PORT" .!= 5432 <*>
     envMaybe "DB_USER" .!= "supple" <*>
-    envMaybe "ENVIRONMENT" .!= "dev"
+    envMaybe "ENVIRONMENT" .!= "dev" <*>
+    envMaybe "SHOPIFY_API_ROOT" .!= libertyPriceApiRoot
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

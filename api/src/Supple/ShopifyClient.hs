@@ -4,6 +4,8 @@
 module Supple.ShopifyClient where
 
 import Control.Lens
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (asks)
 import Data.Aeson
 import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (Parser, parse)
@@ -12,11 +14,9 @@ import Debug.Trace (trace)
 import GHC.Generics (Generic)
 import Network.Wreq
 import Prelude hiding (product)
+import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Data.Api (Image(..), Product(..), Variant(..))
 import Supple.Data.Common (Pid(..))
-
-apiRoot =
-  "https://monvadon.myshopify.com/admin"
 
 opts = defaults & header "X-Shopify-Access-Token" .~ ["705fdddbc12654ca0ecf353e0b2421d5"]
 
@@ -49,36 +49,37 @@ parseProduct v = parse parser v
           Product
             {_pId = id, _pTitle = title, _pImage = image, _pVariants = variants}
 
-fetchProducts :: IO (Maybe [Product])
+fetchProducts :: AppM (Maybe [Product])
 fetchProducts = do
-  r <- getWith opts $ apiRoot ++ "/products.json?fields=id,title,variants,image"
+  apiRoot <- asks (shopifyApiRoot . _getConfig)
+  r <- liftIO $ getWith opts $ apiRoot <> "/products.json?fields=id,title,variants,image"
   json <- asValue r
   let result =
-        (json ^?! responseBody . key "products") ^.. values & fmap parseProduct &
-        sequence
+        (json ^?! responseBody . key "products") ^.. values
+          & fmap parseProduct
+          & sequence
   return $
     case result of
       Success ps -> Just ps
       Error e -> trace e Nothing
 
-fetchProduct :: Pid -> IO Value
+fetchProduct :: Pid -> AppM Value
 fetchProduct (Pid pid) = do
-  r <- getWith opts $ apiRoot ++ "/products/" ++ show pid ++ ".json"
+  apiRoot <- asks (shopifyApiRoot . _getConfig)
+  r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> show pid <> ".json"
   json <- asJSON r
   return $ json ^. responseBody
 
-createProduct :: Value -> IO (Maybe Product)
+createProduct :: Value -> AppM (Maybe Product)
 createProduct v = do
-  r <- postWith opts url v
+  apiRoot <- asks (shopifyApiRoot . _getConfig)
+  r <- liftIO $ postWith opts (apiRoot <> "/products.json") v
   json <- asValue r
   let result = json ^?! responseBody . key "product" & parseProduct
   return $
     case result of
       Success p -> Just p
       _ -> Nothing
-  where
-    url = apiRoot ++ "/products.json"
-
 
 data ExchangeBody = ExchangeBody
   { client_id :: Text
@@ -88,9 +89,10 @@ data ExchangeBody = ExchangeBody
 
 instance ToJSON ExchangeBody
 
-exchangeAccessToken :: Text -> IO Text
+exchangeAccessToken :: Text -> AppM Text
 exchangeAccessToken code = do
-  r <- post (apiRoot ++ "/oauth/access_token") body
+  apiRoot <- asks (shopifyApiRoot . _getConfig)
+  r <- liftIO $ post (apiRoot <> "/oauth/access_token") body
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String
   where

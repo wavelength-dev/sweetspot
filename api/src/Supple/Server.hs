@@ -8,7 +8,6 @@ module Supple.Server
 
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
-import Data.Text as T
 import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
@@ -57,8 +56,9 @@ runServer = do
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
-  let env = T.pack (Env.environment envConfig)
-      config = AppConfig env "0.1"
+  let env = Env.environment envConfig
+      shopifyApiRoot = Env.shopifyApiRoot envConfig
+      config = AppConfig env shopifyApiRoot
       ctx = AppCtx config appLogger dbPool
 
   L.info' appLogger "Running migrations"

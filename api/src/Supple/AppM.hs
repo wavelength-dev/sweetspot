@@ -3,15 +3,14 @@
 module Supple.AppM where
 
 import Control.Monad.Reader (ReaderT)
-import Data.Text (Text)
 import GHC.Generics (Generic)
 import Servant (Handler)
 import Supple.Database (Pool)
 import System.Log.FastLogger (LoggerSet)
 
 data AppConfig = AppConfig
-  { environment :: !Text
-  , version :: !Text
+  { environment :: !String
+  , shopifyApiRoot :: !String
   } deriving (Generic, Show)
 
 data AppCtx = AppCtx

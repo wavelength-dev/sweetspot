@@ -78,7 +78,7 @@ swapCheckoutVariantId userBuckets els =
     getSuppleVariantId :: Element -> Effect (Maybe Number)
     getSuppleVariantId el = do
        attrValue <- E.getAttribute "value" el
-       pure $ attrValue >>= getMatchingUserBucket >>= getUbTestSvid >>> pure
+       pure $ attrValue >>= getMatchingUserBucket # map getUbTestSvid
 
 removeClass :: String -> Element -> Effect Unit
 removeClass className el =

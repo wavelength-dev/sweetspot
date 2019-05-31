@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
 import Data.Tuple (Tuple(..))
@@ -46,11 +46,11 @@ parseCampaignId :: String -> Maybe String
 parseCampaignId qs =
   let
     clean = S.drop 1 qs
-    pairs = S.split (S.Pattern "&") clean
-    campaignPred = S.contains (S.Pattern "campaign=")
-    match = A.find campaignPred pairs
+    kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
+    campaignPred = \arr -> maybe false ((==) "campaign") (A.index arr 0)
+    match = A.find campaignPred kvPairs
   in
-   match >>= pure <<< (S.split $ S.Pattern "=") >>= flip A.index 1
+   match >>= flip A.index 1
 
 instance appCapabilityAppM :: AppCapability AppM where
   ensureDeps =

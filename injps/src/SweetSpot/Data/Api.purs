@@ -12,6 +12,7 @@ newtype UserBucket =
       _ubUserId :: Number
     , _ubSku :: String
     , _ubTestSvid :: Number
+    , _ubOriginalSvid :: Number
     , _ubPrice :: Number
     , _ubExpId :: Number
     , _ubBucketId :: Number

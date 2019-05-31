@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe)
 
-data Page = Product | Collection | Collections | Checkout | Unknown
+data Page = Product | Collection | Collections | Checkout | Home | Unknown
 
 instance showPage :: Show Page where
   show page = case page of
@@ -13,6 +13,7 @@ instance showPage :: Show Page where
     Collection -> "collection"
     Collections -> "collections"
     Checkout -> "checkout"
+    Home -> "home"
     Unknown -> "unknown"
 
 type ViewEvent =

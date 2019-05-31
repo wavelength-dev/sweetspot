@@ -21,13 +21,14 @@ decodeUserBucket str = do
   json <- jsonParser str
   o <- decodeJson json
   _ubUserId <- o .: "_ubUserId"
-  _ubSku  <- o .: "_ubSku"
-  _ubSvid  <- o .: "_ubSvid"
-  _ubPrice  <- o .: "_ubPrice"
-  _ubExpId  <- o .: "_ubExpId"
+  _ubSku <- o .: "_ubSku"
+  _ubOriginalSvid <- o .: "_ubOriginalSvid"
+  _ubTestSvid <- o .: "_ubTestSvid"
+  _ubPrice <- o .: "_ubPrice"
+  _ubExpId <- o .: "_ubExpId"
   _ubBucketId  <- o .: "_ubBucketId"
   pure $ UserBucket
-   { _ubUserId , _ubSku , _ubSvid , _ubPrice , _ubExpId , _ubBucketId}
+   { _ubUserId , _ubSku , _ubTestSvid , _ubPrice , _ubExpId , _ubBucketId, _ubOriginalSvid}
 
 decodeVariant :: Json -> Either String Variant
 decodeVariant json = do

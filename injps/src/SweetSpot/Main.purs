@@ -69,13 +69,13 @@ swapCheckoutVariantId userBuckets els =
         -- The mutation needed for the live version below. Currently it only adds a class.
         -- Just vId -> (setAttribute "value" (toString vId) el))
         Just vId -> addClass ("sweetspot-swap-" <> (toString vId)) el)
-    getMatchingUserBucket :: Array UserBucket -> String -> Maybe UserBucket
-    getMatchingUserBucket userBuckets id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets
-    getUbTestSvid UserBucket ub = ub._ubTestSvid
+    getMatchingUserBucket :: String -> Maybe UserBucket
+    getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets
+    getUbTestSvid (UserBucket ub) = ub._ubTestSvid
     getSuppleVariantId :: Element -> Effect (Maybe Number)
     getSuppleVariantId el = do
        attrValue <- E.getAttribute "value" el
-       pure $ attrValue >>= (\id -> getUbTestSvid <$> (getMatchingUserBucket userBuckets id))
+       pure $ attrValue >>= (\id -> getUbTestSvid <$> (getMatchingUserBucket id))
 
 removeClass :: String -> Element -> Effect Unit
 removeClass className el =

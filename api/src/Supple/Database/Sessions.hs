@@ -17,10 +17,11 @@ import Control.Lens ((^.))
 getUserBucketSession :: UserId -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketStatement
 
-assignAndGetUserBucketSession :: Session [UserBucket]
-assignAndGetUserBucketSession = do
+assignAndGetUserBucketSession :: CampaignId -> Session [UserBucket]
+assignAndGetUserBucketSession cmpId = do
   uid <- Session.statement () insertUserStatement
-  randBs <- Session.statement () randomBucketPerExpStatement
+  insertedCmpId <- Session.statement (uid, cmpId) assignUserToCampaignStatement
+  randBs <- Session.statement insertedCmpId randomBucketPerExpInCampaignStatement
   forM_
     randBs
     (\(_, bucketId) ->

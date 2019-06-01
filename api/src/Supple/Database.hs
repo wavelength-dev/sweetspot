@@ -68,9 +68,9 @@ getUserBuckets pool userId = do
   res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBuckets :: Pool ->  IO (Either T.Text [UserBucket])
-getNewUserBuckets pool = do
-  res <- Pool.use pool assignAndGetUserBucketSession
+getNewUserBuckets :: Pool -> CampaignId -> IO (Either T.Text [UserBucket])
+getNewUserBuckets pool cmpId = do
+  res <- Pool.use pool (assignAndGetUserBucketSession cmpId)
   return $ over _Left wrapQueryError res
 
 getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])

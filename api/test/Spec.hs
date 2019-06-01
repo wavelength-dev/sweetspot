@@ -27,22 +27,19 @@ import Supple.Data.Common
 import Supple.Route.Injectable (InjectableAPI)
 import Supple.Server (rootAPI, runServer)
 
+import Database (reset)
+
 magicWaitNumber = 3 * 1000 * 1000
--- we can spin up a server in another thread and kill that thread when done
--- in an exception-safe way
-withUserApp :: IO () -> IO ()
-withUserApp action =
-  bracket runInThread C.killThread (const action)
+
+beforeSetup :: IO ()
+beforeSetup = runInThread >> C.threadDelay magicWaitNumber
   where
     runInThread = liftIO $ C.forkIO $ runServer
-
-withWait :: IO () -> IO ()
-withWait action = C.threadDelay magicWaitNumber >> action
 
 businessLogicSpec :: Spec
 businessLogicSpec =
   -- `around` will start our Server before the tests and turn it off after
-  around_ (withUserApp . withWait) $ do
+  beforeAll_ beforeSetup $ before_ reset $ do
     let getBucket :<|> postEvent :<|> postLog
           = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
@@ -52,9 +49,9 @@ businessLogicSpec =
     -- testing scenarios start here
     describe "GET /api/bucket" $ do
       it "should get bucket for existing user" $ do
-        result <- runClientM (getBucket Nothing (Just 1)) clientEnv
+        result <- runClientM (getBucket Nothing (Just 1000)) clientEnv
         case result of
-          Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` (UserId 1)
+          Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` (UserId 1000)
           Left err -> do
             print err
             True `shouldBe` False

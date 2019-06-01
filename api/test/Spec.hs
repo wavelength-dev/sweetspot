@@ -8,6 +8,7 @@ import Control.Lens hiding (Context)
 import Data.Aeson
 import Data.Aeson.Lens
 import Control.Lens
+import Data.List.Lens
 import Data.Text (Text, unpack)
 import GHC.Generics
 import Network.HTTP.Client hiding (Proxy)
@@ -26,16 +27,22 @@ import Supple.Data.Common
 import Supple.Route.Injectable (InjectableAPI)
 import Supple.Server (rootAPI, runServer)
 
+magicWaitNumber = 3 * 1000 * 1000
 -- we can spin up a server in another thread and kill that thread when done
 -- in an exception-safe way
 withUserApp :: IO () -> IO ()
 withUserApp action =
-  bracket (liftIO $ C.forkIO $ runServer) C.killThread (const action)
+  bracket runInThread C.killThread (const action)
+  where
+    runInThread = liftIO $ C.forkIO $ runServer
+
+withWait :: IO () -> IO ()
+withWait action = C.threadDelay magicWaitNumber >> action
 
 businessLogicSpec :: Spec
 businessLogicSpec =
   -- `around` will start our Server before the tests and turn it off after
-  around_ withUserApp $ do
+  around_ (withUserApp . withWait) $ do
     let getBucket :<|> postEvent :<|> postLog
           = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
@@ -45,16 +52,12 @@ businessLogicSpec =
     -- testing scenarios start here
     describe "GET /api/bucket" $ do
       it "should get bucket for existing user" $ do
-        result <- runClientM (getBucket (Just 1)) clientEnv
-        result ^?! _Right ^.  ubUserId `shouldBe` UserId 1
-
-      it "should create a new user when no query param" $ do
-        result <- runClientM (getBucket Nothing) clientEnv
-        result ^?! _Right ^.  ubSku `shouldBe` Sku "3"
-
-      it "should create a new user when no query param" $ do
-        result <- runClientM (getBucket Nothing) clientEnv
-        result ^?! _Right ^.  ubSku `shouldBe` Sku "3"
+        result <- runClientM (getBucket Nothing (Just 1)) clientEnv
+        case result of
+          Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` (UserId 1)
+          Left err -> do
+            print err
+            True `shouldBe` False
 
 main :: IO ()
 main = hspec businessLogicSpec

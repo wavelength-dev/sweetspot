@@ -14,6 +14,11 @@ import Supple.Data.Api
 import Supple.Data.Common
 import Supple.Data.Domain (CheckoutEvent(..))
 
+
+wrapUserId userId = UserId $ fromIntegral userId
+wrapCampaignId cmpId = CampaignId cmpId
+unwrapCampaignId (CampaignId cmpId) = cmpId
+
 userBucketStatement :: Statement UserId [UserBucket]
 userBucketStatement = Statement sql encoder decoder True
   where
@@ -55,21 +60,33 @@ insertUserStatement = Statement sql Encoders.unit decoder True
   where
     sql = "INSERT INTO users (user_id) VALUES (DEFAULT) RETURNING user_id;"
     decoder = Decoders.singleRow $ wrapUserId <$> Decoders.column Decoders.int8
-    wrapUserId userId = UserId $ fromIntegral userId
 
-randomBucketPerExpStatement :: Statement () [(ExpId, BucketId)]
-randomBucketPerExpStatement = Statement sql Encoders.unit decoder True
+randomBucketPerExpInCampaignStatement :: Statement CampaignId [(ExpId, BucketId)]
+randomBucketPerExpInCampaignStatement = Statement sql encoder decoder True
   where
     sql =
       (mconcat
          [ "SELECT DISTINCT ON (exp_id) exp_id, bucket_id "
-         , "FROM (SELECT exp_id, bucket_id FROM experiment_buckets "
+         , "FROM (SELECT eb.exp_id, eb.bucket_id FROM experiment_buckets AS eb "
+         , "JOIN campaign_experiments AS ce ON eb.exp_id = ce.exp_id "
+         , "WHERE ce.campaign_id = $1 "
          , "ORDER BY random()) as \"subq\";"
          ])
+    encoder = unwrapCampaignId >$< Encoders.param Encoders.text
     decoder = Decoders.rowList $ wrapRow <$> row
     row =
       (,) <$> (Decoders.column Decoders.int8) <*> Decoders.column Decoders.int8
     wrapRow (eid, bid) = (ExpId $ fromIntegral eid, BucketId $ fromIntegral bid)
+
+
+assignUserToCampaignStatement :: Statement (UserId, CampaignId) CampaignId
+assignUserToCampaignStatement = Statement sql encoder decoder True
+  where
+    sql = "INSERT INTO campaign_users (user_id, campaign_id) VALUES ($1, $2) RETURNING campaign_id;"
+    encoder =
+      (toDatabaseInt . fst >$< Encoders.param Encoders.int8) <>
+      (unwrapCampaignId . snd >$< Encoders.param Encoders.text)
+    decoder = Decoders.singleRow $ wrapCampaignId <$> Decoders.column Decoders.text
 
 assignUserToBucketStatement :: Statement (UserId, BucketId) ()
 assignUserToBucketStatement = Statement sql encoder Decoders.unit True
@@ -272,7 +289,5 @@ getActiveCampaignById = Statement sql encoder decoder True
       mconcat
         [ "SELECT campaign_id FROM campaigns AS c "
         , "WHERE c.campaign_id = $1 AND c.start_date < now() AND c.end_date > now();"]
-    encoder = getCmpId >$< Encoders.param Encoders.text
-      where getCmpId (CampaignId id) = id
-    decoder = Decoders.rowMaybe $ wrapCmpId <$> (Decoders.column Decoders.text)
-    wrapCmpId cid = CampaignId $ cid
+    encoder = unwrapCampaignId >$< Encoders.param Encoders.text
+    decoder = Decoders.rowMaybe $ wrapCampaignId <$> (Decoders.column Decoders.text)

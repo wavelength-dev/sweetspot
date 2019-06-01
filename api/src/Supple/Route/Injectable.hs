@@ -68,12 +68,12 @@ getUserBucketsHandler (Just cmpId) Nothing = do
   isValidCampaign <- liftIO $ validateCampaign pool (CampaignId cmpId)
   case isValidCampaign of
     Right True -> do
-      res <- liftIO $ getNewUserBuckets pool
+      res <- liftIO $ getNewUserBuckets pool (CampaignId cmpId)
       L.info $ "Got campaign " <> cmpId
       case res of
-        Right body -> do
+        Right buckets -> do
           L.info "Assigned user to bucket"
-          return body
+          return buckets
         Left err -> do
           L.error $ "Error assigning user to bucket " <> err
           throwError internalServerErr

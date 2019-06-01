@@ -39,7 +39,7 @@ beforeSetup = runInThread >> C.threadDelay magicWaitNumber
 businessLogicSpec :: Spec
 businessLogicSpec =
   -- `around` will start our Server before the tests and turn it off after
-  beforeAll_ beforeSetup $ before_ reset $ do
+  beforeAll_ beforeSetup . before_ reset $ do
     let getBucket :<|> postEvent :<|> postLog
           = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"

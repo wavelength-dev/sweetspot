@@ -4,6 +4,7 @@
 
 module Supple.Server
   ( runServer
+  , rootAPI
   ) where
 
 import Control.Concurrent (threadDelay)

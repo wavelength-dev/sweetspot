@@ -6,6 +6,7 @@ module Supple.Route.Injectable
   ( InjectableAPI
   , injectableHandler
   , experimentShield
+  , UserBucketRoute
   ) where
 
 import Control.Lens ((^?))

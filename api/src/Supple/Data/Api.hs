@@ -119,6 +119,8 @@ makeLenses ''UserBucket
 
 instance ToJSON UserBucket
 
+instance FromJSON UserBucket
+
 -- | ---------------------------------------------------------------------------
 -- | BucketStats
 -- | ---------------------------------------------------------------------------
@@ -177,3 +179,10 @@ data OkResponse = OkResponse
   } deriving (Eq, Generic, Show)
 
 instance ToJSON OkResponse
+
+instance FromJSON OkResponse
+
+eventTypeToText :: EventType -> Text
+eventTypeToText Checkout = "checkout"
+eventTypeToText Log = "log"
+eventTypeToText View = "view"

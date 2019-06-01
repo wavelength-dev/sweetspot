@@ -32,6 +32,9 @@ dependencies:
 - hasql-migration
 - hasql-pool
 - hasql-transaction
+- hspec
+- hspec-wai
+- http-client
 - http-types
 - lens
 - lens-aeson
@@ -40,6 +43,7 @@ dependencies:
 - purescript-bridge
 - scientific
 - servant
+- servant-client
 - servant-server
 - statistics
 - text

@@ -5,11 +5,11 @@
 module Supple.Database
   ( Pool
   , getDbPool
-  , getUserBucket
+  , getUserBuckets
   , createExperiment
-  , getNewUserBucket
+  , getNewUserBuckets
   , getExperimentBuckets
-  , getExperimentStats
+  --, getExperimentStats
   , DbConfig(..)
   , insertEvent
   , insertLogEvent
@@ -33,7 +33,7 @@ import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
 import Supple.Data.Api
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Common
-import Supple.Data.Domain (DBExperimentStats)
+--import Supple.Data.Domain (DBExperimentStats)
 import Supple.Database.Sessions
 
 type Pool = Pool.Pool
@@ -63,13 +63,13 @@ getDbPool DbConfig {..} = do
 wrapQueryError :: Pool.UsageError -> T.Text
 wrapQueryError = T.pack . show
 
-getUserBucket :: Pool -> UserId -> IO (Either T.Text UserBucket)
-getUserBucket pool userId = do
+getUserBuckets :: Pool -> UserId -> IO (Either T.Text [UserBucket])
+getUserBuckets pool userId = do
   res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBucket :: Pool ->  IO (Either T.Text UserBucket)
-getNewUserBucket pool = do
+getNewUserBuckets :: Pool ->  IO (Either T.Text [UserBucket])
+getNewUserBuckets pool = do
   res <- Pool.use pool assignAndGetUserBucketSession
   return $ over _Left wrapQueryError res
 
@@ -94,18 +94,19 @@ createExperiment ::
      Pool
   -> Sku
   -> Svid
+  -> Svid
   -> Price
   -> CampaignId
   -> T.Text
   -> IO (Either T.Text ())
-createExperiment pool sku svid price cmp name = do
-  res <- Pool.use pool (createExperimentSession (sku, svid, price, cmp, name))
+createExperiment pool sku orig_svid test_svid price cmp name = do
+  res <- Pool.use pool (createExperimentSession (sku, orig_svid, test_svid, price, cmp, name))
   return $ over _Left wrapQueryError res
 
-getExperimentStats :: Pool -> ExpId -> IO (Either T.Text DBExperimentStats)
-getExperimentStats pool expId = do
-  res <- Pool.use pool (getExperimentStatsSession expId)
-  return $ over _Left wrapQueryError res
+-- getExperimentStats :: Pool -> ExpId -> IO (Either T.Text DBExperimentStats)
+-- getExperimentStats pool expId = do
+--   res <- Pool.use pool (getExperimentStatsSession expId)
+--   return $ over _Left wrapQueryError res
 
 migrate :: Pool -> IO (Either T.Text ())
 migrate pool = do

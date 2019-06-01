@@ -15,13 +15,13 @@ import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
 import Supple.AppM (AppCtx(..), AppM)
-import Supple.Calc (enhanceDBStats)
+--import Supple.Calc (enhanceDBStats)
 import Supple.Data.Api
-import Supple.Data.Common
+--import Supple.Data.Common
 import Supple.Database
   ( createExperiment
   , getExperimentBuckets
-  , getExperimentStats
+  --, getExperimentStats
   )
 import qualified Supple.Logger as L
 import Supple.Route.Util (internalServerErr)
@@ -38,7 +38,8 @@ type ExperimentStatsRoute
    = "experiments" :> Capture "expId" Int :> "stats" :> Get '[ JSON] ExperimentStats
 
 type DashboardAPI
-   = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> ExperimentStatsRoute)
+   = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute -- :<|> ExperimentStatsRoute
+                    )
 
 getProductsHandler :: AppM [Product]
 getProductsHandler = do
@@ -73,7 +74,8 @@ createExperimentHandler ce = do
           name = ce ^. ceName
           campaignId = ce ^. ceCampaignId
       pool <- asks _getDbPool
-      res <- liftIO $ createExperiment pool sku svid price campaignId name
+      -- TODO: This is wrong just to please the compiler
+      res <- liftIO $ createExperiment pool sku svid svid price campaignId name
       case res of
         Right _ -> do
           L.info "Created experiment"
@@ -83,21 +85,21 @@ createExperimentHandler ce = do
           throwError internalServerErr
     Nothing -> throwError internalServerErr
 
-getExperimentStatsHandler :: Int -> AppM ExperimentStats
-getExperimentStatsHandler expId = do
-  pool <- asks _getDbPool
-  res <- liftIO $ getExperimentStats pool (ExpId expId)
-  case res of
-    Right dbStats ->
-      L.info ("Got experiment stats for expId: " <> eid) >>
-      (return $ enhanceDBStats dbStats)
-    Left err -> do
-      L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
-        err
-      throwError err404 { errBody = "Could not find experiment" }
-  where
-    eid = T.pack $ show expId
+-- getExperimentStatsHandler :: Int -> AppM ExperimentStats
+-- getExperimentStatsHandler expId = do
+--   pool <- asks _getDbPool
+--   res <- liftIO $ getExperimentStats pool (ExpId expId)
+--   case res of
+--     Right dbStats ->
+--       L.info ("Got experiment stats for expId: " <> eid) >>
+--       (return $ enhanceDBStats dbStats)
+--     Left err -> do
+--       L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
+--         err
+--       throwError err404 { errBody = "Could not find experiment" }
+--   where
+--     eid = T.pack $ show expId
 
 dashboardHandler =
-  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|>
-  getExperimentStatsHandler
+  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler
+  -- :<|> getExperimentStatsHandler

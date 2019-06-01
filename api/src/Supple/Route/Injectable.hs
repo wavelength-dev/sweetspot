@@ -15,7 +15,8 @@ import Control.Monad.Reader (asks)
 import Data.Aeson (Value, encode)
 import Data.Aeson.Lens (_String, key)
 import Data.ByteString as BS (isInfixOf)
-import Data.Text as T
+import qualified Data.Text as T
+import Data.Text (Text)
 import Network.HTTP.Types (hContentType, status400)
 import Network.Wai (Middleware, requestHeaders, responseLBS)
 import Network.Wai.Middleware.Routed (routedMiddleware)
@@ -24,17 +25,17 @@ import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
 import Supple.Data.Api (OkResponse(..), UserBucket)
 import Supple.Data.Common
 import Supple.Database
-  ( getNewUserBucket
-  , getUserBucket
+  ( getNewUserBuckets
+  , getUserBuckets
   , insertEvent
   , insertLogEvent
   , validateCampaign
   )
 import qualified Supple.Logger as L
-import Supple.Route.Util (internalServerErr, badRequestErr)
+import Supple.Route.Util (internalServerErr, badRequestErr, notFoundErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "campaignId" Text :> QueryParam "uid" Int :> Get '[ JSON] UserBucket
+   = "bucket" :> QueryParam "campaignId" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
 
 type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
@@ -45,23 +46,29 @@ type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
 originProtectedRoutes :: [Text]
 originProtectedRoutes = ["bucket", "event", "log"]
 
-getUserBucketHandler :: Maybe Text -> Maybe Int -> AppM UserBucket
-getUserBucketHandler _ (Just uid) = do
+showNumber :: Int -> Text
+showNumber = T.pack . show
+
+getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [UserBucket]
+getUserBucketsHandler _ (Just uid) = do
   pool <- asks _getDbPool
-  res <- liftIO $ getUserBucket pool (UserId uid)
+  res <- liftIO $ getUserBuckets pool (UserId uid)
   case res of
-    Right body -> do
-      L.info $ "Got bucket for userId: " <> T.pack (show uid)
-      return body
+    Right buckets@(b:bs) -> do
+      L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> showNumber uid
+      return buckets
+    Right [] -> do
+      L.info $ "Could not find bucket(s) for userId: " <> showNumber uid
+      throwError notFoundErr
     Left err -> do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
-getUserBucketHandler (Just cmpId) Nothing = do
+getUserBucketsHandler (Just cmpId) Nothing = do
   pool <- asks _getDbPool
   isValidCampaign <- liftIO $ validateCampaign pool (CampaignId cmpId)
   case isValidCampaign of
     Right True -> do
-      res <- liftIO $ getNewUserBucket pool
+      res <- liftIO $ getNewUserBuckets pool
       L.info $ "Got campaign " <> cmpId
       case res of
         Right body -> do
@@ -76,7 +83,7 @@ getUserBucketHandler (Just cmpId) Nothing = do
     Left err -> do
       L.error $ "Error checking campaign id validity " <> err
       throwError internalServerErr
-getUserBucketHandler _ _ = do
+getUserBucketsHandler _ _ = do
   throwError badRequestErr
 
 trackEventHandler :: Value -> AppM OkResponse
@@ -135,4 +142,4 @@ originMiddleware ctx app req respond =
         Just referer -> "longvadon" `BS.isInfixOf` referer
 
 injectableHandler =
-  getUserBucketHandler :<|> trackEventHandler :<|> trackLogMessageHandler
+  getUserBucketsHandler :<|> trackEventHandler :<|> trackLogMessageHandler

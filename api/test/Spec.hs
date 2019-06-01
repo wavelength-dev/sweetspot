@@ -78,6 +78,20 @@ businessLogicSpec =
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
+      it "should not return buckets for expired campaign" $ do
+        result <- runClientM (getBucket Nothing (Just 1001)) clientEnv
+        case result of
+          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
+          Left err -> error (show err)
+          Right _ -> expectationFailure "expected request to fail"
+
+      it "should not return buckets for not yet active campaign" $ do
+        result <- runClientM (getBucket Nothing (Just 1002)) clientEnv
+        case result of
+          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
+          Left err -> error (show err)
+          Right _ -> expectationFailure "expected request to fail"
+
       it "should keep the same user id when given a valid campaignId and userId" $ do
         result <- runClientM (getBucket (Just "longv123") (Just 1000)) clientEnv
         case result of

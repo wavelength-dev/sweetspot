@@ -41,14 +41,3 @@ CREATE TABLE events
  type TEXT,
  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  payload JSONB);
-
-INSERT INTO users (user_id) VALUES (DEFAULT);
-INSERT INTO campaigns (campaign_id, name, min_profit_increase, start_date, end_date) VALUES ('longv123', 'Longvadon initial test', 10, now()::date -1, now()::date + 7);
-INSERT INTO campaign_users (campaign_id, user_id) VALUES ('longv123', 1);
-INSERT INTO experiments (exp_id, sku, product_name) VALUES (DEFAULT, '714449933422', 'Black watchband');
-INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (DEFAULT, 'control', 12502066561095, 12502066561095, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (DEFAULT, 'test', 12502066561095, 12502066561095, 249.90);
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (2, 1);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 1);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 2);

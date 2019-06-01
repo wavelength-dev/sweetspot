@@ -1,8 +1,10 @@
-INSERT INTO users (user_id) VALUES (DEFAULT);
-INSERT INTO experiment_groups (exp_group_id) VALUES (DEFAULT);
-INSERT INTO experiments (exp_id, sku, name, campaign_id, min_profit_increase) VALUES (DEFAULT, '714449933422', 'Kanpeki knife experiment', 'knp123', 10);
-INSERT INTO buckets (bucket_id, bucket_type, svid, sku, price) VALUES (DEFAULT, 'control', 12502066561095, '714449933422', 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, svid, sku, price) VALUES (DEFAULT, 'test', 12502066561095, '714449933422', 249.90);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 1);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1, 2);
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (1, 1);
+INSERT INTO users (user_id) VALUES (1000);
+INSERT INTO campaigns (campaign_id, name, min_profit_increase, start_date, end_date) VALUES ('longv123', 'Longvadon initial test', 10, now()::date -1, now()::date + 7);
+INSERT INTO campaign_users (campaign_id, user_id) VALUES ('longv123', 1000);
+INSERT INTO experiments (exp_id, sku, product_name) VALUES (1000, '714449933422', 'Black watchband');
+INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1000);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1001, 'test', 12502066561095, 12502066561095, 249.90);
+INSERT INTO bucket_users (bucket_id, user_id) VALUES (1001, 1000);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1000);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1001);

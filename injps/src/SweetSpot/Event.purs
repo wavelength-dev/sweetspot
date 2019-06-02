@@ -80,13 +80,12 @@ trackView :: UserBucket -> AppM Unit
 trackView (UserBucket { _ubExpId, _ubBucketId }) = do
   userId <- getUserId
   viewEvent <- liftEffect $ do
-      page <- detectPage
-      pageUrl <- window >>= location >>= href
-      products <- readInjectedProducts
-      let
-        productIds = (map _.id) <$> products
-        productId = productIds >>= A.head
-      pure { page, pageUrl, expId: _ubExpId, userId, bucketId: _ubBucketId, productId, productIds }
-
+    page <- detectPage
+    pageUrl <- window >>= location >>= href
+    products <- readInjectedProducts
+    let
+      productIds = (map _.id) <$> products
+      productId = productIds >>= A.head
+    pure { page, pageUrl, expId: _ubExpId, userId, bucketId: _ubBucketId, productId, productIds }
   _ <- liftAff $ forkAff $ postEventPayload viewEvent
   pure unit

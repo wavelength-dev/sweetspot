@@ -8,9 +8,9 @@ module Supple.Data.Api where
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Text (Text)
+import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Supple.Data.Common
-import Statistics.Types (Estimate, ConfInt)
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -147,6 +147,20 @@ data ExperimentStats = ExperimentStats
   } deriving (Eq, Generic, Show)
 
 instance ToJSON ExperimentStats
+
+-- | ---------------------------------------------------------------------------
+-- | CampaignStats
+-- | ---------------------------------------------------------------------------
+data CampaignStats = CampaignStats
+  { _csCampaignId :: !CampaignId
+  , _csCampaignName :: !Text
+  , _csMinProfitIncrease :: !Int
+  , _csStartDate :: !UTCTime
+  , _csEndDate :: !UTCTime
+  , _csExperiments :: ![ExperimentStats]
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON CampaignStats
 
 -- | ---------------------------------------------------------------------------
 -- | CreateExperiment

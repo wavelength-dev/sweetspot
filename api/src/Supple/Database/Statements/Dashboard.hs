@@ -11,18 +11,45 @@ import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
 import Supple.Data.Api (Experiment(..), Bucket(..))
 import Supple.Data.Common
-import Supple.Data.Domain (CheckoutEvent(..))
+import Supple.Data.Domain (CheckoutEvent(..), Campaign(..))
 
-getExperimentStatement :: Statement ExpId Experiment
-getExperimentStatement = Statement sql encoder decoder True
+getCampaignStatement :: Statement CampaignId Campaign
+getCampaignStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT exp_id, sku, product_name FROM experiments "
-        , "WHERE exp_id = $1;"
+        [ "SELECT campaign_id, name, min_profit_increase, start_date, end_date "
+        , "FROM campaigns WHERE campaign_id = $1;"
         ]
-    encoder = toDatabaseInt >$< Encoders.param Encoders.int8
-    decoder = Decoders.singleRow $ toExperiment <$> row
+    encoder = unwrapCampaignId >$< Encoders.param Encoders.text
+    decoder = Decoders.singleRow $ toCampaign <$> row
+    row =
+      (,,,,) <$> Decoders.column Decoders.text <*>
+      Decoders.column Decoders.text <*>
+      Decoders.column Decoders.int8 <*>
+      Decoders.column Decoders.timestamptz <*>
+      Decoders.column Decoders.timestamptz
+    toCampaign =
+      \(cmpId, name, increase, start, end) ->
+        Campaign
+          { _cCampaignId = (CampaignId cmpId)
+          , _cCampaignName = name
+          , _cMinProfitIncrease = fromIntegral increase
+          , _cStartDate = start
+          , _cEndDate = end
+          }
+
+getCampaignExperimentsStatement :: Statement CampaignId [Experiment]
+getCampaignExperimentsStatement = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+        [ "SELECT e.exp_id, e.sku, e.product_name FROM experiments AS e "
+        , "JOIN campaign_experiments AS ce ON e.exp_id = ce.exp_id "
+        , "WHERE ce.campaign_id = $1;"
+        ]
+    encoder = unwrapCampaignId >$< Encoders.param Encoders.text
+    decoder = Decoders.rowList $ toExperiment <$> row
       where
         row =
           (,,) <$> Decoders.column Decoders.int8 <*>

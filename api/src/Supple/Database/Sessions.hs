@@ -71,31 +71,43 @@ createExperimentSession (sku, orig_svid, test_svid, price, cmp, name) = do
     Session.statement (Test, orig_svid, test_svid, sku, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement
 
-getExperimentStatsSession :: ExpId -> Session DBExperimentStats
-getExperimentStatsSession expId = do
-  experiment <- Session.statement expId getExperimentStatement
-  bs <- Session.statement expId getBucketsForExperimentStatement
-  bstats <- mapM getBucketStats bs
-  return $ DBExperimentStats
-    { _desExpId = experiment ^. eExpId
-    , _desProductName = experiment ^. eProductName
-    , _desBuckets = bstats
+getBucketStats :: Bucket -> Session DBBucketStats
+getBucketStats b = do
+  let
+    bucketId = b ^. bBucketId
+  users <- Session.statement bucketId getBucketUserCountStatement
+  impressions <- Session.statement bucketId getBucketImpressionCountStatement
+  checkouts <- Session.statement bucketId getCheckoutEventsForBucket
+  return $ DBBucketStats
+    { _dbsBucketId = bucketId
+    , _dbsBucketType = b ^. bBucketType
+    , _dbsOriginalSvid = b ^. bOriginalSvid
+    , _dbsTestSvid = b ^. bTestSvid
+    , _dbsUserCount = users
+    , _dbsImpressionCount = impressions
+    , _dbsCheckoutEvents = checkouts
     }
 
-  where
-    getBucketStats :: Bucket -> Session DBBucketStats
-    getBucketStats b = do
-      let
-        bucketId = b ^. bBucketId
-      users <- Session.statement bucketId getBucketUserCountStatement
-      impressions <- Session.statement bucketId getBucketImpressionCountStatement
-      checkouts <- Session.statement bucketId getCheckoutEventsForBucket
-      return $ DBBucketStats
-        { _dbsBucketId = bucketId
-        , _dbsBucketType = b ^. bBucketType
-        , _dbsOriginalSvid = b ^. bOriginalSvid
-        , _dbsTestSvid = b ^. bTestSvid
-        , _dbsUserCount = users
-        , _dbsImpressionCount = impressions
-        , _dbsCheckoutEvents = checkouts
-        }
+getExperimentStats :: Experiment -> Session DBExperimentStats
+getExperimentStats exp = do
+  bs <- Session.statement (exp ^. eExpId) getBucketsForExperimentStatement
+  bStats <- mapM getBucketStats bs
+  return $ DBExperimentStats
+    { _desExpId = exp ^. eExpId
+    , _desProductName = exp ^. eProductName
+    , _desBuckets = bStats
+    }
+
+getCampaignStatsSession :: CampaignId -> Session DBCampaignStats
+getCampaignStatsSession cmpId = do
+  cmp <- Session.statement cmpId getCampaignStatement
+  exps <- Session.statement cmpId getCampaignExperimentsStatement
+  expStats <- mapM getExperimentStats exps
+  return $ DBCampaignStats
+    { _dcsCampaignId = cmpId
+    , _dcsCampaignName = cmp ^. cCampaignName
+    , _dcsMinProfitIncrease = cmp ^. cMinProfitIncrease
+    , _dcsStartDate = cmp ^. cStartDate
+    , _dcsEndDate = cmp ^. cEndDate
+    , _dcsExperiments = expStats
+    }

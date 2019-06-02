@@ -162,3 +162,7 @@ bucketTypeToText Test = "test"
 bucketTypeFromText :: Text -> BucketType
 bucketTypeFromText "control" = Control
 bucketTypeFromText _ = Test
+
+wrapUserId userId = UserId $ fromIntegral userId
+wrapCampaignId cmpId = CampaignId cmpId
+unwrapCampaignId (CampaignId cmpId) = cmpId

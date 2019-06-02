@@ -31,8 +31,8 @@ enhanceDBBucketStats stats =
         , _bsConversionRate = conversion
         }
 
-enhanceDBStats :: DBExperimentStats -> ExperimentStats
-enhanceDBStats stats =
+enhanceDBExperimentStats :: DBExperimentStats -> ExperimentStats
+enhanceDBExperimentStats stats =
   let buckets = stats ^. desBuckets
       totalUserCount = buckets ^.. traverse . dbsUserCount & sum
       totalImpressionCount = buckets ^.. traverse . dbsImpressionCount & sum
@@ -47,7 +47,7 @@ enhanceDBStats stats =
       control = findType Control
       test = findType Test
 
-   in ExperimentStats
+  in ExperimentStats
         { _esExpId = stats ^. desExpId
         , _esUserCount = totalUserCount
         , _esImpressionCount = totalImpressionCount
@@ -56,3 +56,16 @@ enhanceDBStats stats =
           conversionRate totalConversionCount totalUserCount
         , _esBuckets = enhancedBucketStats
         }
+
+enhanceDBStats :: DBCampaignStats -> CampaignStats
+enhanceDBStats stats =
+    CampaignStats
+        { _csCampaignId = stats ^. dcsCampaignId
+        , _csCampaignName = stats ^. dcsCampaignName
+        , _csMinProfitIncrease = stats ^. dcsMinProfitIncrease
+        , _csStartDate = stats ^. dcsStartDate
+        , _csEndDate = stats ^. dcsEndDate
+        , _csExperiments = enhancedExperiments
+        }
+  where enhancedExperiments =
+          stats ^. dcsExperiments ^.. traverse & fmap enhanceDBExperimentStats

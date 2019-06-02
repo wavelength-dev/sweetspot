@@ -21,7 +21,7 @@ import Supple.Data.Common
 import Supple.Database
   ( createExperiment
   , getExperimentBuckets
-  , getExperimentStats
+  , getCampaignStats
   )
 import qualified Supple.Logger as L
 import Supple.Route.Util (internalServerErr)
@@ -34,11 +34,11 @@ type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
 type CreateExperimentRoute
    = "experiments" :> ReqBody '[ JSON] CreateExperiment :> Post '[ JSON] OkResponse
 
-type ExperimentStatsRoute
-   = "experiments" :> Capture "expId" Int :> "stats" :> Get '[ JSON] ExperimentStats
+type CampaignStatsRoute
+   = "campaigns" :> Capture "campaignId" T.Text :> "stats" :> Get '[ JSON] CampaignStats
 
 type DashboardAPI
-   = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> ExperimentStatsRoute)
+   = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
 
 getProductsHandler :: AppM [Product]
 getProductsHandler = do
@@ -84,20 +84,20 @@ createExperimentHandler ce = do
           throwError internalServerErr
     Nothing -> throwError internalServerErr
 
-getExperimentStatsHandler :: Int -> AppM ExperimentStats
-getExperimentStatsHandler expId = do
+getCampaignStatsHandler :: T.Text -> AppM CampaignStats
+getCampaignStatsHandler cmpId = do
   pool <- asks _getDbPool
-  res <- liftIO $ getExperimentStats pool (ExpId expId)
+  res <- liftIO $ getCampaignStats pool (CampaignId cmpId)
   case res of
     Right dbStats ->
-      L.info ("Got experiment stats for expId: " <> eid) >>
+      L.info ("Got experiment stats for campaignId: " <> cid) >>
       (return $ enhanceDBStats dbStats)
     Left err -> do
-      L.error $ "Error getting experiment stats for expId: " <> eid <> " " <>
-        err
+      L.error $ "Error getting experiment stats for campaignId: "
+        <> cid <> " " <> err
       throwError err404 { errBody = "Could not find experiment" }
   where
-    eid = T.pack $ show expId
+    cid = T.pack $ show cmpId
 
 dashboardHandler =
-  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getExperimentStatsHandler
+  getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler

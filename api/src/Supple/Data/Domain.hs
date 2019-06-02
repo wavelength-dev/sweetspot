@@ -5,6 +5,7 @@ module Supple.Data.Domain where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (ToJSON)
+import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Supple.Data.Common
@@ -31,7 +32,8 @@ instance ToJSON CheckoutEvent
 data DBBucketStats = DBBucketStats
   { _dbsBucketId :: !BucketId
   , _dbsBucketType :: !BucketType
-  , _dbsSvid :: !Svid
+  , _dbsOriginalSvid :: !Svid
+  , _dbsTestSvid :: !Svid
   , _dbsUserCount :: !Int
   , _dbsImpressionCount :: !Int
   , _dbsCheckoutEvents :: ![CheckoutEvent]
@@ -44,8 +46,21 @@ makeLenses ''DBBucketStats
 -- | ---------------------------------------------------------------------------
 data DBExperimentStats = DBExperimentStats
   { _desExpId :: !ExpId
-  , _desMinProfitIncrease :: !Int
+  , _desProductName :: !Text
   , _desBuckets :: ![DBBucketStats]
   } deriving (Eq, Generic, Show)
 
 makeLenses ''DBExperimentStats
+
+-- | ---------------------------------------------------------------------------
+-- | DBCampaignStats
+-- | ---------------------------------------------------------------------------
+data DBCampaignStats = DBCampaignStats
+  { _dcsCampaignId :: !CampaignId
+  , _dcsCampaignName :: !Text
+  , _dcsMinProfitIncrease :: !Int
+  , _dcsStartDate :: !UTCTime
+  , _dcsEndDate :: !UTCTime
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''DBCampaignStats

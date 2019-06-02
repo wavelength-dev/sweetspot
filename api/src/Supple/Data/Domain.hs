@@ -27,6 +27,19 @@ makeLenses ''CheckoutEvent
 instance ToJSON CheckoutEvent
 
 -- | ---------------------------------------------------------------------------
+-- | Campaign
+-- | ---------------------------------------------------------------------------
+data Campaign = Campaign
+  { _cCampaignId :: !CampaignId
+  , _cCampaignName :: !Text
+  , _cMinProfitIncrease :: !Int
+  , _cStartDate :: !UTCTime
+  , _cEndDate :: !UTCTime
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''Campaign
+
+-- | ---------------------------------------------------------------------------
 -- | DBBucketStats
 -- | ---------------------------------------------------------------------------
 data DBBucketStats = DBBucketStats
@@ -61,6 +74,7 @@ data DBCampaignStats = DBCampaignStats
   , _dcsMinProfitIncrease :: !Int
   , _dcsStartDate :: !UTCTime
   , _dcsEndDate :: !UTCTime
+  , _dcsExperiments :: ![DBExperimentStats]
   } deriving (Eq, Generic, Show)
 
 makeLenses ''DBCampaignStats

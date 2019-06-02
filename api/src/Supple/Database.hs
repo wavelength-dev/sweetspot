@@ -9,7 +9,7 @@ module Supple.Database
   , createExperiment
   , getNewUserBuckets
   , getExperimentBuckets
-  , getExperimentStats
+  , getCampaignStats
   , DbConfig(..)
   , insertEvent
   , insertLogEvent
@@ -33,7 +33,7 @@ import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
 import Supple.Data.Api
 import Supple.Data.Common (EventType(..), Price, Sku, Svid)
 import Supple.Data.Common
-import Supple.Data.Domain (DBExperimentStats)
+import Supple.Data.Domain (DBCampaignStats)
 import Supple.Database.Sessions
 
 type Pool = Pool.Pool
@@ -103,9 +103,9 @@ createExperiment pool sku orig_svid test_svid price cmp name = do
   res <- Pool.use pool (createExperimentSession (sku, orig_svid, test_svid, price, cmp, name))
   return $ over _Left wrapQueryError res
 
-getExperimentStats :: Pool -> ExpId -> IO (Either T.Text DBExperimentStats)
-getExperimentStats pool expId = do
-  res <- Pool.use pool (getExperimentStatsSession expId)
+getCampaignStats :: Pool -> CampaignId -> IO (Either T.Text DBCampaignStats)
+getCampaignStats pool cmpId = do
+  res <- Pool.use pool (getCampaignStatsSession cmpId)
   return $ over _Left wrapQueryError res
 
 migrate :: Pool -> IO (Either T.Text ())

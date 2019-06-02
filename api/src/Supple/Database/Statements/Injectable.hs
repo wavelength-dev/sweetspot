@@ -10,10 +10,6 @@ import Hasql.Statement (Statement(..))
 import Supple.Data.Api (UserBucket(..))
 import Supple.Data.Common
 
-wrapUserId userId = UserId $ fromIntegral userId
-wrapCampaignId cmpId = CampaignId cmpId
-unwrapCampaignId (CampaignId cmpId) = cmpId
-
 userBucketStatement :: Statement UserId [UserBucket]
 userBucketStatement = Statement sql encoder decoder True
   where

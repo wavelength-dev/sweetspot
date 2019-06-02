@@ -52,7 +52,7 @@ parseCampaignId qs =
   let
     clean = S.drop 1 qs
     kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
-    campaignPred = \arr -> maybe false ((==) "campaign") (A.index arr 0)
+    campaignPred = \arr -> maybe false ((==) "sscid") (A.index arr 0)
     match = A.find campaignPred kvPairs
   in
    match >>= flip A.index 1

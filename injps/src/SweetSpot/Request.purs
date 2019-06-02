@@ -28,7 +28,7 @@ fetchUserBuckets mUid mCampaignId = do
       , headers: jsonHeader
       }
     qs = case Tuple mUid mCampaignId of
-      Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid
+      Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid <> "&campaignId=" <> campaignId
       Tuple (Just uid) _ -> "?uid=" <> uid
       Tuple _ (Just campaignId) -> "?campaignId=" <> campaignId
       Tuple Nothing Nothing -> ""

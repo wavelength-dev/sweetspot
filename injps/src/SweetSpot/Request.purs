@@ -20,7 +20,7 @@ fetch = M.fetch windowFetch
 jsonHeader :: M.Headers
 jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
 
-fetchUserBuckets :: Maybe String -> Maybe String -> Aff (Either String UserBucket)
+fetchUserBuckets :: Maybe String -> Maybe String -> Aff (Either String (Array UserBucket))
 fetchUserBuckets mUid mCampaignId = do
   let
     opts =

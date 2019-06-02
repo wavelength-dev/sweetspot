@@ -7,8 +7,8 @@ import Data.Argonaut.Decode (decodeJson, (.:))
 import Data.Argonaut.Encode ((:=), (~>))
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either)
-import Data.Traversable (sequence)
-import SweetSpot.Data.Api (UserBucket(..))
+import Data.Traversable (for, sequence)
+import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Event (CheckoutEvent, ViewEvent)
 import SweetSpot.Data.Shopify (Product, Variant)
 
@@ -16,19 +16,11 @@ import SweetSpot.Data.Shopify (Product, Variant)
 -- | ---------------------------------------------------------------------------
 -- | Decode
 -- | ---------------------------------------------------------------------------
-decodeUserBucket :: String -> Either String UserBucket
+decodeUserBucket :: String -> Either String (Array UserBucket)
 decodeUserBucket str = do
   json <- jsonParser str
-  o <- decodeJson json
-  _ubUserId <- o .: "_ubUserId"
-  _ubSku <- o .: "_ubSku"
-  _ubOriginalSvid <- o .: "_ubOriginalSvid"
-  _ubTestSvid <- o .: "_ubTestSvid"
-  _ubPrice <- o .: "_ubPrice"
-  _ubExpId <- o .: "_ubExpId"
-  _ubBucketId  <- o .: "_ubBucketId"
-  pure $ UserBucket
-   { _ubUserId , _ubSku , _ubTestSvid , _ubPrice , _ubExpId , _ubBucketId, _ubOriginalSvid}
+  x <- decodeJson json
+  for x decodeJson
 
 decodeVariant :: Json -> Either String Variant
 decodeVariant json = do

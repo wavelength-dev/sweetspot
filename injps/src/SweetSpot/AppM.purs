@@ -4,20 +4,25 @@ import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array as A
+import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Foldable (traverse_)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number.Format (toString)
 import Data.String as S
 import Data.Tuple (Tuple(..))
+import Effect (Effect)
 import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Capability (class AppCapability)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
+import SweetSpot.DOM (addClass, collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, swapCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (uidStorageKey)
+import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
+import Web.DOM (Element)
 import Web.HTML (window)
 import Web.HTML.Location (search)
 import Web.HTML.Window (localStorage, location)
@@ -52,6 +57,26 @@ parseCampaignId qs =
   in
    match >>= flip A.index 1
 
+applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
+applyPriceVariation userBuckets el = do
+  mSku <- getIdFromPriceElement el
+  let mBucket = mSku >>= (\sku -> A.find (\(UserBucket ub) -> ub._ubSku == sku) userBuckets)
+  case mBucket of
+       Nothing -> pure unit
+       Just (UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice
+  -- liftEffect $ traverse_ (maybeInjectPrice _ubSku _ubPrice) els
+  -- This line is wrong, the ubSvid is the new price variant id, we need to know the id of the original
+  checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) userBuckets)
+  liftEffect $ swapCheckoutVariantId userBuckets checkoutOptions
+  where
+    maybeInjectPrice :: String -> Number -> Effect Unit
+    maybeInjectPrice variantSku variantPrice = do
+      mSku <- getIdFromPriceElement el
+      match <- pure $ ((==) variantSku) <$> mSku
+      case match of
+        Just true -> addClass ("sweetspot-match-" <> (toString variantPrice)) el
+        _ -> pure unit
+
 instance appCapabilityAppM :: AppCapability AppM where
   ensureDeps =
     case Tuple promise fetch of
@@ -69,11 +94,12 @@ instance appCapabilityAppM :: AppCapability AppM where
   setUserId (UserBucket b) =
     liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
-  getUserBucket uid campaignId = do
-    bucket <- liftAff $ fetchUserBuckets uid campaignId
-    case bucket of
-      Right b -> pure b
-      Left err -> throwError (ClientErr { message: "Error fetching user bucket", payload: err })
+  getUserBuckets uid campaignId = do
+    mBuckets <- liftAff $ fetchUserBuckets uid campaignId
+    case fromArray <$> mBuckets of
+      Right Nothing -> throwError (ClientErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
+      Right (Just buckets) -> pure buckets
+      Left err -> throwError (ClientErr { message: "Error fetching user buckets", payload: err })
 
   log msg = do
     -- Fork aff since we don't care about result
@@ -88,3 +114,10 @@ instance appCapabilityAppM :: AppCapability AppM where
         case campaignId of
           Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
           Just id -> pure $ Just id
+
+  -- We assume all elements with a hidden price also have a class identifying which SKU the price belongs to.
+  applyPriceVariations userBuckets = do
+    els <- liftEffect collectPriceEls
+    liftEffect $ traverse_ (applyPriceVariation userBuckets) els
+    liftEffect $ traverse_ (removeClass hiddenPriceId) els
+    pure unit

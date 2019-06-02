@@ -64,8 +64,6 @@ applyPriceVariation userBuckets el = do
   case mBucket of
        Nothing -> pure unit
        Just (UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice
-  -- liftEffect $ traverse_ (maybeInjectPrice _ubSku _ubPrice) els
-  -- This line is wrong, the ubSvid is the new price variant id, we need to know the id of the original
   checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) userBuckets)
   liftEffect $ swapCheckoutVariantId userBuckets checkoutOptions
   where

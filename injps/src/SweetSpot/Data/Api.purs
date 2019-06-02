@@ -11,8 +11,8 @@ newtype UserBucket =
     UserBucket {
       _ubUserId :: Number
     , _ubSku :: String
-    , _ubTestSvid :: Number
     , _ubOriginalSvid :: Number
+    , _ubTestSvid :: Number
     , _ubPrice :: Number
     , _ubExpId :: Number
     , _ubBucketId :: Number

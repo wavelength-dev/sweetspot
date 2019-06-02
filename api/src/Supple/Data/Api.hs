@@ -128,8 +128,6 @@ data BucketStats = BucketStats
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
   , _bsConversionRate :: !Double
-  , _bsConfidenceInterval :: !(Estimate ConfInt Double)
-  , _bsEstSamplesToSig :: !Int
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats
@@ -145,8 +143,6 @@ data ExperimentStats = ExperimentStats
   , _esImpressionCount :: !Int
   , _esConversionCount :: !Int
   , _esConversionRate :: !Double
-  , _esPMinCR :: !Double
-  , _esCRp95 :: !Double
   , _esBuckets :: ![BucketStats]
   } deriving (Eq, Generic, Show)
 

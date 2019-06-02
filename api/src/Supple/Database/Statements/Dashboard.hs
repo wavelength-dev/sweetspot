@@ -27,8 +27,8 @@ getCampaignStatement = Statement sql encoder decoder True
       (,,,,) <$> Decoders.column Decoders.text <*>
       Decoders.column Decoders.text <*>
       Decoders.column Decoders.int8 <*>
-      Decoders.column Decoders.timestamptz <*>
-      Decoders.column Decoders.timestamptz
+      Decoders.nullableColumn Decoders.timestamptz <*>
+      Decoders.nullableColumn Decoders.timestamptz
     toCampaign =
       \(cmpId, name, increase, start, end) ->
         Campaign

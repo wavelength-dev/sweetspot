@@ -83,8 +83,7 @@ getUserBucketsHandler (Just cmpId) Nothing = do
     Left err -> do
       L.error $ "Error checking campaign id validity " <> err
       throwError internalServerErr
-getUserBucketsHandler _ _ = do
-  throwError badRequestErr
+getUserBucketsHandler _ _ = throwError badRequestErr
 
 trackEventHandler :: Value -> AppM OkResponse
 trackEventHandler val = do

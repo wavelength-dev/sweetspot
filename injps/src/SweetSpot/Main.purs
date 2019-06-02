@@ -136,10 +136,9 @@ app = do
 
 main :: Effect Unit
 main = launchAff_ $ do
-  res <- runAppM app
-  liftEffect $ case res of
+  result <- runAppM app
+  liftEffect $ case result of
     Right _ -> pure unit
     Left (ClientErr { message }) -> do
       unhidePrice
-      --C.error $ "Failed to apply experiments: " <> message
       launchAff_ $ forkAff $ postLogPayload message

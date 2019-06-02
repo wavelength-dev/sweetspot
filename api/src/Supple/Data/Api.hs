@@ -155,8 +155,8 @@ data CampaignStats = CampaignStats
   { _csCampaignId :: !CampaignId
   , _csCampaignName :: !Text
   , _csMinProfitIncrease :: !Int
-  , _csStartDate :: !UTCTime
-  , _csEndDate :: !UTCTime
+  , _csStartDate :: !(Maybe UTCTime)
+  , _csEndDate :: !(Maybe UTCTime)
   , _csExperiments :: ![ExperimentStats]
   } deriving (Eq, Generic, Show)
 

@@ -33,8 +33,8 @@ data Campaign = Campaign
   { _cCampaignId :: !CampaignId
   , _cCampaignName :: !Text
   , _cMinProfitIncrease :: !Int
-  , _cStartDate :: !UTCTime
-  , _cEndDate :: !UTCTime
+  , _cStartDate :: !(Maybe UTCTime)
+  , _cEndDate :: !(Maybe UTCTime)
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Campaign
@@ -72,8 +72,8 @@ data DBCampaignStats = DBCampaignStats
   { _dcsCampaignId :: !CampaignId
   , _dcsCampaignName :: !Text
   , _dcsMinProfitIncrease :: !Int
-  , _dcsStartDate :: !UTCTime
-  , _dcsEndDate :: !UTCTime
+  , _dcsStartDate :: !(Maybe UTCTime)
+  , _dcsEndDate :: !(Maybe UTCTime)
   , _dcsExperiments :: ![DBExperimentStats]
   } deriving (Eq, Generic, Show)
 

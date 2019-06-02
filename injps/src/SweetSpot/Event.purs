@@ -3,9 +3,9 @@ module SweetSpot.Event (trackView) where
 import Prelude
 
 import Data.Array as A
-import Data.Either (fromRight, hush)
+import Data.Either (hush)
 import Data.Maybe (Maybe)
-import Data.String.Regex (Regex, regex, test)
+import Data.String.Regex (Regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Traversable (sequence)
@@ -13,7 +13,6 @@ import Effect (Effect)
 import Effect.Aff (forkAff)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
 import SweetSpot.AppM (AppM)
 import SweetSpot.Capability (getUserId)
 import SweetSpot.Data.Api (UserBucket(..))

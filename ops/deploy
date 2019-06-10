@@ -1,11 +1,11 @@
 #!/bin/bash
 
 ENV=${1:-staging}
-CLUSTER=$(kubectl config current-context)
+CLUSTER="???"
 DATE=$(date -u "+%F")
 COMMIT=$(git rev-parse --short HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-IMAGE_NAME="gcr.io/supple/supple:${DATE}-${COMMIT}"
+IMAGE_NAME="586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot:${DATE}-${COMMIT}"
 
 exit_on_failure() {
   if [ $? -ne 0 ]; then
@@ -52,8 +52,8 @@ exit_on_failure
 
 # Update sweetspot deployment to latest image
 echo "=> Applying new image"
-kubectl set image deploy/supple supple=$IMAGE_NAME
+exit 1
 exit_on_failure
-echo "=> Watching supple deployment for the next 30s"
-timeout --preserve-status --signal INT 30s kubectl get --watch deployments supple; exit 0
+echo "=> Watching sweetspot deployment for the next 30s"
+exit 1
 echo "=> Done!"

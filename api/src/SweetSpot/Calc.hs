@@ -1,11 +1,11 @@
-module Supple.Calc (enhanceDBStats) where
+module SweetSpot.Calc (enhanceDBStats) where
 
 import Control.Lens
 import qualified Data.List as L
 import Data.Maybe (isJust, fromJust)
-import Supple.Data.Common (BucketType(..))
-import Supple.Data.Domain
-import Supple.Data.Api
+import SweetSpot.Data.Common (BucketType(..))
+import SweetSpot.Data.Domain
+import SweetSpot.Data.Api
 
 
 conversionRate :: Int -> Int -> Double

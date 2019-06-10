@@ -6,8 +6,8 @@ import Control.Applicative
 import Language.PureScript.Bridge
 import Language.PureScript.Bridge.PSTypes
 
-suppleBridge :: BridgePart
-suppleBridge = defaultBridge
+sweetspotBridge :: BridgePart
+sweetspotBridge = defaultBridge
   <|> (typeName ^== "Price" >> return psNumber)
   <|> (typeName ^== "Sku" >> return psString)
   <|> (typeName ^== "ExpId" >> return psNumber)

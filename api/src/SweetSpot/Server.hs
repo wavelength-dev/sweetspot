@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Server
+module SweetSpot.Server
   ( runServer
   , rootAPI
   ) where
@@ -11,16 +11,16 @@ import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
 import qualified Network.Wai.Handler.Warp as Warp
 import Servant
-import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
-import Supple.Database (DbConfig(..), getDbPool, migrate)
-import qualified Supple.Env as Env
-import qualified Supple.Logger as L
-import Supple.Middleware (getMiddleware)
-import Supple.Route.Dashboard (DashboardAPI, dashboardHandler)
-import Supple.Route.Health (HealthAPI, healthHandler)
-import Supple.Route.Injectable (InjectableAPI, injectableHandler)
-import Supple.Route.Static (StaticAPI, staticHandler)
-import Supple.Route.OAuth (OAuthAPI, oauthHandler)
+import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
+import SweetSpot.Database (DbConfig(..), getDbPool, migrate)
+import qualified SweetSpot.Env as Env
+import qualified SweetSpot.Logger as L
+import SweetSpot.Middleware (getMiddleware)
+import SweetSpot.Route.Dashboard (DashboardAPI, dashboardHandler)
+import SweetSpot.Route.Health (HealthAPI, healthHandler)
+import SweetSpot.Route.Injectable (InjectableAPI, injectableHandler)
+import SweetSpot.Route.Static (StaticAPI, staticHandler)
+import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 import System.Exit (exitWith, ExitCode(..))
 

@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Database.Statements.Injectable where
+module SweetSpot.Database.Statements.Injectable where
 
 import Data.Aeson (Value)
 import Data.Functor.Contravariant ((>$<))
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
-import Supple.Data.Api (UserBucket(..))
-import Supple.Data.Common
+import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Common
 
 userBucketStatement :: Statement UserId [UserBucket]
 userBucketStatement = Statement sql encoder decoder True

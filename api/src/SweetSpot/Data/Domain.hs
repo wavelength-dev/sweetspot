@@ -1,14 +1,14 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Supple.Data.Domain where
+module SweetSpot.Data.Domain where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (ToJSON)
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
-import Supple.Data.Common
+import SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
 -- | CheckoutEvent

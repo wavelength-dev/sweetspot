@@ -2,18 +2,18 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Route.OAuth
+module SweetSpot.Route.OAuth
   ( OAuthAPI
   , oauthHandler
   ) where
 
 import Data.Text (Text)
 import Servant
-import Supple.AppM (AppM)
-import Supple.Data.Api (OkResponse(..))
-import qualified Supple.Logger as L
-import Supple.Route.Util (internalServerErr)
-import Supple.ShopifyClient (exchangeAccessToken)
+import SweetSpot.AppM (AppM)
+import SweetSpot.Data.Api (OkResponse(..))
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (internalServerErr)
+import SweetSpot.ShopifyClient (exchangeAccessToken)
 
 type RedirectRoute
    = "redirect" :> QueryParam "code" Text :> QueryParam "hmac" Text :> QueryParam "timestamp" Text :> QueryParam "state" Text :> QueryParam "shop" Text :> Get '[JSON] OkResponse

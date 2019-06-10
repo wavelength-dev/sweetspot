@@ -15,7 +15,7 @@ migrateUp = do
   return ()
   where
     connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "supple"
+      Connection.settings "localhost" 5432 "postgres" "" "sweetspot"
 
 migrateDown :: IO ()
 migrateDown = do
@@ -25,7 +25,7 @@ migrateDown = do
   return ()
   where
     connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "supple"
+      Connection.settings "localhost" 5432 "postgres" "" "sweetspot"
 
 reset :: IO ()
 reset = migrateDown >> migrateUp

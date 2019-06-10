@@ -1,6 +1,6 @@
 module Main where
 
-import Supple.Server (runServer)
+import SweetSpot.Server (runServer)
 
 main :: IO ()
 main = runServer

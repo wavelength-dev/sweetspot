@@ -22,10 +22,10 @@ import Test.Hspec
 import Test.Hspec.Wai hiding (pending)
 import Test.Hspec.Wai.Matcher
 
-import Supple.Data.Api
-import Supple.Data.Common
-import Supple.Route.Injectable (InjectableAPI)
-import Supple.Server (rootAPI, runServer)
+import SweetSpot.Data.Api
+import SweetSpot.Data.Common
+import SweetSpot.Route.Injectable (InjectableAPI)
+import SweetSpot.Server (rootAPI, runServer)
 
 import Database (reset)
 

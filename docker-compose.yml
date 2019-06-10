@@ -10,8 +10,8 @@ services:
     environment:
       - POSTGRES_DB=supple
 
-  supple-api:
-    container_name: supple-api
+  sweetspot-api:
+    container_name: sweetspot-api
     restart: unless-stopped
     links:
       - postgres-db
@@ -26,4 +26,4 @@ services:
       - DB_USER=postgres
       - DB_PORT=5432
       - DB_PASSWORD=
-      - DB_NAME=supple
+      - DB_NAME=sweetspot

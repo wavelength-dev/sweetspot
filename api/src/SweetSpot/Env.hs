@@ -1,4 +1,4 @@
-module Supple.Env where
+module SweetSpot.Env where
 
 import LoadEnv (loadEnv)
 import System.Envy (FromEnv, (.!=), decodeEnv, envMaybe, fromEnv)
@@ -25,10 +25,10 @@ libertyPriceOAuthAccessToken = "705fdddbc12654ca0ecf353e0b2421d5"
 instance FromEnv EnvConfig where
   fromEnv =
     EnvConfig <$> envMaybe "DB_HOST" .!= "localhost" <*>
-    envMaybe "DB_NAME" .!= "supple" <*>
+    envMaybe "DB_NAME" .!= "sweetspot" <*>
     envMaybe "DB_PASSWORD" .!= "" <*>
     envMaybe "DB_PORT" .!= 5432 <*>
-    envMaybe "DB_USER" .!= "supple" <*>
+    envMaybe "DB_USER" .!= "sweetspot" <*>
     envMaybe "ENVIRONMENT" .!= "dev" <*>
     envMaybe "SHOPIFY_API_ROOT" .!= libertyPriceApiRoot <*>
     envMaybe "SHOPIFY_CLIENT_ID" .!= libertyPriceClientId <*>

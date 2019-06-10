@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Supple.ShopifyClient where
+module SweetSpot.ShopifyClient where
 
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
@@ -15,9 +15,9 @@ import Debug.Trace (trace)
 import GHC.Generics (Generic)
 import Network.Wreq
 import Prelude hiding (product)
-import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
-import Supple.Data.Api (Image(..), Product(..), Variant(..))
-import Supple.Data.Common (Pid(..))
+import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
+import SweetSpot.Data.Api (Image(..), Product(..), Variant(..))
+import SweetSpot.Data.Common (Pid(..))
 
 parseImage :: Value -> Parser Image
 parseImage =

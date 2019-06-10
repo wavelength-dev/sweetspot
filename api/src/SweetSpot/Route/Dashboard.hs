@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Route.Dashboard
+module SweetSpot.Route.Dashboard
   ( DashboardAPI
   , dashboardHandler
   ) where
@@ -14,18 +14,18 @@ import Data.Aeson.Lens (_String, key, nth)
 import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
-import Supple.AppM (AppCtx(..), AppM)
-import Supple.Calc (enhanceDBStats)
-import Supple.Data.Api
-import Supple.Data.Common
-import Supple.Database
+import SweetSpot.AppM (AppCtx(..), AppM)
+import SweetSpot.Calc (enhanceDBStats)
+import SweetSpot.Data.Api
+import SweetSpot.Data.Common
+import SweetSpot.Database
   ( createExperiment
   , getExperimentBuckets
   , getCampaignStats
   )
-import qualified Supple.Logger as L
-import Supple.Route.Util (internalServerErr)
-import Supple.ShopifyClient (createProduct, fetchProduct, fetchProducts)
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (internalServerErr)
+import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 

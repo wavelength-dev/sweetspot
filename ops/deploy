@@ -28,7 +28,7 @@ echo "| kubectl context: ${CLUSTER}"
 echo "| env: ${ENV}"
 echo "--"
 
-echo "=> Deploying Supple to ${ENV}"
+echo "=> Deploying SweetSpot to ${ENV}"
 
 # Injectable
 echo "=> Building injectables"
@@ -40,17 +40,17 @@ echo "=> Finished building injectables"
 
 # API
 echo "=> Building image"
-docker build --tag supple .
+docker build --tag sweetspot .
 exit_on_failure
 echo "=> Finished building image"
 
 # Push to Google Container Registry
 echo "=> Pushing image to registry"
-docker tag supple $IMAGE_NAME
+docker tag sweetspot $IMAGE_NAME
 docker push $IMAGE_NAME
 exit_on_failure
 
-# Update supple deployment to latest image
+# Update sweetspot deployment to latest image
 echo "=> Applying new image"
 kubectl set image deploy/supple supple=$IMAGE_NAME
 exit_on_failure

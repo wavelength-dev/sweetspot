@@ -1,17 +1,17 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Database.Sessions where
+module SweetSpot.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Aeson (Value)
 import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
-import Supple.Data.Common
-import Supple.Database.Statements
-import Supple.Data.Domain
-import Supple.Data.Api
+import SweetSpot.Data.Common
+import SweetSpot.Database.Statements
+import SweetSpot.Data.Domain
+import SweetSpot.Data.Api
 import Control.Lens ((^.))
 
 -- | ---------------------------------------------------------------------------

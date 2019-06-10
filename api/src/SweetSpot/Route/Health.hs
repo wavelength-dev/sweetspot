@@ -2,13 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Supple.Route.Health
+module SweetSpot.Route.Health
   ( HealthAPI
   , healthHandler
   ) where
 
 import Servant
-import Supple.AppM (AppM)
+import SweetSpot.AppM (AppM)
 
 type HealthAPI = "health" :> Get '[PlainText] NoContent
 

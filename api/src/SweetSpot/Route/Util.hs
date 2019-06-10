@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Route.Util where
+module SweetSpot.Route.Util where
 
 import Servant (err500, err400, err404, errBody)
 

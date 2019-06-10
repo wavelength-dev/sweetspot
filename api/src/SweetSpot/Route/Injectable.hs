@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Route.Injectable
+module SweetSpot.Route.Injectable
   ( InjectableAPI
   , injectableHandler
   , experimentShield
@@ -21,18 +21,18 @@ import Network.HTTP.Types (hContentType, status400)
 import Network.Wai (Middleware, requestHeaders, responseLBS)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
-import Supple.AppM (AppConfig(..), AppCtx(..), AppM)
-import Supple.Data.Api (OkResponse(..), UserBucket)
-import Supple.Data.Common
-import Supple.Database
+import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
+import SweetSpot.Data.Api (OkResponse(..), UserBucket)
+import SweetSpot.Data.Common
+import SweetSpot.Database
   ( getNewUserBuckets
   , getUserBuckets
   , insertEvent
   , insertLogEvent
   , validateCampaign
   )
-import qualified Supple.Logger as L
-import Supple.Route.Util (internalServerErr, badRequestErr, notFoundErr)
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (internalServerErr, badRequestErr, notFoundErr)
 
 type UserBucketRoute
    = "bucket" :> QueryParam "campaignId" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]

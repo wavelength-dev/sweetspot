@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Route.Static
+module SweetSpot.Route.Static
   ( StaticAPI
   , staticHandler
   ) where

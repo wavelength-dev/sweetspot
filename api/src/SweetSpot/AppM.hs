@@ -1,11 +1,11 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module Supple.AppM where
+module SweetSpot.AppM where
 
 import Control.Monad.Reader (ReaderT)
 import GHC.Generics (Generic)
 import Servant (Handler)
-import Supple.Database (Pool)
+import SweetSpot.Database (Pool)
 import System.Log.FastLogger (LoggerSet)
 
 data AppConfig = AppConfig

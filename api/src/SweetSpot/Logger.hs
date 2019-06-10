@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Supple.Logger
+module SweetSpot.Logger
   ( info
   , info'
   , warn
@@ -22,7 +22,7 @@ import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
 import Prelude hiding (error, log)
-import Supple.AppM (AppCtx(..), AppM)
+import SweetSpot.AppM (AppCtx(..), AppM)
 import System.Log.FastLogger (LoggerSet, ToLogStr(..), pushLogStrLn)
 
 data LogLevel

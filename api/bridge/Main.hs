@@ -8,14 +8,14 @@ import Language.PureScript.Bridge
   , writePSTypes
   , writePSTypesWith
   )
-import qualified Supple.Data.Api as Api
+import qualified SweetSpot.Data.Api as Api
 
 import Data.Proxy (Proxy(..))
-import TypeBridges (suppleBridge)
+import TypeBridges (sweetspotBridge)
 
 writeInjectableTypes :: IO ()
 writeInjectableTypes =
-  writePSTypesWith noLenses "../injps/src" (buildBridge suppleBridge) myTypes
+  writePSTypesWith noLenses "../injps/src" (buildBridge sweetspotBridge) myTypes
   where
     myTypes =
       [ let p = (Proxy :: Proxy Api.UserBucket)
@@ -24,7 +24,7 @@ writeInjectableTypes =
 
 writeDashboardTypes :: IO ()
 writeDashboardTypes =
-  writePSTypes "../dashboard/src" (buildBridge suppleBridge) myTypes
+  writePSTypes "../dashboard/src" (buildBridge sweetspotBridge) myTypes
   where
     myTypes =
       [ let p = (Proxy :: Proxy Api.Bucket)

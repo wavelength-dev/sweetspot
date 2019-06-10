@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Data.Common where
+module SweetSpot.Data.Common where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Int (Int64)

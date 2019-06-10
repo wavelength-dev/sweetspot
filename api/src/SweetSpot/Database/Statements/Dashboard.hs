@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Database.Statements.Dashboard where
+module SweetSpot.Database.Statements.Dashboard where
 
 import Control.Lens ((^..), (&))
 import Data.Aeson.Lens (values, key, _Integer)
@@ -9,9 +9,9 @@ import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
-import Supple.Data.Api (Experiment(..), Bucket(..))
-import Supple.Data.Common
-import Supple.Data.Domain (CheckoutEvent(..), Campaign(..))
+import SweetSpot.Data.Api (Experiment(..), Bucket(..))
+import SweetSpot.Data.Common
+import SweetSpot.Data.Domain (CheckoutEvent(..), Campaign(..))
 
 getCampaignStatement :: Statement CampaignId Campaign
 getCampaignStatement = Statement sql encoder decoder True

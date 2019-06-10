@@ -3,14 +3,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Supple.Data.Api where
+module SweetSpot.Data.Api where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
-import Supple.Data.Common
+import SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
 -- | Image

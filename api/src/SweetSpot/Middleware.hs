@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Supple.Middleware
+module SweetSpot.Middleware
   ( getMiddleware
   ) where
 
@@ -13,8 +13,8 @@ import Network.Wai.Middleware.Gzip
   )
 import Network.Wai.Middleware.HttpAuth (basicAuth)
 import Network.Wai.Middleware.Routed (routedMiddleware)
-import Supple.AppM (AppCtx)
-import Supple.Route.Injectable (experimentShield)
+import SweetSpot.AppM (AppCtx)
+import SweetSpot.Route.Injectable (experimentShield)
 
 -- WAI doesn't seem to want to know about routing.
 -- This should probably move into a Servant handler somehow.

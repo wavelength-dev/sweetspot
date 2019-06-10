@@ -2,7 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Supple.Database
+module SweetSpot.Database
   ( Pool
   , getDbPool
   , getUserBuckets
@@ -30,11 +30,11 @@ import Hasql.Migration
   )
 import qualified Hasql.Pool as Pool
 import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
-import Supple.Data.Api
-import Supple.Data.Common (EventType(..), Price, Sku, Svid)
-import Supple.Data.Common
-import Supple.Data.Domain (DBCampaignStats)
-import Supple.Database.Sessions
+import SweetSpot.Data.Api
+import SweetSpot.Data.Common (EventType(..), Price, Sku, Svid)
+import SweetSpot.Data.Common
+import SweetSpot.Data.Domain (DBCampaignStats)
+import SweetSpot.Database.Sessions
 
 type Pool = Pool.Pool
 

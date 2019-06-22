@@ -35,6 +35,7 @@ import SweetSpot.Data.Common (EventType(..), Price, Sku, Svid)
 import SweetSpot.Data.Common
 import SweetSpot.Data.Domain (DBCampaignStats)
 import SweetSpot.Database.Sessions
+import System.Random (randomRIO)
 
 type Pool = Pool.Pool
 
@@ -70,8 +71,11 @@ getUserBuckets pool userId = do
 
 getNewUserBuckets :: Pool -> CampaignId -> IO (Either T.Text [UserBucket])
 getNewUserBuckets pool cmpId = do
-  res <- Pool.use pool (assignAndGetUserBucketSession cmpId)
+  randIdx <- randomRIO (0 :: Int, 1 :: Int)
+  res <- Pool.use pool (assignAndGetUserBucketSession cmpId (bucketTypes !! randIdx))
   return $ over _Left wrapQueryError res
+  where
+    bucketTypes = [Control, Test]
 
 getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])
 getExperimentBuckets pool = do

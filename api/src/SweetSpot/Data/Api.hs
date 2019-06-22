@@ -110,6 +110,7 @@ data UserBucket = UserBucket
   , _ubPrice :: !Price
   , _ubExpId :: !ExpId
   , _ubBucketId :: !BucketId
+  , _ubBucketType :: !BucketType
   } deriving (Eq, Generic, Show)
 
 makeLenses ''UserBucket

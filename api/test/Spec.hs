@@ -8,6 +8,7 @@ import Control.Lens hiding (Context)
 import Data.Aeson
 import Data.Aeson.Lens
 import Control.Lens
+import Data.List (nub)
 import Data.List.Lens
 import Data.Text (Text, unpack)
 import GHC.Generics
@@ -57,6 +58,15 @@ businessLogicSpec =
         case result of
           Left err -> error (show err)
           Right _ -> return ()
+
+      it "should assign a new user to either test or control for all buckets" $ do
+        result <- runClientM (getBucket (Just "longv123") Nothing) clientEnv
+        case result of
+          Left err -> error (show err)
+          Right buckets -> length uniqTypes `shouldBe` 1
+            where
+              bucketTypes = buckets ^.. traverse . ubBucketType
+              uniqTypes = nub bucketTypes
 
       it "should not return buckets for invalid campaign ids" $ do
         result <- runClientM (getBucket (Just "unknown_campaign") Nothing) clientEnv

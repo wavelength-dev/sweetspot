@@ -18,6 +18,7 @@ newtype UserBucket =
     , _ubPrice :: Number
     , _ubExpId :: Number
     , _ubBucketId :: Number
+    , _ubBucketType :: String
     }
 
 derive instance eqUserBucket :: Eq UserBucket
@@ -34,5 +35,15 @@ instance decodeJsonUserBucket :: DecodeJson UserBucket where
     _ubPrice <- x .: "_ubPrice"
     _ubExpId <- x .: "_ubExpId"
     _ubBucketId  <- x .: "_ubBucketId"
-    pure $ UserBucket { _ubUserId , _ubSku , _ubTestSvid , _ubPrice , _ubExpId , _ubBucketId, _ubOriginalSvid}
-
+    _ubBucketType <- x .: "_ubBucketType"
+    pure $
+      UserBucket
+      { _ubUserId
+      , _ubSku
+      , _ubTestSvid
+      , _ubPrice
+      , _ubExpId
+      , _ubBucketId
+      , _ubOriginalSvid
+      , _ubBucketType
+      }

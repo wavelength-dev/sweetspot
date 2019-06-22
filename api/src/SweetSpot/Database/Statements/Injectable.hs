@@ -15,7 +15,7 @@ userBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT bu.user_id, e.sku, b.original_svid, b.test_svid, b.price, eb.exp_id, b.bucket_id "
+        [ "SELECT bu.user_id, e.sku, b.original_svid, b.test_svid, b.price, eb.exp_id, b.bucket_id, b.bucket_type "
         , "FROM bucket_users AS bu "
         , "JOIN buckets AS b ON bu.bucket_id = b.bucket_id "
         , "JOIN experiment_buckets AS eb ON eb.bucket_id = b.bucket_id "
@@ -27,15 +27,16 @@ userBucketStatement = Statement sql encoder decoder True
     decoder = Decoders.rowList $ toUserBucket <$> row
       where
         row =
-          (,,,,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.numeric <*>
           Decoders.column Decoders.int8 <*>
-          Decoders.column Decoders.int8
+          Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.text
         toUserBucket =
-          \(uid, sku, original_svid, test_svid, price, expId, bucketId) ->
+          \(uid, sku, original_svid, test_svid, price, expId, bucketId, bucketType) ->
             UserBucket
               { _ubUserId = UserId $ fromIntegral uid
               , _ubSku = Sku sku
@@ -44,6 +45,7 @@ userBucketStatement = Statement sql encoder decoder True
               , _ubPrice = Price price
               , _ubExpId = ExpId $ fromIntegral expId
               , _ubBucketId = BucketId $ fromIntegral bucketId
+              , _ubBucketType = bucketTypeFromText bucketType
               }
 
 insertUserStatement :: Statement () UserId
@@ -52,18 +54,19 @@ insertUserStatement = Statement sql Encoders.unit decoder True
     sql = "INSERT INTO users (user_id) VALUES (DEFAULT) RETURNING user_id;"
     decoder = Decoders.singleRow $ wrapUserId <$> Decoders.column Decoders.int8
 
-randomBucketPerExpInCampaignStatement :: Statement CampaignId [(ExpId, BucketId)]
-randomBucketPerExpInCampaignStatement = Statement sql encoder decoder True
+bucketByTypePerExpInCampaignStatement :: Statement (CampaignId, BucketType) [(ExpId, BucketId)]
+bucketByTypePerExpInCampaignStatement = Statement sql encoder decoder True
   where
     sql =
-      (mconcat
-         [ "SELECT DISTINCT ON (exp_id) exp_id, bucket_id "
-         , "FROM (SELECT eb.exp_id, eb.bucket_id FROM experiment_buckets AS eb "
+      mconcat
+         [ "SELECT eb.exp_id, eb.bucket_id FROM experiment_buckets AS eb "
          , "JOIN campaign_experiments AS ce ON eb.exp_id = ce.exp_id "
-         , "WHERE ce.campaign_id = $1 "
-         , "ORDER BY random()) as \"subq\";"
-         ])
-    encoder = unwrapCampaignId >$< Encoders.param Encoders.text
+         , "JOIN buckets AS b ON eb.bucket_id = b.bucket_id "
+         , "WHERE ce.campaign_id = $1 and b.bucket_type = $2;"
+         ]
+    encoder =
+      (unwrapCampaignId . fst >$< Encoders.param Encoders.text) <>
+      (bucketTypeToText . snd >$< Encoders.param Encoders.text)
     decoder = Decoders.rowList $ wrapRow <$> row
     row =
       (,) <$> (Decoders.column Decoders.int8) <*> Decoders.column Decoders.int8

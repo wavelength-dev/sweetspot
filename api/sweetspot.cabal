@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ff1de43e78315a7954b4b100e1ab6d85d5eede1dc066438d64bb9534da0704a3
+-- hash: 7b39589f262d8dbae836fb2860e2201d76927e4034087e6088f4e8f9cd655821
 
 name:           sweetspot
 version:        0.1.0.0
@@ -71,6 +71,7 @@ library
     , load-env
     , mtl
     , purescript-bridge
+    , random
     , scientific
     , servant
     , servant-client
@@ -119,6 +120,7 @@ executable bridge-exe
     , load-env
     , mtl
     , purescript-bridge
+    , random
     , scientific
     , servant
     , servant-client
@@ -167,6 +169,7 @@ executable sweetspot-exe
     , load-env
     , mtl
     , purescript-bridge
+    , random
     , scientific
     , servant
     , servant-client
@@ -217,6 +220,7 @@ test-suite sweetspot-test
     , load-env
     , mtl
     , purescript-bridge
+    , random
     , scientific
     , servant
     , servant-client

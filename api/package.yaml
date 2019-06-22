@@ -41,6 +41,7 @@ dependencies:
 - load-env
 - mtl
 - purescript-bridge
+- random
 - scientific
 - servant
 - servant-client

@@ -18,19 +18,27 @@ INSERT INTO experiments (exp_id, sku, product_name) VALUES (1001, '714449933422'
 INSERT INTO experiments (exp_id, sku, product_name) VALUES (1002, '714449933422', 'Yellow watchband');
 
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1000);
+INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1001);
+INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1002);
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('expired_campaign', 1001);
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('not_yet_active_campaign', 1002);
 
 INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90);
 INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1001, 'test', 12502066561095, 12502066561095, 249.90);
 INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1002, 'control', 12502066561095, 12502066561095, 349.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1003, 'control', 12502066561095, 12502066561095, 549.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1003, 'test', 12502066561095, 12502066561095, 399.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1004, 'control', 12502066561095, 12502066561095, 549.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1005, 'test', 12502066561095, 12502066561095, 599.90);
 
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1001, 1000);
+INSERT INTO bucket_users (bucket_id, user_id) VALUES (1003, 1000);
+INSERT INTO bucket_users (bucket_id, user_id) VALUES (1005, 1000);
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1002, 1001);
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1003, 1002);
 
 INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1000);
 INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1001);
 INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1001, 1002);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1002, 1003);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1001, 1003);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1002, 1004);
+INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1002, 1005);

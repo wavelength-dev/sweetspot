@@ -2,10 +2,9 @@
 
 ENV=${1:-staging}
 CLUSTER="???"
-DATE=$(date -u "+%F")
 COMMIT=$(git rev-parse --short HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-IMAGE_NAME="586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot:${DATE}-${COMMIT}"
+IMAGE_NAME="586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot:${COMMIT}"
 
 exit_on_failure() {
   if [ $? -ne 0 ]; then

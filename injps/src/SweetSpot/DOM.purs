@@ -1,7 +1,6 @@
 module SweetSpot.DOM where
 
 import Prelude
-
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
@@ -47,37 +46,38 @@ collectCheckoutOptions variantIds = do
   -- return any element with a value attribute value equal to one of variantIds
   A.filterA getIsKnownVariantOption els
   where
-    getIsKnownVariantOption :: Element -> Effect Boolean
-    getIsKnownVariantOption el = do
-       optionId <- E.getAttribute "value" el
-       pure $ case optionId of
-            Nothing -> false
-            Just id -> A.elem (readFloat id) variantIds
+  getIsKnownVariantOption :: Element -> Effect Boolean
+  getIsKnownVariantOption el = do
+    optionId <- E.getAttribute "value" el
+    pure
+      $ case optionId of
+          Nothing -> false
+          Just id -> A.elem (readFloat id) variantIds
 
 swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
-swapCheckoutVariantId userBuckets els =
-  traverse_ swapCheckoutIds els
+swapCheckoutVariantId userBuckets els = traverse_ swapCheckoutIds els
   where
-    swapCheckoutIds el = getOptionVariantId el >>= (\variantId ->
-      case variantId of
-        Nothing -> pure unit
-        -- The mutation needed for the live version below. Currently it only adds a class.
-        -- Just vId -> (setAttribute "value" (toString vId) el))
-        Just vId -> addClass ("sweetspot-swap-" <> (toString vId)) el)
+  swapCheckoutIds el =
+    getOptionVariantId el
+      >>= ( \variantId -> case variantId of
+          Nothing -> pure unit
+          -- The mutation needed for the live version below. Currently it only adds a class.
+          -- Just vId -> (setAttribute "value" (toString vId) el))
+          Just vId -> addClass ("sweetspot-swap-" <> (toString vId)) el
+        )
 
-    getMatchingUserBucket :: String -> Maybe UserBucket
-    getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets
+  getMatchingUserBucket :: String -> Maybe UserBucket
+  getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets
 
-    getOptionVariantId :: Element -> Effect (Maybe Number)
-    getOptionVariantId el = do
-       attrValue <- E.getAttribute "value" el
-       pure $ attrValue >>= getMatchingUserBucket # map (\(UserBucket ub) -> ub._ubTestSvid)
+  getOptionVariantId :: Element -> Effect (Maybe Number)
+  getOptionVariantId el = do
+    attrValue <- E.getAttribute "value" el
+    pure $ attrValue >>= getMatchingUserBucket # map (\(UserBucket ub) -> ub._ubTestSvid)
 
 removeClass :: String -> Element -> Effect Unit
-removeClass className el =
-  maybe (pure unit) (classList >=> remove' className) (fromElement el)
+removeClass className el = maybe (pure unit) (classList >=> remove' className) (fromElement el)
   where
-    remove' = flip DTL.remove
+  remove' = flip DTL.remove
 
 addClass :: String -> Element -> Effect Unit
 addClass className el = do
@@ -89,6 +89,7 @@ getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
     match = A.find (S.contains idClassPattern) classNames
+
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
 

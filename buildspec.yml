@@ -10,6 +10,8 @@ phases:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
+    runtime-versions:
+      docker: 18
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...

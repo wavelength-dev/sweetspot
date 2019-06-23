@@ -2,23 +2,23 @@ module SweetSpot.Data.Constant where
 
 import Data.String as S
 import Prelude ((<>))
-import SweetSpot.Env (apiURL) as Env
+import SweetSpot.Env as Env
 
 hiddenPriceId ::
   String
-hiddenPriceId = "sweetspot__price--hidden"
+hiddenPriceId = Env.hiddenPriceId
 
 productClass ::
   String
-productClass = "sweetspot__product"
+productClass = Env.productClass
 
 uidStorageKey ::
   String
-uidStorageKey = "sweetspot_uid_1554053013187"
+uidStorageKey = Env.uidStorageKey
 
 idClassPattern ::
   S.Pattern
-idClassPattern = S.Pattern "sweetspot__price_id--"
+idClassPattern = S.Pattern Env.idClassPattern
 
 eventEndpoint ::
   String

@@ -73,8 +73,7 @@ createExperimentSession (sku, orig_svid, test_svid, price, cmp, name) = do
 
 getBucketStats :: Bucket -> Session DBBucketStats
 getBucketStats b = do
-  let
-    bucketId = b ^. bBucketId
+  let bucketId = b ^. bBucketId
   users <- Session.statement bucketId getBucketUserCountStatement
   impressions <- Session.statement bucketId getBucketImpressionCountStatement
   checkouts <- Session.statement bucketId getCheckoutEventsForBucket
@@ -86,6 +85,8 @@ getBucketStats b = do
     , _dbsUserCount = users
     , _dbsImpressionCount = impressions
     , _dbsCheckoutEvents = checkouts
+    , _dbsPrice = b ^. bPrice
+    , _dbsCost = b ^. bCost
     }
 
 getExperimentStats :: Experiment -> Session DBExperimentStats

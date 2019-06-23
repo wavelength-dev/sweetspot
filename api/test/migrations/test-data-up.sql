@@ -23,12 +23,12 @@ INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1002)
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('expired_campaign', 1001);
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('not_yet_active_campaign', 1002);
 
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1001, 'test', 12502066561095, 12502066561095, 249.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1002, 'control', 12502066561095, 12502066561095, 349.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1003, 'test', 12502066561095, 12502066561095, 399.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1004, 'control', 12502066561095, 12502066561095, 549.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1005, 'test', 12502066561095, 12502066561095, 599.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90, 100.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1001, 'test', 12502066561095, 12502066561095, 249.90, 159.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1002, 'control', 12502066561095, 12502066561095, 349.90, 229.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1003, 'test', 12502066561095, 12502066561095, 399.90, 249.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1004, 'control', 12502066561095, 12502066561095, 549.90, 300.00);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1005, 'test', 12502066561095, 12502066561095, 599.90, 459.90);
 
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1001, 1000);
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1003, 1000);

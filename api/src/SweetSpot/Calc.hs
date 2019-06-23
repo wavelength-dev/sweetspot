@@ -3,7 +3,7 @@ module SweetSpot.Calc (enhanceDBStats) where
 import Control.Lens
 import qualified Data.List as L
 import Data.Maybe (isJust, fromJust)
-import SweetSpot.Data.Common (BucketType(..))
+import SweetSpot.Data.Common (BucketType(..), Price(..))
 import SweetSpot.Data.Domain
 import SweetSpot.Data.Api
 
@@ -11,6 +11,9 @@ import SweetSpot.Data.Api
 conversionRate :: Int -> Int -> Double
 conversionRate conversions users =
   (fromIntegral conversions) / (fromIntegral users)
+
+getProfit :: Price -> Price -> Price
+getProfit (Price price) (Price cost) = Price $ price - cost
 
 enhanceDBBucketStats :: DBBucketStats -> BucketStats
 enhanceDBBucketStats stats =
@@ -29,6 +32,8 @@ enhanceDBBucketStats stats =
         , _bsImpressionCount = stats ^. dbsImpressionCount
         , _bsConversionCount = conversionCount
         , _bsConversionRate = conversion
+        , _bsPrice = stats ^. dbsPrice
+        , _bsCost = stats ^. dbsCost
         }
 
 enhanceDBExperimentStats :: DBExperimentStats -> ExperimentStats

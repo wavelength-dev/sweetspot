@@ -66,6 +66,7 @@ data Bucket = Bucket
   , _bOriginalSvid :: !Svid
   , _bTestSvid :: !Svid
   , _bPrice :: !Price
+  , _bCost :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Bucket
@@ -129,6 +130,8 @@ data BucketStats = BucketStats
   , _bsImpressionCount :: !Int
   , _bsConversionCount :: !Int
   , _bsConversionRate :: !Double
+  , _bsPrice :: !Price
+  , _bsCost :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats

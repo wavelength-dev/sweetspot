@@ -136,7 +136,7 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "SELECT bs.bucket_id, bs.bucket_type, bs.price, bs.original_svid, bs.test_svid "
+        [ "SELECT bs.bucket_id, bs.bucket_type, bs.price, bs.cost, bs.original_svid, bs.test_svid "
         , "FROM experiment_buckets as ebs "
         , "INNER JOIN buckets as bs ON bs.bucket_id = ebs.bucket_id "
         , "WHERE ebs.exp_id = $1;"
@@ -145,17 +145,19 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.rowList $ toBucket <$> row
       where
         row =
-          (,,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
+          Decoders.column Decoders.numeric <*>
           Decoders.column Decoders.numeric <*>
           Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.int8
         toBucket =
-          \(bid, btype, p, ogSvid, testSvid) ->
+          \(bid, btype, p, cost, ogSvid, testSvid) ->
             Bucket
               { _bBucketId = BucketId $ fromIntegral bid
               , _bBucketType = bucketTypeFromText btype
               , _bPrice = Price p
+              , _bCost = Price cost
               , _bOriginalSvid = Svid $ fromIntegral ogSvid
               , _bTestSvid = Svid $ fromIntegral testSvid
               }

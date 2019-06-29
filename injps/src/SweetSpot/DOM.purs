@@ -13,11 +13,13 @@ import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, idClassPattern)
+import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByClassName, getElementsByTagName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
 import Web.DOM.Internal.Types (Element)
+import Web.DOM.Node (setTextContent)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
@@ -95,3 +97,9 @@ getIdFromPriceElement el = do
 
 unhidePrice :: Effect Unit
 unhidePrice = collectPriceEls >>= traverse_ (removeClass hiddenPriceId)
+
+setPrice :: Number -> Element -> Effect Unit
+setPrice price el = do
+  nf <- numberFormat
+  formattedPrice <- formatNumber price nf
+  setTextContent formattedPrice (E.toNode el)

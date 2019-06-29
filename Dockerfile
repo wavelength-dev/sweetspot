@@ -23,3 +23,4 @@ COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-13.24/8.6.5/bi
 COPY --from=build /opt/build/migrations ./migrations
 COPY ./dist /opt/dist
 CMD ["/opt/sweetspot/sweetspot-exe"]
+EXPOSE 8082/tcp

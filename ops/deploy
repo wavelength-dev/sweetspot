@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ENV=${1:-staging}
-CLUSTER="???"
 COMMIT=$(git rev-parse --short HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 IMAGE_NAME="586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot:${COMMIT}"
@@ -23,7 +22,6 @@ if ! git diff-index --quiet origin/master; then
 fi
 
 echo "[note] Deployment parameters are:"
-echo "| kubectl context: ${CLUSTER}"
 echo "| env: ${ENV}"
 echo "--"
 
@@ -51,8 +49,6 @@ exit_on_failure
 
 # Update sweetspot deployment to latest image
 echo "=> Applying new image"
-exit 1
+ecs deploy default sweetspot-${ENV} --tag ${COMMIT}
 exit_on_failure
-echo "=> Watching sweetspot deployment for the next 30s"
-exit 1
 echo "=> Done!"

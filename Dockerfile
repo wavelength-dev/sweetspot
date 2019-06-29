@@ -1,4 +1,4 @@
-FROM haskell:8 AS build
+FROM fpco/stack-build:lts-13.24 AS build
 WORKDIR /opt/build
 
 # We depend on postgres
@@ -22,5 +22,6 @@ RUN apt-get update --quiet && apt-get install -y --quiet \
 COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-13.24/8.6.5/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY ./dist /opt/dist
-CMD ["/opt/sweetspot/sweetspot-exe"]
+
 EXPOSE 8082/tcp
+CMD ["/opt/sweetspot/sweetspot-exe"]

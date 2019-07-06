@@ -1,7 +1,6 @@
 module SweetSpot.DOM where
 
 import Prelude
-
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
@@ -63,8 +62,9 @@ swapCheckoutVariantId userBuckets els = traverse_ swapCheckoutIds els
   swapCheckoutIds el =
     getOptionVariantId el
       >>= ( \variantId -> case variantId of
-          Nothing -> pure unit
-          Just vId -> (E.setAttribute "value" (toString vId) el))
+            Nothing -> pure unit
+            Just vId -> (E.setAttribute "value" (toString vId) el)
+        )
 
   getMatchingUserBucket :: String -> Maybe UserBucket
   getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets

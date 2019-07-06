@@ -18,7 +18,7 @@ import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByClassName, getElementsByTagName)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)
-import Web.DOM.Internal.Types (Element)
+import Web.DOM.Internal.Types (Element, Node)
 import Web.DOM.Node (setTextContent)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
@@ -96,8 +96,11 @@ getIdFromPriceElement el = do
 unhidePrice :: Effect Unit
 unhidePrice = collectPriceEls >>= traverse_ (removeClass hiddenPriceId)
 
-setPrice :: Number -> Element -> Effect Unit
-setPrice price el = do
+setNodePrice :: Number -> Node -> Effect Unit
+setNodePrice price node = do
   nf <- numberFormat
   formattedPrice <- formatNumber price nf
-  setTextContent formattedPrice (E.toNode el)
+  setTextContent formattedPrice node
+
+setPrice :: Number -> Element -> Effect Unit
+setPrice price el = setNodePrice price (E.toNode el)

@@ -3,6 +3,7 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
+import Data.Array (head)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
@@ -18,7 +19,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Capability (class AppCapability)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, getThatOneEl, removeClass, setPrice, swapCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
@@ -124,11 +125,16 @@ instance appCapabilityAppM :: AppCapability AppM where
     pure unit
 
   attachPriceObserver buckets = do
-    els <- liftEffect collectPriceEls
-    muOb <- liftEffect $ mutationObserver (\mr _ -> (target mr)
-      >>= (\node ->
-          case E.fromNode node of
-               Nothing -> pure unit
-               Just el -> applyPriceVariation buckets el
-           ))
-    liftEffect $ for_ els \el -> observe (E.toNode el) { childList: true } muOb
+    mEl <- liftEffect getThatOneEl
+    let cb = (\mrs _ ->
+             case head mrs of
+                  Nothing -> C.log "No mutation records"
+                  Just mr -> target mr >>= \node ->
+                             case E.fromNode node of
+                                  Nothing -> C.log "Node was not of type element"
+                                  Just el -> applyPriceVariation buckets el
+                                  )
+    muOb <- liftEffect $ mutationObserver cb
+    liftEffect $ case mEl of
+      Nothing -> C.log "No elements to observe"
+      Just el -> for_ [el] \el -> observe (E.toNode el) { childList: true } muOb

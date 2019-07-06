@@ -18,7 +18,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Capability (class AppCapability)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (addClass, collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, swapCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
@@ -72,7 +72,7 @@ applyPriceVariation userBuckets el = do
       mSku <- getIdFromPriceElement el
       match <- pure $ ((==) variantSku) <$> mSku
       case match of
-        Just true -> addClass ("sweetspot-match-" <> (toString variantPrice)) el
+        Just true -> setPrice variantPrice el
         _ -> pure unit
 
 instance appCapabilityAppM :: AppCapability AppM where

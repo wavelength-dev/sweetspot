@@ -9,7 +9,7 @@ import Effect.Aff (forkAff, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
-import SweetSpot.Capability (applyPriceVariations, ensureCampaign, ensureDeps, getUserBuckets, getUserId, setUserId)
+import SweetSpot.Capability (applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, setUserId)
 import SweetSpot.DOM (getDOMReady, unhidePrice)
 import SweetSpot.Event (trackView)
 import SweetSpot.Request (postLogPayload)
@@ -23,6 +23,7 @@ app = do
   buckets <- getUserBuckets uid campaignId
   setUserId (head buckets)
   applyPriceVariations buckets
+  attachPriceObserver buckets
   trackView (head buckets)
 
 main :: Effect Unit

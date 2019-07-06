@@ -14,3 +14,4 @@ class Monad m <= AppCapability m where
   log :: String -> m Unit
   ensureCampaign :: Maybe String -> m (Maybe String)
   applyPriceVariations :: (NonEmptyArray UserBucket) -> m Unit
+  attachPriceObserver :: (NonEmptyArray UserBucket) -> m Unit

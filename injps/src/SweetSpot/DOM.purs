@@ -1,6 +1,8 @@
 module SweetSpot.DOM where
 
 import Prelude
+
+import Data.Array (head)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
@@ -104,3 +106,10 @@ setNodePrice price node = do
 
 setPrice :: Number -> Element -> Effect Unit
 setPrice price el = setNodePrice price (E.toNode el)
+
+getThatOneEl :: Effect (Maybe Element)
+getThatOneEl = do
+  doc <- window >>= document
+  htmlCol <- getElementsByClassName "sweetspot__price_id--2" (toDocument doc)
+  els <- toArray htmlCol
+  pure $ head els

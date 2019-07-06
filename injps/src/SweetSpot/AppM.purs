@@ -6,7 +6,7 @@ import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwE
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
-import Data.Foldable (traverse_)
+import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number.Format (toString)
 import Data.String as S
@@ -23,6 +23,9 @@ import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
+import Web.DOM.Element as E
+import Web.DOM.MutationObserver (mutationObserver, observe)
+import Web.DOM.MutationRecord (target)
 import Web.HTML (window)
 import Web.HTML.Location (search)
 import Web.HTML.Window (localStorage, location)
@@ -119,3 +122,13 @@ instance appCapabilityAppM :: AppCapability AppM where
     liftEffect $ traverse_ (applyPriceVariation userBuckets) els
     liftEffect $ traverse_ (removeClass hiddenPriceId) els
     pure unit
+
+  attachPriceObserver buckets = do
+    els <- liftEffect collectPriceEls
+    muOb <- liftEffect $ mutationObserver (\mr _ -> (target mr)
+      >>= (\node ->
+          case E.fromNode node of
+               Nothing -> pure unit
+               Just el -> applyPriceVariation buckets el
+           ))
+    liftEffect $ for_ els \el -> observe (E.toNode el) { childList: true } muOb

@@ -54,7 +54,8 @@ readLineItem value = do
   productId <- value ! "product_id" >>= readNumber
   variantId <- value ! "variant_id" >>= readNumber
   sku <- value ! "sku" >>= readString
-  pure $ LineItem { productId, variantId, sku }
+  quantity <- value ! "quantity" >>= readNumber
+  pure $ LineItem { productId, variantId, sku, quantity }
 
 getCheckoutStateIssues :: CheckoutA -> CheckoutB -> Maybe String
 getCheckoutStateIssues chA chB = case mErr of

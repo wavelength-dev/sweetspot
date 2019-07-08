@@ -30,6 +30,7 @@ newtype LineItem = LineItem
   { productId :: Number
   , variantId :: Number
   , sku :: String
+  , quantity :: Number
   }
 
 instance encodeLineItemJson :: EncodeJson LineItem where
@@ -37,6 +38,7 @@ instance encodeLineItemJson :: EncodeJson LineItem where
     "productId" := li.productId
     ~> "variantId" := li.variantId
     ~> "sku" := li.sku
+    ~> "quantity" := li.quantity
     ~> jsonEmptyObject
 
 type CheckoutEvent =

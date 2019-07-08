@@ -11,6 +11,7 @@ import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number.Format (toString)
 import Data.String as S
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, forkAff)
@@ -19,7 +20,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Capability (class AppCapability)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, getThatOneEl, removeClass, setPrice, swapCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
@@ -121,11 +122,13 @@ instance appCapabilityAppM :: AppCapability AppM where
   applyPriceVariations userBuckets = do
     els <- liftEffect collectPriceEls
     liftEffect $ traverse_ (applyPriceVariation userBuckets) els
-    liftEffect $ traverse_ (removeClass hiddenPriceId) els
-    pure unit
+    let res = traverse (removeClass hiddenPriceId) els
+    pure $ case res of
+      Nothing -> Nothing
+      Just _ -> Just unit
 
   attachPriceObserver buckets = do
-    mEl <- liftEffect getThatOneEl
+    priceElements <- liftEffect collectPriceEls
     let cb = (\mrs _ ->
              case head mrs of
                   Nothing -> C.log "No mutation records"
@@ -135,6 +138,4 @@ instance appCapabilityAppM :: AppCapability AppM where
                                   Just el -> applyPriceVariation buckets el
                                   )
     muOb <- liftEffect $ mutationObserver cb
-    liftEffect $ case mEl of
-      Nothing -> C.log "No elements to observe"
-      Just el -> for_ [el] \el -> observe (E.toNode el) { childList: true } muOb
+    liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb

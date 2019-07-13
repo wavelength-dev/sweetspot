@@ -23,6 +23,7 @@ dependencies:
 - aeson
 - bytestring
 - casing
+- containers
 - contravariant
 - data-default
 - envy
@@ -40,6 +41,7 @@ dependencies:
 - lens-aeson
 - load-env
 - mtl
+- mwc-random
 - purescript-bridge
 - random
 - scientific
@@ -51,6 +53,7 @@ dependencies:
 - time
 - transformers
 - utf8-string
+- vector
 - wai
 - wai-app-static
 - wai-cors

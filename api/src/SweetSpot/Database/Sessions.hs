@@ -5,6 +5,7 @@ module SweetSpot.Database.Sessions where
 
 import Control.Monad (forM, forM_)
 import Data.Aeson (Value)
+import Data.Map.Strict as M
 import Data.Text (Text)
 import Hasql.Session (Session)
 import qualified Hasql.Session as Session
@@ -77,7 +78,7 @@ getBucketStats b = do
   users <- Session.statement bucketId getBucketUserCountStatement
   impressions <- Session.statement bucketId getBucketImpressionCountStatement
   checkouts <- Session.statement bucketId getCheckoutEventsForBucket
-  return $ DBBucketStats
+  return DBBucketStats
     { _dbsBucketId = bucketId
     , _dbsBucketType = b ^. bBucketType
     , _dbsOriginalSvid = b ^. bOriginalSvid
@@ -93,7 +94,7 @@ getExperimentStats :: Experiment -> Session DBExperimentStats
 getExperimentStats exp = do
   bs <- Session.statement (exp ^. eExpId) getBucketsForExperimentStatement
   bStats <- mapM getBucketStats bs
-  return $ DBExperimentStats
+  return DBExperimentStats
     { _desExpId = exp ^. eExpId
     , _desProductName = exp ^. eProductName
     , _desBuckets = bStats
@@ -104,7 +105,9 @@ getCampaignStatsSession cmpId = do
   cmp <- Session.statement cmpId getCampaignStatement
   exps <- Session.statement cmpId getCampaignExperimentsStatement
   expStats <- mapM getExperimentStats exps
-  return $ DBCampaignStats
+  -- lineItemsControl <- Session.statement (cmpId, Control) getLineItemsPerUserForCampaign
+  -- lineItemsTest <- Session.statement (cmpId, Test) getLineItemsPerUserForCampaign
+  return DBCampaignStats
     { _dcsCampaignId = cmpId
     , _dcsCampaignName = cmp ^. cCampaignName
     , _dcsMinProfitIncrease = cmp ^. cMinProfitIncrease
@@ -112,3 +115,6 @@ getCampaignStatsSession cmpId = do
     , _dcsEndDate = cmp ^. cEndDate
     , _dcsExperiments = expStats
     }
+  where
+    groupByUser :: [(Int, [LineItem])] -> [LineItem]
+    groupByUser = mconcat . fmap snd . M.toList . M.fromListWith (<>)

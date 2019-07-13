@@ -64,7 +64,7 @@ instance FromJSON Sku
 -- | ---------------------------------------------------------------------------
 newtype UserId =
   UserId Int
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Ord)
 
 instance ToJSON UserId
 

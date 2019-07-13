@@ -90,8 +90,8 @@ getCampaignStatsHandler cmpId = do
   res <- liftIO $ getCampaignStats pool (CampaignId cmpId)
   case res of
     Right dbStats ->
-      L.info ("Got experiment stats for campaignId: " <> cid) >>
-      (return $ enhanceDBStats dbStats)
+      L.info ("Got experiment stats for campaignId: " <> cid)
+      >> enhanceDBStats dbStats
     Left err -> do
       L.error $ "Error getting experiment stats for campaignId: "
         <> cid <> " " <> err

@@ -6,9 +6,8 @@ import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Effect (Effect)
-import Effect.Aff (apathize, launchAff_)
+import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
-import Effect.Class (liftEffect)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
 import SweetSpot.Capability (applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, setUserId)
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
@@ -45,12 +44,18 @@ app = do
 
 main :: Effect Unit
 main =
-  launchAff_
+  runAff_ logResult
     $ do
         result <- runAppM app
         case result of
-          Right _ -> pure unit
-          Left (ClientErr { message }) -> do
-            _ <- liftEffect $ unhidePrice
-            -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-            apathize $ postLogPayload message
+          -- If posting this log message fails there is little more we can do to report it so we ignore the result.
+          Right _ -> apathize $ postLogPayload "Successfully ran SweetSpot"
+          Left (ClientErr { message }) -> apathize $ postLogPayload message
+  where
+  logResult either = case either of
+    -- If posting this log message fails there is little more we can do to report it so we ignore the result.
+    Left message -> do
+      -- If running our main logic encountered some problem we will still try to unhide the price as-is
+      _ <- unhidePrice
+      launchAff_ $ apathize $ postLogPayload (show message)
+    Right message -> launchAff_ $ apathize $ postLogPayload (show message)

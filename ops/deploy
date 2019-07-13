@@ -41,8 +41,10 @@ docker build --tag sweetspot .
 exit_on_failure
 echo "=> Finished building image"
 
-# Push to Google Container Registry
+# Push to Amazon Container Registry
 echo "=> Pushing image to registry"
+ECR_LOGIN_CMD=$(aws ecr get-login --no-include-email)
+eval $ECR_LOGIN_CMD
 docker tag sweetspot $IMAGE_NAME
 docker push $IMAGE_NAME
 exit_on_failure

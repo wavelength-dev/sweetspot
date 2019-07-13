@@ -13,7 +13,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (hiddenPriceId, idClass)
+import SweetSpot.Data.Constant (idClass)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByTagName, toParentNode)

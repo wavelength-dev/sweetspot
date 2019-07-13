@@ -3,7 +3,6 @@ module SweetSpot.Capability where
 import Prelude
 
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Either (Either)
 import Data.Maybe (Maybe)
 import SweetSpot.Data.Api (UserBucket)
 

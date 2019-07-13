@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7b39589f262d8dbae836fb2860e2201d76927e4034087e6088f4e8f9cd655821
+-- hash: 6cbd945c02dbdfc724c97f7ba0fdf42ee92093017e6fe04f59a399b992a375f4
 
 name:           sweetspot
 version:        0.1.0.0
@@ -53,6 +53,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , casing
+    , containers
     , contravariant
     , data-default
     , envy
@@ -70,6 +71,7 @@ library
     , lens-aeson
     , load-env
     , mtl
+    , mwc-random
     , purescript-bridge
     , random
     , scientific
@@ -81,6 +83,7 @@ library
     , time
     , transformers
     , utf8-string
+    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -102,6 +105,7 @@ executable bridge-exe
     , base >=4.7 && <5
     , bytestring
     , casing
+    , containers
     , contravariant
     , data-default
     , envy
@@ -119,6 +123,7 @@ executable bridge-exe
     , lens-aeson
     , load-env
     , mtl
+    , mwc-random
     , purescript-bridge
     , random
     , scientific
@@ -131,6 +136,7 @@ executable bridge-exe
     , time
     , transformers
     , utf8-string
+    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -151,6 +157,7 @@ executable sweetspot-exe
     , base >=4.7 && <5
     , bytestring
     , casing
+    , containers
     , contravariant
     , data-default
     , envy
@@ -168,6 +175,7 @@ executable sweetspot-exe
     , lens-aeson
     , load-env
     , mtl
+    , mwc-random
     , purescript-bridge
     , random
     , scientific
@@ -180,6 +188,7 @@ executable sweetspot-exe
     , time
     , transformers
     , utf8-string
+    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -202,6 +211,7 @@ test-suite sweetspot-test
     , base >=4.7 && <5
     , bytestring
     , casing
+    , containers
     , contravariant
     , data-default
     , envy
@@ -219,6 +229,7 @@ test-suite sweetspot-test
     , lens-aeson
     , load-env
     , mtl
+    , mwc-random
     , purescript-bridge
     , random
     , scientific
@@ -231,6 +242,7 @@ test-suite sweetspot-test
     , time
     , transformers
     , utf8-string
+    , vector
     , wai
     , wai-app-static
     , wai-cors

@@ -7,6 +7,8 @@ module SweetSpot.Data.Api where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (FromJSON(..), ToJSON(..))
+import Data.Scientific (Scientific)
+import Statistics.Types (Estimate(..), ConfInt(..))
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
@@ -128,10 +130,9 @@ data BucketStats = BucketStats
   , _bsBucketType :: !BucketType
   , _bsUserCount :: !Int
   , _bsImpressionCount :: !Int
-  , _bsConversionCount :: !Int
-  , _bsConversionRate :: !Double
   , _bsPrice :: !Price
   , _bsCost :: !Price
+  , _bsUserRevenues :: ![(UserId, Double)]
   } deriving (Eq, Generic, Show)
 
 makeLenses ''BucketStats
@@ -145,10 +146,10 @@ data ExperimentStats = ExperimentStats
   { _esExpId :: !ExpId
   , _esUserCount :: !Int
   , _esImpressionCount :: !Int
-  , _esConversionCount :: !Int
-  , _esConversionRate :: !Double
   , _esBuckets :: ![BucketStats]
   } deriving (Eq, Generic, Show)
+
+makeLenses ''ExperimentStats
 
 instance ToJSON ExperimentStats
 
@@ -162,6 +163,8 @@ data CampaignStats = CampaignStats
   , _csStartDate :: !(Maybe UTCTime)
   , _csEndDate :: !(Maybe UTCTime)
   , _csExperiments :: ![ExperimentStats]
+  , _csProfitPerUserControl :: !(Estimate ConfInt Double)
+  , _csProfitPerUserTest :: !(Estimate ConfInt Double)
   } deriving (Eq, Generic, Show)
 
 instance ToJSON CampaignStats

@@ -4,11 +4,27 @@
 module SweetSpot.Data.Domain where
 
 import Control.Lens.TH (makeLenses)
-import Data.Aeson (ToJSON)
+import Data.Aeson (ToJSON, FromJSON)
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import SweetSpot.Data.Common
+
+-- | ---------------------------------------------------------------------------
+-- | LineItem
+-- | ---------------------------------------------------------------------------
+data LineItem = LineItem
+  { _liProductId :: Pid
+  , _liVariantId :: Svid
+  , _liSku :: Sku
+  , _liQuantity :: Int
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''LineItem
+
+instance ToJSON LineItem
+
+instance FromJSON LineItem
 
 -- | ---------------------------------------------------------------------------
 -- | CheckoutEvent
@@ -19,7 +35,7 @@ data CheckoutEvent = CheckoutEvent
   , _chkBucketId :: !BucketId
   , _chkOrderId :: !OrderId
   , _chkTimestamp :: !UTCTime
-  , _chkLineItems :: ![Svid]
+  , _chkLineItems :: ![LineItem]
   } deriving (Eq, Generic, Show)
 
 makeLenses ''CheckoutEvent

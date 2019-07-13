@@ -2,8 +2,7 @@
 
 module SweetSpot.Database.Statements.Dashboard where
 
-import Control.Lens ((^..), (&))
-import Data.Aeson.Lens (values, key, _Integer)
+import Data.Aeson (fromJSON, Value, Result(..))
 import Data.Functor.Contravariant ((>$<))
 import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
@@ -11,7 +10,7 @@ import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))
 import SweetSpot.Data.Api (Experiment(..), Bucket(..))
 import SweetSpot.Data.Common
-import SweetSpot.Data.Domain (CheckoutEvent(..), Campaign(..))
+import SweetSpot.Data.Domain
 
 getCampaignStatement :: Statement CampaignId Campaign
 getCampaignStatement = Statement sql encoder decoder True
@@ -212,7 +211,11 @@ getCheckoutEventsForBucket = Statement sql encoder decoder True
           , _chkUserId = UserId $ fromIntegral userId
           , _chkBucketId = BucketId $ fromIntegral bucketId
           , _chkOrderId = OrderId $ fromIntegral orderId
-          , _chkLineItems =
-              lineItems ^.. values . key "variantId" . _Integer
-                & fmap (Svid . fromIntegral)
+          , _chkLineItems = parseLineItems lineItems
           }
+
+parseLineItems :: Value -> [LineItem]
+parseLineItems v =
+  case fromJSON v of
+    Success r -> r
+    Error _ -> []

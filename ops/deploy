@@ -28,12 +28,10 @@ echo "--"
 echo "=> Deploying SweetSpot to ${ENV}"
 
 # Injectable
-echo "=> Building injectables"
 cd injps/
 ./script/build $ENV
 exit_on_failure
 cd ..
-echo "=> Finished building injectables"
 
 # API
 echo "=> Building image"

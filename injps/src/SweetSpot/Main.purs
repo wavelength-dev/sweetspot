@@ -6,7 +6,7 @@ import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Effect (Effect)
-import Effect.Aff (Aff, apathize, launchAff_)
+import Effect.Aff (apathize, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
@@ -43,12 +43,14 @@ app = do
   attachPriceObserver buckets
   trackView (head buckets)
 
-main :: Aff Unit
-main = do
-  result <- (runAppM app)
-  case result of
-    Right _ -> pure unit
-    Left (ClientErr { message }) -> do
-      _ <- liftEffect $ unhidePrice
-      -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-      liftEffect $ launchAff_ $ apathize $ postLogPayload message
+main :: Effect Unit
+main =
+  launchAff_
+    $ do
+        result <- runAppM app
+        case result of
+          Right _ -> pure unit
+          Left (ClientErr { message }) -> do
+            _ <- liftEffect $ unhidePrice
+            -- If posting this log message fails there is little more we can do to report it so we ignore the result.
+            apathize $ postLogPayload message

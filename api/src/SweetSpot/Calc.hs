@@ -4,7 +4,7 @@ import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.List as L
 import Data.Map.Strict as M
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (fromJust)
 import Data.Scientific (Scientific, toRealFloat)
 import qualified Data.Vector.Unboxed as V
 import Statistics.Types (cl95, Estimate, ConfInt)
@@ -109,10 +109,15 @@ enhanceDBStats stats = do
       stats ^. dcsExperiments ^.. traverse & fmap enhanceDBExperimentStats
     bucketStats =
       enhancedExperiments ^.. traverse . esBuckets & mconcat
+
+    convertersControl = sampleForBucketType Control bucketStats
+    convertersTest = sampleForBucketType Control bucketStats
+
     nonConvertersControl = nonConvertersForBucketType Control bucketStats
     nonConvertersTest = nonConvertersForBucketType Test bucketStats
-    controlSample = V.fromList $ sampleForBucketType Control bucketStats <> nonConvertersControl
-    testSample = V.fromList $ sampleForBucketType Test bucketStats <> nonConvertersTest
+
+    controlSample = V.fromList $ convertersControl <> nonConvertersControl
+    testSample = V.fromList $ convertersTest <> nonConvertersTest
 
     nonConvertersForBucketType :: BucketType -> [BucketStats] -> [Double]
     nonConvertersForBucketType t bs =
@@ -120,8 +125,12 @@ enhanceDBStats stats = do
         & L.filter (\b -> b ^. bsBucketType == t)
         & fmap (^. bsUserCount)
         & sum
-        & ((-) (V.length controlSample))
-        & \count -> L.take 10 $ repeat 0.0
+        & ((-) convs)
+        & \count -> L.take count $ repeat 0.0
+      where
+        convs = case t of
+          Control -> L.length convertersControl
+          Test -> L.length convertersTest
 
 bootstrap :: GenIO -> V.Vector Double -> AppM (Estimate ConfInt Double)
 bootstrap gen sample = do

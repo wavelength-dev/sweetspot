@@ -7,7 +7,6 @@ module SweetSpot.Data.Api where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (FromJSON(..), ToJSON(..))
-import Data.Scientific (Scientific)
 import Statistics.Types (Estimate(..), ConfInt(..))
 import Data.Text (Text)
 import Data.Time (UTCTime)

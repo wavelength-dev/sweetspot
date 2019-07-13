@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array (catMaybes, length)
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
@@ -8,6 +9,8 @@ import Data.Foldable (traverse_)
 import Effect (Effect)
 import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
+import Effect.Class (liftEffect)
+import Effect.Exception (throw)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
 import SweetSpot.Capability (applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, setUserId)
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
@@ -48,9 +51,8 @@ main =
     $ do
         result <- runAppM app
         case result of
-          -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-          Right _ -> apathize $ postLogPayload "Successfully ran SweetSpot"
-          Left (ClientErr { message }) -> apathize $ postLogPayload message
+          Left (ClientErr { message }) -> liftEffect $ throw message
+          Right _ -> pure "Successfully ran SweetSpot"
   where
   logResult either = case either of
     -- If posting this log message fails there is little more we can do to report it so we ignore the result.

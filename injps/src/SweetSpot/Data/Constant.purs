@@ -1,6 +1,5 @@
 module SweetSpot.Data.Constant where
 
-import Data.String as S
 import Prelude ((<>))
 import SweetSpot.Env as Env
 
@@ -16,9 +15,8 @@ uidStorageKey ::
   String
 uidStorageKey = Env.uidStorageKey
 
-idClassPattern ::
-  S.Pattern
-idClassPattern = S.Pattern Env.idClassPattern
+idClass :: String
+idClass = Env.idClass
 
 eventEndpoint ::
   String

@@ -14,7 +14,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (hiddenPriceId, idClassPattern)
+import SweetSpot.Data.Constant (hiddenPriceId, idClass)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByClassName, getElementsByTagName, toParentNode)
@@ -95,7 +95,7 @@ getIdFromPriceElement :: Element -> Effect (Maybe String)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
-    match = A.find (S.contains idClassPattern) classNames
+    match = A.find (S.contains (S.Pattern idClassPattern)) classNames
 
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku

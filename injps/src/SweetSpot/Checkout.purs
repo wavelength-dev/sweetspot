@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Number (fromString)
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (Aff, Error, attempt, launchAff_)
+import Effect.Aff (Aff, Error, apathize, attempt, launchAff_)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, F, readArray, readNumber, readString, renderForeignError)
 import Foreign.Index (readProp, (!))
@@ -111,6 +111,6 @@ main :: Effect Unit
 main = launchAff_ $ do
   let err = getCheckoutStateIssues checkoutA checkoutB
   _ <- case err of
-    Just err' -> postLogPayload err'
+    Just err' -> apathize $ postLogPayload err'
     Nothing -> pure unit
   trackCheckout

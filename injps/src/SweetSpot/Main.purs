@@ -6,7 +6,7 @@ import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff, apathize, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
@@ -51,4 +51,4 @@ main = do
     Left (ClientErr { message }) -> do
       _ <- liftEffect $ unhidePrice
       -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-      liftEffect $ launchAff_ $ postLogPayload message
+      liftEffect $ launchAff_ $ apathize $ postLogPayload message

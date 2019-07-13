@@ -37,8 +37,8 @@ fetchUserBuckets mUid mCampaignId = do
     Right res -> M.text res >>= decodeUserBucket >>> pure
     Left err -> pure $ Left $ show err
 
-postLogPayload :: String -> Aff Unit
-postLogPayload msg = apathize $ fetch url opts
+postLogPayload :: String -> Aff M.Response
+postLogPayload msg = fetch url opts
   where
     url = (M.URL logEndpoint)
     opts =

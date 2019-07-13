@@ -1,15 +1,14 @@
 module SweetSpot.DOM where
 
 import Prelude
-import Data.Array (catMaybes, fold, head)
+import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Number.Format (toString)
 import Data.String as S
-import Data.Traversable (sequence, traverse)
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
@@ -17,7 +16,7 @@ import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, idClass)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
-import Web.DOM.Document (getElementsByClassName, getElementsByTagName, toParentNode)
+import Web.DOM.Document (getElementsByTagName, toParentNode)
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection as HC
 import Web.DOM.Internal.Types (Element, Node)
@@ -25,10 +24,10 @@ import Web.DOM.Node (setTextContent)
 import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelectorAll)
 import Web.Event.EventTarget (addEventListener, eventListener)
-import Web.HTML (window)
+import Web.HTML (HTMLElement, window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
-import Web.HTML.HTMLElement (classList, fromElement)
+import Web.HTML.HTMLElement (classList)
 import Web.HTML.Window (document)
 
 getDOMReady :: Aff Unit
@@ -44,7 +43,7 @@ collectPriceEls = do
   htmlDoc <- window >>= document
   let
     docNode = toParentNode <<< toDocument $ htmlDoc
-  priceNodes <- querySelectorAll (QuerySelector "[class*=supple__price]") docNode
+  priceNodes <- querySelectorAll (QuerySelector ("[class*=" <> idClass <> "]")) docNode
   nodesArray <- NL.toArray priceNodes
   pure $ catMaybes (map E.fromNode nodesArray)
 
@@ -81,8 +80,8 @@ swapCheckoutVariantId userBuckets elements = traverse_ swapCheckoutIds elements
     attrValue <- E.getAttribute "value" el
     pure $ attrValue >>= getMatchingUserBucket # map (\(UserBucket ub) -> ub._ubTestSvid)
 
-removeClass :: String -> Element -> Maybe (Effect Unit)
-removeClass className el = (classList >=> remove' className) <$> fromElement el
+removeClass :: String -> HTMLElement -> Effect Unit
+removeClass className = (classList >=> remove' className)
   where
   remove' = flip DTL.remove
 
@@ -95,18 +94,10 @@ getIdFromPriceElement :: Element -> Effect (Maybe String)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
-    match = A.find (S.contains (S.Pattern idClassPattern)) classNames
+    match = A.find (S.contains (S.Pattern idClass)) classNames
 
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
-
-unhidePrice :: Effect (Maybe Unit)
-unhidePrice = do
-  elements <- collectPriceEls
-  pure $ traverse_ removeHiddenPriceClass elements
-  where
-  removeHiddenPriceClass :: Element -> Maybe (Effect Unit)
-  removeHiddenPriceClass = removeClass hiddenPriceId
 
 setNodePrice :: Number -> Node -> Effect Unit
 setNodePrice price node = do

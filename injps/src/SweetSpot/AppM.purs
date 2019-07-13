@@ -3,7 +3,7 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
-import Data.Array (head)
+import Data.Array (catMaybes, head, length)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
@@ -11,10 +11,9 @@ import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number.Format (toString)
 import Data.String as S
-import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff, forkAff)
+import Effect.Aff (Aff, forkAff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
@@ -29,6 +28,7 @@ import Web.DOM.Element as E
 import Web.DOM.MutationObserver (mutationObserver, observe)
 import Web.DOM.MutationRecord (target)
 import Web.HTML (window)
+import Web.HTML.HTMLElement (fromElement)
 import Web.HTML.Location (search)
 import Web.HTML.Window (localStorage, location)
 import Web.Storage.Storage (getItem, setItem)
@@ -118,14 +118,20 @@ instance appCapabilityAppM :: AppCapability AppM where
           Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
           Just id -> pure $ Just id
 
-  -- We assume all elements with a hidden price also have a class identifying which SKU the price belongs to.
   applyPriceVariations userBuckets = do
-    els <- liftEffect collectPriceEls
-    liftEffect $ traverse_ (applyPriceVariation userBuckets) els
-    let res = traverse (removeClass hiddenPriceId) els
-    pure $ case res of
-      Nothing -> Nothing
-      Just _ -> Just unit
+    priceElements <- liftEffect collectPriceEls
+    let priceHTMLElements = catMaybes $ map fromElement priceElements
+    -- It's unlikely but possible not all collected Elements are HTMLElements
+    -- We should only add sweetspot ids to elements which are HTMLElements
+    -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
+    _ <-
+      liftEffect
+        $ if length priceElements /= length priceHTMLElements then
+            launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
+          else
+            pure unit
+    liftEffect $ traverse_ (applyPriceVariation userBuckets) priceElements
+    liftEffect $ traverse_ (removeClass hiddenPriceId) priceHTMLElements
 
   attachPriceObserver buckets = do
     priceElements <- liftEffect collectPriceEls

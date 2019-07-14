@@ -6,7 +6,7 @@ import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
@@ -67,10 +67,7 @@ swapCheckoutVariantId userBuckets elements = traverse_ swapCheckoutIds elements
   where
   swapCheckoutIds el =
     getOptionVariantId el
-      >>= ( \variantId -> case variantId of
-            Nothing -> pure unit
-            Just vId -> (E.setAttribute "value" (toString vId) el)
-        )
+      >>= \variantId -> maybe (pure unit) (\vId -> E.setAttribute "value" (toString vId) el) variantId
 
   getMatchingUserBucket :: String -> Maybe UserBucket
   getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets

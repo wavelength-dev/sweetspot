@@ -121,7 +121,7 @@ enhanceDBStats stats = do
     nonConvertersForBucketType :: BucketType -> [BucketStats] -> [Double]
     nonConvertersForBucketType t bs =
       bs
-        & L.filter (\b -> b ^. bsBucketType == t)
+        & L.filter ((== t) . (^. bsBucketType))
         & fmap (^. bsUserCount)
         & sum
         & ((-) convs)

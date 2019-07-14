@@ -58,6 +58,7 @@ dependencies:
 - wai-app-static
 - wai-cors
 - wai-extra
+- wai-logger
 - warp
 - wreq
 

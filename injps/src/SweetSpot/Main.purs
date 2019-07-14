@@ -1,7 +1,6 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Data.Array (catMaybes, length)
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))

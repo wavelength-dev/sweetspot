@@ -157,9 +157,9 @@ attachPriceObserver buckets = do
             case head mrs of
                 Nothing -> C.log "No mutation records"
                 Just mr -> target mr >>= \node ->
-                            case E.fromNode node of
-                                Nothing -> C.log "Node was not of type element"
-                                Just el -> applyPriceVariation buckets el
-                                )
+                  maybe
+                    (C.log  "Node was not of type element")
+                    (applyPriceVariation buckets)
+                    (E.fromNode node))
   muOb <- liftEffect $ mutationObserver cb
   liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb

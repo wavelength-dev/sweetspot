@@ -2,31 +2,23 @@
   DeriveGeneric, TypeOperators #-}
 
 import qualified Control.Concurrent as C
-import Control.Concurrent.MVar
-import Control.Exception (bracket)
 import Control.Lens hiding (Context)
-import Data.Aeson
-import Data.Aeson.Lens
-import Control.Lens
+import qualified Data.Aeson as JSON
+import qualified Data.ByteString.Lazy as BS
 import Data.List (nub)
-import Data.List.Lens
-import Data.Text (Text, unpack)
-import GHC.Generics
+import Data.Maybe (fromJust)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Types
-import Network.Wai
-import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 import Servant.Client
-import Servant.Server
 import Test.Hspec
 import Test.Hspec.Wai hiding (pending)
-import Test.Hspec.Wai.Matcher
 
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Route.Injectable (InjectableAPI)
-import SweetSpot.Server (rootAPI, runServer)
+import SweetSpot.Route.Dashboard (DashboardAPI)
+import SweetSpot.Server (runServer)
 
 import Database (reset)
 
@@ -44,8 +36,8 @@ businessLogicSpec =
           = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
     manager <- runIO $ newManager defaultManagerSettings
-    let clientEnv = mkClientEnv manager baseUrl
-
+    let
+      clientEnv = mkClientEnv manager baseUrl
     describe "GET /api/bucket" $ do
       it "should get buckets for an existing user" $ do
         result <- runClientM (getBucket Nothing (Just 1000)) clientEnv
@@ -107,6 +99,21 @@ businessLogicSpec =
         case result of
           Left err -> error (show err)
           Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` UserId 1000
+
+
+    describe "POST /api/event" $ do
+      evStr <- runIO $ BS.readFile "./test/data/events.json"
+      let evs = fromJust $ JSON.decode evStr :: JSON.Array
+          _ :<|> _ :<|> _ :<|> getStats = client (Proxy :: Proxy DashboardAPI)
+
+      it "should get valid campaign stats response" $ do
+        traverse (\val -> runClientM (postEvent val) clientEnv) evs
+        res <- runClientM (getStats "longv123") clientEnv
+        case res of
+          Right stats -> userCount `shouldBe` 1
+            where
+              userCount = stats ^. csExperiments ^?! ix 0 ^. esUserCount
+          Left err -> error (show err)
 
 main :: IO ()
 main = hspec businessLogicSpec

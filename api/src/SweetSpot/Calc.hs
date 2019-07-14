@@ -46,8 +46,7 @@ calcRev svid p = mapped . _2 %~ revenue . getMatchingPurchases
 sampleForBucketType :: BucketType -> [BucketStats] -> [Double]
 sampleForBucketType t bs =
   L.filter ((== t) . (^. bsBucketType)) bs
-    & fmap (^. bsUserRevenues)
-    & mconcat
+    & (>>= (^. bsUserRevenues))
     & groupByUser
     & fmap snd
 

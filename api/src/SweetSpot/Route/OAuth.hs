@@ -20,6 +20,7 @@ type RedirectRoute
 
 type OAuthAPI = "oauth" :> RedirectRoute
 
+-- | TODO: implement this properly
 redirectHandler ::
      Maybe Text
   -> Maybe Text

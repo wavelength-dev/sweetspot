@@ -91,7 +91,7 @@ swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elem
   getOptionVariantId :: Element -> Effect (Maybe Number)
   getOptionVariantId el = do
     attrValue <- E.getAttribute "data-varid" el
-    pure $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> ub._ubTestSvid)
+    pure $ attrValue >>= getMatchingUserBucket buckets # map \(UserBucket ub) -> ub._ubTestSvid
 
 swapLibertyPriceCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
@@ -121,7 +121,6 @@ getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
     match = A.find (S.contains (S.Pattern idClass)) classNames
-
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
 

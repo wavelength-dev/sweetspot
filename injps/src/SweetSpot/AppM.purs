@@ -79,9 +79,7 @@ applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
   let mBucket = mSku >>= (\sku -> A.find (\(UserBucket ub) -> ub._ubSku == sku) userBuckets)
-  case mBucket of
-       Nothing -> pure unit
-       Just (UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice
+  maybe (pure unit) (\(UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
   checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) userBuckets)
   liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
   where

@@ -9,7 +9,8 @@ module SweetSpot.Server
 
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
-import qualified Network.Wai.Handler.Warp as Warp
+import Network.Wai.Logger (withStdoutLogger)
+import Network.Wai.Handler.Warp (defaultSettings, setPort, runSettings, setLogger)
 import Servant
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Database (DbConfig(..), getDbPool, migrate)
@@ -83,4 +84,6 @@ runServer = do
 
     Right _ -> do
       L.info' appLogger "Listening on port 8082..."
-      Warp.run 8082 $ createApp ctx
+      withStdoutLogger $ \aplogger -> do
+        let settings = setPort 8082 $ setLogger aplogger defaultSettings
+        runSettings settings $ createApp ctx

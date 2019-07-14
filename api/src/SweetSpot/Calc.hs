@@ -124,8 +124,8 @@ enhanceDBStats stats = do
         & L.filter ((== t) . (^. bsBucketType))
         & fmap (^. bsUserCount)
         & sum
-        & ((-) convs)
-        & \count -> L.take count $ repeat 0.0
+        & (-) convs
+        & flip L.take (repeat 0.0)
       where
         convs = case t of
           Control -> L.length convertersControl

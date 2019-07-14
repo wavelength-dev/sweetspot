@@ -29,8 +29,8 @@ fetchUserBuckets mUid mCampaignId = do
       }
     qs = case Tuple mUid mCampaignId of
       Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid <> "&campaignId=" <> campaignId
-      Tuple (Just uid) _ -> "?uid=" <> uid
-      Tuple _ (Just campaignId) -> "?campaignId=" <> campaignId
+      Tuple (Just uid) Nothing -> "?uid=" <> uid
+      Tuple Nothing (Just campaignId) -> "?campaignId=" <> campaignId
       Tuple Nothing Nothing -> ""
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of

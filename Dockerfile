@@ -13,12 +13,18 @@ RUN stack --system-ghc build --only-dependencies --verbosity warn
 COPY ./api /opt/build
 RUN stack --system-ghc build --verbosity warn
 
+# Build the PureScript injectables
 FROM node:12 AS build-dist
 WORKDIR /opt/build-dist
+
+# Install build dependencies
 RUN yarn global add purescript spago
 COPY ./injps/package.json ./injps/yarn.lock ./
 RUN yarn install
 COPY ./injps/spago.dhall ./injps/packages.dhall ./
+RUN spago install
+
+# Compile, bundle and uglify our scripts
 COPY ./injps/src ./src
 COPY ./injps/test ./test
 RUN spago bundle-app --main SweetSpot.Main --to ./output/sweetspot-main.js

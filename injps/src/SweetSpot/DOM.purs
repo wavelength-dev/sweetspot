@@ -44,8 +44,8 @@ collectPriceEls = do
   htmlDoc <- window >>= document
   let
     docNode = toParentNode <<< toDocument $ htmlDoc
-  priceNodes <- querySelectorAll (QuerySelector ("[class*=" <> idClass <> "]")) docNode
-  nodesArray <- NL.toArray priceNodes
+  checkoutOptionNodes <- querySelectorAll (QuerySelector ("[class*=" <> idClass <> "]")) docNode
+  nodesArray <- NL.toArray checkoutOptionNodes
   pure $ catMaybes (map E.fromNode nodesArray)
 
 collectCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
@@ -60,20 +60,51 @@ collectCheckoutOptions variantIds = do
     optionId <- E.getAttribute "value" el
     pure $ maybe false (\id -> A.elem (readFloat id) variantIds) optionId
 
-swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
-swapCheckoutVariantId userBuckets elements = traverse_ swapCheckoutIds elements
+collectLongvadonCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
+collectLongvadonCheckoutOptions variantIds = do
+  htmlDoc <- window >>= document
+  let
+    docNode = toParentNode <<< toDocument $ htmlDoc
+  checkoutOptionNodes <- querySelectorAll (QuerySelector "[data-varid]") docNode
+  nodesArray <- NL.toArray checkoutOptionNodes
+  -- We expect these elements to be divs, div nodes can be converted to Element, so we ignore nodes which can not be converted to elements, as they shouldn't exist.
+  let
+    elements = catMaybes (map E.fromNode nodesArray)
+  A.filterA getIsKnownVariantOption elements
   where
+  getIsKnownVariantOption :: Element -> Effect Boolean
+  getIsKnownVariantOption el = do
+    dataVarid <- E.getAttribute "data-varid" el
+    pure $ maybe false (\id -> A.elem (readFloat id) variantIds) dataVarid
+
+getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
+getMatchingUserBucket buckets id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) buckets
+
+swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
+swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements
+  where
+  swapCheckoutIds :: Element -> Effect Unit
+  swapCheckoutIds el =
+    getOptionVariantId el
+      >>= \variantId -> maybe (pure unit) (\vId -> E.setAttribute "data-varid" (toString vId) el) variantId
+
+  getOptionVariantId :: Element -> Effect (Maybe Number)
+  getOptionVariantId el = do
+    attrValue <- E.getAttribute "data-varid" el
+    pure $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> ub._ubTestSvid)
+
+swapLibertyPriceCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
+swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
+  where
+  swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el =
     getOptionVariantId el
       >>= \variantId -> maybe (pure unit) (\vId -> E.setAttribute "value" (toString vId) el) variantId
 
-  getMatchingUserBucket :: String -> Maybe UserBucket
-  getMatchingUserBucket id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) userBuckets
-
   getOptionVariantId :: Element -> Effect (Maybe Number)
   getOptionVariantId el = do
     attrValue <- E.getAttribute "value" el
-    pure $ attrValue >>= getMatchingUserBucket # map (\(UserBucket ub) -> ub._ubTestSvid)
+    pure $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> ub._ubTestSvid)
 
 removeClass :: String -> HTMLElement -> Effect Unit
 removeClass className = (classList >=> remove' className)

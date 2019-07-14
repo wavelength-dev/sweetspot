@@ -101,6 +101,8 @@ makeLenses ''ExperimentBuckets
 
 instance ToJSON ExperimentBuckets
 
+instance FromJSON ExperimentBuckets
+
 -- | ---------------------------------------------------------------------------
 -- | UserBucket
 -- | ---------------------------------------------------------------------------
@@ -138,6 +140,8 @@ makeLenses ''BucketStats
 
 instance ToJSON BucketStats
 
+instance FromJSON BucketStats
+
 -- | ---------------------------------------------------------------------------
 -- | ExperimentStats
 -- | ---------------------------------------------------------------------------
@@ -151,6 +155,8 @@ data ExperimentStats = ExperimentStats
 makeLenses ''ExperimentStats
 
 instance ToJSON ExperimentStats
+
+instance FromJSON ExperimentStats
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignStats
@@ -166,7 +172,11 @@ data CampaignStats = CampaignStats
   , _csProfitPerUserTest :: !(Estimate ConfInt Double)
   } deriving (Eq, Generic, Show)
 
+makeLenses ''CampaignStats
+
 instance ToJSON CampaignStats
+
+instance FromJSON CampaignStats
 
 -- | ---------------------------------------------------------------------------
 -- | CreateExperiment

@@ -13,7 +13,7 @@ import Network.Wai.Middleware.Gzip
   )
 import Network.Wai.Middleware.HttpAuth (basicAuth)
 import Network.Wai.Middleware.Routed (routedMiddleware)
-import SweetSpot.AppM (AppCtx)
+import SweetSpot.AppM (AppConfig(..), AppCtx(..))
 import SweetSpot.Route.Injectable (experimentShield)
 
 -- WAI doesn't seem to want to know about routing.
@@ -30,4 +30,10 @@ auth = routedMiddleware ("dashboard" `elem`) mw
     mw = basicAuth check "Dashboard realm"
 
 getMiddleware :: AppCtx -> Middleware
-getMiddleware ctx = gzipStatic . auth . experimentShield ctx
+getMiddleware ctx =
+  -- Disable auth in dev for ease of testing
+  if env == "dev"
+    then gzipStatic . experimentShield ctx
+    else gzipStatic . auth . experimentShield ctx
+  where
+    env = environment . _getConfig $ ctx

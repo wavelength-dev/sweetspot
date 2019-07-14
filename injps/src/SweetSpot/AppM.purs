@@ -18,7 +18,16 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapCheckoutVariantId)
+import SweetSpot.DOM
+  ( collectCheckoutOptions
+  , collectLongvadonCheckoutOptions
+  , collectPriceEls
+  , getIdFromPriceElement
+  , removeClass
+  , setPrice
+  , swapLibertyPriceCheckoutVariantId
+  , swapLongvadonCheckoutVariantId
+  )
 import SweetSpot.Data.Api (UserBucket(..))
 import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
@@ -61,6 +70,11 @@ parseCampaignId qs =
   in
    match >>= flip A.index 1
 
+mutateProductSource :: (NonEmptyArray UserBucket) -> AppM Unit
+mutateProductSource buckets = liftEffect $ do
+  elements <- collectLongvadonCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) buckets)
+  swapLongvadonCheckoutVariantId buckets elements
+
 applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
@@ -69,7 +83,7 @@ applyPriceVariation userBuckets el = do
        Nothing -> pure unit
        Just (UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice
   checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) userBuckets)
-  liftEffect $ swapCheckoutVariantId userBuckets checkoutOptions
+  liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
   where
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do

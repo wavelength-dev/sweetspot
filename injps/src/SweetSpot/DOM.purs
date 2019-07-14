@@ -1,6 +1,7 @@
 module SweetSpot.DOM where
 
 import Prelude
+
 import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -57,10 +58,7 @@ collectCheckoutOptions variantIds = do
   getIsKnownVariantOption :: Element -> Effect Boolean
   getIsKnownVariantOption el = do
     optionId <- E.getAttribute "value" el
-    pure
-      $ case optionId of
-          Nothing -> false
-          Just id -> A.elem (readFloat id) variantIds
+    pure $ maybe false (\id -> A.elem (readFloat id) variantIds) optionId
 
 swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapCheckoutVariantId userBuckets elements = traverse_ swapCheckoutIds elements

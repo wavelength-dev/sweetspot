@@ -11,8 +11,17 @@ import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ClientErr(..), runAppM)
-import SweetSpot.Capability (applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, setUserId)
+import SweetSpot.AppM ( AppM
+                      , ClientErr(..)
+                      , runAppM
+                      , applyPriceVariations
+                      , attachPriceObserver
+                      , ensureCampaign
+                      , ensureDeps
+                      , getUserBuckets
+                      , getUserId
+                      , setUserId
+                      )
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
 import SweetSpot.Data.Constant (hiddenPriceId)
 import SweetSpot.Event (trackView)

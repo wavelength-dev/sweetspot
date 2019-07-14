@@ -17,7 +17,6 @@ import Effect.Aff (Aff, forkAff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
-import SweetSpot.Capability (class AppCapability)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
@@ -80,68 +79,75 @@ applyPriceVariation userBuckets el = do
         Just true -> setPrice variantPrice el
         _ -> pure unit
 
-instance appCapabilityAppM :: AppCapability AppM where
-  ensureDeps =
-    case Tuple promise fetch of
-      Tuple true true -> pure unit
-      Tuple _ _ ->
-        throwError (ClientErr { message: "Missing required dependencies"
-                              , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
-                              })
-   where
-     promise = hasPromise
-     fetch = hasFetch
+ensureDeps :: AppM Unit
+ensureDeps =
+  case Tuple promise fetch of
+    Tuple true true -> pure unit
+    Tuple _ _ ->
+      throwError (ClientErr { message: "Missing required dependencies"
+                            , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
+                            })
+  where
+    promise = hasPromise
+    fetch = hasFetch
 
-  getUserId = liftEffect $ window >>= localStorage >>= getItem uidStorageKey
+getUserId :: AppM (Maybe String)
+getUserId = liftEffect $ window >>= localStorage >>= getItem uidStorageKey
 
-  setUserId (UserBucket b) =
-    liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
+setUserId :: UserBucket -> AppM Unit
+setUserId (UserBucket b) =
+  liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
-  getUserBuckets uid campaignId = do
-    mBuckets <- liftAff $ fetchUserBuckets uid campaignId
-    case fromArray <$> mBuckets of
-      Right Nothing -> throwError (ClientErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
-      Right (Just buckets) -> pure buckets
-      Left err -> throwError (ClientErr { message: "Error fetching user buckets", payload: err })
+getUserBuckets :: Maybe String -> Maybe String -> AppM (NonEmptyArray UserBucket)
+getUserBuckets uid campaignId = do
+  mBuckets <- liftAff $ fetchUserBuckets uid campaignId
+  case fromArray <$> mBuckets of
+    Right Nothing -> throwError (ClientErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
+    Right (Just buckets) -> pure buckets
+    Left err -> throwError (ClientErr { message: "Error fetching user buckets", payload: err })
 
-  log msg = do
-    -- Fork aff since we don't care about result
-    _ <- liftAff $ forkAff $ postLogPayload msg
-    liftEffect $ C.log msg
+log :: String -> AppM Unit
+log msg = do
+  -- Fork aff since we don't care about result
+  _ <- liftAff $ forkAff $ postLogPayload msg
+  liftEffect $ C.log msg
 
-  ensureCampaign mUid = do
-    case mUid of
-      Just _ -> pure Nothing
-      Nothing -> do
-        campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
-        case campaignId of
-          Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
-          Just id -> pure $ Just id
+ensureCampaign :: Maybe String -> AppM (Maybe String)
+ensureCampaign mUid = do
+  case mUid of
+    Just _ -> pure Nothing
+    Nothing -> do
+      campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
+      case campaignId of
+        Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
+        Just id -> pure $ Just id
 
-  applyPriceVariations userBuckets = do
-    priceElements <- liftEffect collectPriceEls
-    let priceHTMLElements = catMaybes $ map fromElement priceElements
-    -- It's unlikely but possible not all collected Elements are HTMLElements
-    -- We should only add sweetspot ids to elements which are HTMLElements
-    -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
-    _ <-
-      liftEffect
-        $ if length priceElements /= length priceHTMLElements then
-            launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
-          else
-            pure unit
-    liftEffect $ traverse_ (applyPriceVariation userBuckets) priceElements
-    liftEffect $ traverse_ (removeClass hiddenPriceId) priceHTMLElements
+applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit
+applyPriceVariations userBuckets = do
+  priceElements <- liftEffect collectPriceEls
+  let priceHTMLElements = catMaybes $ map fromElement priceElements
+  -- It's unlikely but possible not all collected Elements are HTMLElements
+  -- We should only add sweetspot ids to elements which are HTMLElements
+  -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
+  _ <-
+    liftEffect
+      $ if length priceElements /= length priceHTMLElements then
+          launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
+        else
+          pure unit
+  liftEffect $ traverse_ (applyPriceVariation userBuckets) priceElements
+  liftEffect $ traverse_ (removeClass hiddenPriceId) priceHTMLElements
 
-  attachPriceObserver buckets = do
-    priceElements <- liftEffect collectPriceEls
-    let cb = (\mrs _ ->
-             case head mrs of
-                  Nothing -> C.log "No mutation records"
-                  Just mr -> target mr >>= \node ->
-                             case E.fromNode node of
-                                  Nothing -> C.log "Node was not of type element"
-                                  Just el -> applyPriceVariation buckets el
-                                  )
-    muOb <- liftEffect $ mutationObserver cb
-    liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb
+attachPriceObserver :: (NonEmptyArray UserBucket) -> AppM Unit
+attachPriceObserver buckets = do
+  priceElements <- liftEffect collectPriceEls
+  let cb = (\mrs _ ->
+            case head mrs of
+                Nothing -> C.log "No mutation records"
+                Just mr -> target mr >>= \node ->
+                            case E.fromNode node of
+                                Nothing -> C.log "Node was not of type element"
+                                Just el -> applyPriceVariation buckets el
+                                )
+  muOb <- liftEffect $ mutationObserver cb
+  liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb

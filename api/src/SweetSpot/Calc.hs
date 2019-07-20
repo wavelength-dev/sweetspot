@@ -124,7 +124,7 @@ enhanceDBStats stats = do
         & L.filter ((== t) . (^. bsBucketType))
         & fmap (^. bsUserCount)
         & sum
-        & (-) convs
+        & flip (-) convs
         & flip L.take (repeat 0.0)
       where
         convs = case t of

@@ -75,8 +75,8 @@ detectPage = window >>= location >>= pathname >>= pure <<< getPage
       | test homeUrlRegex path = Home
       | otherwise = Unknown
 
-trackView :: UserBucket -> AppM Unit
-trackView (UserBucket { _ubExpId, _ubBucketId }) = do
+trackView :: AppM Unit
+trackView = do
   userId <- getUserId
   viewEvent <- liftEffect $ do
     page <- detectPage
@@ -85,6 +85,6 @@ trackView (UserBucket { _ubExpId, _ubBucketId }) = do
     let
       productIds = (map _.id) <$> products
       productId = productIds >>= A.head
-    pure { page, pageUrl, expId: _ubExpId, userId, bucketId: _ubBucketId, productId, productIds }
+    pure { page, pageUrl, userId, productId, productIds }
   _ <- liftAff $ forkAff $ postEventPayload viewEvent
   pure unit

@@ -52,7 +52,7 @@ app = do
   setUserId (head buckets)
   applyPriceVariations buckets
   attachPriceObserver buckets
-  trackView (head buckets)
+  trackView
 
 main :: Effect Unit
 main =

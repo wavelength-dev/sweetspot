@@ -17,9 +17,7 @@ instance showPage :: Show Page where
     Unknown -> "unknown"
 
 type ViewEvent =
-  { expId :: Number
-  , bucketId :: Number
-  , page :: Page
+  { page :: Page
   , pageUrl :: String
   , userId :: Maybe String
   , productIds :: Maybe (Array Number)

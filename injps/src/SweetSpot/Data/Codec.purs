@@ -46,7 +46,6 @@ encodeViewEvent :: ViewEvent -> Json
 encodeViewEvent ve =
   "page" := (show ve.page)
   ~> "pageUrl" := ve.pageUrl
-  ~> "expId" := ve.expId
   ~> "userId" := ve.userId
   ~> "productId" := ve.productId
   ~> "productIds" := ve.productIds

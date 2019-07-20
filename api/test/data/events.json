@@ -9,7 +9,7 @@
     "lineItems": [
       {
         "productId": 123456,
-        "variantId": 12502066561095,
+        "variantId": 12502066561096,
         "sku": "714449933422",
         "quantity": 1
       }
@@ -25,39 +25,7 @@
     "lineItems": [
       {
         "productId": 123456,
-        "variantId": 12502066561095,
-        "sku": "714449933422",
-        "quantity": 1
-      }
-    ]
-  },
-  {
-    "page": "checkout",
-    "pageUrl": "https://sweetspot.com/checkout",
-    "step": "thank_you",
-    "token": "fesdf125",
-    "userId": 1000,
-    "orderId": 1001,
-    "lineItems": [
-      {
-        "productId": 123456,
-        "variantId": 12502066561095,
-        "sku": "714449933422",
-        "quantity": 1
-      }
-    ]
-  },
-  {
-    "page": "checkout",
-    "pageUrl": "https://sweetspot.com/checkout",
-    "step": "thank_you",
-    "token": "fesdf126",
-    "userId": 1000,
-    "orderId": 1001,
-    "lineItems": [
-      {
-        "productId": 123456,
-        "variantId": 12502066561095,
+        "variantId": 12502066561096,
         "sku": "714449933422",
         "quantity": 1
       }
@@ -73,10 +41,125 @@
     "lineItems": [
       {
         "productId": 123456,
-        "variantId": 12502066561095,
+        "variantId": 12502066561096,
         "sku": "714449933422",
         "quantity": 1
       }
     ]
+  },
+  {
+    "page": "checkout",
+    "pageUrl": "https://sweetspot.com/checkout",
+    "step": "thank_you",
+    "token": "fesdf123",
+    "userId": 1000,
+    "orderId": 1001,
+    "lineItems": [
+      {
+        "productId": 123456,
+        "variantId": 12502066561096,
+        "sku": "714449933422",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "page": "checkout",
+    "pageUrl": "https://sweetspot.com/checkout",
+    "step": "thank_you",
+    "token": "fesdf124",
+    "userId": 1000,
+    "orderId": 1001,
+    "lineItems": [
+      {
+        "productId": 123456,
+        "variantId": 12502066561096,
+        "sku": "714449933422",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "page": "checkout",
+    "pageUrl": "https://sweetspot.com/checkout",
+    "step": "thank_you",
+    "token": "fesdf125",
+    "userId": 1000,
+    "orderId": 1001,
+    "lineItems": [
+      {
+        "productId": 123456,
+        "variantId": 12502066561096,
+        "sku": "714449933422",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "page": "checkout",
+    "pageUrl": "https://sweetspot.com/checkout",
+    "step": "thank_you",
+    "token": "fesdf126",
+    "userId": 1000,
+    "orderId": 1001,
+    "lineItems": [
+      {
+        "productId": 123456,
+        "variantId": 12502066561096,
+        "sku": "714449933422",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "page": "checkout",
+    "pageUrl": "https://sweetspot.com/checkout",
+    "step": "thank_you",
+    "token": "fesdf127",
+    "userId": 1000,
+    "orderId": 1001,
+    "lineItems": [
+      {
+        "productId": 123456,
+        "variantId": 12502066561096,
+        "sku": "714449933422",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "page": "product",
+    "pageUrl": "https://sweetspot.com/cool-product",
+    "userId": 1000,
+    "productId": 123456,
+    "productIds": [123456]
+  },
+  {
+    "page": "product",
+    "pageUrl": "https://sweetspot.com/cool-product",
+    "userId": 1000,
+    "productId": 123456,
+    "productIds": [123456]
+  },
+  {
+    "page": "product",
+    "pageUrl": "https://sweetspot.com/cool-product",
+    "userId": 1000,
+    "productId": 123456,
+    "productIds": [123456]
+  },
+  {
+    "page": "product",
+    "pageUrl": "https://sweetspot.com/cool-product",
+    "userId": 1000,
+    "productId": 123456,
+    "productIds": [123456]
+  },
+  {
+    "page": "product",
+    "pageUrl": "https://sweetspot.com/cool-product",
+    "userId": 1000,
+    "productId": 123456,
+    "productIds": [123456]
   }
 ]

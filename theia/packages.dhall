@@ -114,7 +114,9 @@ let mkPackage =
 let upstream =
       https://raw.githubusercontent.com/purescript/package-sets/psc-0.13.2-20190715/src/packages.dhall sha256:906af79ba3aec7f429b107fd8d12e8a29426db8229d228c6f992b58151e2308e
 
-let overrides = {=}
+let overrides =
+  { toppokki =
+      upstream.toppokki // { repo = "https://github.com/alextes/purescript-toppokki", version = "master" } }
 
 let additions = {=}
 

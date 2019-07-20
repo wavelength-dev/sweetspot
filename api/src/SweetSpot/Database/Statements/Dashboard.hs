@@ -176,8 +176,8 @@ getBucketImpressionCountStatement = Statement sql encoder decoder True
     sql =
       mconcat
         [ "SELECT COUNT(*) FROM events AS e "
-        , "JOIN bucket_users AS bu ON bu.user_id = (e.payload->>'userId')::int "
-        , "WHERE type = 'view' AND bu.bucket_id = $1;"
+        , "WHERE type = 'view' AND (e.payload->>'userId')::int IN "
+        , "(SELECT DISTINCT(bu.user_id) FROM bucket_users bu WHERE bu.bucket_id = $1);"
         ]
     encoder = toDatabaseInt >$< Encoders.param Encoders.int8
     decoder =
@@ -218,4 +218,4 @@ parseLineItems :: Value -> [LineItem]
 parseLineItems v =
   case fromJSON v of
     Success r -> r
-    Error _ -> []
+    Error err -> error err

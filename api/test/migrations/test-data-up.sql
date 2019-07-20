@@ -30,16 +30,16 @@ INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('expired_campaign
 INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('not_yet_active_campaign', 1003);
 
 -- longv123
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90, 100.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1001, 'test', 12502066561095, 12502066561096, 249.90, 159.23);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1002, 'control', 12502066561095, 12502066561097, 249.90, 159.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1003, 'test', 12502066561095, 12502066561098, 249.90, 159.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1000, 'control', 12502066561095, 12502066561095, 197.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1001, 'test', 12502066561095, 12502066561096, 249.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1002, 'control', 12502066561095, 12502066561097, 249.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1003, 'test', 12502066561095, 12502066561098, 249.90);
 -- expired_campaign
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1004, 'control', 12502066561095, 12502066561099, 349.90, 229.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1005, 'test', 12502066561095, 12502066561010, 399.90, 249.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1004, 'control', 12502066561095, 12502066561099, 349.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1005, 'test', 12502066561095, 12502066561010, 399.90);
 -- not_yet_active_campaign
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1006, 'control', 12502066561095, 12502066561011, 549.90, 300.00);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, cost) VALUES (1007, 'test', 12502066561095, 12502066561012, 599.90, 459.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1006, 'control', 12502066561095, 12502066561011, 549.90);
+INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price) VALUES (1007, 'test', 12502066561095, 12502066561012, 599.90);
 
 -- longv123
 INSERT INTO bucket_users (bucket_id, user_id) VALUES (1001, 1000);

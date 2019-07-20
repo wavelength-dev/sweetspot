@@ -119,7 +119,7 @@ businessLogicSpec =
         traverse (\val -> runClientM (postEvent val) clientEnv) evs
         res <- runClientM (getStats "longv123") clientEnv
         case res of
-          Right stats -> x `shouldBe` 1999.2
+          Right stats -> x `shouldBe` 1999.2 -- 8 * 249.90
             where
               x = stats ^. csExperiments ^?! ix 0 ^. esBuckets
                 ^?! ix 1 ^. bsUserRevenues ^?! ix 0 ^. _2

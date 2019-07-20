@@ -79,7 +79,6 @@ data DBBucketStats = DBBucketStats
   , _dbsImpressionCount :: !Int
   , _dbsCheckoutEvents :: ![CheckoutEvent]
   , _dbsPrice :: !Price
-  , _dbsCost :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''DBBucketStats

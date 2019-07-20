@@ -87,7 +87,6 @@ getBucketStats b = do
     , _dbsImpressionCount = impressions
     , _dbsCheckoutEvents = checkouts
     , _dbsPrice = b ^. bPrice
-    , _dbsCost = b ^. bCost
     }
 
 getExperimentStats :: Experiment -> Session DBExperimentStats

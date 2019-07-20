@@ -18,8 +18,7 @@ CREATE TABLE buckets
  bucket_type TEXT NOT NULL,
  original_svid BIGINT,
  test_svid BIGINT,
- price NUMERIC(12, 2),
- cost NUMERIC(12, 2));
+ price NUMERIC(12, 2));
 
 CREATE TABLE bucket_users
 (bucket_id SERIAL REFERENCES buckets(bucket_id),

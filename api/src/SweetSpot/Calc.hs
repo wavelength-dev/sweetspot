@@ -20,9 +20,6 @@ conversionRate :: Int -> Int -> Double
 conversionRate conversions users =
   (fromIntegral conversions) / (fromIntegral users)
 
-getMargin :: Price -> Price -> Scientific
-getMargin (Price price) (Price cost) = price - cost
-
 findType :: BucketType -> [BucketStats] -> BucketStats
 findType t stats = fromJust $ L.find ((== t) . (^. bsBucketType)) stats
 
@@ -58,7 +55,6 @@ enhanceDBBucketStats stats =
         , _bsUserCount = stats ^. dbsUserCount
         , _bsImpressionCount = stats ^. dbsImpressionCount
         , _bsPrice = stats ^. dbsPrice
-        , _bsCost = stats ^. dbsCost
         , _bsUserRevenues = userRevenues
         }
     where

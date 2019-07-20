@@ -106,13 +106,23 @@ businessLogicSpec =
       let evs = fromJust $ JSON.decode evStr :: JSON.Array
           _ :<|> _ :<|> _ :<|> getStats = client (Proxy :: Proxy DashboardAPI)
 
-      it "should get valid campaign stats response" $ do
+      it "should get correct impression count" $ do
         traverse (\val -> runClientM (postEvent val) clientEnv) evs
         res <- runClientM (getStats "longv123") clientEnv
         case res of
-          Right stats -> userCount `shouldBe` 1
+          Right stats -> impressions `shouldBe` 5
             where
-              userCount = stats ^. csExperiments ^?! ix 0 ^. esUserCount
+              impressions = stats ^. csExperiments ^?! ix 0 ^. esImpressionCount
+          Left err -> error (show err)
+
+      it "should track user revenue" $ do
+        traverse (\val -> runClientM (postEvent val) clientEnv) evs
+        res <- runClientM (getStats "longv123") clientEnv
+        case res of
+          Right stats -> x `shouldBe` 1999.2
+            where
+              x = stats ^. csExperiments ^?! ix 0 ^. esBuckets
+                ^?! ix 1 ^. bsUserRevenues ^?! ix 0 ^. _2
           Left err -> error (show err)
 
 main :: IO ()

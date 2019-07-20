@@ -1,10 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module SweetSpot.Data.Domain where
 
 import Control.Lens.TH (makeLenses)
-import Data.Aeson (ToJSON, FromJSON)
+import Data.Aeson (ToJSON, FromJSON(..), withObject, (.:))
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
@@ -24,7 +25,18 @@ makeLenses ''LineItem
 
 instance ToJSON LineItem
 
-instance FromJSON LineItem
+instance FromJSON LineItem where
+  parseJSON = withObject "LineItem" $ \o -> do
+    pid <- o .: "productId"
+    svid <- o .: "variantId"
+    sku <- o .: "sku"
+    quantity <- o .: "quantity"
+    return LineItem
+      { _liProductId = Pid pid
+      , _liVariantId = Svid svid
+      , _liSku = Sku sku
+      , _liQuantity = quantity
+      }
 
 -- | ---------------------------------------------------------------------------
 -- | CheckoutEvent

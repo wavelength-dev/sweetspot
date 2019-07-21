@@ -2,6 +2,7 @@ module SweetSpot.AppM where
 
 import Prelude
 
+import Control.Monad (when)
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array (catMaybes, head, length)
 import Data.Array as A
@@ -18,18 +19,9 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM
-  ( collectCheckoutOptions
-  , collectLongvadonCheckoutOptions
-  , collectPriceEls
-  , getIdFromPriceElement
-  , removeClass
-  , setPrice
-  , swapLibertyPriceCheckoutVariantId
-  , swapLongvadonCheckoutVariantId
-  )
+import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey)
+import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
@@ -163,3 +155,14 @@ attachPriceObserver buckets = do
                     (E.fromNode node))
   muOb <- liftEffect $ mutationObserver cb
   liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb
+
+applyFacadeUrl :: AppM Unit
+applyFacadeUrl = liftEffect $ do
+  path <- getPathname
+  when (isMatch path) (replacePathname $ strip path)
+  where
+    strip path = fromMaybe path $ S.stripSuffix (S.Pattern variantUrlPattern) path
+    isMatch =
+      S.split (S.Pattern "/")
+        >>> A.last
+        >>> maybe false (S.contains (S.Pattern variantUrlPattern))

@@ -23,3 +23,6 @@ logEndpoint = Env.apiURL <> "/log"
 
 experimentEndpoint :: String
 experimentEndpoint = Env.apiURL <> "/bucket"
+
+variantUrlPattern :: String
+variantUrlPattern = "-ssvid"

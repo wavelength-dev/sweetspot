@@ -54,7 +54,7 @@ runAppM (AppM m) = runExceptT m
 parseCampaignId :: String -> Maybe String
 parseCampaignId qs =
   let
-    clean = S.drop 1 qs
+    clean = fromMaybe qs (S.stripPrefix (S.Pattern "?") qs)
     kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
     campaignPred = \arr -> maybe false ((==) campaignIdQueryParam) (A.index arr 0)
     match = A.find campaignPred kvPairs

@@ -16,7 +16,6 @@
     , "prelude"
     , "psci-support"
     , "spec"
-    , "tuples"
     , "web-dom"
     , "web-html"
     , "web-storage"

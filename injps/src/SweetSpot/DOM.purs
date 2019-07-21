@@ -112,7 +112,7 @@ swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
       (Just variantId), Live -> E.setAttribute "value" variantId el
 
 removeClass :: String -> HTMLElement -> Effect Unit
-removeClass className = (classList >=> remove' className)
+removeClass className = classList >=> remove' className
   where
   remove' = flip DTL.remove
 

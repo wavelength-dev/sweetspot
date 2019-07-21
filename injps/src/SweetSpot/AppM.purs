@@ -78,15 +78,14 @@ applyPriceVariation userBuckets el = do
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do
       mSku <- getIdFromPriceElement el
-      match <- pure $ ((==) variantSku) <$> mSku
-      case match of
-        Just true -> case dryRunMode of
-                            DryRun -> do
-                               nf <- numberFormat
-                               formattedPrice <- formatNumber variantPrice nf
-                               E.setAttribute "ssdr__price" formattedPrice el
-                            Live -> setPrice variantPrice el
-        _ -> pure unit
+      let match = maybe false ((==) variantSku) mSku
+      case match, dryRunMode of
+        true, DryRun -> do
+          nf <- numberFormat
+          formattedPrice <- formatNumber variantPrice nf
+          E.setAttribute "ssdr__price" formattedPrice el
+        true, Live -> setPrice variantPrice el
+        _, _ -> pure unit
 
 ensureDeps :: AppM Unit
 ensureDeps =

@@ -29,3 +29,10 @@ variantUrlPattern = "-ssvid"
 
 campaignIdQueryParam :: String
 campaignIdQueryParam = "sscid"
+
+data DryRunMode
+  = DryRun
+  | Live
+
+dryRunMode :: DryRunMode
+dryRunMode = DryRun

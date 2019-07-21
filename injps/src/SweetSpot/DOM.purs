@@ -1,7 +1,6 @@
 module SweetSpot.DOM where
 
 import Prelude
-
 import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -10,11 +9,12 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (idClass)
+import SweetSpot.Data.Constant (DryRunMode(..), dryRunMode, idClass)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByTagName, toParentNode)
@@ -26,7 +26,6 @@ import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelectorAll)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (HTMLElement, window)
-import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
 import Web.HTML.HTMLElement (classList)
@@ -81,33 +80,37 @@ collectLongvadonCheckoutOptions variantIds = do
     pure $ maybe false (\id -> A.elem (readFloat id) variantIds) dataVarid
 
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
-getMatchingUserBucket buckets id = A.find (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id)) buckets
+getMatchingUserBucket buckets id =
+  A.find
+    (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id))
+    buckets
+
+getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
+getOptionVariantId buckets attribute el = do
+  attrValue <- E.getAttribute attribute el
+  pure $ map toString $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> ub._ubTestSvid)
 
 swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements
   where
   swapCheckoutIds :: Element -> Effect Unit
-  swapCheckoutIds el =
-    getOptionVariantId el
-      >>= maybe (pure unit) (\vId -> E.setAttribute "data-varid" (toString vId) el)
-
-  getOptionVariantId :: Element -> Effect (Maybe Number)
-  getOptionVariantId el = do
-    attrValue <- E.getAttribute "data-varid" el
-    pure $ attrValue >>= getMatchingUserBucket buckets # map \(UserBucket ub) -> ub._ubTestSvid
+  swapCheckoutIds el = do
+    mVariantId <- getOptionVariantId buckets "data-varid" el
+    case Tuple mVariantId dryRunMode of
+      Tuple Nothing _ -> pure unit
+      Tuple (Just variantId) DryRun -> E.setAttribute "ssdr__data-varid" variantId el
+      Tuple (Just variantId) Live -> E.setAttribute "data-varid" variantId el
 
 swapLibertyPriceCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
   where
   swapCheckoutIds :: Element -> Effect Unit
-  swapCheckoutIds el =
-    getOptionVariantId el
-      >>= \variantId -> maybe (pure unit) (\vId -> E.setAttribute "value" (toString vId) el) variantId
-
-  getOptionVariantId :: Element -> Effect (Maybe Number)
-  getOptionVariantId el = do
-    attrValue <- E.getAttribute "value" el
-    pure $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> ub._ubTestSvid)
+  swapCheckoutIds el = do
+    mVariantId <- getOptionVariantId buckets "value" el
+    case Tuple mVariantId dryRunMode of
+      (Tuple Nothing _) -> pure unit
+      (Tuple (Just variantId) DryRun) -> E.setAttribute "ssdr__value" variantId el
+      (Tuple (Just variantId) Live) -> E.setAttribute "value" variantId el
 
 removeClass :: String -> HTMLElement -> Effect Unit
 removeClass className = (classList >=> remove' className)
@@ -124,6 +127,7 @@ getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
     match = A.find (S.contains (S.Pattern idClass)) classNames
+
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
   pure sku
 

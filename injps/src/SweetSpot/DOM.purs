@@ -26,10 +26,13 @@ import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelectorAll)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (HTMLElement, window)
+import Web.HTML (window)
 import Web.HTML.Event.EventTypes (domcontentloaded)
 import Web.HTML.HTMLDocument (toDocument, toEventTarget)
 import Web.HTML.HTMLElement (classList)
-import Web.HTML.Window (document)
+import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
+import Web.HTML.Location (pathname)
+import Web.HTML.Window (document, location, history)
 
 getDOMReady :: Aff Unit
 getDOMReady =
@@ -86,7 +89,7 @@ swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elem
   swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el =
     getOptionVariantId el
-      >>= \variantId -> maybe (pure unit) (\vId -> E.setAttribute "data-varid" (toString vId) el) variantId
+      >>= maybe (pure unit) (\vId -> E.setAttribute "data-varid" (toString vId) el)
 
   getOptionVariantId :: Element -> Effect (Maybe Number)
   getOptionVariantId el = do
@@ -132,3 +135,11 @@ setNodePrice price node = do
 
 setPrice :: Number -> Element -> Effect Unit
 setPrice price el = setNodePrice price (E.toNode el)
+
+getPathname :: Effect String
+getPathname = window >>= location >>= pathname
+
+replacePathname :: String -> Effect Unit
+replacePathname url = do
+  h <- window >>= history
+  state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h

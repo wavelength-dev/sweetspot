@@ -11,17 +11,7 @@ import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM ( AppM
-                      , ClientErr(..)
-                      , runAppM
-                      , applyPriceVariations
-                      , attachPriceObserver
-                      , ensureCampaign
-                      , ensureDeps
-                      , getUserBuckets
-                      , getUserId
-                      , setUserId
-                      )
+import SweetSpot.AppM (AppM, ClientErr(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, runAppM, setUserId)
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
 import SweetSpot.Data.Constant (hiddenPriceId)
 import SweetSpot.Event (trackView)
@@ -45,6 +35,7 @@ unhidePrice = do
 app :: AppM Unit
 app = do
   liftAff getDOMReady
+  applyFacadeUrl
   ensureDeps
   uid <- getUserId
   campaignId <- ensureCampaign uid

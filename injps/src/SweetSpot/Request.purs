@@ -10,7 +10,7 @@ import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Api (UserBucket)
-import SweetSpot.Data.Codec (decodeUserBucket, encodeViewEvent)
+import SweetSpot.Data.Codec (decodeUserBuckets, encodeViewEvent)
 import SweetSpot.Data.Constant (eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Event (ViewEvent)
 
@@ -34,7 +34,7 @@ fetchUserBuckets mUid mCampaignId = do
       Tuple Nothing Nothing -> ""
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
-    Right res -> M.text res >>= decodeUserBucket >>> pure
+    Right res -> M.text res >>= decodeUserBuckets >>> pure
     Left err -> pure $ Left $ show err
 
 postLogPayload :: String -> Aff M.Response

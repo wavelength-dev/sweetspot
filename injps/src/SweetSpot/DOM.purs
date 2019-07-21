@@ -12,7 +12,7 @@ import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
-import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), dryRunMode, idClass)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
@@ -81,13 +81,13 @@ collectLongvadonCheckoutOptions variantIds = do
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =
   A.find
-    (\(UserBucket userBucket) -> userBucket._ubOriginalSvid == (readFloat id))
+    (\userBucket -> userBucket._ubOriginalSvid == (readFloat id))
     buckets
 
 getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
 getOptionVariantId buckets attribute el = do
   attrValue <- E.getAttribute attribute el
-  pure $ attrValue >>= getMatchingUserBucket buckets # map (\(UserBucket ub) -> toString ub._ubTestSvid)
+  pure $ attrValue >>= getMatchingUserBucket buckets # map (\ub -> toString ub._ubTestSvid)
 
 swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements

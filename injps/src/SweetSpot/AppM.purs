@@ -18,9 +18,10 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, removeClass, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (campaignIdQueryParam, hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Constant (campaignIdQueryParam, DryRunMode(..), dryRunMode, hiddenPriceId, uidStorageKey)
+import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
@@ -79,7 +80,12 @@ applyPriceVariation userBuckets el = do
       mSku <- getIdFromPriceElement el
       match <- pure $ ((==) variantSku) <$> mSku
       case match of
-        Just true -> setPrice variantPrice el
+        Just true -> case dryRunMode of
+                            DryRun -> do
+                               nf <- numberFormat
+                               formattedPrice <- formatNumber variantPrice nf
+                               E.setAttribute "ssdr__price" formattedPrice el
+                            Live -> setPrice variantPrice el
         _ -> pure unit
 
 ensureDeps :: AppM Unit

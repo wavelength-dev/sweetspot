@@ -4,7 +4,7 @@ import Effect (Effect)
 
 foreign import data NumberFormat :: Type
 
-foreign import numberFormatImpl :: forall a. String -> a -> Effect NumberFormat
+foreign import _numberFormat :: forall a. String -> a -> Effect NumberFormat
 
 numberFormat :: Effect NumberFormat
 numberFormat = numberFormatImpl "en-US" { style: "currency", currency: "USD" }

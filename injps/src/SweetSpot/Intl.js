@@ -8,7 +8,7 @@ exports.formatNumber = function (number) {
     }
 }
 
-exports.numberFormatImpl = function (locale) {
+exports._numberFormat = function (locale) {
     return function (options) {
         return function () {
             return new Intl.NumberFormat(locale, options);

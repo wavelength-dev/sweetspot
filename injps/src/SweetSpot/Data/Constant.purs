@@ -26,3 +26,6 @@ experimentEndpoint = Env.apiURL <> "/bucket"
 
 variantUrlPattern :: String
 variantUrlPattern = "-ssvid"
+
+campaignIdQueryParam :: String
+campaignIdQueryParam = "sscid"

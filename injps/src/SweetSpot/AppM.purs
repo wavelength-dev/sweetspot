@@ -2,7 +2,6 @@ module SweetSpot.AppM where
 
 import Prelude
 
-import Control.Monad (when)
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array (catMaybes, head, length)
 import Data.Array as A
@@ -21,7 +20,7 @@ import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket(..))
-import SweetSpot.Data.Constant (hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Constant (campaignIdQueryParam, hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
@@ -57,7 +56,7 @@ parseCampaignId qs =
   let
     clean = S.drop 1 qs
     kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
-    campaignPred = \arr -> maybe false ((==) "sscid") (A.index arr 0)
+    campaignPred = \arr -> maybe false ((==) campaignIdQueryParam) (A.index arr 0)
     match = A.find campaignPred kvPairs
   in
    match >>= flip A.index 1

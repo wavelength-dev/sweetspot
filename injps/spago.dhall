@@ -9,7 +9,6 @@
     , "debug"
     , "effect"
     , "foreign"
-    , "foreign-generic"
     , "generics-rep"
     , "milkis"
     , "numbers"

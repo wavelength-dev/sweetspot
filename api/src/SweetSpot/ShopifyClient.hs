@@ -63,8 +63,7 @@ fetchProducts = do
   json <- asValue r
   let result =
         (json ^?! responseBody . key "products") ^.. values
-          & fmap parseProduct
-          & sequence
+          & traverse parseProduct
   return $
     case result of
       Success ps -> Just ps

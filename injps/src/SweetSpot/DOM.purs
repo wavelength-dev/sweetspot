@@ -81,13 +81,13 @@ collectLongvadonCheckoutOptions variantIds = do
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =
   A.find
-    (\userBucket -> userBucket._ubOriginalSvid == (readFloat id))
+    ((==) (readFloat id) <<< _._ubOriginalSvid)
     buckets
 
 getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
 getOptionVariantId buckets attribute el = do
   attrValue <- E.getAttribute attribute el
-  pure $ attrValue >>= getMatchingUserBucket buckets # map (\ub -> toString ub._ubTestSvid)
+  pure $ attrValue >>= getMatchingUserBucket buckets # map (toString <<<  _._ubTestSvid)
 
 swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements

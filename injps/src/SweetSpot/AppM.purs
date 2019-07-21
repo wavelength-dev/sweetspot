@@ -63,15 +63,15 @@ parseCampaignId qs =
 
 mutateProductSource :: (NonEmptyArray UserBucket) -> AppM Unit
 mutateProductSource buckets = liftEffect $ do
-  elements <- collectLongvadonCheckoutOptions (map (\ub -> ub._ubOriginalSvid) buckets)
+  elements <- collectLongvadonCheckoutOptions (map _._ubOriginalSvid buckets)
   swapLongvadonCheckoutVariantId buckets elements
 
 applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
-  let mBucket = mSku >>= (\sku -> A.find (\ub -> ub._ubSku == sku) userBuckets)
+  let mBucket = mSku >>= (\sku -> A.find ((==) sku <<< _._ubSku) userBuckets)
   maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
-  checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\ub -> ub._ubOriginalSvid) userBuckets)
+  checkoutOptions <- liftEffect $ collectCheckoutOptions (map _._ubOriginalSvid userBuckets)
   liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
   where
     maybeInjectPrice :: String -> Number -> Effect Unit

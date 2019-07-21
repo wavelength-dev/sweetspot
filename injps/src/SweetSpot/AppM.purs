@@ -18,7 +18,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
-import SweetSpot.Data.Api (UserBucket(..))
+import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
@@ -63,15 +63,15 @@ parseCampaignId qs =
 
 mutateProductSource :: (NonEmptyArray UserBucket) -> AppM Unit
 mutateProductSource buckets = liftEffect $ do
-  elements <- collectLongvadonCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) buckets)
+  elements <- collectLongvadonCheckoutOptions (map (\ub -> ub._ubOriginalSvid) buckets)
   swapLongvadonCheckoutVariantId buckets elements
 
 applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
-  let mBucket = mSku >>= (\sku -> A.find (\(UserBucket ub) -> ub._ubSku == sku) userBuckets)
-  maybe (pure unit) (\(UserBucket bucket) -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
-  checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\(UserBucket ub) -> ub._ubOriginalSvid) userBuckets)
+  let mBucket = mSku >>= (\sku -> A.find (\ub -> ub._ubSku == sku) userBuckets)
+  maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
+  checkoutOptions <- liftEffect $ collectCheckoutOptions (map (\ub -> ub._ubOriginalSvid) userBuckets)
   liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
   where
     maybeInjectPrice :: String -> Number -> Effect Unit
@@ -102,7 +102,7 @@ getUserId :: AppM (Maybe String)
 getUserId = liftEffect $ window >>= localStorage >>= getItem uidStorageKey
 
 setUserId :: UserBucket -> AppM Unit
-setUserId (UserBucket b) =
+setUserId b =
   liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
 getUserBuckets :: Maybe String -> Maybe String -> AppM (NonEmptyArray UserBucket)

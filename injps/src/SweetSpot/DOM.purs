@@ -9,7 +9,6 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
@@ -96,10 +95,10 @@ swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elem
   swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el = do
     mVariantId <- getOptionVariantId buckets "data-varid" el
-    case Tuple mVariantId dryRunMode of
-      Tuple Nothing _ -> pure unit
-      Tuple (Just variantId) DryRun -> E.setAttribute "ssdr__data-varid" variantId el
-      Tuple (Just variantId) Live -> E.setAttribute "data-varid" variantId el
+    case mVariantId, dryRunMode of
+      Nothing, _ -> pure unit
+      (Just variantId), DryRun -> E.setAttribute "ssdr__data-varid" variantId el
+      (Just variantId), Live -> E.setAttribute "data-varid" variantId el
 
 swapLibertyPriceCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
@@ -107,10 +106,10 @@ swapLibertyPriceCheckoutVariantId buckets = traverse_ swapCheckoutIds
   swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el = do
     mVariantId <- getOptionVariantId buckets "value" el
-    case Tuple mVariantId dryRunMode of
-      (Tuple Nothing _) -> pure unit
-      (Tuple (Just variantId) DryRun) -> E.setAttribute "ssdr__value" variantId el
-      (Tuple (Just variantId) Live) -> E.setAttribute "value" variantId el
+    case mVariantId, dryRunMode of
+      Nothing, _ -> pure unit
+      (Just variantId), DryRun -> E.setAttribute "ssdr__value" variantId el
+      (Just variantId), Live -> E.setAttribute "value" variantId el
 
 removeClass :: String -> HTMLElement -> Effect Unit
 removeClass className = (classList >=> remove' className)

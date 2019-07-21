@@ -11,7 +11,6 @@ import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number.Format (toString)
 import Data.String as S
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, forkAff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -89,9 +88,9 @@ applyPriceVariation userBuckets el = do
 
 ensureDeps :: AppM Unit
 ensureDeps =
-  case Tuple promise fetch of
-    Tuple true true -> pure unit
-    Tuple _ _ ->
+  case promise, fetch of
+    true, true -> pure unit
+    _, _ ->
       throwError (ClientErr { message: "Missing required dependencies"
                             , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
                             })

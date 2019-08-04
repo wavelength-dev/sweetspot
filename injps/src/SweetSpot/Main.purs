@@ -11,7 +11,7 @@ import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ClientErr(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, runAppM, setUserId)
+import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, runAppM, setUserId)
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
 import SweetSpot.Data.Constant (hiddenPriceId)
 import SweetSpot.Event (trackView)
@@ -49,7 +49,8 @@ main =
     $ do
         result <- runAppM app
         case result of
-          Left (ClientErr { message }) -> liftEffect $ throw message
+          Left (ReportErr { message }) -> liftEffect $ throw message
+          Left Noop -> pure unit
           Right _ -> pure unit
   where
   logResult :: Either Error Unit -> Effect Unit
@@ -57,6 +58,6 @@ main =
     -- If posting this log message fails there is little more we can do to report it so we ignore the result.
     Left err -> do
       -- If running our main logic encountered some problem we will still try to unhide the price as-is
-      _ <- unhidePrice
+      unhidePrice
       launchAff_ $ apathize $ postLogPayload (show err)
     Right _ -> launchAff_ $ apathize $ postLogPayload "Successfully ran SweetSpot"

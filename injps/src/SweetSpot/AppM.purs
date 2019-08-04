@@ -33,12 +33,9 @@ import Web.HTML.Location (search)
 import Web.HTML.Window (localStorage, location)
 import Web.Storage.Storage (getItem, setItem)
 
-newtype ClientErr = ClientErr
-  { message :: String
-  , payload :: String
-  }
+data ShortCircuit = ReportErr { message :: String, payload :: String } | Noop
 
-newtype AppM a = AppM (ExceptT ClientErr Aff a)
+newtype AppM a = AppM (ExceptT ShortCircuit Aff a)
 
 derive newtype instance functorAppM :: Functor AppM
 derive newtype instance applyAppM :: Apply AppM
@@ -47,9 +44,9 @@ derive newtype instance bindAppM :: Bind AppM
 derive newtype instance monadAppM :: Monad AppM
 derive newtype instance monadEffectAppM :: MonadEffect AppM
 derive newtype instance monadAffAppM :: MonadAff AppM
-derive newtype instance monadThrowAppM :: MonadThrow ClientErr AppM
+derive newtype instance monadThrowAppM :: MonadThrow ShortCircuit AppM
 
-runAppM :: forall a. AppM a -> Aff (Either ClientErr a)
+runAppM :: forall a. AppM a -> Aff (Either ShortCircuit a)
 runAppM (AppM m) = runExceptT m
 
 parseCampaignId :: String -> Maybe String
@@ -92,7 +89,7 @@ ensureDeps =
   case promise, fetch of
     true, true -> pure unit
     _, _ ->
-      throwError (ClientErr { message: "Missing required dependencies"
+      throwError (ReportErr { message: "Missing required dependencies"
                             , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
                             })
   where
@@ -110,9 +107,9 @@ getUserBuckets :: Maybe String -> Maybe String -> AppM (NonEmptyArray UserBucket
 getUserBuckets uid campaignId = do
   mBuckets <- liftAff $ fetchUserBuckets uid campaignId
   case fromArray <$> mBuckets of
-    Right Nothing -> throwError (ClientErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
+    Right Nothing -> throwError (ReportErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
     Right (Just buckets) -> pure buckets
-    Left err -> throwError (ClientErr { message: "Error fetching user buckets", payload: err })
+    Left err -> throwError (ReportErr { message: "Error fetching user buckets", payload: err })
 
 log :: String -> AppM Unit
 log msg = do
@@ -127,7 +124,7 @@ ensureCampaign mUid = do
     Nothing -> do
       campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
       case campaignId of
-        Nothing -> throwError (ClientErr { message: "No url campaign parameter", payload: "" })
+        Nothing -> throwError Noop
         Just id -> pure $ Just id
 
 applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit

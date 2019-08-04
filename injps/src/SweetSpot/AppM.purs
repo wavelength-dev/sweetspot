@@ -20,6 +20,7 @@ import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.Request (fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
@@ -69,7 +70,7 @@ mutateProductSource buckets = liftEffect $ do
 applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
-  let mBucket = mSku >>= (\sku -> A.find ((==) sku <<< _._ubSku) userBuckets)
+  let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _._ubSku) userBuckets)
   maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
   checkoutOptions <- liftEffect $ collectCheckoutOptions (map _._ubOriginalSvid userBuckets)
   liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
@@ -77,7 +78,7 @@ applyPriceVariation userBuckets el = do
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do
       mSku <- getIdFromPriceElement el
-      let match = maybe false ((==) variantSku) mSku
+      let match = maybe false (\(Sku sku) -> sku == variantSku) mSku
       case match, dryRunMode of
         true, DryRun -> do
           nf <- numberFormat

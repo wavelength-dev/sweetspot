@@ -14,6 +14,7 @@ import Effect.Aff (Aff, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), dryRunMode, idClass)
+import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (getElementsByTagName, toParentNode)
@@ -121,14 +122,14 @@ addClass className el = do
   current <- E.className el
   E.setClassName (current <> " " <> className) el
 
-getIdFromPriceElement :: Element -> Effect (Maybe String)
+getIdFromPriceElement :: Element -> Effect (Maybe Sku)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> E.className el
   let
     match = A.find (S.contains (S.Pattern idClass)) classNames
 
     sku = A.last =<< (S.split $ S.Pattern "--") <$> match
-  pure sku
+  pure $ Sku <$> sku
 
 setNodePrice :: Number -> Node -> Effect Unit
 setNodePrice price node = do

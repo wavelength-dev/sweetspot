@@ -182,7 +182,6 @@ instance FromJSON CampaignStats
 data CreateExperiment = CreateExperiment
   { _ceProductId :: !Pid
   , _cePrice :: !Price
-  , _ceName :: !Text
   , _ceCampaignId :: !CampaignId
   } deriving (Eq, Generic, Show)
 

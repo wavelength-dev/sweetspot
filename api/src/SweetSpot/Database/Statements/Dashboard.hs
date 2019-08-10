@@ -96,6 +96,20 @@ insertExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
     wrapExpId eid = ExpId $ fromIntegral eid
 
+insertCampaignExperimentStatement :: Statement (CampaignId, ExpId) ()
+insertCampaignExperimentStatement = Statement sql encoder decoder True
+  where
+    sql =
+      mconcat
+        [ "INSERT INTO campaign_experiments (campaign_id, exp_id) "
+        , "VALUES ($1, $2);"]
+    encoder =
+      (getCmpId >$< Encoders.param Encoders.text) <>
+      (getExpId >$< Encoders.param Encoders.int8)
+    decoder = Decoders.unit
+    getCmpId (CampaignId cmpId, _) = cmpId
+    getExpId (_, ExpId id) = fromIntegral id
+
 insertBucketStatement :: Statement (BucketType, Svid, Svid, Price) BucketId
 insertBucketStatement = Statement sql encoder decoder True
   where
@@ -156,6 +170,10 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
               , _bOriginalSvid = Svid $ fromIntegral ogSvid
               , _bTestSvid = Svid $ fromIntegral testSvid
               }
+
+-- | ---------------------------------------------------------------------------
+-- | Stats
+-- | ---------------------------------------------------------------------------
 
 getBucketUserCountStatement :: Statement BucketId Int
 getBucketUserCountStatement = Statement sql encoder decoder True

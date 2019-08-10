@@ -69,7 +69,7 @@ createExperimentSession (sku, orig_svid, test_svid, price, cmp, name) = do
   expId <- Session.statement (sku, name) insertExperimentStatement
   -- TODO: create both test and control here
   bucketId <-
-    Session.statement (Test, orig_svid, test_svid, sku, price) insertBucketStatement
+    Session.statement (Test, orig_svid, test_svid, price) insertBucketStatement
   Session.statement (expId, bucketId) insertExperimentBucketStatement
 
 getBucketStats :: Bucket -> Session DBBucketStats

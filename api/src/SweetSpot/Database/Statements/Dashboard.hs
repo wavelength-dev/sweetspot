@@ -96,27 +96,25 @@ insertExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.singleRow $ wrapExpId <$> Decoders.column Decoders.int8
     wrapExpId eid = ExpId $ fromIntegral eid
 
-insertBucketStatement :: Statement (BucketType, Svid, Svid, Sku, Price) BucketId
+insertBucketStatement :: Statement (BucketType, Svid, Svid, Price) BucketId
 insertBucketStatement = Statement sql encoder decoder True
   where
     sql =
       mconcat
-        [ "INSERT INTO buckets (bucket_type, original_svid, test_svid, sku, price) "
-        , "VALUES ($1, $2, $3) RETURNING bucket_id;"
+        [ "INSERT INTO buckets (bucket_type, original_svid, test_svid, price) "
+        , "VALUES ($1, $2, $3, $4) RETURNING bucket_id;"
         ]
     encoder =
       (getBucketType >$< Encoders.param Encoders.text) <>
       (getOrigSvid >$< Encoders.param Encoders.int8) <>
       (getTestSvid >$< Encoders.param Encoders.int8) <>
-      (getSku >$< Encoders.param Encoders.text) <>
       (getPrice >$< Encoders.param Encoders.numeric)
     decoder = Decoders.singleRow $ wrapBuid <$> Decoders.column Decoders.int8
     wrapBuid buid = BucketId $ fromIntegral buid
-    getBucketType (t, _, _, _, _) = bucketTypeToText t
-    getOrigSvid (_, s, _, _, _) = toDatabaseInt s
-    getTestSvid (_, _, s, _, _) = toDatabaseInt s
-    getSku (_, _, _, (Sku s), _) = s
-    getPrice (_, _, _, _, (Price p)) = p
+    getBucketType (t, _, _, _) = bucketTypeToText t
+    getOrigSvid (_, s, _, _) = toDatabaseInt s
+    getTestSvid (_, _, s, _) = toDatabaseInt s
+    getPrice (_, _, _, (Price p)) = p
 
 insertExperimentBucketStatement :: Statement (ExpId, BucketId) ()
 insertExperimentBucketStatement = Statement sql encoder Decoders.unit True

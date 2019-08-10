@@ -10,7 +10,7 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
-import Data.Aeson.Lens (_String, key, nth)
+import Data.Aeson.Lens (_String, key, values)
 import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
@@ -60,9 +60,9 @@ getExperimentsHandler = do
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
   json <- fetchProduct $ ce ^. ceProductId
-  let priceLens = key "product" . key "variants" . nth 0 . key "price" . _String
-      textPrice = T.pack . show $ ce ^. cePrice
-      withNewPrice = priceLens .~ textPrice $ json
+  let
+    textPrice = T.pack . show $ ce ^. cePrice
+    withNewPrice = json & (key "product" . key "variants" . values . key "price" . _String) .~ textPrice
   maybeNewProduct <- createProduct withNewPrice
   case maybeNewProduct of
     Just newProduct -> do
@@ -70,7 +70,7 @@ createExperimentHandler ce = do
           sku = variant ^. vSku
           svid = variant ^. vId
           price = ce ^. cePrice
-          name = ce ^. ceName
+          name = json ^. key "product" . key "title" . _String
           campaignId = ce ^. ceCampaignId
       pool <- asks _getDbPool
       -- TODO: This is wrong just to please the compiler

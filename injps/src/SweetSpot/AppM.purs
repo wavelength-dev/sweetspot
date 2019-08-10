@@ -80,7 +80,7 @@ applyPriceVariation userBuckets el = do
         true, DryRun -> do
           nf <- numberFormat
           formattedPrice <- formatNumber variantPrice nf
-          E.setAttribute "ssdr__price" formattedPrice el
+          E.setAttribute "data-ssdr__price" formattedPrice el
         true, Live -> setPrice variantPrice el
         _, _ -> pure unit
 

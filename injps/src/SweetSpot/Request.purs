@@ -11,7 +11,7 @@ import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Codec (decodeUserBuckets, encodeViewEvent)
-import SweetSpot.Data.Constant (eventEndpoint, experimentEndpoint, logEndpoint)
+import SweetSpot.Data.Constant (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Event (ViewEvent)
 
 fetch :: M.Fetch
@@ -28,9 +28,9 @@ fetchUserBuckets mUid mCampaignId = do
       , headers: jsonHeader
       }
     qs = case Tuple mUid mCampaignId of
-      Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid <> "&campaignId=" <> campaignId
+      Tuple (Just uid) (Just campaignId) -> "?uid=" <> uid <> "&" <> campaignIdQueryParam <> "=" <> campaignId
       Tuple (Just uid) Nothing -> "?uid=" <> uid
-      Tuple Nothing (Just campaignId) -> "?campaignId=" <> campaignId
+      Tuple Nothing (Just campaignId) -> "?" <> campaignIdQueryParam <> "=" <> campaignId
       Tuple Nothing Nothing -> ""
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of

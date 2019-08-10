@@ -5,7 +5,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe (fromJust)
-import Data.Scientific (Scientific, toRealFloat)
+import Data.Scientific (toRealFloat)
 import qualified Data.Vector.Unboxed as V
 import Statistics.Types (cl95, Estimate, ConfInt)
 import Statistics.Resampling (Estimator(..), resample)

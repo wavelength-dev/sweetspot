@@ -35,7 +35,7 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr, notFoundErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "campaignId" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
+   = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
 
 type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 

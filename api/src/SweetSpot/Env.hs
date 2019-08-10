@@ -20,7 +20,7 @@ data EnvConfig = EnvConfig
 libertyPriceApiRoot = "https://libertyprice.myshopify.com/admin"
 libertyPriceClientId = "634b531a6568d6eb076c2ad5c7e0265a"
 libertyPriceClientSecret = "***REMOVED***"
-libertyPriceOAuthAccessToken = "705fdddbc12654ca0ecf353e0b2421d5"
+libertyPriceOAuthAccessToken = "***REMOVED***"
 
 instance FromEnv EnvConfig where
   fromEnv =

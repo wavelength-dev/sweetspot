@@ -17,7 +17,7 @@ data EnvConfig = EnvConfig
   } deriving (Show)
 
 
-libertyPriceApiRoot = "https://libertyprice.myshopify.com/admin"
+libertyPriceApiRoot = "https://libertyprice.myshopify.com/admin/2019-07"
 libertyPriceClientId = "634b531a6568d6eb076c2ad5c7e0265a"
 libertyPriceClientSecret = "bd382d7ebb6c489bb24de3aefdb2498d"
 libertyPriceOAuthAccessToken = "624b039bb09b299bfe59472c2b83ebed"

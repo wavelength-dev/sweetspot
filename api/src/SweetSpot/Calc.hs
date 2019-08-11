@@ -38,7 +38,7 @@ calcRev svid p = mapped . _2 %~ revenue . getMatchingPurchases
     revenue lis =
         lis ^.. traverse . liQuantity
           & sum
-          & \qty -> (fromIntegral qty) * p
+          & \qty -> fromIntegral qty * p
 
 sampleForBucketType :: BucketType -> [BucketStats] -> [Double]
 sampleForBucketType t bs =

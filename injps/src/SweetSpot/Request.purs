@@ -44,19 +44,21 @@ fetchUserBuckets provisions = do
 postLogPayload :: String -> Aff M.Response
 postLogPayload msg = fetch url opts
   where
-    url = (M.URL logEndpoint)
-    opts =
-      { method: M.postMethod
-      , headers: jsonHeader
-      , body: "{\"message\": \"" <> msg <> "\"}"
-      }
+  url = (M.URL logEndpoint)
+
+  opts =
+    { method: M.postMethod
+    , headers: jsonHeader
+    , body: "{\"message\": \"" <> msg <> "\"}"
+    }
 
 postEventPayload :: ViewEvent -> Aff Unit
 postEventPayload tv = apathize $ fetch url opts
   where
-    url = (M.URL eventEndpoint)
-    opts =
-      { method: M.postMethod
-      , headers: jsonHeader
-      , body:  stringify $ encodeViewEvent tv
-      }
+  url = (M.URL eventEndpoint)
+
+  opts =
+    { method: M.postMethod
+    , headers: jsonHeader
+    , body: stringify $ encodeViewEvent tv
+    }

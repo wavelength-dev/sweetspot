@@ -7,7 +7,7 @@ module SweetSpot.Database
   , getDbPool
   , getUserBuckets
   , createExperiment
-  , getNewUserBuckets
+  , getNewCampaignBuckets
   , getExperimentBuckets
   , getCampaignStats
   , DbConfig(..)
@@ -69,10 +69,10 @@ getUserBuckets pool userId = do
   res <- Pool.use pool (getUserBucketSession userId)
   return $ over _Left wrapQueryError res
 
-getNewUserBuckets :: Pool -> CampaignId -> IO (Either T.Text [UserBucket])
-getNewUserBuckets pool cmpId = do
+getNewCampaignBuckets :: Pool -> CampaignId -> Maybe UserId -> IO (Either T.Text [UserBucket])
+getNewCampaignBuckets pool cmpId mUid = do
   randIdx <- randomRIO (0 :: Int, 1 :: Int)
-  res <- Pool.use pool (assignAndGetUserBucketSession cmpId (bucketTypes !! randIdx))
+  res <- Pool.use pool (assignAndGetUserBucketSession cmpId mUid (bucketTypes !! randIdx))
   return $ over _Left wrapQueryError res
   where
     bucketTypes = [Control, Test]

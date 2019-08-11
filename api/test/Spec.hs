@@ -74,7 +74,7 @@ businessLogicSpec =
           Right _ -> return ()
 
       it "should not return buckets for unknown user ids" $ do
-        result <- runClientM (getBucket (Just "unknown_campaign") (Just 9001)) clientEnv
+        result <- runClientM (getBucket Nothing (Just 9001)) clientEnv
         case result of
           Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
@@ -100,6 +100,17 @@ businessLogicSpec =
           Left err -> error (show err)
           Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` UserId 1000
 
+      it "should assign existing user to new campaign when old campaigns have expired" $ do
+        result <- runClientM (getBucket (Just "longv123") (Just 1001)) clientEnv
+        case result of
+          Left err -> error (show err)
+          Right bs -> bs ^?! ix 1 ^. ubSku `shouldBe` Sku "714449933423"
+
+      it "should not assign existing user to new campaign when old one is still running" $ do
+        result <- runClientM (getBucket (Just "somenewcampaign") (Just 1000)) clientEnv
+        case result of
+          Left err -> error (show err)
+          Right bs -> bs ^?! ix 0 ^. ubSku `shouldBe` Sku "714449933422"
 
     describe "POST /api/event" $ do
       evStr <- runIO $ BS.readFile "./test/data/events.json"

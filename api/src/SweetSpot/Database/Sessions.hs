@@ -21,9 +21,11 @@ import Control.Lens ((^.))
 getUserBucketSession :: UserId -> Session [UserBucket]
 getUserBucketSession userId = Session.statement userId userBucketStatement
 
-assignAndGetUserBucketSession :: CampaignId -> BucketType -> Session [UserBucket]
-assignAndGetUserBucketSession cmpId bucketType = do
-  uid <- Session.statement () insertUserStatement
+assignAndGetUserBucketSession :: CampaignId -> Maybe UserId -> BucketType -> Session [UserBucket]
+assignAndGetUserBucketSession cmpId mUid bucketType = do
+  uid <- case mUid of
+    Just id -> pure id
+    Nothing -> Session.statement () insertUserStatement
   insertedCmpId <- Session.statement (uid, cmpId) assignUserToCampaignStatement
   bs <- Session.statement (insertedCmpId, bucketType) bucketByTypePerExpInCampaignStatement
   forM_
@@ -49,20 +51,18 @@ insertEventSession input = Session.statement input insertEventStatement
 getBucketsSession :: Session [ExperimentBuckets]
 getBucketsSession = do
   experiments <- Session.statement () getExperimentsStatement
-  expBuckets <- forM experiments addBuckets
-  return expBuckets
+  forM experiments addBuckets
   where
-    addBuckets =
-      \experiment -> do
-        let experimentId = experiment ^. eExpId
-        bs <- Session.statement experimentId getBucketsForExperimentStatement
-        return
-          ExperimentBuckets
-            { _ebExpId = experimentId
-            , _ebBuckets = bs
-            , _ebProductName = experiment ^. eProductName
-            , _ebSku = experiment ^. eSku
-            }
+    addBuckets experiment = do
+      let experimentId = experiment ^. eExpId
+      bs <- Session.statement experimentId getBucketsForExperimentStatement
+      return
+        ExperimentBuckets
+          { _ebExpId = experimentId
+          , _ebBuckets = bs
+          , _ebProductName = experiment ^. eProductName
+          , _ebSku = experiment ^. eSku
+          }
 
 createExperimentSession :: (Sku, Svid, Svid, Price, Price, CampaignId, Text) -> Session ()
 createExperimentSession (sku, controlSvid, testSvid, controlPrice, testPrice, cmp, name) = do

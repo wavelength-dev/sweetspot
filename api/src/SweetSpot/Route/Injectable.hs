@@ -25,7 +25,7 @@ import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Data.Api (OkResponse(..), UserBucket)
 import SweetSpot.Data.Common
 import SweetSpot.Database
-  ( getNewUserBuckets
+  ( getNewCampaignBuckets
   , getUserBuckets
   , insertEvent
   , insertLogEvent
@@ -50,25 +50,47 @@ showNumber :: Int -> Text
 showNumber = T.pack . show
 
 getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [UserBucket]
-getUserBucketsHandler _ (Just uid) = do
+-- Existing user
+getUserBucketsHandler mCmpId (Just uid) = do
   pool <- asks _getDbPool
   res <- liftIO $ getUserBuckets pool (UserId uid)
-  case res of
-    Right buckets@(b:bs) -> do
+  case (mCmpId, res) of
+    (_, Right buckets@(b:bs)) -> do
       L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> showNumber uid
       return buckets
-    Right [] -> do
+    (Nothing, Right []) -> do
       L.info $ "Could not find bucket(s) for userId: " <> showNumber uid
       throwError notFoundErr
-    Left err -> do
+    (Just newCmpId, Right []) -> do
+      let cId = CampaignId newCmpId
+      isValidCampaign <- liftIO $ validateCampaign pool cId
+      case isValidCampaign of
+        Right True -> do
+          res <- liftIO $ getNewCampaignBuckets pool cId (Just (UserId uid))
+          case res of
+            Right buckets -> do
+              L.info $ "Adding existing user " <> showNumber uid <> " to new campaign " <> newCmpId
+              return buckets
+            Left err -> do
+              L.error $ "Error assigning existing user " <> showNumber uid <> " to new campaign " <> newCmpId
+              throwError internalServerErr
+        Right False -> do
+          L.info $ "Got invalid campaign id for existing user" <> newCmpId
+          throwError badRequestErr
+        Left err -> do
+          L.error $ "Error checking campaign id validity for existing user " <> err
+          throwError internalServerErr
+
+    (_, Left err) -> do
       L.error $ "Error getting user bucket: " <> err
       throwError internalServerErr
+-- New user
 getUserBucketsHandler (Just cmpId) Nothing = do
   pool <- asks _getDbPool
   isValidCampaign <- liftIO $ validateCampaign pool (CampaignId cmpId)
   case isValidCampaign of
     Right True -> do
-      res <- liftIO $ getNewUserBuckets pool (CampaignId cmpId)
+      res <- liftIO $ getNewCampaignBuckets pool (CampaignId cmpId) Nothing
       L.info $ "Got campaign " <> cmpId
       case res of
         Right buckets -> do
@@ -83,7 +105,8 @@ getUserBucketsHandler (Just cmpId) Nothing = do
     Left err -> do
       L.error $ "Error checking campaign id validity " <> err
       throwError internalServerErr
-getUserBucketsHandler _ _ = throwError badRequestErr
+
+getUserBucketsHandler Nothing Nothing = throwError badRequestErr
 
 trackEventHandler :: Value -> AppM OkResponse
 trackEventHandler val = do

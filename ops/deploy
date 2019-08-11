@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ENV=${1:-staging}
-COMMIT=$(git rev-parse --short HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 IMAGE_NAME="586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot:${COMMIT}"
 
@@ -11,41 +10,29 @@ exit_on_failure() {
   fi
 }
 
-if [ ${CURRENT_BRANCH} != "master" ]; then
-  echo "You're on ${CURRENT_BRANCH}, deploy from master"
-  exit 1
-fi
-
-if ! git diff-index --quiet origin/master; then
-  echo "Stash or, commit and push your changes, before deploying"
-  exit 1
-fi
-
-echo "[note] Deployment parameters are:"
-echo "| env: ${ENV}"
-echo "--"
-
 echo "=> Deploying SweetSpot to ${ENV}"
 
-# Injectable
-cd injps/
-./script/build $ENV
-exit_on_failure
-cd ..
+# Figure out which commit to try and deploy
+if [[ -z $2 ]]; then
+  echo "=> No commit argument given, continuing with origin/master commit, which is"
+  git fetch --quiet
+  echo $(git show --oneline --quiet origin/master)
+  COMMIT=$(git rev-parse --short origin/master)
+else
+  echo "=> Commit argument given: $2, which is"
+  echo $(git show --oneline --quiet $2)
+  COMMIT=$2
+fi
 
-# API
-echo "=> Building image"
-docker build --tag sweetspot .
-exit_on_failure
-echo "=> Finished building image"
+echo "=> Checking commit has finished building"
+IMAGE_META="$( aws ecr describe-images --repository-name=sweetspot --image-ids=imageTag=${COMMIT} 2> /dev/null )"
 
-# Push to Amazon Container Registry
-echo "=> Pushing image to registry"
-ECR_LOGIN_CMD=$(aws ecr get-login --no-include-email)
-eval $ECR_LOGIN_CMD
-docker tag sweetspot $IMAGE_NAME
-docker push $IMAGE_NAME
-exit_on_failure
+if [[ $? == 0 ]]; then
+    echo "=> Build has finished, continuing deployment"
+else
+    echo "=> No image found by this tag, perhaps the build is still in progress"
+    exit 1
+fi
 
 # Update sweetspot deployment to latest image
 echo "=> Applying new image"

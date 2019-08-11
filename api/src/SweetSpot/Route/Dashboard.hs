@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module SweetSpot.Route.Dashboard
   ( DashboardAPI
@@ -10,8 +11,15 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
+import Control.Monad (sequence)
+import Data.Aeson (Value(..))
 import Data.Aeson.Lens (_String, key, values)
+import qualified Data.List as L
+import Data.Either (fromRight)
+import Data.Maybe (fromJust)
+import Data.Scientific (toBoundedInteger)
 import qualified Data.Text as T
+import Data.Text.Read (rational)
 import Prelude hiding (id)
 import Servant
 import SweetSpot.AppM (AppCtx(..), AppM)
@@ -62,25 +70,46 @@ createExperimentHandler ce = do
   json <- fetchProduct $ ce ^. ceProductId
   let
     textPrice = T.pack . show $ ce ^. cePrice
-    withNewPrice = json & (key "product" . key "variants" . values . key "price" . _String) .~ textPrice
+    variantsT = key "product" . key "variants" . values
+    -- Assumes all variants have the same price
+    withNewPrice = json & variantsT . key "price" . _String .~ textPrice
   maybeNewProduct <- createProduct withNewPrice
   case maybeNewProduct of
     Just newProduct -> do
       let variant = newProduct ^?! pVariants . element 0
-          sku = variant ^. vSku
-          svid = variant ^. vId
-          price = ce ^. cePrice
+          testPrice = ce ^. cePrice
           name = json ^. key "product" . key "title" . _String
-          campaignId = ce ^. ceCampaignId
+          cmpId = ce ^. ceCampaignId
       pool <- asks _getDbPool
-      -- TODO: This is wrong just to please the compiler
-      res <- liftIO $ createExperiment pool sku svid svid price campaignId name
-      case res of
+      -- I'm sorry for this
+      res <- liftIO $ newProduct ^. pVariants
+        & traverse (\v -> do
+          let
+            sku = v ^. vSku
+            controlVariant = json ^?! key "product" . key "variants" ^.. values
+              & L.find (\v -> Sku (v ^. key "sku" . _String) == sku)
+              & fromJust
+
+            contSvid = controlVariant ^?! key "id"
+              & \case
+                  Number n -> (Svid . fromJust . toBoundedInteger) n
+                  _ -> undefined
+
+            contPrice = controlVariant ^?! key "price"
+              & \case
+                   String s -> Price $ fst $ fromRight (0, "") (rational s)
+                   _ -> undefined
+
+            testSvid = v ^. vId
+
+          createExperiment pool sku contSvid testSvid contPrice testPrice cmpId name)
+
+      case sequence res of
         Right _ -> do
-          L.info "Created experiment"
-          return OkResponse {message = "Created experiment"}
+          L.info "Created experiment(s)"
+          return OkResponse {message = "Created experiment(s)"}
         Left err -> do
-          L.error $ "Error creating experiment " <> err
+          L.error $ "Error creating experiment(s) " <> err
           throwError internalServerErr
     Nothing -> throwError internalServerErr
 

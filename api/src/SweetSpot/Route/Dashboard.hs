@@ -12,14 +12,11 @@ import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Control.Monad (sequence)
-import Data.Aeson (Value(..))
+import Data.Aeson (Result(..))
 import Data.Aeson.Lens (_String, key, values)
 import qualified Data.List as L
-import Data.Either (fromRight)
 import Data.Maybe (fromJust)
-import Data.Scientific (toBoundedInteger)
 import qualified Data.Text as T
-import Data.Text.Read (rational)
 import Prelude hiding (id)
 import Servant
 import SweetSpot.AppM (AppCtx(..), AppM)
@@ -33,7 +30,7 @@ import SweetSpot.Database
   )
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr)
-import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts)
+import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -69,16 +66,18 @@ createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
   json <- fetchProduct $ ce ^. ceProductId
   let
+    contProduct = parseProduct $ json ^?! key "product"
     textPrice = T.pack . show $ ce ^. cePrice
-    variantsT = key "product" . key "variants" . values
     -- Assumes all variants have the same price
-    withNewPrice = json & variantsT . key "price" . _String .~ textPrice
+    withNewPrice =
+      json & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+
   maybeNewProduct <- createProduct withNewPrice
-  case maybeNewProduct of
-    Just newProduct -> do
+  case (contProduct, maybeNewProduct) of
+    (Success contProduct, Success newProduct) -> do
       let variant = newProduct ^?! pVariants . element 0
           testPrice = ce ^. cePrice
-          name = json ^. key "product" . key "title" . _String
+          title = contProduct ^. pTitle
           cmpId = ce ^. ceCampaignId
       pool <- asks _getDbPool
       -- I'm sorry for this
@@ -86,23 +85,14 @@ createExperimentHandler ce = do
         & traverse (\v -> do
           let
             sku = v ^. vSku
-            controlVariant = json ^?! key "product" . key "variants" ^.. values
-              & L.find (\v -> Sku (v ^. key "sku" . _String) == sku)
+            controlVariant = contProduct ^. pVariants ^.. traverse
+              & L.find ((== sku) . (^. vSku))
               & fromJust
-
-            contSvid = controlVariant ^?! key "id"
-              & \case
-                  Number n -> (Svid . fromJust . toBoundedInteger) n
-                  _ -> undefined
-
-            contPrice = controlVariant ^?! key "price"
-              & \case
-                   String s -> Price $ fst $ fromRight (0, "") (rational s)
-                   _ -> undefined
-
+            contSvid = controlVariant ^. vId
+            contPrice = controlVariant ^. vPrice
             testSvid = v ^. vId
 
-          createExperiment pool sku contSvid testSvid contPrice testPrice cmpId name)
+          createExperiment pool sku contSvid testSvid contPrice testPrice cmpId title)
 
       case sequence res of
         Right _ -> do
@@ -111,7 +101,14 @@ createExperimentHandler ce = do
         Left err -> do
           L.error $ "Error creating experiment(s) " <> err
           throwError internalServerErr
-    Nothing -> throwError internalServerErr
+
+    (Error e, _) -> do
+      L.error "Failed to parse control product"
+      throwError internalServerErr
+    (_, Error e) -> do
+      L.error "Failed to create new product"
+      throwError internalServerErr
+
 
 getCampaignStatsHandler :: T.Text -> AppM CampaignStats
 getCampaignStatsHandler cmpId = do

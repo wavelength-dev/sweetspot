@@ -4,14 +4,19 @@ import Prelude
 
 import Data.Argonaut.Core (stringify)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Codec (decodeUserBuckets, encodeViewEvent)
 import SweetSpot.Data.Constant (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
+import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Event (ViewEvent)
+
+data UserBucketProvisions
+  = OnlyCampaignId CampaignId
+  | OnlyUserId UserId
+  | UserAndCampaignId UserId CampaignId
 
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
@@ -19,18 +24,18 @@ fetch = M.fetch windowFetch
 jsonHeader :: M.Headers
 jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
 
-fetchUserBuckets :: Maybe String -> Maybe String -> Aff (Either String (Array UserBucket))
-fetchUserBuckets mUid mCampaignId = do
+fetchUserBuckets :: UserBucketProvisions -> Aff (Either String (Array UserBucket))
+fetchUserBuckets provisions = do
   let
     opts =
       { method: M.getMethod
       , headers: jsonHeader
       }
-    qs = case mUid, mCampaignId of
-      (Just uid), (Just campaignId) -> "?uid=" <> uid <> "&" <> campaignIdQueryParam <> "=" <> campaignId
-      (Just uid), Nothing -> "?uid=" <> uid
-      Nothing, (Just campaignId) -> "?" <> campaignIdQueryParam <> "=" <> campaignId
-      Nothing, Nothing -> ""
+
+    qs = case provisions of
+      UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&" <> campaignIdQueryParam <> "=" <> cid
+      OnlyCampaignId (CampaignId cid) -> "?" <> campaignIdQueryParam <> "=" <> cid
+      OnlyUserId (UserId uid) -> "?uid=" <> uid
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
     Right res -> M.text res >>= decodeUserBuckets >>> pure

@@ -10,6 +10,7 @@
     , "effect"
     , "foreign"
     , "milkis"
+    , "newtype"
     , "numbers"
     , "prelude"
     , "psci-support"

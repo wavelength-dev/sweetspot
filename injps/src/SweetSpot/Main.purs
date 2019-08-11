@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array (catMaybes)
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
@@ -26,6 +27,7 @@ unhidePrice = do
   -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
   let
     priceHTMLElements = map fromElement priceElements
+
     anyInvalidElements = any isNothing priceHTMLElements
   _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
   traverse_ (removeClass hiddenPriceId) (catMaybes $ priceHTMLElements)

@@ -34,6 +34,7 @@ data Variant = Variant
   , _vProductId :: !Pid
   , _vTitle :: !Text
   , _vSku :: !Sku
+  , _vPrice :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Variant

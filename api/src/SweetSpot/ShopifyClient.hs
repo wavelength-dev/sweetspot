@@ -10,14 +10,16 @@ import Data.Aeson
 import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (Parser, parse)
 import qualified Data.ByteString.UTF8 as BLU
+import Data.Either (fromRight)
 import Data.Text (Text, pack)
+import Data.Text.Read (rational)
 import Debug.Trace (trace)
 import GHC.Generics (Generic)
 import Network.Wreq
 import Prelude hiding (product)
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Data.Api (Image(..), Product(..), Variant(..))
-import SweetSpot.Data.Common (Pid(..))
+import SweetSpot.Data.Common (Pid(..), Price(..))
 
 parseImage :: Value -> Parser Image
 parseImage =
@@ -32,10 +34,16 @@ parseVariant =
     pid <- o .: "product_id"
     title <- o .: "title"
     sku <- o .: "sku"
-    return Variant {_vId = id, _vProductId = pid, _vTitle = title, _vSku = sku}
+    price <- o .: "price"
+    return Variant
+      { _vId = id
+      , _vProductId = pid
+      , _vTitle = title
+      , _vSku = sku
+      , _vPrice = Price $ fst $ fromRight (0, "") (rational price)}
 
 parseProduct :: Value -> Result Product
-parseProduct v = parse parser v
+parseProduct = parse parser
   where
     parser =
       withObject "product" $ \o -> do
@@ -77,17 +85,13 @@ fetchProduct (Pid pid) = do
   json <- asJSON r
   return $ json ^. responseBody
 
-createProduct :: Value -> AppM (Maybe Product)
+createProduct :: Value -> AppM (Result Product)
 createProduct v = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
   opts <- getOpts
   r <- liftIO $ postWith opts (apiRoot <> "/products.json") v
   json <- asValue r
-  let result = json ^?! responseBody . key "product" & parseProduct
-  return $
-    case result of
-      Success p -> Just p
-      _ -> Nothing
+  return $ json ^?! responseBody . key "product" & parseProduct
 
 data ExchangeBody = ExchangeBody
   { client_id :: Text

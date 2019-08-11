@@ -11,7 +11,7 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
-import Control.Monad (sequence)
+import Control.Monad (sequence, unless)
 import Data.Aeson (Result(..))
 import Data.Aeson.Lens (_String, key, values)
 import qualified Data.List as L
@@ -27,9 +27,10 @@ import SweetSpot.Database
   ( createExperiment
   , getExperimentBuckets
   , getCampaignStats
+  , validateCampaign
   )
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (internalServerErr)
+import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
@@ -64,6 +65,13 @@ getExperimentsHandler = do
 
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
+  pool <- asks _getDbPool
+  isValidCampaign <- do
+    res <- liftIO $ validateCampaign pool (ce ^. ceCampaignId)
+    return $ case res of
+      Right True -> True
+      _ -> False
+  unless isValidCampaign (throwError badRequestErr)
   json <- fetchProduct $ ce ^. ceProductId
   let
     contProduct = parseProduct $ json ^?! key "product"
@@ -79,8 +87,6 @@ createExperimentHandler ce = do
           testPrice = ce ^. cePrice
           title = contProduct ^. pTitle
           cmpId = ce ^. ceCampaignId
-      pool <- asks _getDbPool
-      -- I'm sorry for this
       res <- liftIO $ newProduct ^. pVariants
         & traverse (\v -> do
           let

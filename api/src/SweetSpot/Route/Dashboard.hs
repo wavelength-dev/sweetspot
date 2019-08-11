@@ -108,11 +108,11 @@ createExperimentHandler ce = do
           L.error $ "Error creating experiment(s) " <> err
           throwError internalServerErr
 
-    (Error e, _) -> do
-      L.error "Failed to parse control product"
+    (Error err, _) -> do
+      L.error $ "Failed to parse control product " <> T.pack err
       throwError internalServerErr
-    (_, Error e) -> do
-      L.error "Failed to create new product"
+    (_, Error err) -> do
+      L.error $ "Failed to create new product" <> T.pack err
       throwError internalServerErr
 
 

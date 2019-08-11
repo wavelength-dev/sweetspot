@@ -100,11 +100,12 @@ createExperiment ::
   -> Svid
   -> Svid
   -> Price
+  -> Price
   -> CampaignId
   -> T.Text
   -> IO (Either T.Text ())
-createExperiment pool sku orig_svid test_svid price cmp name = do
-  res <- Pool.use pool (createExperimentSession (sku, orig_svid, test_svid, price, cmp, name))
+createExperiment pool sku contSvid testSvid contPrice testPrice cmp name = do
+  res <- Pool.use pool (createExperimentSession (sku, contSvid, testSvid, contPrice, testPrice, cmp, name))
   return $ over _Left wrapQueryError res
 
 getCampaignStats :: Pool -> CampaignId -> IO (Either T.Text DBCampaignStats)

@@ -64,14 +64,21 @@ getBucketsSession = do
             , _ebSku = experiment ^. eSku
             }
 
-createExperimentSession :: (Sku, Svid, Svid, Price, CampaignId, Text) -> Session ()
-createExperimentSession (sku, orig_svid, test_svid, price, cmp, name) = do
+createExperimentSession :: (Sku, Svid, Svid, Price, Price, CampaignId, Text) -> Session ()
+createExperimentSession (sku, controlSvid, testSvid, controlPrice, testPrice, cmp, name) = do
   expId <- Session.statement (sku, name) insertExperimentStatement
+
   Session.statement (cmp, expId) insertCampaignExperimentStatement
-  -- TODO: create both test and control here
-  bucketId <-
-    Session.statement (Test, orig_svid, test_svid, price) insertBucketStatement
-  Session.statement (expId, bucketId) insertExperimentBucketStatement
+
+  controlBucketId <-
+    Session.statement (Control, controlSvid, controlSvid, controlPrice) insertBucketStatement
+
+  testBucketId <-
+    Session.statement (Test, controlSvid, testSvid, testPrice) insertBucketStatement
+
+  Session.statement (expId, controlBucketId) insertExperimentBucketStatement
+  Session.statement (expId, testBucketId) insertExperimentBucketStatement
+
 
 getBucketStats :: Bucket -> Session DBBucketStats
 getBucketStats b = do

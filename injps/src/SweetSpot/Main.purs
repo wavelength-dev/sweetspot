@@ -11,7 +11,7 @@ import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureCampaign, ensureDeps, getUserBuckets, getUserId, runAppM, setUserId)
+import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getUserBuckets, getUserId, maybeEarlyExit, runAppM, setUserId)
 import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
 import SweetSpot.Data.Constant (hiddenPriceId)
 import SweetSpot.Event (trackView)
@@ -36,8 +36,9 @@ app = do
   applyFacadeUrl
   ensureDeps
   uid <- getUserId
-  campaignId <- ensureCampaign uid
-  buckets <- getUserBuckets uid campaignId
+  cid <- getCampaignId
+  maybeEarlyExit uid cid
+  buckets <- getUserBuckets uid cid
   setUserId (head buckets)
   applyPriceVariations buckets
   attachPriceObserver buckets

@@ -9,6 +9,7 @@ import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Newtype (unwrap)
 import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
@@ -17,12 +18,13 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLibertyPriceCheckoutVariantId, swapLongvadonCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLongvadonCheckoutVariantId)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
-import SweetSpot.Request (fetchUserBuckets, postLogPayload)
+import SweetSpot.Request (UserBucketProvisions(..), fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
 import Web.DOM.MutationObserver (mutationObserver, observe)
@@ -42,22 +44,22 @@ derive newtype instance applyAppM :: Apply AppM
 derive newtype instance applicativeAppM :: Applicative AppM
 derive newtype instance bindAppM :: Bind AppM
 derive newtype instance monadAppM :: Monad AppM
-derive newtype instance monadEffectAppM :: MonadEffect AppM
 derive newtype instance monadAffAppM :: MonadAff AppM
+derive newtype instance monadEffectAppM :: MonadEffect AppM
 derive newtype instance monadThrowAppM :: MonadThrow ShortCircuit AppM
 
 runAppM :: forall a. AppM a -> Aff (Either ShortCircuit a)
 runAppM (AppM m) = runExceptT m
 
-parseCampaignId :: String -> Maybe String
-parseCampaignId qs =
+parseCampaignId :: String -> Maybe CampaignId
+parseCampaignId queryString =
   let
-    clean = fromMaybe qs (S.stripPrefix (S.Pattern "?") qs)
+    clean = fromMaybe queryString (S.stripPrefix (S.Pattern "?") queryString)
     kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
     campaignPred = \arr -> maybe false ((==) campaignIdQueryParam) (A.index arr 0)
     match = A.find campaignPred kvPairs
   in
-   match >>= flip A.index 1
+   match >>= flip A.index 1 <#> CampaignId
 
 mutateProductSource :: (NonEmptyArray UserBucket) -> AppM Unit
 mutateProductSource buckets = liftEffect $ do
@@ -96,20 +98,26 @@ ensureDeps =
     promise = hasPromise
     fetch = hasFetch
 
-getUserId :: AppM (Maybe String)
-getUserId = liftEffect $ window >>= localStorage >>= getItem uidStorageKey
+getUserId :: AppM (Maybe UserId)
+getUserId = do
+  mUid <- liftEffect $ window >>= localStorage >>= getItem uidStorageKey
+  pure $ UserId <$> mUid
 
 setUserId :: UserBucket -> AppM Unit
 setUserId b =
   liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
-getUserBuckets :: Maybe String -> Maybe String -> AppM (NonEmptyArray UserBucket)
-getUserBuckets uid campaignId = do
-  mBuckets <- liftAff $ fetchUserBuckets uid campaignId
+getUserBuckets :: Maybe UserId -> Maybe CampaignId -> AppM (NonEmptyArray UserBucket)
+getUserBuckets mUid mCid = do
+  mBuckets <- case mUid, mCid of
+      Nothing, Nothing -> throwError Noop
+      Just uid, Just cid -> liftAff $ fetchUserBuckets $ UserAndCampaignId uid cid
+      Just uid, _ -> liftAff $ fetchUserBuckets $ OnlyUserId uid
+      _, Just cid -> liftAff $ fetchUserBuckets $ OnlyCampaignId cid
   case fromArray <$> mBuckets of
-    Right Nothing -> throwError (ReportErr { message: "User " <> (fromMaybe "UnknownUid" uid) <> " has no buckets!", payload: "" })
-    Right (Just buckets) -> pure buckets
-    Left err -> throwError (ReportErr { message: "Error fetching user buckets", payload: err })
+       Right Nothing -> throwError (ReportErr { message: "User " <> (maybe "UnknownUid" unwrap mUid) <> " has no buckets!", payload: "" })
+       Right (Just buckets) -> pure buckets
+       Left err -> throwError (ReportErr { message: "Error fetching user buckets", payload: err })
 
 log :: String -> AppM Unit
 log msg = do
@@ -117,15 +125,12 @@ log msg = do
   _ <- liftAff $ forkAff $ postLogPayload msg
   liftEffect $ C.log msg
 
-ensureCampaign :: Maybe String -> AppM (Maybe String)
-ensureCampaign mUid = do
-  case mUid of
-    Just _ -> pure Nothing
-    Nothing -> do
-      campaignId <- liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
-      case campaignId of
-        Nothing -> throwError Noop
-        Just id -> pure $ Just id
+getCampaignId :: AppM (Maybe CampaignId)
+getCampaignId = liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
+
+maybeEarlyExit :: Maybe UserId -> Maybe CampaignId -> AppM Unit
+maybeEarlyExit Nothing Nothing = throwError Noop
+maybeEarlyExit _ _ = pure unit
 
 applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit
 applyPriceVariations userBuckets = do

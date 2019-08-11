@@ -1,7 +1,7 @@
 module SweetSpot.Env where
 
 import LoadEnv (loadEnv)
-import System.Envy (FromEnv, (.!=), decodeEnv, envMaybe, fromEnv)
+import System.Envy (FromEnv, decodeEnv, env, fromEnv)
 
 data EnvConfig = EnvConfig
   { dbHost :: String
@@ -16,24 +16,18 @@ data EnvConfig = EnvConfig
   , shopifyOAuthAccessToken :: String
   } deriving (Show)
 
-
-libertyPriceApiRoot = "https://libertyprice.myshopify.com/admin/api/2019-07"
-libertyPriceClientId = "634b531a6568d6eb076c2ad5c7e0265a"
-libertyPriceClientSecret = "bd382d7ebb6c489bb24de3aefdb2498d"
-libertyPriceOAuthAccessToken = "624b039bb09b299bfe59472c2b83ebed"
-
 instance FromEnv EnvConfig where
   fromEnv =
-    EnvConfig <$> envMaybe "DB_HOST" .!= "localhost" <*>
-    envMaybe "DB_NAME" .!= "sweetspot" <*>
-    envMaybe "DB_PASSWORD" .!= "" <*>
-    envMaybe "DB_PORT" .!= 5432 <*>
-    envMaybe "DB_USER" .!= "sweetspot" <*>
-    envMaybe "ENVIRONMENT" .!= "dev" <*>
-    envMaybe "SHOPIFY_API_ROOT" .!= libertyPriceApiRoot <*>
-    envMaybe "SHOPIFY_CLIENT_ID" .!= libertyPriceClientId <*>
-    envMaybe "SHOPIFY_CLIENT_SECRET" .!= libertyPriceClientSecret <*>
-    envMaybe "SHOPIFY_OAUTH_ACCESS_TOKEN" .!= libertyPriceOAuthAccessToken
+    EnvConfig <$> env "DB_HOST" <*>
+    env "DB_NAME" <*>
+    env "DB_PASSWORD" <*>
+    env "DB_PORT" <*>
+    env "DB_USER" <*>
+    env "ENVIRONMENT" <*>
+    env "SHOPIFY_API_ROOT" <*>
+    env "SHOPIFY_CLIENT_ID" <*>
+    env "SHOPIFY_CLIENT_SECRET" <*>
+    env "SHOPIFY_OAUTH_ACCESS_TOKEN"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

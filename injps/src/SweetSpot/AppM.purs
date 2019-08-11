@@ -70,7 +70,7 @@ applyPriceVariation userBuckets el = do
   let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _._ubSku) userBuckets)
   maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
   checkoutOptions <- liftEffect $ collectCheckoutOptions (map _._ubOriginalSvid userBuckets)
-  liftEffect $ swapLibertyPriceCheckoutVariantId userBuckets checkoutOptions
+  liftEffect $ swapLongvadonCheckoutVariantId userBuckets checkoutOptions
   where
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do

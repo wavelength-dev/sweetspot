@@ -14,6 +14,8 @@ import Control.Monad.Reader (asks)
 import Control.Monad (sequence, unless)
 import Data.Aeson (Result(..))
 import Data.Aeson.Lens (_String, key, values)
+import Data.Either (either)
+import Data.Function (id, const)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
@@ -68,9 +70,7 @@ createExperimentHandler ce = do
   pool <- asks _getDbPool
   isValidCampaign <- do
     res <- liftIO $ validateCampaign pool (ce ^. ceCampaignId)
-    return $ case res of
-      Right True -> True
-      _ -> False
+    return $ either (const False) id res
   unless isValidCampaign (throwError badRequestErr)
   json <- fetchProduct $ ce ^. ceProductId
   let

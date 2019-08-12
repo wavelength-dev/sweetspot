@@ -63,4 +63,4 @@ main =
       -- If running our main logic encountered some problem we will still try to unhide the price as-is
       unhidePrice
       launchAff_ $ apathize $ postLogPayload (show err)
-    Right _ -> launchAff_ $ apathize $ postLogPayload "Successfully ran SweetSpot"
+    Right _ -> pure unit

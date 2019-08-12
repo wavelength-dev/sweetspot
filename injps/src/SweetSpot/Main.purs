@@ -45,6 +45,7 @@ app = do
   applyPriceVariations buckets
   attachPriceObserver buckets
   trackView
+  liftEffect unhidePrice
 
 main :: Effect Unit
 main =

@@ -1,36 +1,17 @@
 module SweetSpot.Main where
 
 import Prelude
-
-import Data.Array (catMaybes)
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
-import Data.Foldable (any, traverse_)
-import Data.Maybe (isNothing)
 import Effect (Effect)
 import Effect.Aff (apathize, launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getUserBuckets, getUserId, maybeEarlyExit, runAppM, setUserId)
-import SweetSpot.DOM (collectPriceEls, getDOMReady, removeClass)
-import SweetSpot.Data.Constant (hiddenPriceId)
+import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getUserBuckets, getUserId, maybeEarlyExit, runAppM, setUserId, unhidePrice)
+import SweetSpot.DOM (getDOMReady)
 import SweetSpot.Event (trackView)
 import SweetSpot.Request (postLogPayload)
-import Web.HTML.HTMLElement (fromElement)
-
-unhidePrice :: Effect Unit
-unhidePrice = do
-  priceElements <- collectPriceEls
-  -- It's unlikely but possible not all collected Elements are HTMLElements
-  -- We should only add sweetspot ids to elements which are HTMLElements
-  -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
-  let
-    priceHTMLElements = map fromElement priceElements
-
-    anyInvalidElements = any isNothing priceHTMLElements
-  _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
-  traverse_ (removeClass hiddenPriceId) (catMaybes $ priceHTMLElements)
 
 app :: AppM Unit
 app = do

@@ -3,12 +3,12 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
-import Data.Array (catMaybes, head, length)
+import Data.Array (any, catMaybes, head, length)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Newtype (unwrap)
 import Data.Number.Format (toString)
 import Data.String as S
@@ -172,3 +172,17 @@ applyFacadeUrl = liftEffect $ do
       S.split (S.Pattern "/")
         >>> A.last
         >>> maybe false (S.contains (S.Pattern variantUrlPattern))
+
+unhidePrice :: Effect Unit
+unhidePrice = liftEffect $ do
+  priceElements <- collectPriceEls
+  -- It's unlikely but possible not all collected Elements are HTMLElements
+  -- We should only add sweetspot ids to elements which are HTMLElements
+  -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
+  let
+    priceHTMLElements = map fromElement priceElements
+
+    anyInvalidElements = any isNothing priceHTMLElements
+  _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
+  traverse_ (removeClass hiddenPriceId) (catMaybes $ priceHTMLElements)
+

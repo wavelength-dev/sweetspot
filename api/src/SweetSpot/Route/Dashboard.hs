@@ -78,7 +78,9 @@ createExperimentHandler ce = do
     textPrice = T.pack . show $ ce ^. cePrice
     -- Assumes all variants have the same price
     withNewPrice =
-      json & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+      json
+        & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+        & key "product" . key "handle" . _String <>~ "-ssv"
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of

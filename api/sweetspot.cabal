@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 52cdaf51ee5fb693a48f422078085076899d16f0af38cafd5dc8fdefa3932188
+-- hash: 2b724a2fd337e1b8d60e4358eab7a64706972d7e49c62361d50b188155c5f6c4
 
 name:           sweetspot
 version:        0.1.0.0
@@ -29,7 +29,9 @@ library
       SweetSpot.Data.Common
       SweetSpot.Data.Domain
       SweetSpot.Database
-      SweetSpot.Database.Beam
+      SweetSpot.Database.Migrations.V0001InitDb
+      SweetSpot.Database.Queries.Injectable
+      SweetSpot.Database.Schema
       SweetSpot.Database.Sessions
       SweetSpot.Database.Statements
       SweetSpot.Database.Statements.Dashboard

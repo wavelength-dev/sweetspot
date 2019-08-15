@@ -15,17 +15,12 @@ import           Database.Beam.Postgres
 
 import           SweetSpot.Database.Schema
 
--- addBuckets = runInsert $ insert (_buckets sweetspot) $ insertValues
---         [ Bucket 123 "control" 12345 12346 10.90
---         , Bucket 124 "test"    22345 22346 15.90
---         ]
-
--- addUsers :: Connection -> IO ()
--- addUsers conn =
---         runBeamPostgresDebug putStrLn conn
---                 $ runInsert
---                 $ insert (_users sweetspot)
---                 $ insertExpressions [User default_, User default_]
+addUsers :: Connection -> IO ()
+addUsers conn =
+        runBeamPostgresDebug putStrLn conn
+                $ runInsert
+                $ insert (_users db)
+                $ insertExpressions [User default_, User default_]
 
 getAllBuckets :: Connection -> IO [Bucket]
 getAllBuckets conn =

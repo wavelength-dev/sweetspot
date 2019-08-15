@@ -1,4 +1,4 @@
-
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -8,22 +8,14 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module SweetSpot.Database.Beam where
+module SweetSpot.Database.Migrations.V0001InitDb where
 
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
 import           Database.Beam.Postgres
-import           Database.Beam.Postgres.Migrate ( getDbConstraints
-                                                , migrationBackend
-                                                )
 import           Database.Beam.Migrate
-import           Database.Beam.Migrate.Simple   ( createSchema
-                                                , verifySchema
-                                                )
-
 import           Data.Text                      ( Text )
-
 
 -- | ---------------------------------------------------------------------------
 -- | Bucket
@@ -78,7 +70,11 @@ data SweetSpotDb f = SweetSpotDb
 
 instance Database Postgres SweetSpotDb
 
-initMigration () =
+
+-- | ---------------------------------------------------------------------------
+-- | Migration
+-- | ---------------------------------------------------------------------------
+migration () =
         SweetSpotDb
                 <$> createTable
                             "buckets"
@@ -90,59 +86,3 @@ initMigration () =
                             )
 
                 <*> createTable "users" (User (field "id" serial))
-
-
-migration = migrationStep "Initial schema" initMigration
-
-
-sweetspotChecked :: CheckedDatabaseSettings Postgres SweetSpotDb
-sweetspotChecked = evaluateDatabase migration
-
-sweetspot :: DatabaseSettings Postgres SweetSpotDb
-sweetspot = unCheckDatabase sweetspotChecked
-
--- | ---------------------------------------------------------------------------
--- | Queries
--- | ---------------------------------------------------------------------------
-create :: Connection -> IO ()
-create conn =
-        runBeamPostgres conn (createSchema migrationBackend sweetspotChecked)
-
-addBuckets :: Connection -> IO ()
-addBuckets conn =
-        runBeamPostgresDebug putStrLn conn
-                $ runInsert
-                $ insert (_buckets sweetspot)
-                $ insertValues
-                          [ Bucket 123 "control" 12345 12346 10.90
-                          , Bucket 124 "test"    22345 22346 15.90
-                          ]
-
-addUsers :: Connection -> IO ()
-addUsers conn =
-        runBeamPostgresDebug putStrLn conn
-                $ runInsert
-                $ insert (_users sweetspot)
-                $ insertExpressions [User default_, User default_]
-
-getAllBuckets :: Connection -> IO ()
-getAllBuckets conn = runBeamPostgresDebug putStrLn conn $ do
-        buckets <- runSelectReturningList $ select allBuckets
-        mapM_ (liftIO . print) buckets
-        where allBuckets = all_ (_buckets sweetspot)
-
-
-getAllUsers :: Connection -> IO ()
-getAllUsers conn = runBeamPostgresDebug putStrLn conn $ do
-        users <- runSelectReturningList $ select allUsers
-        mapM_ (liftIO . print) users
-        where allUsers = all_ (_users sweetspot)
-
-
-verify :: Connection -> IO ()
-verify conn = do
-        res <- runBeamPostgres
-                conn
-                (verifySchema migrationBackend sweetspotChecked)
-        print res
-        return ()

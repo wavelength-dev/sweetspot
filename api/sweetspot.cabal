@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c89947ec6377ce122719c4bc679dad0bc5751e115a33b6465c2ab423ded35aff
+-- hash: 52cdaf51ee5fb693a48f422078085076899d16f0af38cafd5dc8fdefa3932188
 
 name:           sweetspot
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
       SweetSpot.Data.Common
       SweetSpot.Data.Domain
       SweetSpot.Database
+      SweetSpot.Database.Beam
       SweetSpot.Database.Sessions
       SweetSpot.Database.Statements
       SweetSpot.Database.Statements.Dashboard
@@ -51,6 +52,9 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , beam-core
+    , beam-migrate
+    , beam-postgres
     , bytestring
     , casing
     , containers
@@ -104,6 +108,9 @@ executable bridge-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , beam-core
+    , beam-migrate
+    , beam-postgres
     , bytestring
     , casing
     , containers
@@ -157,6 +164,9 @@ executable sweetspot-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , beam-core
+    , beam-migrate
+    , beam-postgres
     , bytestring
     , casing
     , containers
@@ -212,6 +222,9 @@ test-suite sweetspot-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , beam-core
+    , beam-migrate
+    , beam-postgres
     , bytestring
     , casing
     , containers

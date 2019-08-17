@@ -16,6 +16,7 @@ import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
 import           Database.Beam.Postgres
 import           Database.Beam.Migrate
+import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
 
@@ -93,7 +94,7 @@ data BucketT f
   , _bktType :: Columnar f Text
   , _bktControlSvid :: Columnar f Int
   , _bktTestSvid :: Columnar f Int
-  , _bktPrice :: Columnar f Double
+  , _bktPrice :: Columnar f Scientific
   } deriving (Generic, Beamable)
 
 type Bucket = BucketT Identity
@@ -224,6 +225,12 @@ SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (Tab
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
+-- | Price
+-- | ---------------------------------------------------------------------------
+pricePrecision :: Maybe (Word, Maybe Word)
+pricePrecision = Just (12, Just 2)
+
+-- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
 migration () =
@@ -262,17 +269,21 @@ migration () =
                             "buckets"
                             Bucket
                                     { _bktId = field "bucket_id" serial notNull
-                                    , _bktType = field "bucket_type"
-                                                       text
-                                                       notNull
+                                    , _bktType        = field "bucket_type"
+                                                              text
+                                                              notNull
                                     , _bktControlSvid = field
                                                                 "original_svid"
-                                                                int
+                                                                bigint
                                                                 notNull
-                                    , _bktTestSvid = field "test_svid"
-                                                           int
-                                                           notNull
-                                    , _bktPrice = field "price" double notNull
+                                    , _bktTestSvid    = field "test_svid"
+                                                              bigint
+                                                              notNull
+                                    , _bktPrice       =
+                                            field
+                                                    "price"
+                                                    (numeric pricePrecision)
+                                                    notNull
                                     }
                 <*> createTable
                             "bucket_users"

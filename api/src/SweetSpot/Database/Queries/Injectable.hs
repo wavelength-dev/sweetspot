@@ -9,37 +9,21 @@ module SweetSpot.Database.Queries.Injectable where
 import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
+import           Data.Maybe                     ( Maybe(..)
+                                                , maybe
+                                                )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial(..) )
+import           Database.Beam.Backend.SQL.BeamExtensions
+                                               as BeamExt
 import           Database.Beam.Postgres
+import           System.Random                  ( randomRIO )
 
 import           SweetSpot.Database.Schema
                                          hiding ( UserId )
 import           SweetSpot.Data.Api             ( UserBucket(..) )
 import           SweetSpot.Data.Common
-
--- addUsers :: Connection -> IO ()
--- addUsers conn =
---         runBeamPostgresDebug putStrLn conn
---                 $ runInsert
---                 $ insert (_users db)
---                 $ insertExpressions [User default_, User default_]
-
--- getAllBuckets :: Connection -> IO [Bucket]
--- getAllBuckets conn =
---         runBeamPostgresDebug putStrLn conn $ runSelectReturningList $ select
---                 allBuckets
---         where allBuckets = all_ (_buckets db)
-
-
--- getAllUsers :: Connection -> IO [User]
--- getAllUsers conn =
---         runBeamPostgresDebug putStrLn conn $ runSelectReturningList $ select
---                 allUsers
---         where allUsers = all_ (_users db)
-
--- filter_ (\c -> _cmpId c ==. val_ cmpId)
 
 
 getUserBuckets :: Connection -> UserId -> IO [UserBucket]
@@ -87,3 +71,70 @@ getUserBuckets conn uid@(UserId id) = do
                         }
                 )
                 tuples
+
+insertUser :: Connection -> IO UserId
+insertUser conn = do
+        [user] <-
+                runBeamPostgresDebug putStrLn conn
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. users)
+                $ insertExpressions [User default_]
+        return $ user ^. usrId & unSerial & UserId
+
+assignUserToCampaign :: Connection -> (CampaignId, UserId) -> IO CampaignId
+assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
+        [cmpUsr] <-
+                runBeamPostgresDebug putStrLn conn
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. campaignUsers)
+                $ insertValues
+                          [ CampaignUser (CampaignKey cmpId)
+                                         (usrId & SqlSerial & UserKey)
+                          ]
+        return $ cmpUsr ^. cmpForUsr & CampaignId
+
+
+bucketByTypePerExpInCampaign
+        :: Connection -> (CampaignId, BucketType) -> IO [(ExpId, BucketId)]
+bucketByTypePerExpInCampaign conn (CampaignId cid, btype) = do
+        res <-
+                runBeamPostgresDebug putStrLn conn
+                $ runSelectReturningList
+                $ select
+                $ do
+                          cmps    <- all_ (db ^. campaigns)
+                          cmpExps <- all_ (db ^. campaignExperiments)
+                          exps    <- all_ (db ^. experiments)
+                          expBkts <- all_ (db ^. experimentBuckets)
+                          bkts    <- all_ (db ^. buckets)
+
+                          guard_ (_cmpForExp cmpExps `references_` cmps)
+                          guard_ (_expForCmp cmpExps `references_` exps)
+
+                          guard_ (_expForBkt expBkts `references_` exps)
+                          guard_ (_bktForExp expBkts `references_` bkts)
+
+                          guard_
+                                  (   _bktType bkts
+                                  ==. (btype & bucketTypeToText & val_)
+                                  )
+                          guard_ (_cmpId cmps ==. val_ cid)
+
+                          pure (exps, bkts)
+
+        return $ fmap
+                (\(exp, bkt) ->
+                        ( exp ^. expId & unSerial & ExpId
+                        , bkt ^. bktId & unSerial & BucketId
+                        )
+                )
+                res
+
+-- getNewCampaignBuckets
+--         :: Connection -> CampaignId -> Maybe UserId -> IO [UserBucket]
+-- getNewCampaignBuckets conn cmpId mUid = do
+--         randIdx <- randomRIO (0 :: Int, 1 :: Int)
+--         let bucketType = [Control, Test] !! randIdx
+--         uid <- case mUid of
+--           Just id -> pure id
+--           Nothing -> insertUser

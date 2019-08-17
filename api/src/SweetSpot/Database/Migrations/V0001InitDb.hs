@@ -29,15 +29,15 @@ newtype UserT f
   } deriving (Generic, Beamable)
 
 type User = UserT Identity
-type UserIdKey = PrimaryKey UserT Identity
+type UserKey = PrimaryKey UserT Identity
 
 deriving instance Show User
 deriving instance Eq User
 
 instance Table UserT where
         data PrimaryKey UserT f
-          = UserIdKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
-        primaryKey = UserIdKey . _usrId
+          = UserKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+        primaryKey = UserKey . _usrId
 
 User (LensFor usrId) = tableLenses
 
@@ -54,12 +54,12 @@ data CampaignT f
   } deriving (Generic, Beamable)
 
 type Campaign = CampaignT Identity
-type CampaignId = PrimaryKey CampaignT Identity
+type CampaignKey = PrimaryKey CampaignT Identity
 
 instance Table CampaignT where
         data PrimaryKey CampaignT f
-          = CampaignId (Columnar f Text) deriving (Generic, Beamable)
-        primaryKey = CampaignId . _cmpId
+          = CampaignKey (Columnar f Text) deriving (Generic, Beamable)
+        primaryKey = CampaignKey . _cmpId
 
 Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensFor cmpStartDate) (LensFor cmpEndDate)
         = tableLenses
@@ -133,7 +133,7 @@ instance Table BucketUserT where
             deriving (Generic, Beamable)
         primaryKey = BucketUserKey <$> _bktForUsr <*> _usrForBkt
 
-BucketUser (BucketKey (LensFor bktForUsr)) (UserIdKey (LensFor usrForBkt)) =
+BucketUser (BucketKey (LensFor bktForUsr)) (UserKey (LensFor usrForBkt)) =
         tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ instance Table CampaignUserT where
             deriving (Generic, Beamable)
         primaryKey = CampaignUserKey <$> _cmpForUsr <*> _usrForCmp
 
-CampaignUser (CampaignId (LensFor cmpForUsr)) (UserIdKey (LensFor usrForCmp)) =
+CampaignUser (CampaignKey (LensFor cmpForUsr)) (UserKey (LensFor usrForCmp)) =
         tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -180,7 +180,7 @@ instance Table CampaignExperimentT where
           = CampaignExperimentKey (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
         primaryKey = CampaignExperimentKey <$> _cmpForExp <*> _expForCmp
 
-CampaignExperiment (CampaignId (LensFor cmpForExp)) (ExperimentKey (LensFor expForCmp))
+CampaignExperiment (CampaignKey (LensFor cmpForExp)) (ExperimentKey (LensFor expForCmp))
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -295,7 +295,7 @@ migration () =
                                                            notNull
                                                     )
                                     , _usrForBkt =
-                                            UserIdKey
+                                            UserKey
                                                     (field "user_id"
                                                            serial
                                                            notNull
@@ -306,13 +306,13 @@ migration () =
                             "campaign_users"
                             CampaignUser
                                     { _cmpForUsr =
-                                            CampaignId
+                                            CampaignKey
                                                     (field "campaign_id"
                                                            text
                                                            notNull
                                                     )
                                     , _usrForCmp =
-                                            UserIdKey
+                                            UserKey
                                                     (field "user_id"
                                                            serial
                                                            notNull
@@ -323,7 +323,7 @@ migration () =
                             "campaign_experiments"
                             CampaignExperiment
                                     { _cmpForExp =
-                                            CampaignId
+                                            CampaignKey
                                                     (field "campaign_id"
                                                            text
                                                            notNull

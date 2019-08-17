@@ -261,8 +261,10 @@ migration () =
                 <*> createTable
                             "buckets"
                             Bucket
-                                    { _bktId = field "id" serial notNull
-                                    , _bktType = field "type" text notNull
+                                    { _bktId = field "bucket_id" serial notNull
+                                    , _bktType = field "bucket_type"
+                                                       text
+                                                       notNull
                                     , _bktControlSvid = field
                                                                 "original_svid"
                                                                 int

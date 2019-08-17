@@ -107,6 +107,9 @@ instance Table BucketT where
           = BucketKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
         primaryKey = BucketKey . _bktId
 
+Bucket (LensFor bktId) (LensFor bktType) (LensFor bktControlSvid) (LensFor bktTestSvid) (LensFor bktPrice)
+        = tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | BucketUsers
 -- | ---------------------------------------------------------------------------
@@ -121,6 +124,7 @@ type BucketUserKey = PrimaryKey BucketUserT Identity
 
 -- deriving instance Show BucketUser
 -- deriving instance Eq BucketUser
+
 
 instance Table BucketUserT where
         data PrimaryKey BucketUserT f

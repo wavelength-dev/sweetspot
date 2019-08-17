@@ -13,7 +13,6 @@ import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial(..) )
 import           Database.Beam.Postgres
-import           Data.Scientific                ( fromFloatDigits )
 
 import           SweetSpot.Database.Schema
                                          hiding ( UserId )
@@ -81,7 +80,7 @@ getUserBuckets conn uid@(UserId id) = do
                         , _ubSku          = Sku $ exp ^. expSku
                         , _ubOriginalSvid = Svid $ bkt ^. bktControlSvid
                         , _ubTestSvid     = Svid $ bkt ^. bktTestSvid
-                        , _ubPrice = Price $  bkt ^. bktPrice
+                        , _ubPrice        = Price $ bkt ^. bktPrice
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
                         , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial
                         , _ubBucketType   = bkt ^. bktType & bucketTypeFromText

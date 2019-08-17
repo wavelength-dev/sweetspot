@@ -7,6 +7,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-#  LANGUAGE ImpredicativeTypes #-}
 
 module SweetSpot.Database.Migrations.V0001InitDb where
 
@@ -37,6 +38,8 @@ instance Table UserT where
           = UserId (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
         primaryKey = UserId . _usrId
 
+User (LensFor usrId) = tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | Campaign
 -- | ---------------------------------------------------------------------------
@@ -57,6 +60,9 @@ instance Table CampaignT where
           = CampaignId (Columnar f Text) deriving (Generic, Beamable)
         primaryKey = CampaignId . _cmpId
 
+Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensFor cmpStartDate) (LensFor cmpEndDate)
+        = tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | Experiment
 -- | ---------------------------------------------------------------------------
@@ -74,6 +80,9 @@ instance Table ExperimentT where
         data PrimaryKey ExperimentT f
           = ExperimentId (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
         primaryKey = ExperimentId . _expId
+
+Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
+        tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Bucket
@@ -118,6 +127,9 @@ instance Table BucketUserT where
             deriving (Generic, Beamable)
         primaryKey = BucketUserPK <$> _bktForUsr <*> _usrForBkt
 
+BucketUser (BucketId (LensFor bktForUsr)) (UserId (LensFor usrForBkt)) =
+        tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | CampaignUsers
 -- | ---------------------------------------------------------------------------
@@ -138,6 +150,8 @@ instance Table CampaignUserT where
             deriving (Generic, Beamable)
         primaryKey = CampaignUserPK <$> _cmpForUsr <*> _usrForCmp
 
+CampaignUser (CampaignId (LensFor cmpForUsr)) (UserId (LensFor usrForCmp)) =
+        tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignExperiments
@@ -158,6 +172,9 @@ instance Table CampaignExperimentT where
           = CampaignExperimentPK (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
         primaryKey = CampaignExperimentPK <$> _cmpForExp <*> _expForCmp
 
+CampaignExperiment (CampaignId (LensFor cmpForExp)) (ExperimentId (LensFor expForCmp))
+        = tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | ExperimentBuckets
 -- | ---------------------------------------------------------------------------
@@ -176,6 +193,10 @@ instance Table ExperimentBucketT where
         data PrimaryKey ExperimentBucketT f
           = ExperimentBucketPK (PrimaryKey ExperimentT f) (PrimaryKey BucketT f) deriving (Generic, Beamable)
         primaryKey = ExperimentBucketPK <$> _expForBkt <*> _bktForExp
+
+ExperimentBucket (ExperimentId (LensFor expForBkt)) (BucketId (LensFor bktForExp))
+        = tableLenses
+
 -- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
@@ -192,6 +213,8 @@ data SweetSpotDb f = SweetSpotDb
 
 instance Database Postgres SweetSpotDb
 
+SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (TableLens buckets) (TableLens bucketUsers) (TableLens campaignUsers) (TableLens campaignExperiments) (TableLens experimentBuckets)
+        = dbLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Migration

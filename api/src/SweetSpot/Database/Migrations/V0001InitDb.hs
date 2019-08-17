@@ -28,15 +28,15 @@ newtype UserT f
   } deriving (Generic, Beamable)
 
 type User = UserT Identity
-type UserId = PrimaryKey UserT Identity
+type UserIdKey = PrimaryKey UserT Identity
 
 deriving instance Show User
 deriving instance Eq User
 
 instance Table UserT where
         data PrimaryKey UserT f
-          = UserId (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
-        primaryKey = UserId . _usrId
+          = UserIdKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+        primaryKey = UserIdKey . _usrId
 
 User (LensFor usrId) = tableLenses
 
@@ -74,12 +74,12 @@ data ExperimentT f
   } deriving (Generic, Beamable)
 
 type Experiment = ExperimentT Identity
-type ExperimentId = PrimaryKey ExperimentT Identity
+type ExperimentKey = PrimaryKey ExperimentT Identity
 
 instance Table ExperimentT where
         data PrimaryKey ExperimentT f
-          = ExperimentId (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
-        primaryKey = ExperimentId . _expId
+          = ExperimentKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+        primaryKey = ExperimentKey . _expId
 
 Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
         tableLenses
@@ -97,15 +97,15 @@ data BucketT f
   } deriving (Generic, Beamable)
 
 type Bucket = BucketT Identity
-type BucketId = PrimaryKey BucketT Identity
+type BucketKey = PrimaryKey BucketT Identity
 
 deriving instance Show Bucket
 deriving instance Eq Bucket
 
 instance Table BucketT where
         data PrimaryKey BucketT f
-          = BucketId (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
-        primaryKey = BucketId . _bktId
+          = BucketKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+        primaryKey = BucketKey . _bktId
 
 -- | ---------------------------------------------------------------------------
 -- | BucketUsers
@@ -117,17 +117,18 @@ data BucketUserT f
   } deriving (Generic, Beamable)
 
 type BucketUser = BucketUserT Identity
+type BucketUserKey = PrimaryKey BucketUserT Identity
 
 -- deriving instance Show BucketUser
 -- deriving instance Eq BucketUser
 
 instance Table BucketUserT where
         data PrimaryKey BucketUserT f
-          = BucketUserPK (PrimaryKey BucketT f) (PrimaryKey UserT f)
+          = BucketUserKey (PrimaryKey BucketT f) (PrimaryKey UserT f)
             deriving (Generic, Beamable)
-        primaryKey = BucketUserPK <$> _bktForUsr <*> _usrForBkt
+        primaryKey = BucketUserKey <$> _bktForUsr <*> _usrForBkt
 
-BucketUser (BucketId (LensFor bktForUsr)) (UserId (LensFor usrForBkt)) =
+BucketUser (BucketKey (LensFor bktForUsr)) (UserIdKey (LensFor usrForBkt)) =
         tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -140,17 +141,18 @@ data CampaignUserT f
   } deriving (Generic, Beamable)
 
 type CampaignUser = CampaignUserT Identity
+type CampaignUserKey = PrimaryKey CampaignUserT Identity
 
 -- deriving instance Show CampaignUser
 -- deriving instance Eq CampaignUser
 
 instance Table CampaignUserT where
         data PrimaryKey CampaignUserT f
-          = CampaignUserPK (PrimaryKey CampaignT f) (PrimaryKey UserT f)
+          = CampaignUserKey (PrimaryKey CampaignT f) (PrimaryKey UserT f)
             deriving (Generic, Beamable)
-        primaryKey = CampaignUserPK <$> _cmpForUsr <*> _usrForCmp
+        primaryKey = CampaignUserKey <$> _cmpForUsr <*> _usrForCmp
 
-CampaignUser (CampaignId (LensFor cmpForUsr)) (UserId (LensFor usrForCmp)) =
+CampaignUser (CampaignId (LensFor cmpForUsr)) (UserIdKey (LensFor usrForCmp)) =
         tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -163,16 +165,17 @@ data CampaignExperimentT f
   } deriving (Generic, Beamable)
 
 type CampaignExperiment = CampaignExperimentT Identity
+type CampaignExperimentKey = PrimaryKey CampaignExperimentT Identity
 
 -- deriving instance Show CampaignExperiment
 -- deriving instance Eq CampaignExperiment
 
 instance Table CampaignExperimentT where
         data PrimaryKey CampaignExperimentT f
-          = CampaignExperimentPK (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
-        primaryKey = CampaignExperimentPK <$> _cmpForExp <*> _expForCmp
+          = CampaignExperimentKey (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
+        primaryKey = CampaignExperimentKey <$> _cmpForExp <*> _expForCmp
 
-CampaignExperiment (CampaignId (LensFor cmpForExp)) (ExperimentId (LensFor expForCmp))
+CampaignExperiment (CampaignId (LensFor cmpForExp)) (ExperimentKey (LensFor expForCmp))
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -185,16 +188,16 @@ data ExperimentBucketT f
   } deriving (Generic, Beamable)
 
 type ExperimentBucket = ExperimentBucketT Identity
-
+type ExperimentBucketKey = PrimaryKey ExperimentBucketT Identity
 -- deriving instance Show ExperimentBucket
 -- deriving instance Eq ExperimentBucket
 
 instance Table ExperimentBucketT where
         data PrimaryKey ExperimentBucketT f
-          = ExperimentBucketPK (PrimaryKey ExperimentT f) (PrimaryKey BucketT f) deriving (Generic, Beamable)
-        primaryKey = ExperimentBucketPK <$> _expForBkt <*> _bktForExp
+          = ExperimentBucketKey (PrimaryKey ExperimentT f) (PrimaryKey BucketT f) deriving (Generic, Beamable)
+        primaryKey = ExperimentBucketKey <$> _expForBkt <*> _bktForExp
 
-ExperimentBucket (ExperimentId (LensFor expForBkt)) (BucketId (LensFor bktForExp))
+ExperimentBucket (ExperimentKey (LensFor expForBkt)) (BucketKey (LensFor bktForExp))
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -269,13 +272,13 @@ migration () =
                             "bucket_users"
                             BucketUser
                                     { _bktForUsr =
-                                            BucketId
+                                            BucketKey
                                                     (field "bucket_id"
                                                            serial
                                                            notNull
                                                     )
                                     , _usrForBkt =
-                                            UserId
+                                            UserIdKey
                                                     (field "user_id"
                                                            serial
                                                            notNull
@@ -292,7 +295,7 @@ migration () =
                                                            notNull
                                                     )
                                     , _usrForCmp =
-                                            UserId
+                                            UserIdKey
                                                     (field "user_id"
                                                            serial
                                                            notNull
@@ -309,7 +312,7 @@ migration () =
                                                            notNull
                                                     )
                                     , _expForCmp =
-                                            ExperimentId
+                                            ExperimentKey
                                                     (field "exp_id"
                                                            serial
                                                            notNull
@@ -320,13 +323,13 @@ migration () =
                             "experiment_buckets"
                             ExperimentBucket
                                     { _expForBkt =
-                                            ExperimentId
+                                            ExperimentKey
                                                     (field "exp_id"
                                                            serial
                                                            notNull
                                                     )
                                     , _bktForExp =
-                                            BucketId
+                                            BucketKey
                                                     (field "bucket_id"
                                                            serial
                                                            notNull

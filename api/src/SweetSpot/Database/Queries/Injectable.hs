@@ -10,9 +10,7 @@ import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
 import           Control.Monad                  ( forM_ )
-import           Data.Maybe                     ( Maybe(..)
-                                                , maybe
-                                                )
+import           Data.Maybe                     ( Maybe(..) )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial(..) )
@@ -29,35 +27,31 @@ import           SweetSpot.Data.Common
 
 getUserBuckets :: Connection -> UserId -> IO [UserBucket]
 getUserBuckets conn uid@(UserId id) = do
-        tuples <-
-                runBeamPostgresDebug putStrLn conn
-                $ runSelectReturningList
-                $ select
-                $ do
+        tuples <- runBeamPostgres conn $ runSelectReturningList $ select $ do
 
-                          usrs    <- all_ (db ^. users)
-                          bktUsrs <- all_ (db ^. bucketUsers)
-                          bkts    <- all_ (db ^. buckets)
-                          expBkts <- all_ (db ^. experimentBuckets)
-                          exps    <- all_ (db ^. experiments)
-                          cmpUsrs <- all_ (db ^. campaignUsers)
-                          cmps    <- all_ (db ^. campaigns)
+                usrs    <- all_ (db ^. users)
+                bktUsrs <- all_ (db ^. bucketUsers)
+                bkts    <- all_ (db ^. buckets)
+                expBkts <- all_ (db ^. experimentBuckets)
+                exps    <- all_ (db ^. experiments)
+                cmpUsrs <- all_ (db ^. campaignUsers)
+                cmps    <- all_ (db ^. campaigns)
 
 
-                          guard_ (_usrForBkt bktUsrs `references_` usrs)
-                          guard_ (_bktForUsr bktUsrs `references_` bkts)
+                guard_ (_usrForBkt bktUsrs `references_` usrs)
+                guard_ (_bktForUsr bktUsrs `references_` bkts)
 
-                          guard_ (_bktForExp expBkts `references_` bkts)
-                          guard_ (_expForBkt expBkts `references_` exps)
+                guard_ (_bktForExp expBkts `references_` bkts)
+                guard_ (_expForBkt expBkts `references_` exps)
 
-                          guard_ (_usrForCmp cmpUsrs `references_` usrs)
-                          guard_ (_cmpForUsr cmpUsrs `references_` cmps)
+                guard_ (_usrForCmp cmpUsrs `references_` usrs)
+                guard_ (_cmpForUsr cmpUsrs `references_` cmps)
 
-                          guard_ (_usrId usrs ==. val_ (SqlSerial id))
-                          guard_ (cmps ^. cmpStartDate <. now_)
-                          guard_ (cmps ^. cmpEndDate >. now_)
+                guard_ (_usrId usrs ==. val_ (SqlSerial id))
+                guard_ (cmps ^. cmpStartDate <. now_)
+                guard_ (cmps ^. cmpEndDate >. now_)
 
-                          pure (exps, bkts)
+                pure (exps, bkts)
 
         return $ fmap
                 (\(exp, bkt) -> UserBucket
@@ -76,7 +70,7 @@ getUserBuckets conn uid@(UserId id) = do
 insertUser :: Connection -> IO UserId
 insertUser conn = do
         [user] <-
-                runBeamPostgresDebug putStrLn conn
+                runBeamPostgres conn
                 $ BeamExt.runInsertReturningList
                 $ insert (db ^. users)
                 $ insertExpressions [User default_]
@@ -85,7 +79,7 @@ insertUser conn = do
 assignUserToCampaign :: Connection -> (CampaignId, UserId) -> IO CampaignId
 assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
         [cmpUsr] <-
-                runBeamPostgresDebug putStrLn conn
+                runBeamPostgres conn
                 $ BeamExt.runInsertReturningList
                 $ insert (db ^. campaignUsers)
                 $ insertValues
@@ -96,7 +90,7 @@ assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
 
 assignUserToBucket :: Connection -> (UserId, BucketId) -> IO ()
 assignUserToBucket conn (UserId usrId', BucketId bktId') =
-        runBeamPostgresDebug putStrLn conn
+        runBeamPostgres conn
                 $ runInsert
                 $ insert (db ^. bucketUsers)
                 $ insertValues
@@ -108,31 +102,23 @@ assignUserToBucket conn (UserId usrId', BucketId bktId') =
 bucketByTypePerExpInCampaign
         :: Connection -> (CampaignId, BucketType) -> IO [(ExpId, BucketId)]
 bucketByTypePerExpInCampaign conn (CampaignId cid, btype) = do
-        res <-
-                runBeamPostgresDebug putStrLn conn
-                $ runSelectReturningList
-                $ select
-                $ do
-                          cmps    <- all_ (db ^. campaigns)
-                          cmpExps <- all_ (db ^. campaignExperiments)
-                          exps    <- all_ (db ^. experiments)
-                          expBkts <- all_ (db ^. experimentBuckets)
-                          bkts    <- all_ (db ^. buckets)
+        res <- runBeamPostgres conn $ runSelectReturningList $ select $ do
+                cmps    <- all_ (db ^. campaigns)
+                cmpExps <- all_ (db ^. campaignExperiments)
+                exps    <- all_ (db ^. experiments)
+                expBkts <- all_ (db ^. experimentBuckets)
+                bkts    <- all_ (db ^. buckets)
 
-                          guard_ (_cmpForExp cmpExps `references_` cmps)
-                          guard_ (_expForCmp cmpExps `references_` exps)
+                guard_ (_cmpForExp cmpExps `references_` cmps)
+                guard_ (_expForCmp cmpExps `references_` exps)
 
-                          guard_ (_expForBkt expBkts `references_` exps)
-                          guard_ (_bktForExp expBkts `references_` bkts)
+                guard_ (_expForBkt expBkts `references_` exps)
+                guard_ (_bktForExp expBkts `references_` bkts)
 
-                          guard_
-                                  (   bkts
-                                  ^.  bktType
-                                  ==. (btype & bucketTypeToText & val_)
-                                  )
-                          guard_ ((cmps ^. cmpId) ==. val_ cid)
+                guard_ (bkts ^. bktType ==. (btype & bucketTypeToText & val_))
+                guard_ ((cmps ^. cmpId) ==. val_ cid)
 
-                          pure (exps, bkts)
+                pure (exps, bkts)
 
         return $ fmap
                 (\(exp, bkt) ->
@@ -157,17 +143,13 @@ getNewCampaignBuckets conn cmpId mUid = do
 
 validateCampaign :: Connection -> CampaignId -> IO Bool
 validateCampaign conn (CampaignId cmpId') = do
-        res <-
-                runBeamPostgresDebug putStrLn conn
-                $ runSelectReturningList
-                $ select
-                $ do
-                          cmps <- all_ (db ^. campaigns)
-                          guard_ (cmps ^. cmpId ==. val_ cmpId')
-                          guard_ (cmps ^. cmpStartDate <. now_)
-                          guard_ (cmps ^. cmpEndDate >. now_)
+        res <- runBeamPostgres conn $ runSelectReturningList $ select $ do
+                cmps <- all_ (db ^. campaigns)
+                guard_ (cmps ^. cmpId ==. val_ cmpId')
+                guard_ (cmps ^. cmpStartDate <. now_)
+                guard_ (cmps ^. cmpEndDate >. now_)
 
-                          pure cmps
+                pure cmps
 
 
         return $ not (null res)

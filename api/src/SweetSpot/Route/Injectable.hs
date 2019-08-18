@@ -15,6 +15,7 @@ import Control.Monad.Reader (asks)
 import Data.Aeson (Value, encode)
 import Data.Aeson.Lens (_String, key)
 import Data.ByteString as BS (isInfixOf)
+import Data.Pool (withResource)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Network.HTTP.Types (hContentType, status400)
@@ -25,12 +26,15 @@ import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Data.Api (OkResponse(..), UserBucket)
 import SweetSpot.Data.Common
 import SweetSpot.Database
-  ( getNewCampaignBuckets
-  , getUserBuckets
-  , insertEvent
+  ( insertEvent
   , insertLogEvent
-  , validateCampaign
   )
+import SweetSpot.Database.Queries.Injectable
+ (  getNewCampaignBuckets
+  , getUserBuckets
+  , validateCampaign
+ )
+
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr, notFoundErr)
 
@@ -52,59 +56,34 @@ showNumber = T.pack . show
 getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [UserBucket]
 -- Existing user
 getUserBucketsHandler mCmpId (Just uid) = do
-  pool <- asks _getDbPool
-  res <- liftIO $ getUserBuckets pool (UserId uid)
+  pool <- asks _getNewDbPool
+  res <- liftIO . withResource pool $ \conn -> getUserBuckets conn (UserId uid)
   case (mCmpId, res) of
-    (_, Right buckets@(b:bs)) -> do
+    (_, buckets@(b:bs)) -> do
       L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> showNumber uid
       return buckets
-    (Nothing, Right []) -> do
+    (Nothing, []) -> do
       L.info $ "Could not find bucket(s) for userId: " <> showNumber uid
       throwError notFoundErr
-    (Just newCmpId, Right []) -> do
+    (Just newCmpId, []) -> do
       let cId = CampaignId newCmpId
-      isValidCampaign <- liftIO $ validateCampaign pool cId
-      case isValidCampaign of
-        Right True -> do
-          res <- liftIO $ getNewCampaignBuckets pool cId (Just (UserId uid))
-          case res of
-            Right buckets -> do
-              L.info $ "Adding existing user " <> showNumber uid <> " to new campaign " <> newCmpId
-              return buckets
-            Left err -> do
-              L.error $ "Error assigning existing user " <> showNumber uid <> " to new campaign " <> newCmpId
-              throwError internalServerErr
-        Right False -> do
+      isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn cId
+      if isValidCampaign
+        then liftIO . withResource pool $ \conn -> getNewCampaignBuckets conn cId (Just (UserId uid))
+        else do
           L.info $ "Got invalid campaign id for existing user" <> newCmpId
           throwError badRequestErr
-        Left err -> do
-          L.error $ "Error checking campaign id validity for existing user " <> err
-          throwError internalServerErr
-
-    (_, Left err) -> do
-      L.error $ "Error getting user bucket: " <> err
-      throwError internalServerErr
 -- New user
 getUserBucketsHandler (Just cmpId) Nothing = do
-  pool <- asks _getDbPool
-  isValidCampaign <- liftIO $ validateCampaign pool (CampaignId cmpId)
+  pool <- asks _getNewDbPool
+  isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn (CampaignId cmpId)
   case isValidCampaign of
-    Right True -> do
-      res <- liftIO $ getNewCampaignBuckets pool (CampaignId cmpId) Nothing
+    True -> do
       L.info $ "Got campaign " <> cmpId
-      case res of
-        Right buckets -> do
-          L.info "Assigned user to bucket"
-          return buckets
-        Left err -> do
-          L.error $ "Error assigning user to bucket " <> err
-          throwError internalServerErr
-    Right False -> do
+      liftIO . withResource pool $ \conn -> getNewCampaignBuckets conn (CampaignId cmpId) Nothing
+    False -> do
       L.info $ "Got invalid campaign id " <> cmpId
       throwError badRequestErr
-    Left err -> do
-      L.error $ "Error checking campaign id validity " <> err
-      throwError internalServerErr
 
 getUserBucketsHandler Nothing Nothing = throwError badRequestErr
 

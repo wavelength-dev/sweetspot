@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings, TypeFamilies, DataKinds,
-  DeriveGeneric, TypeOperators #-}
+  TypeOperators #-}
 
 import qualified Control.Concurrent as C
 import Control.Lens hiding (Context)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import Data.Foldable (traverse_)
 import Data.List (nub)
 import Data.Maybe (fromJust)
 import Network.HTTP.Client hiding (Proxy)
@@ -104,7 +105,7 @@ businessLogicSpec =
         result <- runClientM (getBucket (Just "longv123") (Just 1001)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 1 ^. ubSku `shouldBe` Sku "714449933423"
+          Right bs -> bs ^?! ix 2 ^. ubSku `shouldBe` Sku "714449933423"
 
       it "should not assign existing user to new campaign when old one is still running" $ do
         result <- runClientM (getBucket (Just "somenewcampaign") (Just 1000)) clientEnv
@@ -118,7 +119,7 @@ businessLogicSpec =
           _ :<|> _ :<|> _ :<|> getStats = client (Proxy :: Proxy DashboardAPI)
 
       it "should get correct impression count" $ do
-        traverse (\val -> runClientM (postEvent val) clientEnv) evs
+        traverse_ (\val -> runClientM (postEvent val) clientEnv) evs
         res <- runClientM (getStats "longv123") clientEnv
         case res of
           Right stats -> impressions `shouldBe` 5
@@ -127,7 +128,7 @@ businessLogicSpec =
           Left err -> error (show err)
 
       it "should track user revenue" $ do
-        traverse (\val -> runClientM (postEvent val) clientEnv) evs
+        traverse_ (\val -> runClientM (postEvent val) clientEnv) evs
         res <- runClientM (getStats "longv123") clientEnv
         case res of
           Right stats -> x `shouldBe` 1999.2 -- 8 * 249.90

@@ -4,7 +4,6 @@ module SweetSpot.Database.Statements.Dashboard where
 
 import Data.Aeson (fromJSON, Value, Result(..))
 import Data.Functor.Contravariant ((>$<))
-import Data.Text (Text)
 import qualified Hasql.Decoders as Decoders
 import qualified Hasql.Encoders as Encoders
 import Hasql.Statement (Statement(..))

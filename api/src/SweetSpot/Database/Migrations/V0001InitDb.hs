@@ -264,10 +264,7 @@ migration () =
                                     , _cmpStartDate = field
                                                               "start_date"
                                                               timestamptz
-                                                              notNull
-                                    , _cmpEndDate = field "end_date"
-                                                          timestamptz
-                                                          notNull
+                                    , _cmpEndDate = field "end_date" timestamptz
                                     }
 
                 <*> createTable
@@ -285,17 +282,17 @@ migration () =
                             "buckets"
                             Bucket
                                     { _bktId = field "bucket_id" serial notNull
-                                    , _bktType        = field "bucket_type"
-                                                              text
-                                                              notNull
+                                    , _bktType     = field "bucket_type"
+                                                           text
+                                                           notNull
                                     , _bktCtrlSvid = field
-                                                                "original_svid"
-                                                                bigint
-                                                                notNull
-                                    , _bktTestSvid    = field "test_svid"
-                                                              bigint
-                                                              notNull
-                                    , _bktPrice       =
+                                                             "original_svid"
+                                                             bigint
+                                                             notNull
+                                    , _bktTestSvid = field "test_svid"
+                                                           bigint
+                                                           notNull
+                                    , _bktPrice    =
                                             field
                                                     "price"
                                                     (numeric pricePrecision)

@@ -9,6 +9,7 @@ module SweetSpot.Server
 
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
+import Data.Pool (withResource)
 import Network.Wai.Logger (withStdoutLogger)
 import Network.Wai.Handler.Warp (defaultSettings, setPort, runSettings, setLogger)
 import Servant
@@ -75,16 +76,16 @@ runServer = do
       }
 
   L.info' appLogger "Running migrations"
-  res <- migrate dbPool
+  res <- withResource newDbPool $ \conn -> migrate conn
 
   case res of
-    Left err -> do
-      L.error' appLogger ("Error while trying to migrate: " <> err)
+    Nothing -> do
+      L.error' appLogger "Error while trying to migrate"
       -- Make sure error gets logged
       threadDelay 1000000
       exitWith $ ExitFailure 1
 
-    Right _ -> do
+    Just _ -> do
       L.info' appLogger "Listening on port 8082..."
       withStdoutLogger $ \aplogger -> do
         let settings = setPort 8082 $ setLogger aplogger defaultSettings

@@ -22,14 +22,7 @@ import           Database.Beam.Migrate          ( CheckedDatabaseSettings
                                                 , unCheckDatabase
                                                 , migrationStep
                                                 )
-import           Database.Beam.Migrate.Simple   ( createSchema, bringUpToDate )
-import           Database.Beam.Postgres         ( Postgres
-                                                , runBeamPostgres
-                                                , Connection
-                                                , connect
-                                                , defaultConnectInfo
-                                                )
-import           Database.Beam.Postgres.Migrate ( migrationBackend )
+import           Database.Beam.Postgres         ( Postgres )
 
 import qualified SweetSpot.Database.Migrations.V0001InitDb
                                                as V1
@@ -44,8 +37,3 @@ db = unCheckDatabase checkedDb
 
 
 migration = migrationStep "Initial schema" V1.migration
-
-createDbSchema :: Connection -> IO ()
-createDbSchema conn = runBeamPostgres
-        conn
-        (createSchema migrationBackend (evaluateDatabase migration))

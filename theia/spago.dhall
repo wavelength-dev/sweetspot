@@ -1,5 +1,5 @@
 { name =
-    "my-project"
+    "theia"
 , dependencies =
     [ "console"
     , "debug"

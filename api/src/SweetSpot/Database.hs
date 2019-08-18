@@ -6,16 +6,11 @@ module SweetSpot.Database
   ( Pool
   , getDbPool
   , getNewDbPool
-  , getUserBuckets
   , createExperiment
-  , getNewCampaignBuckets
   , getExperimentBuckets
   , getCampaignStats
   , DbConfig(..)
-  , insertEvent
-  , insertLogEvent
   , migrate
-  , validateCampaign
   ) where
 
 import qualified Database.Beam.Postgres as PG
@@ -34,7 +29,6 @@ import Hasql.Migration
 import qualified Hasql.Pool as Pool
 import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
 import SweetSpot.Data.Api
-import SweetSpot.Data.Common (EventType(..), Price, Sku, Svid)
 import SweetSpot.Data.Common
 import SweetSpot.Data.Domain (DBCampaignStats)
 import SweetSpot.Database.Sessions
@@ -51,7 +45,7 @@ data DbConfig = DbConfig
   }
 
 getDbPool :: DbConfig -> IO Pool
-getDbPool DbConfig {..} = do
+getDbPool DbConfig {..} =
   Pool.acquire (poolSize, timeoutMs, connectionSettings)
   where
     poolSize = 10
@@ -88,35 +82,10 @@ getNewDbPool DbConfig {..} =
 wrapQueryError :: Pool.UsageError -> T.Text
 wrapQueryError = T.pack . show
 
-getUserBuckets :: Pool -> UserId -> IO (Either T.Text [UserBucket])
-getUserBuckets pool userId = do
-  res <- Pool.use pool (getUserBucketSession userId)
-  return $ over _Left wrapQueryError res
-
-getNewCampaignBuckets :: Pool -> CampaignId -> Maybe UserId -> IO (Either T.Text [UserBucket])
-getNewCampaignBuckets pool cmpId mUid = do
-  randIdx <- randomRIO (0 :: Int, 1 :: Int)
-  res <- Pool.use pool (assignAndGetUserBucketSession cmpId mUid (bucketTypes !! randIdx))
-  return $ over _Left wrapQueryError res
-  where
-    bucketTypes = [Control, Test]
-
 getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])
 getExperimentBuckets pool = do
   res <- Pool.use pool getBucketsSession
   return $ over _Left wrapQueryError res
-
-insertEvent :: Pool -> (EventType, Value) -> IO (Either T.Text ())
-insertEvent pool input = do
-  res <- Pool.use pool (insertEventSession input)
-  return $ over _Left wrapQueryError res
-
-insertLogEvent :: Pool -> Value -> IO (Either T.Text ())
-insertLogEvent pool val = do
-  res <- Pool.use pool (insertEventSession input)
-  return $ over _Left wrapQueryError res
-  where
-    input = (Log, val)
 
 createExperiment ::
      Pool
@@ -148,8 +117,3 @@ migrate pool = do
       Right (Just errors) ->
         Left $ T.intercalate ", " (T.pack . show <$> errors)
       Left err -> Left $ wrapQueryError err
-
-validateCampaign :: Pool -> CampaignId -> IO (Either T.Text Bool)
-validateCampaign pool cmpId = do
-  res <- Pool.use pool (validateCampaignSession cmpId)
-  return $ over _Left wrapQueryError res

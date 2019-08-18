@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 
 module SweetSpot.Route.Dashboard
   ( DashboardAPI
@@ -14,10 +13,9 @@ import Control.Monad.Reader (asks)
 import Control.Monad (sequence, unless)
 import Data.Aeson (Result(..))
 import Data.Aeson.Lens (_String, key, values)
-import Data.Either (either)
-import Data.Function (id, const)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
+import Data.Pool (withResource)
 import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
@@ -29,8 +27,8 @@ import SweetSpot.Database
   ( createExperiment
   , getExperimentBuckets
   , getCampaignStats
-  , validateCampaign
   )
+import SweetSpot.Database.Queries.Injectable (validateCampaign)
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
@@ -68,9 +66,9 @@ getExperimentsHandler = do
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
   pool <- asks _getDbPool
-  isValidCampaign <- do
-    res <- liftIO $ validateCampaign pool (ce ^. ceCampaignId)
-    return $ either (const False) id res
+  pool' <- asks _getNewDbPool
+  isValidCampaign <- liftIO . withResource pool'
+    $ \conn -> validateCampaign conn (ce ^. ceCampaignId)
   unless isValidCampaign (throwError badRequestErr)
   json <- fetchProduct $ ce ^. ceProductId
   let

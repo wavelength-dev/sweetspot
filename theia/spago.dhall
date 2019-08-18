@@ -7,8 +7,8 @@
     , "psci-support"
     , "test-unit"
     , "toppokki"
-    , "web-html"
     , "web-dom"
+    , "web-html"
     ]
 , packages =
     ./packages.dhall

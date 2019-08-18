@@ -77,27 +77,36 @@ createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, Ca
         toExpKey exp = exp ^. expId & ExperimentKey
         toBktKey bkt = bkt ^. bktId & BucketKey
 
-getCampaign :: Connection -> Text -> IO [Campaign]
+-- | ---------------------------------------------------------------------------
+-- | Stats
+-- | ---------------------------------------------------------------------------
+getCampaign :: Connection -> Text -> IO (Maybe Campaign)
 getCampaign conn cmpId =
-        runBeamPostgresDebug putStrLn conn
-                $ runSelectReturningList
+        runBeamPostgres conn
+                $ runSelectReturningOne
                 $ select
                 $ filter_ (\c -> _cmpId c ==. val_ cmpId)
                 $ all_ (_campaigns db)
 
 
-getCampaignExperiments :: Connection -> Text -> IO [Experiment]
-getCampaignExperiments conn cmpId =
-        runBeamPostgresDebug putStrLn conn
-                $ runSelectReturningList
-                $ select
-                $ do
-                          experiments         <- all_ (_experiments db)
-                          campaignExperiments <- all_ (_campaignExperiments db)
+getCampaignExperiments :: Connection -> CampaignId -> IO [Experiment]
+getCampaignExperiments conn (CampaignId cmpId) =
+        runBeamPostgres conn $ runSelectReturningList $ select $ do
+                exps    <- all_ (db ^. experiments)
+                cmpExps <- all_ (db ^. campaignExperiments)
 
-                          guard_
-                                  (             _expForCmp campaignExperiments
-                                  `references_` experiments
-                                  )
+                guard_ (_expForCmp cmpExps `references_` exps)
+                guard_ (_cmpForExp cmpExps ==. cmpKey)
 
-                          pure experiments
+                pure exps
+        where cmpKey = val_ (CampaignKey cmpId)
+
+getExperimentBuckets :: Connection -> ExpId -> IO [Bucket]
+getExperimentBuckets conn (ExpId eid) =
+        runBeamPostgres conn $ runSelectReturningList $ select $ do
+                expBkts <- all_ (db ^. experimentBuckets)
+                bkts    <- all_ (db ^. buckets)
+                guard_ (_bktForExp expBkts `references_` bkts)
+                guard_ (_expForBkt expBkts ==. expKey)
+                pure bkts
+        where expKey = val_ (ExperimentKey (SqlSerial eid))

@@ -100,6 +100,7 @@ data BucketT f
   , _bktCtrlSvid :: Columnar f Int
   , _bktTestSvid :: Columnar f Int
   , _bktPrice :: Columnar f Scientific
+  , _bktCtrlPrice :: Columnar f Scientific
   } deriving (Generic, Beamable)
 
 type Bucket = BucketT Identity
@@ -113,7 +114,7 @@ instance Table BucketT where
           = BucketKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
         primaryKey = BucketKey . _bktId
 
-Bucket (LensFor bktId) (LensFor bktType) (LensFor bktCtrlSvid) (LensFor bktTestSvid) (LensFor bktPrice)
+Bucket (LensFor bktId) (LensFor bktType) (LensFor bktCtrlSvid) (LensFor bktTestSvid) (LensFor bktPrice) (LensFor bktCtrlPrice)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -282,19 +283,24 @@ migration () =
                             "buckets"
                             Bucket
                                     { _bktId = field "bucket_id" serial notNull
-                                    , _bktType     = field "bucket_type"
-                                                           text
-                                                           notNull
-                                    , _bktCtrlSvid = field
-                                                             "original_svid"
-                                                             bigint
-                                                             notNull
-                                    , _bktTestSvid = field "test_svid"
-                                                           bigint
-                                                           notNull
-                                    , _bktPrice    =
+                                    , _bktType      = field "bucket_type"
+                                                            text
+                                                            notNull
+                                    , _bktCtrlSvid  = field
+                                                              "original_svid"
+                                                              bigint
+                                                              notNull
+                                    , _bktTestSvid  = field "test_svid"
+                                                            bigint
+                                                            notNull
+                                    , _bktPrice     =
                                             field
                                                     "price"
+                                                    (numeric pricePrecision)
+                                                    notNull
+                                    , _bktCtrlPrice =
+                                            field
+                                                    "original_price"
                                                     (numeric pricePrecision)
                                                     notNull
                                     }

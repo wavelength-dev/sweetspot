@@ -48,17 +48,19 @@ createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, Ca
                         $ BeamExt.runInsertReturningList
                         $ insert (db ^. buckets)
                         $ insertExpressions
-                                  [ Bucket { _bktId       = default_
-                                           , _bktType     = val_ "control"
-                                           , _bktCtrlSvid = val_ ctrl
-                                           , _bktTestSvid = val_ ctrl
-                                           , _bktPrice    = val_ ctrlP
+                                  [ Bucket { _bktId        = default_
+                                           , _bktType      = val_ "control"
+                                           , _bktCtrlSvid  = val_ ctrl
+                                           , _bktTestSvid  = val_ ctrl
+                                           , _bktCtrlPrice = val_ ctrlP
+                                           , _bktPrice     = val_ ctrlP
                                            }
-                                  , Bucket { _bktId       = default_
-                                           , _bktType     = val_ "test"
-                                           , _bktCtrlSvid = val_ ctrl
-                                           , _bktTestSvid = val_ test
-                                           , _bktPrice    = val_ testP
+                                  , Bucket { _bktId        = default_
+                                           , _bktType      = val_ "test"
+                                           , _bktCtrlSvid  = val_ ctrl
+                                           , _bktTestSvid  = val_ test
+                                           , _bktCtrlPrice = val_ ctrlP
+                                           , _bktPrice     = val_ testP
                                            }
                                   ]
 

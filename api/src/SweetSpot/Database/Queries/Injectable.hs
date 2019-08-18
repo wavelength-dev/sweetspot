@@ -9,6 +9,7 @@ module SweetSpot.Database.Queries.Injectable where
 import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
+import           Control.Monad                  ( forM_ )
 import           Data.Maybe                     ( Maybe(..)
                                                 , maybe
                                                 )
@@ -93,6 +94,16 @@ assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
                           ]
         return $ cmpUsr ^. cmpForUsr & CampaignId
 
+assignUserToBucket :: Connection -> (UserId, BucketId) -> IO ()
+assignUserToBucket conn (UserId usrId', BucketId bktId') =
+        runBeamPostgresDebug putStrLn conn
+                $ runInsert
+                $ insert (db ^. bucketUsers)
+                $ insertValues
+                          [ BucketUser (bktId' & SqlSerial & BucketKey)
+                                       (usrId' & SqlSerial & UserKey)
+                          ]
+
 
 bucketByTypePerExpInCampaign
         :: Connection -> (CampaignId, BucketType) -> IO [(ExpId, BucketId)]
@@ -115,10 +126,11 @@ bucketByTypePerExpInCampaign conn (CampaignId cid, btype) = do
                           guard_ (_bktForExp expBkts `references_` bkts)
 
                           guard_
-                                  (   _bktType bkts
+                                  (   bkts
+                                  ^.  bktType
                                   ==. (btype & bucketTypeToText & val_)
                                   )
-                          guard_ (_cmpId cmps ==. val_ cid)
+                          guard_ ((cmps ^. cmpId) ==. val_ cid)
 
                           pure (exps, bkts)
 
@@ -130,11 +142,32 @@ bucketByTypePerExpInCampaign conn (CampaignId cid, btype) = do
                 )
                 res
 
--- getNewCampaignBuckets
---         :: Connection -> CampaignId -> Maybe UserId -> IO [UserBucket]
--- getNewCampaignBuckets conn cmpId mUid = do
---         randIdx <- randomRIO (0 :: Int, 1 :: Int)
---         let bucketType = [Control, Test] !! randIdx
---         uid <- case mUid of
---           Just id -> pure id
---           Nothing -> insertUser
+getNewCampaignBuckets
+        :: Connection -> CampaignId -> Maybe UserId -> IO [UserBucket]
+getNewCampaignBuckets conn cmpId mUid = do
+        randIdx <- randomRIO (0 :: Int, 1 :: Int)
+        let bucketType = [Control, Test] !! randIdx
+        uid <- case mUid of
+                Just id -> pure id
+                Nothing -> insertUser conn
+        cid <- assignUserToCampaign conn (cmpId, uid)
+        bs  <- bucketByTypePerExpInCampaign conn (cid, bucketType)
+        forM_ bs (\(_, bid) -> assignUserToBucket conn (uid, bid))
+        getUserBuckets conn uid
+
+validateCampaign :: Connection -> CampaignId -> IO Bool
+validateCampaign conn (CampaignId cmpId') = do
+        res <-
+                runBeamPostgresDebug putStrLn conn
+                $ runSelectReturningList
+                $ select
+                $ do
+                          cmps <- all_ (db ^. campaigns)
+                          guard_ (cmps ^. cmpId ==. val_ cmpId')
+                          guard_ (cmps ^. cmpStartDate <. now_)
+                          guard_ (cmps ^. cmpEndDate >. now_)
+
+                          pure cmps
+
+
+        return $ not (null res)

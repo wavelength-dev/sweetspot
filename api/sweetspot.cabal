@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d70a823cf0e0bdd62828bf7284765e0671aee149a4d6f2d04656d0d450cd7926
+-- hash: 7f78075a298c76a19b8f0b7a35d6a0f9064afbab46a29ce6c529ecc9623282d8
 
 name:           sweetspot
 version:        0.1.0.0
@@ -81,6 +81,7 @@ library
     , mwc-random
     , purescript-bridge
     , random
+    , resource-pool
     , scientific
     , servant
     , servant-client
@@ -137,6 +138,7 @@ executable bridge-exe
     , mwc-random
     , purescript-bridge
     , random
+    , resource-pool
     , scientific
     , servant
     , servant-client
@@ -193,6 +195,7 @@ executable sweetspot-exe
     , mwc-random
     , purescript-bridge
     , random
+    , resource-pool
     , scientific
     , servant
     , servant-client
@@ -251,6 +254,7 @@ test-suite sweetspot-test
     , mwc-random
     , purescript-bridge
     , random
+    , resource-pool
     , scientific
     , servant
     , servant-client

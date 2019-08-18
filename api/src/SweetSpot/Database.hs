@@ -5,6 +5,7 @@
 module SweetSpot.Database
   ( Pool
   , getDbPool
+  , getNewDbPool
   , getUserBuckets
   , createExperiment
   , getNewCampaignBuckets
@@ -17,12 +18,14 @@ module SweetSpot.Database
   , validateCampaign
   ) where
 
+import qualified Database.Beam.Postgres as PG
 import Control.Lens (_Left, over)
 import Control.Monad (mapM)
 import Data.Aeson (Value)
 import Data.ByteString.UTF8 (fromString)
 import qualified Data.Text as T
-import qualified Hasql.Connection as Connection
+import qualified Data.Pool as P
+import qualified Hasql.Connection as Conn
 import Hasql.Migration
   ( MigrationCommand(..)
   , loadMigrationsFromDirectory
@@ -54,12 +57,33 @@ getDbPool DbConfig {..} = do
     poolSize = 10
     timeoutMs = 2000
     connectionSettings =
-      Connection.settings
+      Conn.settings
         (fromString host)
         (fromIntegral port)
         (fromString user)
         (fromString password)
         (fromString name)
+
+getNewDbPool :: DbConfig -> IO (P.Pool PG.Connection)
+getNewDbPool DbConfig {..} =
+  P.createPool
+    connect
+    PG.close
+    subPools
+    timeoutMs
+    poolSize
+  where
+    connect=
+      PG.connect (PG.ConnectInfo
+                  { connectHost = host
+                  , connectPort = fromIntegral port
+                  , connectUser = user
+                  , connectPassword = password
+                  , connectDatabase = name
+                  })
+    subPools = 1
+    timeoutMs = 2000
+    poolSize = 10
 
 wrapQueryError :: Pool.UsageError -> T.Text
 wrapQueryError = T.pack . show

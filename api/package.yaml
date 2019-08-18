@@ -47,6 +47,7 @@ dependencies:
 - mwc-random
 - purescript-bridge
 - random
+- resource-pool
 - scientific
 - servant
 - servant-client

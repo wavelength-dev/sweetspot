@@ -6,7 +6,6 @@ module SweetSpot.Database
   ( Pool
   , getDbPool
   , getNewDbPool
-  , createExperiment
   , getExperimentBuckets
   , getCampaignStats
   , DbConfig(..)
@@ -85,20 +84,6 @@ wrapQueryError = T.pack . show
 getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])
 getExperimentBuckets pool = do
   res <- Pool.use pool getBucketsSession
-  return $ over _Left wrapQueryError res
-
-createExperiment ::
-     Pool
-  -> Sku
-  -> Svid
-  -> Svid
-  -> Price
-  -> Price
-  -> CampaignId
-  -> T.Text
-  -> IO (Either T.Text ())
-createExperiment pool sku contSvid testSvid contPrice testPrice cmp name = do
-  res <- Pool.use pool (createExperimentSession (sku, contSvid, testSvid, contPrice, testPrice, cmp, name))
   return $ over _Left wrapQueryError res
 
 getCampaignStats :: Pool -> CampaignId -> IO (Either T.Text DBCampaignStats)

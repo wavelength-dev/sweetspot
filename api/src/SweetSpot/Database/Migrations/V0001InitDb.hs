@@ -97,7 +97,7 @@ data BucketT f
   = Bucket
   { _bktId :: Columnar f (SqlSerial Int)
   , _bktType :: Columnar f Text
-  , _bktControlSvid :: Columnar f Int
+  , _bktCtrlSvid :: Columnar f Int
   , _bktTestSvid :: Columnar f Int
   , _bktPrice :: Columnar f Scientific
   } deriving (Generic, Beamable)
@@ -113,7 +113,7 @@ instance Table BucketT where
           = BucketKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
         primaryKey = BucketKey . _bktId
 
-Bucket (LensFor bktId) (LensFor bktType) (LensFor bktControlSvid) (LensFor bktTestSvid) (LensFor bktPrice)
+Bucket (LensFor bktId) (LensFor bktType) (LensFor bktCtrlSvid) (LensFor bktTestSvid) (LensFor bktPrice)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -288,7 +288,7 @@ migration () =
                                     , _bktType        = field "bucket_type"
                                                               text
                                                               notNull
-                                    , _bktControlSvid = field
+                                    , _bktCtrlSvid = field
                                                                 "original_svid"
                                                                 bigint
                                                                 notNull

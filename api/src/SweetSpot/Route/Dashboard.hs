@@ -10,7 +10,7 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
-import Control.Monad (sequence, unless)
+import Control.Monad (unless)
 import Data.Aeson (Result(..))
 import Data.Aeson.Lens (_String, key, values)
 import qualified Data.List as L
@@ -24,11 +24,11 @@ import SweetSpot.Calc (enhanceDBStats)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database
-  ( createExperiment
-  , getExperimentBuckets
+  ( getExperimentBuckets
   , getCampaignStats
   )
 import SweetSpot.Database.Queries.Injectable (validateCampaign)
+import SweetSpot.Database.Queries.Dashboard (createExperiment)
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
@@ -98,15 +98,11 @@ createExperimentHandler ce = do
             contPrice = controlVariant ^. vPrice
             testSvid = v ^. vId
 
-          createExperiment pool sku contSvid testSvid contPrice testPrice cmpId title)
+          liftIO . withResource pool'
+            $ \conn -> createExperiment conn (sku, contSvid, testSvid, contPrice, testPrice, cmpId, title))
 
-      case sequence res of
-        Right _ -> do
-          L.info "Created experiment(s)"
-          return OkResponse {message = "Created experiment(s)"}
-        Left err -> do
-          L.error $ "Error creating experiment(s) " <> err
-          throwError internalServerErr
+      L.info "Created experiment(s)"
+      return OkResponse { message = "Created experiment(s)"}
 
     (Error err, _) -> do
       L.error $ "Failed to parse control product " <> T.pack err

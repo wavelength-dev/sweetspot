@@ -1,11 +1,15 @@
-{-
-Welcome to a Spago project!
-You can edit this file as you like.
--}
 { name =
     "my-project"
 , dependencies =
-    [ "effect", "console", "psci-support", "toppokki", "test-unit" ]
+    [ "console"
+    , "debug"
+    , "effect"
+    , "psci-support"
+    , "test-unit"
+    , "toppokki"
+    , "web-html"
+    , "web-dom"
+    ]
 , packages =
     ./packages.dhall
 , sources =

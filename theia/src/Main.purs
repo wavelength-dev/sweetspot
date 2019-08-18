@@ -40,6 +40,7 @@ main =
     -- beforeAll
     browser <- T.launch {}
     page <- T.newPage browser
+    T.setUserAgent "Theia/1.0" page
 
     runTestWith Fancy.runTest do
 

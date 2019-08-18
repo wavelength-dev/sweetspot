@@ -25,18 +25,15 @@ import Servant
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Data.Api (OkResponse(..), UserBucket)
 import SweetSpot.Data.Common
-import SweetSpot.Database
-  ( insertEvent
-  , insertLogEvent
-  )
 import SweetSpot.Database.Queries.Injectable
  (  getNewCampaignBuckets
   , getUserBuckets
   , validateCampaign
+  , insertEvent
  )
 
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (internalServerErr, badRequestErr, notFoundErr)
+import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 
 type UserBucketRoute
    = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
@@ -77,11 +74,11 @@ getUserBucketsHandler mCmpId (Just uid) = do
 getUserBucketsHandler (Just cmpId) Nothing = do
   pool <- asks _getNewDbPool
   isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn (CampaignId cmpId)
-  case isValidCampaign of
-    True -> do
+  if isValidCampaign
+    then do
       L.info $ "Got campaign " <> cmpId
       liftIO . withResource pool $ \conn -> getNewCampaignBuckets conn (CampaignId cmpId) Nothing
-    False -> do
+    else do
       L.info $ "Got invalid campaign id " <> cmpId
       throwError badRequestErr
 
@@ -96,26 +93,16 @@ trackEventHandler val = do
         case (pageType, step) of
           (Just "checkout", Just "thank_you") -> (Checkout, val)
           _ -> (View, val)
-  pool <- asks _getDbPool
-  res <- liftIO $ insertEvent pool input
-  case res of
-    Right _ ->
-      L.info "Tracked event" >> return OkResponse {message = "Event received"}
-    Left err -> do
-      L.error $ "Error tracking event " <> err
-      throwError internalServerErr
+  pool <- asks _getNewDbPool
+  liftIO . withResource pool $ \conn -> insertEvent conn input
+  L.info "Tracked event"
+  return OkResponse {message = "Event received"}
 
 trackLogMessageHandler :: Value -> AppM OkResponse
 trackLogMessageHandler val = do
-  pool <- asks _getDbPool
-  res <- liftIO $ insertLogEvent pool val
-  case res of
-    Right _ ->
-      L.info "Tracked log event" >>
-      return OkResponse {message = "Event received"}
-    Left err -> do
-      L.error $ "Error tracking log event " <> err
-      throwError internalServerErr
+  pool <- asks _getNewDbPool
+  liftIO . withResource pool $ \conn -> insertEvent conn (Log, val)
+  return OkResponse {message = "Event received"}
 
 experimentShield :: AppCtx -> Middleware
 experimentShield ctx =

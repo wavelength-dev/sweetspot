@@ -10,6 +10,7 @@ import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
 import           Control.Monad                  ( forM_ )
+import           Data.Aeson                     ( Value )
 import           Data.Maybe                     ( Maybe(..) )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
@@ -151,5 +152,17 @@ validateCampaign conn (CampaignId cmpId') = do
 
                 pure cmps
 
-
         return $ not (null res)
+
+insertEvent :: Connection -> (EventType, Value) -> IO ()
+insertEvent conn (eventType, json) =
+        runBeamPostgres conn
+                $ runInsert
+                $ insert (db ^. events)
+                $ insertExpressions
+                          [ Event { _evId        = default_
+                                  , _evType = val_ $ eventTypeToText eventType
+                                  , _evTimestamp = now_
+                                  , _evPayload   = val_ $ PgJSONB json
+                                  }
+                          ]

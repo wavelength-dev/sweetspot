@@ -11,6 +11,7 @@
 
 module SweetSpot.Database.Migrations.V0001InitDb where
 
+import           Data.Aeson                     ( Value )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
@@ -56,6 +57,8 @@ data CampaignT f
 type Campaign = CampaignT Identity
 type CampaignKey = PrimaryKey CampaignT Identity
 
+deriving instance Show Campaign
+
 instance Table CampaignT where
         data PrimaryKey CampaignT f
           = CampaignKey (Columnar f Text) deriving (Generic, Beamable)
@@ -76,6 +79,8 @@ data ExperimentT f
 
 type Experiment = ExperimentT Identity
 type ExperimentKey = PrimaryKey ExperimentT Identity
+
+deriving instance Show Experiment
 
 instance Table ExperimentT where
         data PrimaryKey ExperimentT f
@@ -123,10 +128,6 @@ data BucketUserT f
 type BucketUser = BucketUserT Identity
 type BucketUserKey = PrimaryKey BucketUserT Identity
 
--- deriving instance Show BucketUser
--- deriving instance Eq BucketUser
-
-
 instance Table BucketUserT where
         data PrimaryKey BucketUserT f
           = BucketUserKey (PrimaryKey BucketT f) (PrimaryKey UserT f)
@@ -147,9 +148,6 @@ data CampaignUserT f
 
 type CampaignUser = CampaignUserT Identity
 type CampaignUserKey = PrimaryKey CampaignUserT Identity
-
--- deriving instance Show CampaignUser
--- deriving instance Eq CampaignUser
 
 instance Table CampaignUserT where
         data PrimaryKey CampaignUserT f
@@ -172,9 +170,6 @@ data CampaignExperimentT f
 type CampaignExperiment = CampaignExperimentT Identity
 type CampaignExperimentKey = PrimaryKey CampaignExperimentT Identity
 
--- deriving instance Show CampaignExperiment
--- deriving instance Eq CampaignExperiment
-
 instance Table CampaignExperimentT where
         data PrimaryKey CampaignExperimentT f
           = CampaignExperimentKey (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
@@ -194,8 +189,6 @@ data ExperimentBucketT f
 
 type ExperimentBucket = ExperimentBucketT Identity
 type ExperimentBucketKey = PrimaryKey ExperimentBucketT Identity
--- deriving instance Show ExperimentBucket
--- deriving instance Eq ExperimentBucket
 
 instance Table ExperimentBucketT where
         data PrimaryKey ExperimentBucketT f
@@ -203,6 +196,28 @@ instance Table ExperimentBucketT where
         primaryKey = ExperimentBucketKey <$> _expForBkt <*> _bktForExp
 
 ExperimentBucket (ExperimentKey (LensFor expForBkt)) (BucketKey (LensFor bktForExp))
+        = tableLenses
+
+-- | ---------------------------------------------------------------------------
+-- | Events
+-- | ---------------------------------------------------------------------------
+data EventT f
+  = Event
+  { _evId :: Columnar f (SqlSerial Int)
+  , _evType :: Columnar f Text
+  , _evTimestamp :: Columnar f LocalTime
+  , _evPayload :: Columnar f (PgJSONB Value)
+  } deriving (Generic, Beamable)
+
+type Event = EventT Identity
+type EventKey = PrimaryKey EventT Identity
+
+instance Table EventT where
+        data PrimaryKey EventT f
+          = EventKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+        primaryKey = EventKey . _evId
+
+Event (LensFor evId) (LensFor evType) (LensFor evTimestamp) (LensFor evPayload)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -217,11 +232,12 @@ data SweetSpotDb f = SweetSpotDb
   , _campaignUsers :: f (TableEntity CampaignUserT)
   , _campaignExperiments :: f (TableEntity CampaignExperimentT)
   , _experimentBuckets :: f (TableEntity ExperimentBucketT)
+  , _events :: f (TableEntity EventT)
   } deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (TableLens buckets) (TableLens bucketUsers) (TableLens campaignUsers) (TableLens campaignExperiments) (TableLens experimentBuckets)
+SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (TableLens buckets) (TableLens bucketUsers) (TableLens campaignUsers) (TableLens campaignExperiments) (TableLens experimentBuckets) (TableLens events)
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -351,4 +367,14 @@ migration () =
                                                            serial
                                                            notNull
                                                     )
+                                    }
+                <*> createTable
+                            "events"
+                            Event
+                                    { _evId        = field "id" serial notNull
+                                    , _evType      = field "type" text notNull
+                                    , _evTimestamp = field "timestamp"
+                                                           timestamptz
+                                                           notNull
+                                    , _evPayload = field "payload" jsonb notNull
                                     }

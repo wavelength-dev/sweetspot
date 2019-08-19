@@ -88,7 +88,7 @@ getMatchingUserBucket buckets id =
 getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
 getOptionVariantId buckets attribute el = do
   attrValue <- E.getAttribute attribute el
-  pure $ attrValue >>= getMatchingUserBucket buckets # map (toString <<<  _._ubTestSvid)
+  pure $ attrValue >>= getMatchingUserBucket buckets # map (toString <<< _._ubTestSvid)
 
 swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
 swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements

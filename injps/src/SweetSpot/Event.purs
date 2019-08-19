@@ -5,6 +5,7 @@ import Prelude
 import Data.Array as A
 import Data.Either (hush)
 import Data.Maybe (Maybe)
+import Data.Newtype (unwrap)
 import Data.String.Regex (Regex, test)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
@@ -76,7 +77,8 @@ detectPage = window >>= location >>= pathname >>= pure <<< getPage
 
 trackView :: AppM Unit
 trackView = do
-  userId <- getUserId
+  mUserId <- getUserId
+  let userId = unwrap <$> mUserId
   viewEvent <- liftEffect $ do
     page <- detectPage
     pageUrl <- window >>= location >>= href

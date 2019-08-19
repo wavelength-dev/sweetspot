@@ -27,22 +27,21 @@ app = do
   attachPriceObserver buckets
   trackView
 
+logResult :: forall a. Either Error a -> Effect Unit
+logResult either = case either of
+  -- If posting this log message fails there is little more we can do to report it so we ignore the result.
+  Left err -> runAff_
+    (\_ -> pure unit)
+    (postLogPayload (show err))
+  Right _ -> pure unit
+
 main :: Effect Unit
 main =
-  runAff_ logResult
-    $ do
-        result <- runAppM app
-        liftEffect
-          $ case result of
-              Left (ReportErr { message }) -> do
-                unhidePrice
-                throw message
-              Left Noop -> unhidePrice
-              Right _ -> unhidePrice
-  where
-  logResult :: Either Error Unit -> Effect Unit
-  logResult either = case either of
-    -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-    Left err -> do
-      launchAff_ $ apathize $ postLogPayload (show err)
-    Right _ -> pure unit
+  runAff_ logResult do
+    result <- runAppM app
+    liftEffect $ unhidePrice
+    liftEffect
+      $ case result of
+          Left (ReportErr { message }) -> throw message
+          Left Noop -> pure unit
+          Right _ -> pure unit

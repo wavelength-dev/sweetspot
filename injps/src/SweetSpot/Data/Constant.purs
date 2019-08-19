@@ -35,4 +35,4 @@ data DryRunMode
   | Live
 
 dryRunMode :: DryRunMode
-dryRunMode = DryRun
+dryRunMode = Live

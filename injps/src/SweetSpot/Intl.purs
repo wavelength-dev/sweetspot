@@ -7,6 +7,6 @@ foreign import data NumberFormat :: Type
 foreign import _numberFormat :: forall a. String -> a -> Effect NumberFormat
 
 numberFormat :: Effect NumberFormat
-numberFormat = _numberFormat "en-US" { style: "currency", currency: "USD" }
+numberFormat = _numberFormat "en-US" { style: "currency", currency: "USD", maximumFractionDigits: 0 }
 
 foreign import formatNumber :: Number -> NumberFormat -> Effect String

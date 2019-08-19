@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-14.1 AS build
+FROM fpco/stack-build:lts-13.24 AS build
 
 WORKDIR /opt/build
 

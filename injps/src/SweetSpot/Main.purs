@@ -26,23 +26,23 @@ app = do
   applyPriceVariations buckets
   attachPriceObserver buckets
   trackView
-  liftEffect unhidePrice
 
 main :: Effect Unit
 main =
   runAff_ logResult
     $ do
         result <- runAppM app
-        case result of
-          Left (ReportErr { message }) -> liftEffect $ throw message
-          Left Noop -> pure unit
-          Right _ -> pure unit
+        liftEffect
+          $ case result of
+              Left (ReportErr { message }) -> do
+                unhidePrice
+                throw message
+              Left Noop -> unhidePrice
+              Right _ -> unhidePrice
   where
   logResult :: Either Error Unit -> Effect Unit
   logResult either = case either of
     -- If posting this log message fails there is little more we can do to report it so we ignore the result.
     Left err -> do
-      -- If running our main logic encountered some problem we will still try to unhide the price as-is
-      unhidePrice
       launchAff_ $ apathize $ postLogPayload (show err)
     Right _ -> pure unit

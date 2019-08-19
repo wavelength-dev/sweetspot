@@ -6,6 +6,7 @@ WORKDIR /opt/build
 RUN apt-get update --quiet && apt-get install -y --quiet libpq-dev
 
 # Install deps first for improved caching
+RUN stack --system-ghc build --only-dependencies --verbosity warn
 COPY ./api/stack.yaml .
 COPY ./api/package.yaml .
 RUN stack --system-ghc build --only-dependencies --verbosity warn

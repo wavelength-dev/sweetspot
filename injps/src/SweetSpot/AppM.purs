@@ -107,17 +107,19 @@ setUserId :: UserBucket -> AppM Unit
 setUserId b =
   liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
-getUserBuckets :: Maybe UserId -> Maybe CampaignId -> AppM (NonEmptyArray UserBucket)
-getUserBuckets mUid mCid = do
-  mBuckets <- case mUid, mCid of
-      Nothing, Nothing -> throwError Noop
-      Just uid, Just cid -> liftAff $ fetchUserBuckets $ UserAndCampaignId uid cid
-      Just uid, _ -> liftAff $ fetchUserBuckets $ OnlyUserId uid
-      _, Just cid -> liftAff $ fetchUserBuckets $ OnlyCampaignId cid
+getUserBuckets :: UserBucketProvisions -> AppM (NonEmptyArray UserBucket)
+getUserBuckets userBucketProvisions = do
+  mBuckets <- liftAff $ fetchUserBuckets userBucketProvisions
   case fromArray <$> mBuckets of
-       Right Nothing -> throwError (ReportErr { message: "User " <> (maybe "UnknownUid" unwrap mUid) <> " has no buckets!", payload: "" })
+       Right Nothing -> throwError (ReportErr { message: noBucketErr, payload: "" })
        Right (Just buckets) -> pure buckets
        Left err -> throwError (ReportErr { message: "Error fetching user buckets", payload: err })
+  where
+  noBucketErr = "User " <> (maybe "UnknownUid" unwrap mUserId) <> " has no buckets!"
+  mUserId = case userBucketProvisions of
+                 (UserAndCampaignId uid cid) -> Just uid
+                 (OnlyUserId uid) -> Just uid
+                 _ -> Nothing
 
 log :: String -> AppM Unit
 log msg = do
@@ -128,9 +130,11 @@ log msg = do
 getCampaignId :: AppM (Maybe CampaignId)
 getCampaignId = liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
 
-maybeEarlyExit :: Maybe UserId -> Maybe CampaignId -> AppM Unit
-maybeEarlyExit Nothing Nothing = throwError Noop
-maybeEarlyExit _ _ = pure unit
+getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM UserBucketProvisions
+getUserBucketProvisions Nothing Nothing = throwError Noop
+getUserBucketProvisions (Just uid) (Just cid) = pure $ UserAndCampaignId uid cid
+getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
+getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
 applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit
 applyPriceVariations userBuckets = do

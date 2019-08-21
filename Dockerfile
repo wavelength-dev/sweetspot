@@ -10,11 +10,10 @@ COPY ./api/stack.yaml .
 COPY ./api/package.yaml .
 COPY ./api/sweetspot.cabal .
 RUN stack setup
-RUN stack build --only-dependencies
-# RUN stack build --only-dependencies --verbosity warn
+RUN stack build --only-dependencies --verbosity warn
 
 COPY ./api /opt/build
-RUN stack build
+RUN stack build --verbosity warn
 # RUN stack build --verbosity warn
 
 # Build the PureScript injectables

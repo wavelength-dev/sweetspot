@@ -30,9 +30,10 @@ app = do
 logResult :: forall a. Either Error a -> Effect Unit
 logResult either = case either of
   -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-  Left err -> runAff_
-    (\_ -> pure unit)
-    (postLogPayload (show err))
+  Left err ->
+    runAff_
+      (\_ -> pure unit)
+      (postLogPayload (show err))
   Right _ -> pure unit
 
 main :: Effect Unit

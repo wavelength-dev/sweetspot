@@ -44,7 +44,10 @@ getDOMReady =
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do
   docNode <- window >>= document >>= toDocument >>> toParentNode >>> pure
-  checkoutOptionNodes <- querySelectorAll (QuerySelector ("[class*=" <> idClass <> "]")) docNode
+  checkoutOptionNodes <-
+    querySelectorAll
+      (QuerySelector ("[class*=" <> idClass <> "]"))
+      docNode
   nodesArray <- NL.toArray checkoutOptionNodes
   pure $ catMaybes (map E.fromNode nodesArray)
 

@@ -18,9 +18,9 @@ app = do
   liftAff getDOMReady
   applyFacadeUrl
   ensureDeps
-  uid <- getUserId
-  cid <- getCampaignId
-  ubp <- getUserBucketProvisions uid cid
+  mUid <- getUserId
+  mCid <- getCampaignId
+  ubp <- getUserBucketProvisions mUid mCid
   buckets <- getUserBuckets ubp
   setUserId (head buckets)
   applyPriceVariations buckets

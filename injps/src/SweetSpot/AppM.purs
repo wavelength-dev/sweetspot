@@ -3,7 +3,6 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
-import Data.Array (any, catMaybes, head, length)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
@@ -18,12 +17,13 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectLongvadonCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice, swapLongvadonCheckoutVariantId)
+import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
+import SweetSpot.Longvadon (collectLongvadonCheckoutOptions, swapLongvadonCheckoutVariantId)
 import SweetSpot.Request (UserBucketProvisions(..), fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
@@ -139,13 +139,13 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit
 applyPriceVariations userBuckets = do
   priceElements <- liftEffect collectPriceEls
-  let priceHTMLElements = catMaybes $ map fromElement priceElements
+  let priceHTMLElements = A.catMaybes $ map fromElement priceElements
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
   -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
   _ <-
     liftEffect
-      $ if length priceElements /= length priceHTMLElements then
+      $ if A.length priceElements /= A.length priceHTMLElements then
           launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
         else
           pure unit
@@ -156,7 +156,7 @@ attachPriceObserver :: (NonEmptyArray UserBucket) -> AppM Unit
 attachPriceObserver buckets = do
   priceElements <- liftEffect collectPriceEls
   let cb = (\mrs _ ->
-            case head mrs of
+            case A.head mrs of
                 Nothing -> C.log "No mutation records"
                 Just mr -> target mr >>= \node ->
                   maybe
@@ -186,7 +186,7 @@ unhidePrice = liftEffect $ do
   let
     priceHTMLElements = map fromElement priceElements
 
-    anyInvalidElements = any isNothing priceHTMLElements
+    anyInvalidElements = A.any isNothing priceHTMLElements
   _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
-  traverse_ (removeClass hiddenPriceId) (catMaybes $ priceHTMLElements)
+  traverse_ (removeClass hiddenPriceId) (A.catMaybes $ priceHTMLElements)
 

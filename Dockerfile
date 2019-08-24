@@ -23,7 +23,7 @@ WORKDIR /opt/build-dist
 # Install build dependencies
 RUN yarn global add purescript spago uglify-js
 COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
-RUN spago install
+RUN spago install --global-cache skip
 
 # Compile, bundle and uglify our scripts
 COPY ./injectable/src ./src

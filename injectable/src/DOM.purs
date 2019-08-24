@@ -1,7 +1,6 @@
 module SweetSpot.DOM where
 
 import Prelude
-
 import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -55,17 +54,18 @@ getSiteId = do
     mEl
 
 awaitDomReady :: Aff Unit
-awaitDomReady = makeAff \callback -> do
-  rs <- readyState =<< Window.document =<< window
-  case rs of
-    Loading -> do
-      et <- Window.toEventTarget <$> window
-      listener <- eventListener (\_ -> callback (Right unit))
-      addEventListener ET.domcontentloaded listener false et
-      pure $ effectCanceler (removeEventListener ET.domcontentloaded listener false et)
-    _ -> do
-      callback (Right unit)
-      pure nonCanceler
+awaitDomReady =
+  makeAff \callback -> do
+    rs <- readyState =<< Window.document =<< window
+    case rs of
+      Loading -> do
+        et <- Window.toEventTarget <$> window
+        listener <- eventListener (\_ -> callback (Right unit))
+        addEventListener ET.domcontentloaded listener false et
+        pure $ effectCanceler (removeEventListener ET.domcontentloaded listener false et)
+      _ -> do
+        callback (Right unit)
+        pure nonCanceler
 
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do

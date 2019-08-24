@@ -1,5 +1,5 @@
 { sources =
-    [ "src/**/*.purs", "test/**/*.purs" ]
+    [ "src/**/*.purs" ]
 , name =
     "injectable"
 , dependencies =
@@ -14,7 +14,6 @@
     , "numbers"
     , "prelude"
     , "psci-support"
-    , "spec"
     , "web-dom"
     , "web-html"
     , "web-storage"

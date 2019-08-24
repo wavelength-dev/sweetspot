@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
-import Effect.Aff (Aff, makeAff, nonCanceler)
+import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
 import Global (readFloat)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Config (idClass)
@@ -24,10 +24,11 @@ import Web.DOM.HTMLCollection as HC
 import Web.DOM.Node (setTextContent, textContent)
 import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)
-import Web.Event.EventTarget (addEventListener, eventListener)
+import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (HTMLElement, window)
-import Web.HTML.Event.EventTypes (domcontentloaded)
-import Web.HTML.HTMLDocument (toDocument, toEventTarget)
+import Web.HTML.Event.EventTypes as ET
+import Web.HTML.HTMLDocument (readyState, toDocument)
+import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.HTMLElement (classList)
 import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
 import Web.HTML.Location (hostname, pathname)
@@ -53,13 +54,18 @@ getSiteId = do
     (\el -> E.toNode el # textContent >>= textToSite >>> pure)
     mEl
 
-getDOMReady :: Aff Unit
-getDOMReady =
-  makeAff \cb -> do
-    listener <- eventListener (\_ -> cb (Right unit))
-    doc <- window >>= Win.document
-    addEventListener domcontentloaded listener false (toEventTarget doc)
-    pure nonCanceler
+awaitDomReady :: Aff Unit
+awaitDomReady = makeAff \callback -> do
+  rs <- readyState =<< Window.document =<< window
+  case rs of
+    Loading -> do
+      et <- Window.toEventTarget <$> window
+      listener <- eventListener (\_ -> callback (Right unit))
+      addEventListener ET.domcontentloaded listener false et
+      pure $ effectCanceler (removeEventListener ET.domcontentloaded listener false et)
+    _ -> do
+      callback (Right unit)
+      pure nonCanceler
 
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do

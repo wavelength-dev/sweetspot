@@ -10,13 +10,13 @@ import Effect.Class (liftEffect)
 import Effect.Console as Console
 import Effect.Exception (Error, throw)
 import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getSiteId, getUserBuckets, getUserId, getUserBucketProvisions, overrideCheckout, runAppM, setUserId, unhidePrice)
-import SweetSpot.DOM (getDOMReady)
+import SweetSpot.DOM (awaitDomReady)
 import SweetSpot.Event (trackView)
 import SweetSpot.Request (postLogPayload)
 
 app :: AppM Unit
 app = do
-  liftAff getDOMReady
+  liftAff awaitDomReady
   applyFacadeUrl
   ensureDeps
   mUid <- getUserId

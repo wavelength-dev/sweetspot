@@ -16,7 +16,7 @@ import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Config (idClass)
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
-import Web.DOM (Element, Node)
+import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document as Doc
 import Web.DOM.Element as E
@@ -135,3 +135,8 @@ replacePathname :: String -> Effect Unit
 replacePathname url = do
   h <- window >>= Window.history
   state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h
+
+queryDocument :: QuerySelector -> Effect NodeList
+queryDocument querySelector = do
+  document <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
+  querySelectorAll querySelector document

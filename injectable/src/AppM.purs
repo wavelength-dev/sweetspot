@@ -84,9 +84,7 @@ parseCampaignId queryString =
 overrideCheckout :: Site -> NonEmptyArray UserBucket -> AppM Unit
 overrideCheckout siteId buckets = do
   case siteId of
-    Longvadon -> liftEffect $ do
-      elements <- Lv.collectCheckoutOptions (map _._ubOriginalSvid buckets)
-      Lv.swapCheckoutVariantId buckets elements
+    Longvadon -> liftEffect $ Lv.swapCheckoutVariantId buckets
     LibertyPrice -> liftEffect $ do
       elements <- LP.collectCheckoutOptions (map _._ubOriginalSvid buckets)
       LP.swapCheckoutVariantId buckets elements

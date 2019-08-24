@@ -19,7 +19,7 @@ import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
 import SweetSpot.Data.Api (UserBucket)
-import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)

@@ -9,7 +9,7 @@ import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Codec (decodeUserBuckets, encodeViewEvent)
-import SweetSpot.Data.Constant (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
+import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Event (ViewEvent)
 

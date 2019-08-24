@@ -1,6 +1,0 @@
-"use strict";
-exports.apiURL = process.env.API_URL || "/apps/sweetspot/api"
-exports.hiddenPriceId = process.env.HIDDEN_PRICE_ID || "sweetspot__price--hidden"
-exports.productClass = process.env.PRODUCT_CLASS || "sweetspot__product"
-exports.uidStorageKey = process.env.UID_STORAGE_KEY || "sweetspot_uid"
-exports.idClass = process.env.ID_CLASS || "sweetspot__price_id--"

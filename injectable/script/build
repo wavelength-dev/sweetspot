@@ -23,24 +23,19 @@ if [ $? -ne 0 ]; then
 fi
 echo "=> Finished building main"
 
-yarn --silent browserify --transform envify --outfile ../dist/sweetspot-main.js ./output/sweetspot-main.js
-if [ $? -ne 0 ]; then
-  echo "=> Failed to bundle main"
-  exit 1
-fi
-echo "=> Finished bundling main"
-
-yarn --silent uglifyjs --compress --mangle --output ../dist/sweetspot-main.min.js ../dist/sweetspot-main.js
+npx --quiet uglifyjs --compress --mangle --output ./output/sweetspot-main.min.js ./output/sweetspot-main.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify main"
   exit 1
 fi
 
-gzip --keep --force ../dist/sweetspot-main.min.js
+gzip --keep --force ./output/sweetspot-main.min.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to gzip main"
   exit 1
 fi
+
+mv ./output/sweetspot-main* ../dist/
 
 END=$(date +%s)
 BUILD_TIME=$(( $END - $START ))
@@ -57,24 +52,19 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-yarn --silent browserify --transform envify --outfile ../dist/sweetspot-checkout.js ./output/sweetspot-checkout.js
-if [ $? -ne 0 ]; then
-  echo "=> Failed to bundle checkout"
-  exit 1
-fi
-echo "=> Finished bundling checkout"
-
-yarn --silent uglifyjs --compress --mangle --output ../dist/sweetspot-checkout.min.js ../dist/sweetspot-checkout.js
+npx --quiet uglifyjs --compress --mangle --output ./output/sweetspot-checkout.min.js ./output/sweetspot-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify checkout"
   exit 1
 fi
 
-gzip --keep --force ../dist/sweetspot-checkout.min.js
+gzip --keep --force ./output/sweetspot-checkout.min.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to gzip checkout"
   exit 1
 fi
+
+mv ./output/sweetspot-checkout* ../dist/
 
 echo "=> Build size checkout:"
 print_filesize "sweetspot-checkout.js" "Raw Output"

@@ -19,7 +19,7 @@ import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
 import SweetSpot.Data.Codec (encodeCheckoutEvent)
-import SweetSpot.Data.Constant (eventEndpoint, uidStorageKey)
+import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
 import SweetSpot.Request (jsonHeader, postLogPayload)
 import Web.HTML (window)

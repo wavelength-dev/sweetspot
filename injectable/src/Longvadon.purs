@@ -9,7 +9,7 @@ import Effect (Effect)
 import Global (readFloat)
 import SweetSpot.DOM (getOptionVariantId)
 import SweetSpot.Data.Api (UserBucket)
-import SweetSpot.Data.Constant (DryRunMode(..), dryRunMode)
+import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import Web.DOM (Element)
 import Web.DOM.Document as Doc
 import Web.DOM.Element as E

@@ -21,21 +21,17 @@ FROM node:12 AS build-dist
 WORKDIR /opt/build-dist
 
 # Install build dependencies
-RUN yarn global add purescript spago
-COPY ./injectable/package.json ./injectable/yarn.lock ./
-RUN yarn install
+RUN yarn global add purescript spago uglifyjs
 COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
 RUN spago install
 
 # Compile, bundle and uglify our scripts
 COPY ./injectable/src ./src
 COPY ./injectable/test ./test
-RUN spago bundle-app --main SweetSpot.Main --to ./output/sweetspot-main.js
-RUN yarn browserify --transform envify --outfile ./sweetspot-main.js ./output/sweetspot-main.js
-RUN yarn uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
-RUN spago bundle-app --main SweetSpot.Checkout --to ./output/sweetspot-checkout.js
-RUN yarn browserify --transform envify --outfile ./sweetspot-checkout.js ./output/sweetspot-checkout.js
-RUN yarn uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
+RUN spago bundle-app --main SweetSpot.Main --to ./sweetspot-main.js
+RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
+RUN spago bundle-app --main SweetSpot.Checkout --to ./sweetspot-checkout.js
+RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
 
 # Leave only the executable in the second stage
 FROM debian:stretch

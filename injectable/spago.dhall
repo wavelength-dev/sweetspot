@@ -1,7 +1,7 @@
 { sources =
     [ "src/**/*.purs", "test/**/*.purs" ]
 , name =
-    "injps"
+    "injectable"
 , dependencies =
     [ "aff"
     , "argonaut"

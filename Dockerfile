@@ -22,14 +22,14 @@ WORKDIR /opt/build-dist
 
 # Install build dependencies
 RUN yarn global add purescript spago
-COPY ./injps/package.json ./injps/yarn.lock ./
+COPY ./injectable/package.json ./injectable/yarn.lock ./
 RUN yarn install
-COPY ./injps/spago.dhall ./injps/packages.dhall ./
+COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
 RUN spago install
 
 # Compile, bundle and uglify our scripts
-COPY ./injps/src ./src
-COPY ./injps/test ./test
+COPY ./injectable/src ./src
+COPY ./injectable/test ./test
 RUN spago bundle-app --main SweetSpot.Main --to ./output/sweetspot-main.js
 RUN yarn browserify --transform envify --outfile ./sweetspot-main.js ./output/sweetspot-main.js
 RUN yarn uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js

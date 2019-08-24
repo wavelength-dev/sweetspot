@@ -1,5 +1,5 @@
 {
-  "name": "injps",
+  "name": "injectable",
   "version": "1.0.0",
   "description": "build tooling for injectable purescript",
   "main": "index.js",

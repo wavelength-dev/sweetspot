@@ -1,7 +1,7 @@
 module SweetSpot.Env where
 
 import LoadEnv (loadEnv)
-import System.Envy (FromEnv, decodeEnv, env, fromEnv)
+import System.Envy (FromEnv, decodeEnv, env, fromEnv, envMaybe, (.!=))
 
 data EnvConfig = EnvConfig
   { dbHost :: String
@@ -20,7 +20,7 @@ instance FromEnv EnvConfig where
   fromEnv =
     EnvConfig <$> env "DB_HOST" <*>
     env "DB_NAME" <*>
-    env "DB_PASSWORD" <*>
+    envMaybe "DB_PASSWORD" .!= "" <*>
     env "DB_PORT" <*>
     env "DB_USER" <*>
     env "ENVIRONMENT" <*>

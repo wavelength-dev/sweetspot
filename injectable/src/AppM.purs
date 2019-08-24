@@ -63,8 +63,8 @@ instance showSite :: Show Site where
   show LibertyPrice = "libertyprice.myshopify.com"
   show (Unknown hostname) = hostname
 
-getSiteId :: AppM Site
-getSiteId = liftEffect $ do
+getSiteId :: Effect Site
+getSiteId = do
   siteHostname <- window >>= Win.location >>= hostname
   pure $ case siteHostname of
     "longvadon.com" -> Longvadon
@@ -122,12 +122,12 @@ ensureDeps =
     promise = hasPromise
     fetch = hasFetch
 
-getUserId :: AppM (Maybe UserId)
+getUserId :: Effect (Maybe UserId)
 getUserId = do
   mUid <- liftEffect $ window >>= localStorage >>= getItem uidStorageKey
   pure $ UserId <$> mUid
 
-setUserId :: UserBucket -> AppM Unit
+setUserId :: UserBucket -> Effect Unit
 setUserId b =
   liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
 
@@ -151,8 +151,8 @@ log msg = do
   _ <- liftAff $ forkAff $ postLogPayload msg
   liftEffect $ C.log msg
 
-getCampaignId :: AppM (Maybe CampaignId)
-getCampaignId = liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
+getCampaignId :: Effect (Maybe CampaignId)
+getCampaignId = window >>= location >>= search >>= pure <<< parseCampaignId
 
 getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM UserBucketProvisions
 getUserBucketProvisions Nothing Nothing = throwError $ Noop "No userId or campaign url parameter. Exiting..."
@@ -160,25 +160,24 @@ getUserBucketProvisions (Just uid) (Just cid) = pure $ UserAndCampaignId uid cid
 getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
 getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
-applyPriceVariations :: (NonEmptyArray UserBucket) -> AppM Unit
+applyPriceVariations :: (NonEmptyArray UserBucket) -> Effect Unit
 applyPriceVariations userBuckets = do
-  priceElements <- liftEffect collectPriceEls
+  priceElements <- collectPriceEls
   let priceHTMLElements = A.catMaybes $ map fromElement priceElements
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
   -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
   _ <-
-    liftEffect
-      $ if A.length priceElements /= A.length priceHTMLElements then
-          launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
-        else
-          pure unit
-  liftEffect $ traverse_ (applyPriceVariation userBuckets) priceElements
-  liftEffect $ traverse_ (removeClass hiddenPriceId) priceHTMLElements
+    if A.length priceElements /= A.length priceHTMLElements then
+      launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
+    else
+      pure unit
+  traverse_ (applyPriceVariation userBuckets) priceElements
+  traverse_ (removeClass hiddenPriceId) priceHTMLElements
 
-attachPriceObserver :: (NonEmptyArray UserBucket) -> AppM Unit
+attachPriceObserver :: (NonEmptyArray UserBucket) -> Effect Unit
 attachPriceObserver buckets = do
-  priceElements <- liftEffect collectPriceEls
+  priceElements <- collectPriceEls
   let cb = (\mrs _ ->
             case A.head mrs of
                 Nothing -> C.log "No mutation records"
@@ -187,11 +186,11 @@ attachPriceObserver buckets = do
                     (C.log  "Node was not of type element")
                     (applyPriceVariation buckets)
                     (E.fromNode node))
-  muOb <- liftEffect $ mutationObserver cb
-  liftEffect $ for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb
+  muOb <- mutationObserver cb
+  for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb
 
-applyFacadeUrl :: AppM Unit
-applyFacadeUrl = liftEffect $ do
+applyFacadeUrl :: Effect Unit
+applyFacadeUrl = do
   path <- getPathname
   when (isMatch path) (replacePathname $ strip path)
   where
@@ -202,7 +201,7 @@ applyFacadeUrl = liftEffect $ do
         >>> maybe false (S.contains (S.Pattern variantUrlPattern))
 
 unhidePrice :: Effect Unit
-unhidePrice = liftEffect $ do
+unhidePrice = do
   priceElements <- collectPriceEls
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements

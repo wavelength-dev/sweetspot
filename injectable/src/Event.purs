@@ -11,7 +11,7 @@ import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Traversable (sequence)
 import Effect (Effect)
-import Effect.Aff (forkAff)
+import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import SweetSpot.AppM (AppM, getUserId)
@@ -75,11 +75,11 @@ detectPage = window >>= location >>= pathname >>= pure <<< getPage
       | test homeUrlRegex path = Home
       | otherwise = Unknown
 
-trackView :: AppM Unit
+trackView :: Aff Unit
 trackView = do
-  mUserId <- getUserId
-  let userId = unwrap <$> mUserId
   viewEvent <- liftEffect $ do
+    mUserId <- getUserId
+    let userId = unwrap <$> mUserId
     page <- detectPage
     pageUrl <- window >>= location >>= href
     products <- readInjectedProducts
@@ -87,5 +87,4 @@ trackView = do
       productIds = (map _.id) <$> products
       productId = productIds >>= A.head
     pure { page, pageUrl, userId, productId, productIds }
-  _ <- liftAff $ forkAff $ postEventPayload viewEvent
-  pure unit
+  postEventPayload viewEvent

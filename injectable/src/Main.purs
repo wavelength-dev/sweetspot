@@ -1,10 +1,11 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Effect (Effect)
-import Effect.Aff (runAff_)
+import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console as Console
@@ -16,19 +17,19 @@ import SweetSpot.Request (postLogPayload)
 
 app :: AppM Unit
 app = do
-  liftAff awaitDomReady
-  applyFacadeUrl
   ensureDeps
-  mUid <- getUserId
-  mCid <- getCampaignId
-  siteId <- getSiteId
+  liftAff awaitDomReady
+  liftEffect applyFacadeUrl
+  mUid <- liftEffect $ getUserId
+  mCid <- liftEffect $ getCampaignId
+  siteId <- liftEffect $ getSiteId
   ubp <- getUserBucketProvisions mUid mCid
   buckets <- getUserBuckets ubp
-  setUserId (head buckets)
+  liftEffect $ setUserId (head buckets)
   overrideCheckout siteId buckets
-  applyPriceVariations buckets
-  attachPriceObserver buckets
-  trackView
+  liftEffect $ applyPriceVariations buckets
+  liftEffect $ attachPriceObserver buckets
+  liftEffect $ launchAff_ trackView
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of

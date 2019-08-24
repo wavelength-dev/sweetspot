@@ -31,7 +31,7 @@ import Web.HTML.HTMLDocument (toDocument, toEventTarget)
 import Web.HTML.HTMLElement (classList)
 import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
 import Web.HTML.Location (hostname, pathname)
-import Web.HTML.Window as Win
+import Web.HTML.Window as Window
 
 data Site
   = Longvadon
@@ -40,8 +40,8 @@ data Site
 
 getSiteId :: Effect (Maybe Site)
 getSiteId = do
-  hostUrl <- window >>= Win.location >>= hostname
-  doc <- window >>= Win.document >>= toDocument >>> Doc.toParentNode >>> pure
+  hostUrl <- window >>= Window.location >>= hostname
+  doc <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
   mEl <- querySelector (QuerySelector "#sweetspot__site-id") doc
   let
     textToSite text = case text of
@@ -63,7 +63,7 @@ getDOMReady =
 
 collectPriceEls :: Effect (Array Element)
 collectPriceEls = do
-  docNode <- window >>= Win.document >>= toDocument >>> Doc.toParentNode >>> pure
+  docNode <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
   checkoutOptionNodes <-
     querySelectorAll
       (QuerySelector ("[class*=" <> idClass <> "]"))
@@ -73,7 +73,7 @@ collectPriceEls = do
 
 collectCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
 collectCheckoutOptions variantIds = do
-  doc <- window >>= Win.document
+  doc <- window >>= Window.document
   elements <- Doc.getElementsByTagName "option" (toDocument doc) >>= HC.toArray
   -- return any element with a value attribute value equal to one of variantIds
   A.filterA getIsKnownVariantOption elements
@@ -123,9 +123,9 @@ setPrice :: Number -> Element -> Effect Unit
 setPrice price el = setNodePrice price (E.toNode el)
 
 getPathname :: Effect String
-getPathname = window >>= Win.location >>= pathname
+getPathname = window >>= Window.location >>= pathname
 
 replacePathname :: String -> Effect Unit
 replacePathname url = do
-  h <- window >>= Win.history
+  h <- window >>= Window.history
   state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h

@@ -4,10 +4,12 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module SweetSpot.Database.Queries.Dashboard where
 
 import           Control.Lens
+import           Data.Maybe                     ( fromMaybe )
 import           Data.Text                      ( Text )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
@@ -15,6 +17,7 @@ import           Database.Beam.Backend.SQL.BeamExtensions
 import           Database.Beam.Postgres
 
 import           SweetSpot.Data.Common
+import           SweetSpot.Data.Domain   hiding ( Campaign )
 import           SweetSpot.Database.Schema
 
 createExperiment
@@ -112,3 +115,30 @@ getExperimentBuckets conn (ExpId eid) =
                 guard_ (_expForBkt expBkts ==. expKey)
                 pure bkts
         where expKey = val_ (ExperimentKey (SqlSerial eid))
+
+
+getBucketUserCount :: Connection -> BucketId -> IO Int
+getBucketUserCount conn (BucketId id) = do
+        mCount <-
+                runBeamPostgres conn
+                $ runSelectReturningOne
+                $ select
+                $ aggregate_
+                          (\bktUsr -> countOver_ distinctInGroup_
+                                                 (bktUsr ^. bktForUsr)
+                          )
+                          (filter_ (\bu -> _bktForUsr bu ==. bktKey)
+                                   (all_ (db ^. bucketUsers))
+                          )
+        return $ fromMaybe 0 mCount
+        where bktKey = val_ $ BucketKey (SqlSerial id)
+
+
+getBucketImpressionCount :: Connection -> BucketId -> IO Int
+getBucketImpressionCount conn (BucketId id) = undefined
+
+getCheckoutEventsForBucket :: Connection -> BucketId -> IO [CheckoutEvent]
+getCheckoutEventsForBucket conn id = undefined
+
+getBucketStats :: Connection -> Bucket -> IO DBBucketStats
+getBucketStats conn b = undefined

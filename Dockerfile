@@ -21,7 +21,7 @@ FROM node:12 AS build-dist
 WORKDIR /opt/build-dist
 
 # Install build dependencies
-RUN yarn global add purescript spago uglifyjs
+RUN yarn global add purescript spago uglify-js
 COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
 RUN spago install
 

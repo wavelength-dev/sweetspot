@@ -28,6 +28,3 @@ phases:
       - printf '[{"name":"sweetspot","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
     files: imagedefinitions.json
-cache:
-  paths:
-    - api/.stack-work

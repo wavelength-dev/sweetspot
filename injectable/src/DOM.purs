@@ -77,18 +77,6 @@ collectPriceEls = do
   nodesArray <- NL.toArray checkoutOptionNodes
   pure $ catMaybes (map E.fromNode nodesArray)
 
-collectCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
-collectCheckoutOptions variantIds = do
-  doc <- window >>= Window.document
-  elements <- Doc.getElementsByTagName "option" (toDocument doc) >>= HC.toArray
-  -- return any element with a value attribute value equal to one of variantIds
-  A.filterA getIsKnownVariantOption elements
-  where
-  getIsKnownVariantOption :: Element -> Effect Boolean
-  getIsKnownVariantOption el = do
-    optionId <- E.getAttribute "value" el
-    pure $ maybe false (\id -> A.elem (readFloat id) variantIds) optionId
-
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =
   A.find

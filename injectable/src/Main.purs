@@ -1,13 +1,13 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Aff (runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
+import Effect.Console as Console
 import Effect.Exception (Error, throw)
 import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getSiteId, getUserBuckets, getUserId, getUserBucketProvisions, overrideCheckout, runAppM, setUserId, unhidePrice)
 import SweetSpot.DOM (getDOMReady)
@@ -32,11 +32,7 @@ app = do
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of
-  -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-  Left err ->
-    runAff_
-      (\_ -> pure unit)
-      (postLogPayload $ show err)
+  Left err -> runAff_ (\_ -> Console.error $ show err) (postLogPayload $ show err)
   Right _ -> pure unit
 
 main :: Effect Unit
@@ -47,5 +43,5 @@ main =
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message
-          Left Noop -> pure unit
+          Left (Noop reason) -> runAff_ (\_ -> Console.error reason) (postLogPayload reason)
           Right _ -> pure unit

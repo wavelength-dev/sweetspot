@@ -37,7 +37,7 @@ import Web.HTML.Window (localStorage, location)
 import Web.HTML.Window (location) as Win
 import Web.Storage.Storage (getItem, setItem)
 
-data ShortCircuit = ReportErr { message :: String, payload :: String } | Noop
+data ShortCircuit = ReportErr { message :: String, payload :: String } | Noop String
 
 newtype AppM a = AppM (ExceptT ShortCircuit Aff a)
 
@@ -155,7 +155,7 @@ getCampaignId :: AppM (Maybe CampaignId)
 getCampaignId = liftEffect $ window >>= location >>= search >>= pure <<< parseCampaignId
 
 getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM UserBucketProvisions
-getUserBucketProvisions Nothing Nothing = throwError Noop
+getUserBucketProvisions Nothing Nothing = throwError $ Noop "No userId or campaign url parameter. Exiting..."
 getUserBucketProvisions (Just uid) (Just cid) = pure $ UserAndCampaignId uid cid
 getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
 getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid

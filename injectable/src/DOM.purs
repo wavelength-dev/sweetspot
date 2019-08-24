@@ -19,7 +19,6 @@ import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document as Doc
 import Web.DOM.Element as E
-import Web.DOM.HTMLCollection as HC
 import Web.DOM.Node (setTextContent, textContent)
 import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)

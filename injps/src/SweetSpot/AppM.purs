@@ -17,13 +17,14 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectCheckoutOptions, collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
+import SweetSpot.DOM (collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Constant (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
-import SweetSpot.Longvadon (collectLongvadonCheckoutOptions, swapLongvadonCheckoutVariantId)
+import SweetSpot.LibertyPrice as LP
+import SweetSpot.Longvadon as Lv
 import SweetSpot.Request (UserBucketProvisions(..), fetchUserBuckets, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
@@ -31,8 +32,9 @@ import Web.DOM.MutationObserver (mutationObserver, observe)
 import Web.DOM.MutationRecord (target)
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement)
-import Web.HTML.Location (search)
+import Web.HTML.Location (hostname, search)
 import Web.HTML.Window (localStorage, location)
+import Web.HTML.Window (location) as Win
 import Web.Storage.Storage (getItem, setItem)
 
 data ShortCircuit = ReportErr { message :: String, payload :: String } | Noop
@@ -51,6 +53,24 @@ derive newtype instance monadThrowAppM :: MonadThrow ShortCircuit AppM
 runAppM :: forall a. AppM a -> Aff (Either ShortCircuit a)
 runAppM (AppM m) = runExceptT m
 
+data Site
+  = Longvadon
+  | LibertyPrice
+  | Unknown String
+
+instance showSite :: Show Site where
+  show Longvadon = "longvadon.com"
+  show LibertyPrice = "libertyprice.myshopify.com"
+  show (Unknown hostname) = hostname
+
+getSiteId :: AppM Site
+getSiteId = liftEffect $ do
+  siteHostname <- window >>= Win.location >>= hostname
+  pure $ case siteHostname of
+    "longvadon.com" -> Longvadon
+    "libertyprice.myshopify.com" -> LibertyPrice
+    _ -> Unknown siteHostname
+
 parseCampaignId :: String -> Maybe CampaignId
 parseCampaignId queryString =
   let
@@ -61,18 +81,22 @@ parseCampaignId queryString =
   in
    match >>= flip A.index 1 <#> CampaignId
 
-mutateProductSource :: (NonEmptyArray UserBucket) -> AppM Unit
-mutateProductSource buckets = liftEffect $ do
-  elements <- collectLongvadonCheckoutOptions (map _._ubOriginalSvid buckets)
-  swapLongvadonCheckoutVariantId buckets elements
+overrideCheckout :: Site -> NonEmptyArray UserBucket -> AppM Unit
+overrideCheckout siteId buckets = do
+  case siteId of
+    Longvadon -> liftEffect $ do
+      elements <- Lv.collectCheckoutOptions (map _._ubOriginalSvid buckets)
+      Lv.swapCheckoutVariantId buckets elements
+    LibertyPrice -> liftEffect $ do
+      elements <- LP.collectCheckoutOptions (map _._ubOriginalSvid buckets)
+      LP.swapCheckoutVariantId buckets elements
+    _ -> throwError $ ReportErr { message : "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload : "" }
 
 applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
 applyPriceVariation userBuckets el = do
   mSku <- getIdFromPriceElement el
   let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _._ubSku) userBuckets)
   maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
-  checkoutOptions <- liftEffect $ collectCheckoutOptions (map _._ubOriginalSvid userBuckets)
-  liftEffect $ swapLongvadonCheckoutVariantId userBuckets checkoutOptions
   where
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do

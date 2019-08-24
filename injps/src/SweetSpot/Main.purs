@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array.NonEmpty (head)
 import Data.Either (Either(..))
 import Effect (Effect)
@@ -8,7 +9,7 @@ import Effect.Aff (runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getUserBuckets, getUserId, getUserBucketProvisions, runAppM, setUserId, unhidePrice)
+import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, getCampaignId, getSiteId, getUserBuckets, getUserId, getUserBucketProvisions, overrideCheckout, runAppM, setUserId, unhidePrice)
 import SweetSpot.DOM (getDOMReady)
 import SweetSpot.Event (trackView)
 import SweetSpot.Request (postLogPayload)
@@ -20,20 +21,21 @@ app = do
   ensureDeps
   mUid <- getUserId
   mCid <- getCampaignId
+  siteId <- getSiteId
   ubp <- getUserBucketProvisions mUid mCid
   buckets <- getUserBuckets ubp
   setUserId (head buckets)
+  overrideCheckout siteId buckets
   applyPriceVariations buckets
   attachPriceObserver buckets
   trackView
 
 logResult :: forall a. Either Error a -> Effect Unit
-logResult either = case either of
+logResult = case _ of
   -- If posting this log message fails there is little more we can do to report it so we ignore the result.
-  Left err ->
-    runAff_
-      (\_ -> pure unit)
-      (postLogPayload (show err))
+  Left err -> runAff_
+    (\_ -> pure unit)
+    (postLogPayload $ show err)
   Right _ -> pure unit
 
 main :: Effect Unit

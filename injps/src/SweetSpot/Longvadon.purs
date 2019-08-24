@@ -19,14 +19,14 @@ import Web.HTML (window)
 import Web.HTML.HTMLDocument (toDocument)
 import Web.HTML.Window as Win
 
-collectLongvadonCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
-collectLongvadonCheckoutOptions variantIds = do
+collectCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
+collectCheckoutOptions variantIds = do
   htmlDoc <- window >>= Win.document
   let
     docNode = Doc.toParentNode <<< toDocument $ htmlDoc
   checkoutOptionNodes <- querySelectorAll (QuerySelector "[data-varid]") docNode
   nodesArray <- NL.toArray checkoutOptionNodes
-  -- We expect these elements to be divs, div nodes can be converted to Element, so we ignore nodes which can not be converted to elements, as they shouldn't exist.
+  -- We expect these elements to be coercible to Element, so we ignore nodes which can not be converted to elements, as they shouldn't exist.
   let
     elements = A.catMaybes (map E.fromNode nodesArray)
   A.filterA getIsKnownVariantOption elements
@@ -36,8 +36,8 @@ collectLongvadonCheckoutOptions variantIds = do
     dataVarid <- E.getAttribute "data-varid" el
     pure $ maybe false (\id -> A.elem (readFloat id) variantIds) dataVarid
 
-swapLongvadonCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
-swapLongvadonCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements
+swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
+swapCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements
   where
   swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el = do

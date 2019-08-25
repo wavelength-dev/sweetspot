@@ -18,7 +18,7 @@ import SweetSpot.Data.Codec (decodeProduct)
 import SweetSpot.Data.Config (productClass)
 import SweetSpot.Data.Event (Page(..))
 import SweetSpot.Data.Shopify (Product)
-import SweetSpot.Request (postEventPayload)
+import SweetSpot.Api (postEventPayload)
 import Web.DOM.Document as D
 import Web.DOM.Element as E
 import Web.DOM.HTMLCollection (toArray)

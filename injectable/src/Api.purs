@@ -1,4 +1,4 @@
-module SweetSpot.Request where
+module SweetSpot.Api where
 
 import Prelude
 

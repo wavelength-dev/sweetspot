@@ -25,7 +25,7 @@ import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
-import SweetSpot.Request (TestMapProvisions(..), fetchTestMaps, postLogPayload)
+import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
 import Web.DOM.MutationObserver (mutationObserver, observe)

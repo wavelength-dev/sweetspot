@@ -7,13 +7,9 @@ import Data.Argonaut.Decode (decodeJson, (.:))
 import Data.Argonaut.Encode ((:=), (~>))
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either)
-import Data.Traversable (sequence, traverse)
-import SweetSpot.Data.Api (TestMap)
+import Data.Traversable (sequence)
 import SweetSpot.Data.Event (CheckoutEvent, ViewEvent)
 import SweetSpot.Data.Shopify (Product, Variant)
-
-decodeTestMaps :: Json -> Either String (Array TestMap)
-decodeTestMaps json = decodeJson json >>= traverse decodeJson
 
 decodeVariant :: Json -> Either String Variant
 decodeVariant json = do

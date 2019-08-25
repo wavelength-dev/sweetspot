@@ -18,7 +18,7 @@ import SweetSpot.Data.Api
 
 conversionRate :: Int -> Int -> Double
 conversionRate conversions users =
-  (fromIntegral conversions) / (fromIntegral users)
+  fromIntegral conversions / fromIntegral users
 
 findType :: BucketType -> [BucketStats] -> BucketStats
 findType t stats = fromJust $ L.find ((== t) . (^. bsBucketType)) stats
@@ -130,4 +130,4 @@ enhanceDBStats stats = do
 bootstrap :: GenIO -> V.Vector Double -> AppM (Estimate ConfInt Double)
 bootstrap gen sample = do
   resampled <- liftIO $ resample gen [Mean] 10000 sample
-  return $ (bootstrapBCA cl95 sample resampled) !! 0
+  return $ head $ bootstrapBCA cl95 sample resampled

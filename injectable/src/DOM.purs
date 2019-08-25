@@ -127,3 +127,6 @@ queryDocument :: QuerySelector -> Effect NodeList
 queryDocument querySelector = do
   document <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
   querySelectorAll querySelector document
+
+nodesToElements :: NodeList -> Effect (Array Element)
+nodesToElements nodes = NL.toArray nodes >>= map El.fromNode >>> catMaybes >>> pure

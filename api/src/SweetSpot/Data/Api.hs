@@ -5,13 +5,17 @@
 
 module SweetSpot.Data.Api where
 
-import Control.Lens.TH (makeLenses)
-import Data.Aeson (FromJSON(..), ToJSON(..))
-import Statistics.Types (Estimate(..), ConfInt(..))
-import Data.Text (Text)
-import Data.Time (UTCTime)
-import GHC.Generics (Generic)
-import SweetSpot.Data.Common
+import           Control.Lens.TH                ( makeLenses )
+import           Data.Aeson                     ( FromJSON(..)
+                                                , ToJSON(..)
+                                                )
+import           Statistics.Types               ( Estimate(..)
+                                                , ConfInt(..)
+                                                )
+import           Data.Text                      ( Text )
+import           Data.Time                      ( UTCTime )
+import           GHC.Generics                   ( Generic )
+import           SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
 -- | Image

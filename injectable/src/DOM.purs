@@ -118,9 +118,13 @@ replacePathname url = do
   state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h
 
 queryDocument :: QuerySelector -> Effect NodeList
-queryDocument querySelector = do
-  document <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
-  querySelectorAll querySelector document
+queryDocument querySelector =
+  window
+    >>= Window.document
+    >>= toDocument
+    >>> Doc.toParentNode
+    >>> pure
+    >>= querySelectorAll querySelector
 
 nodesToElements :: NodeList -> Effect (Array Element)
-nodesToElements nodes = NL.toArray nodes >>= map El.fromNode >>> catMaybes >>> pure
+nodesToElements = NL.toArray >=> map El.fromNode >>> catMaybes >>> pure

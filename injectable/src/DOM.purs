@@ -18,7 +18,7 @@ import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document as Doc
-import Web.DOM.Element as E
+import Web.DOM.Element as El
 import Web.DOM.Node (setTextContent, textContent)
 import Web.DOM.NodeList as NL
 import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)
@@ -49,7 +49,7 @@ getSiteId = do
       _ -> Nothing
   maybe
     (pure $ Nothing)
-    (\el -> E.toNode el # textContent >>= textToSite >>> pure)
+    (\el -> El.toNode el # textContent >>= textToSite >>> pure)
     mEl
 
 awaitDomReady :: Aff Unit
@@ -74,7 +74,7 @@ collectPriceEls = do
       (QuerySelector ("[class*=" <> idClass <> "]"))
       docNode
   nodesArray <- NL.toArray checkoutOptionNodes
-  pure $ catMaybes (map E.fromNode nodesArray)
+  pure $ catMaybes (map El.fromNode nodesArray)
 
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =
@@ -84,7 +84,7 @@ getMatchingUserBucket buckets id =
 
 getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
 getOptionVariantId buckets attribute el = do
-  attrValue <- E.getAttribute attribute el
+  attrValue <- El.getAttribute attribute el
   pure $ attrValue >>= getMatchingUserBucket buckets # map (toString <<< _._ubTestSvid)
 
 removeClass :: String -> HTMLElement -> Effect Unit
@@ -94,12 +94,12 @@ removeClass className = classList >=> remove' className
 
 addClass :: String -> Element -> Effect Unit
 addClass className el = do
-  current <- E.className el
-  E.setClassName (current <> " " <> className) el
+  current <- El.className el
+  El.setClassName (current <> " " <> className) el
 
 getIdFromPriceElement :: Element -> Effect (Maybe Sku)
 getIdFromPriceElement el = do
-  classNames <- (S.split $ S.Pattern " ") <$> E.className el
+  classNames <- (S.split $ S.Pattern " ") <$> El.className el
   let
     match = A.find (S.contains (S.Pattern idClass)) classNames
 
@@ -113,7 +113,7 @@ setNodePrice price node = do
   setTextContent formattedPrice node
 
 setPrice :: Number -> Element -> Effect Unit
-setPrice price el = setNodePrice price (E.toNode el)
+setPrice price el = setNodePrice price (El.toNode el)
 
 getPathname :: Effect String
 getPathname = window >>= Window.location >>= pathname

@@ -87,8 +87,8 @@ enhanceDBExperimentStats stats =
 enhanceDBStats :: DBCampaignStats -> AppM CampaignStats
 enhanceDBStats stats = do
     gen <- liftIO createSystemRandom
-    controlEstimate <- bootstrap gen controlSample
-    testEstimate <- bootstrap gen testSample
+    controlEstimate <- liftIO $ bootstrap gen controlSample
+    testEstimate <- liftIO $ bootstrap gen testSample
     return CampaignStats
         { _csCampaignId = stats ^. dcsCampaignId
         , _csCampaignName = stats ^. dcsCampaignName
@@ -127,7 +127,38 @@ enhanceDBStats stats = do
           Control -> L.length convertersControl
           Test -> L.length convertersTest
 
-bootstrap :: GenIO -> V.Vector Double -> AppM (Estimate ConfInt Double)
+bootstrap :: GenIO -> V.Vector Double -> IO (Estimate ConfInt Double)
 bootstrap gen sample = do
-  resampled <- liftIO $ resample gen [Mean] 10000 sample
+  resampled <- resample gen [Mean] 10000 sample
   return $ head $ bootstrapBCA cl95 sample resampled
+
+
+
+-- | ---------------------------------------------------------------------------
+-- | Simulation
+-- | ---------------------------------------------------------------------------
+data SimParams = SimParams
+  { _size :: Int
+  , _cr :: Double
+  , _avgUsrProfit :: Double
+  }
+
+genSample :: SimParams -> V.Vector Double
+genSample params = convs <> nonConvs
+  where
+    convCount = round (_cr params * fromIntegral (_size params))
+    nonConvCount = _size params - convCount
+    convs = V.fromList $ L.replicate convCount (_avgUsrProfit params)
+    nonConvs = V.fromList $ L.replicate nonConvCount 0.0
+
+simulate :: SimParams
+         -> SimParams
+         -> IO ()
+simulate c t = do
+  gen <- createSystemRandom
+  controlRes <- bootstrap gen $ genSample c
+  testRes <- bootstrap gen $ genSample t
+  print controlRes
+  putStrLn "==="
+  print testRes
+  return ()

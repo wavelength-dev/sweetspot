@@ -1,6 +1,7 @@
 module SweetSpot.DOM where
 
 import Prelude
+
 import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
@@ -66,8 +67,8 @@ awaitDomReady =
         callback (Right unit)
         pure nonCanceler
 
-collectPriceEls :: Effect (Array Element)
-collectPriceEls = queryDocument (QuerySelector ("[class*=" <> idClass <> "]")) >>= nodesToElements
+collectElements :: QuerySelector -> Effect (Array Element)
+collectElements querySelector = queryDocument querySelector >>= nodesToElements
 
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =

@@ -17,9 +17,9 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectPriceEls, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
+import SweetSpot.DOM (collectElements, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
 import SweetSpot.Data.Api (UserBucket)
-import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, uidStorageKey, variantUrlPattern)
+import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, idClass, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
@@ -30,6 +30,7 @@ import Web.DOM (Element)
 import Web.DOM.Element as E
 import Web.DOM.MutationObserver (mutationObserver, observe)
 import Web.DOM.MutationRecord (target)
+import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement)
 import Web.HTML.Location (hostname, search)
@@ -64,6 +65,9 @@ instance showSite :: Show Site where
   show Longvadon = "longvadon.com"
   show LibertyPrice = "libertyprice.myshopify.com"
   show (Unknown hostname) = hostname
+
+priceElementSelector :: QuerySelector
+priceElementSelector = QuerySelector $ "[class*=" <> idClass <> "]"
 
 getSiteId :: Effect Site
 getSiteId = do
@@ -162,7 +166,7 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
 applyPriceVariations :: (NonEmptyArray UserBucket) -> Effect Unit
 applyPriceVariations userBuckets = do
-  priceElements <- collectPriceEls
+  priceElements <- collectElements priceElementSelector
   let priceHTMLElements = A.catMaybes $ map fromElement priceElements
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
@@ -177,7 +181,7 @@ applyPriceVariations userBuckets = do
 
 attachPriceObserver :: (NonEmptyArray UserBucket) -> Effect Unit
 attachPriceObserver buckets = do
-  priceElements <- collectPriceEls
+  priceElements <- collectElements priceElementSelector
   let cb = (\mrs _ ->
             case A.head mrs of
                 Nothing -> C.log "No mutation records"
@@ -202,7 +206,7 @@ applyFacadeUrl = do
 
 unhidePrice :: Effect Unit
 unhidePrice = do
-  priceElements <- collectPriceEls
+  priceElements <- collectElements priceElementSelector
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
   -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements

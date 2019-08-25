@@ -1,12 +1,16 @@
 module SweetSpot.Longvadon where
 
 import Prelude
+
 import Data.Array (catMaybes)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..))
+import Data.String.Regex (replace, test)
+import Data.String.Regex.Flags (ignoreCase)
+import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
-import SweetSpot.DOM (getOptionVariantId, queryDocument)
+import SweetSpot.DOM (getOptionVariantId, getPathname, nodesToElements, queryDocument)
 import SweetSpot.Data.Api (UserBucket)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import Web.DOM (Element)
@@ -54,3 +58,23 @@ swapCheckoutVariantId buckets = do
       Nothing, _ -> pure unit
       (Just variantId), DryRun -> El.setAttribute "data-ssdr__value" variantId el
       (Just variantId), Live -> El.setAttribute "value" variantId el
+
+
+replaceTestVariantUrlOnCartPage :: Effect Unit
+replaceTestVariantUrlOnCartPage = do
+  path <- getPathname
+  when (isCartPage path) do
+    nodeList <- queryDocument (QuerySelector "[href*=-ssv]")
+    elements <- nodesToElements nodeList
+    for_ elements \el -> do
+      href <- El.getAttribute "href" el
+      case href of
+        (Just h) -> do
+          let fixed = replace urlPattern "" h
+          case dryRunMode of
+            Live -> El.setAttribute "href" fixed el
+            DryRun -> El.setAttribute "data-sshref" fixed el
+        Nothing -> pure unit
+  where
+    isCartPage = test (unsafeRegex "^/cart" ignoreCase)
+    urlPattern = unsafeRegex "^/collections/" ignoreCase

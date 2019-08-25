@@ -58,6 +58,8 @@ data Site
   | LibertyPrice
   | Unknown String
 
+derive instance eqSite :: Eq Site
+
 instance showSite :: Show Site where
   show Longvadon = "longvadon.com"
   show LibertyPrice = "libertyprice.myshopify.com"
@@ -211,3 +213,7 @@ unhidePrice = do
   _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
   traverse_ (removeClass hiddenPriceId) (A.catMaybes $ priceHTMLElements)
 
+
+fixCartItemUrls :: Site -> Effect Unit
+fixCartItemUrls siteId =
+  when (siteId == Longvadon) Lv.replaceTestVariantUrlOnCartPage

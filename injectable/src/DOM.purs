@@ -12,7 +12,7 @@ import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
 import Global (readFloat)
-import SweetSpot.Data.Api (UserBucket)
+import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (idClass)
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
@@ -70,16 +70,16 @@ awaitDomReady =
 collectElements :: QuerySelector -> Effect (Array Element)
 collectElements querySelector = queryDocument querySelector >>= nodesToElements
 
-getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
-getMatchingUserBucket buckets id =
+getMatchingTestMap :: NonEmptyArray TestMap -> String -> Maybe TestMap
+getMatchingTestMap testMaps id =
   A.find
-    ((==) (readFloat id) <<< _._ubOriginalSvid)
-    buckets
+    ((==) (readFloat id) <<< _.targetId)
+    testMaps
 
-getOptionVariantId :: NonEmptyArray UserBucket -> String -> Element -> Effect (Maybe String)
-getOptionVariantId buckets attribute el = do
+getOptionVariantId :: NonEmptyArray TestMap -> String -> Element -> Effect (Maybe String)
+getOptionVariantId testMaps attribute el = do
   attrValue <- El.getAttribute attribute el
-  pure $ attrValue >>= getMatchingUserBucket buckets # map (toString <<< _._ubTestSvid)
+  pure $ attrValue >>= getMatchingTestMap testMaps # map (toString <<< _.swapId)
 
 removeClass :: String -> HTMLElement -> Effect Unit
 removeClass className = classList >=> remove' className

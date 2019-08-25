@@ -1,7 +1,6 @@
 module SweetSpot.LibertyPrice where
 
 import Prelude
-
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Foldable (traverse_)
@@ -9,7 +8,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Global (readFloat)
 import SweetSpot.DOM (getOptionVariantId)
-import SweetSpot.Data.Api (UserBucket)
+import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import Web.DOM (Element)
 import Web.DOM.Document as Doc
@@ -31,12 +30,12 @@ collectCheckoutOptions variantIds = do
     optionId <- E.getAttribute "value" el
     pure $ maybe false (\id -> A.elem (readFloat id) variantIds) optionId
 
-swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
-swapCheckoutVariantId buckets = traverse_ swapCheckoutIds
+swapCheckoutVariantId :: NonEmptyArray TestMap -> Array Element -> Effect Unit
+swapCheckoutVariantId testMaps = traverse_ swapCheckoutIds
   where
   swapCheckoutIds :: Element -> Effect Unit
   swapCheckoutIds el = do
-    mVariantId <- getOptionVariantId buckets "value" el
+    mVariantId <- getOptionVariantId testMaps "value" el
     case mVariantId, dryRunMode of
       Nothing, _ -> pure unit
       (Just variantId), DryRun -> E.setAttribute "ssdr__value" variantId el

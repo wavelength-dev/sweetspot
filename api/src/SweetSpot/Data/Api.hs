@@ -72,6 +72,7 @@ data Bucket = Bucket
   , _bOriginalSvid :: !Svid
   , _bTestSvid :: !Svid
   , _bPrice :: !Price
+  , _bControlPrice :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Bucket
@@ -119,6 +120,7 @@ data UserBucket = UserBucket
   , _ubExpId :: !ExpId
   , _ubBucketId :: !BucketId
   , _ubBucketType :: !BucketType
+  , _ubControlPrice :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''UserBucket
@@ -206,3 +208,18 @@ data OkResponse = OkResponse
 instance ToJSON OkResponse
 
 instance FromJSON OkResponse
+
+--
+-- TestMap
+--
+data TestMap = TestMap
+  { userId :: !UserId
+  , targetId :: !Svid
+  , sku :: !Sku
+  , swapId :: !Svid
+  , swapPrice :: !Price
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON TestMap
+
+instance FromJSON TestMap

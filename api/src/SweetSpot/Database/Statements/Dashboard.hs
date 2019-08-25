@@ -93,19 +93,21 @@ getBucketsForExperimentStatement = Statement sql encoder decoder True
     decoder = Decoders.rowList $ toBucket <$> row
       where
         row =
-          (,,,,) <$> Decoders.column Decoders.int8 <*>
+          (,,,,,) <$> Decoders.column Decoders.int8 <*>
           Decoders.column Decoders.text <*>
           Decoders.column Decoders.numeric <*>
           Decoders.column Decoders.int8 <*>
-          Decoders.column Decoders.int8
+          Decoders.column Decoders.int8 <*>
+          Decoders.column Decoders.numeric
         toBucket =
-          \(bid, btype, p, ogSvid, testSvid) ->
+          \(bid, btype, p, ogSvid, testSvid, original_price) ->
             Bucket
               { _bBucketId = BucketId $ fromIntegral bid
               , _bBucketType = bucketTypeFromText btype
               , _bPrice = Price p
               , _bOriginalSvid = Svid $ fromIntegral ogSvid
               , _bTestSvid = Svid $ fromIntegral testSvid
+              , _bControlPrice = Price original_price
               }
 
 -- | ---------------------------------------------------------------------------

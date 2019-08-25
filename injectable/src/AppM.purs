@@ -18,14 +18,14 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.DOM (collectElements, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
-import SweetSpot.Data.Api (UserBucket)
+import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, idClass, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
-import SweetSpot.Request (UserBucketProvisions(..), fetchUserBuckets, postLogPayload)
+import SweetSpot.Request (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import Web.DOM (Element)
 import Web.DOM.Element as E
 import Web.DOM.MutationObserver (mutationObserver, observe)
@@ -87,20 +87,20 @@ parseCampaignId queryString =
   in
    match >>= flip A.index 1 <#> CampaignId
 
-overrideCheckout :: Site -> NonEmptyArray UserBucket -> AppM Unit
-overrideCheckout siteId buckets = do
+overrideCheckout :: Site -> NonEmptyArray TestMap -> AppM Unit
+overrideCheckout siteId testMaps = do
   case siteId of
-    Longvadon -> liftEffect $ Lv.swapCheckoutVariantId buckets
+    Longvadon -> liftEffect $ Lv.swapCheckoutVariantId testMaps
     LibertyPrice -> liftEffect $ do
-      elements <- LP.collectCheckoutOptions (map _._ubOriginalSvid buckets)
-      LP.swapCheckoutVariantId buckets elements
+      elements <- LP.collectCheckoutOptions (map _.targetId testMaps)
+      LP.swapCheckoutVariantId testMaps elements
     _ -> throwError $ ReportErr { message : "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload : "" }
 
-applyPriceVariation :: NonEmptyArray UserBucket -> Element -> Effect Unit
-applyPriceVariation userBuckets el = do
+applyPriceVariation :: NonEmptyArray TestMap -> Element -> Effect Unit
+applyPriceVariation testMaps el = do
   mSku <- getIdFromPriceElement el
-  let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _._ubSku) userBuckets)
-  maybe (pure unit) (\bucket -> maybeInjectPrice bucket._ubSku bucket._ubPrice) mBucket
+  let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _.sku) testMaps)
+  maybe (pure unit) (\testMap -> maybeInjectPrice testMap.sku testMap.swapPrice) mBucket
   where
     maybeInjectPrice :: String -> Number -> Effect Unit
     maybeInjectPrice variantSku variantPrice = do
@@ -131,19 +131,19 @@ getUserId = do
   mUid <- liftEffect $ window >>= localStorage >>= getItem uidStorageKey
   pure $ UserId <$> mUid
 
-setUserId :: UserBucket -> Effect Unit
-setUserId b =
-  liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString b._ubUserId)
+setUserId :: TestMap -> Effect Unit
+setUserId testMap =
+  liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString testMap.userId)
 
-getUserBuckets :: UserBucketProvisions -> AppM (NonEmptyArray UserBucket)
+getUserBuckets :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
 getUserBuckets userBucketProvisions = do
-  mBuckets <- liftAff $ fetchUserBuckets userBucketProvisions
+  mBuckets <- liftAff $ fetchTestMaps userBucketProvisions
   case fromArray <$> mBuckets of
        Right Nothing -> throwError (ReportErr { message: noBucketErr, payload: "" })
-       Right (Just buckets) -> pure buckets
-       Left err -> throwError (ReportErr { message: "Error fetching user buckets", payload: err })
+       Right (Just testMaps) -> pure testMaps
+       Left err -> throwError (ReportErr { message: "Error fetching user testMaps", payload: err })
   where
-  noBucketErr = "User " <> (maybe "UnknownUid" unwrap mUserId) <> " has no buckets!"
+  noBucketErr = "User " <> (maybe "UnknownUid" unwrap mUserId) <> " has no testMaps!"
   mUserId = case userBucketProvisions of
                  (UserAndCampaignId uid cid) -> Just uid
                  (OnlyUserId uid) -> Just uid
@@ -158,13 +158,13 @@ log msg = do
 getCampaignId :: Effect (Maybe CampaignId)
 getCampaignId = window >>= location >>= search >>= pure <<< parseCampaignId
 
-getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM UserBucketProvisions
+getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM TestMapProvisions
 getUserBucketProvisions Nothing Nothing = throwError $ Noop "No userId or campaign url parameter. Exiting..."
 getUserBucketProvisions (Just uid) (Just cid) = pure $ UserAndCampaignId uid cid
 getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
 getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
-applyPriceVariations :: (NonEmptyArray UserBucket) -> Effect Unit
+applyPriceVariations :: (NonEmptyArray TestMap) -> Effect Unit
 applyPriceVariations userBuckets = do
   priceElements <- collectElements priceElementSelector
   let priceHTMLElements = A.catMaybes $ map fromElement priceElements
@@ -179,8 +179,8 @@ applyPriceVariations userBuckets = do
   traverse_ (applyPriceVariation userBuckets) priceElements
   traverse_ (removeClass hiddenPriceId) priceHTMLElements
 
-attachPriceObserver :: (NonEmptyArray UserBucket) -> Effect Unit
-attachPriceObserver buckets = do
+attachPriceObserver :: (NonEmptyArray TestMap) -> Effect Unit
+attachPriceObserver testMaps = do
   priceElements <- collectElements priceElementSelector
   let cb = (\mrs _ ->
             case A.head mrs of
@@ -188,7 +188,7 @@ attachPriceObserver buckets = do
                 Just mr -> target mr >>= \node ->
                   maybe
                     (C.log  "Node was not of type element")
-                    (applyPriceVariation buckets)
+                    (applyPriceVariation testMaps)
                     (E.fromNode node))
   muOb <- mutationObserver cb
   for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb

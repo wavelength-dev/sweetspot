@@ -9,7 +9,7 @@ module SweetSpot.Route.Injectable
   , UserBucketRoute
   ) where
 
-import Control.Lens ((^?))
+import Control.Lens ((^.), (^?))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Aeson (Value, encode)
@@ -23,7 +23,7 @@ import Network.Wai (Middleware, requestHeaders, responseLBS)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
-import SweetSpot.Data.Api (OkResponse(..), UserBucket)
+import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable
  (  getNewCampaignBuckets
@@ -36,7 +36,7 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Int :> Get '[ JSON] [UserBucket]
+   = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Int :> Get '[ JSON] [TestMap]
 
 type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
@@ -50,7 +50,25 @@ originProtectedRoutes = ["bucket", "event", "log"]
 showNumber :: Int -> Text
 showNumber = T.pack . show
 
-getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [UserBucket]
+createTestMap :: UserBucket -> TestMap
+createTestMap ub =
+  case ub ^. ubBucketType of
+    Control -> TestMap
+      { userId = ub ^. ubUserId
+      , targetId = ub ^. ubTestSvid
+      , sku = ub ^. ubSku
+      , swapId = ub ^. ubOriginalSvid
+      , swapPrice = ub ^. ubControlPrice
+      }
+    Test -> TestMap
+      { userId = ub ^. ubUserId
+      , targetId = ub ^. ubOriginalSvid
+      , sku = ub ^. ubSku
+      , swapId = ub ^. ubTestSvid
+      , swapPrice = ub ^. ubPrice
+      }
+
+getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [TestMap]
 -- Existing user
 getUserBucketsHandler mCmpId (Just uid) = do
   pool <- asks _getNewDbPool
@@ -58,7 +76,7 @@ getUserBucketsHandler mCmpId (Just uid) = do
   case (mCmpId, res) of
     (_, buckets@(b:bs)) -> do
       L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> showNumber uid
-      return buckets
+      return (map createTestMap buckets)
     (Nothing, []) -> do
       L.info $ "Could not find bucket(s) for userId: " <> showNumber uid
       throwError notFoundErr
@@ -66,7 +84,9 @@ getUserBucketsHandler mCmpId (Just uid) = do
       let cId = CampaignId newCmpId
       isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn cId
       if isValidCampaign
-        then liftIO . withResource pool $ \conn -> getNewCampaignBuckets conn cId (Just (UserId uid))
+        then liftIO $ do
+            buckets <- withResource pool $ \conn -> getNewCampaignBuckets conn cId (Just (UserId uid))
+            return $ map createTestMap buckets
         else do
           L.info $ "Got invalid campaign id for existing user" <> newCmpId
           throwError badRequestErr
@@ -77,7 +97,8 @@ getUserBucketsHandler (Just cmpId) Nothing = do
   if isValidCampaign
     then do
       L.info $ "Got campaign " <> cmpId
-      liftIO . withResource pool $ \conn -> getNewCampaignBuckets conn (CampaignId cmpId) Nothing
+      buckets <- liftIO $ withResource pool $ \conn -> getNewCampaignBuckets conn (CampaignId cmpId) Nothing
+      return $ map createTestMap buckets
     else do
       L.info $ "Got invalid campaign id " <> cmpId
       throwError badRequestErr

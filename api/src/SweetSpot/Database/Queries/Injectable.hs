@@ -64,6 +64,7 @@ getUserBuckets conn uid@(UserId id) = do
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
                         , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial
                         , _ubBucketType   = bkt ^. bktType & bucketTypeFromText
+                        , _ubControlPrice = Price $ bkt ^. bktCtrlPrice
                         }
                 )
                 tuples

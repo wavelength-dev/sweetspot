@@ -2,18 +2,19 @@ module SweetSpot.Request where
 
 import Prelude
 
+import Data.Argonaut (fromString) as Ar
 import Data.Argonaut.Core (stringify)
 import Data.Either (Either(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
-import SweetSpot.Data.Api (UserBucket)
-import SweetSpot.Data.Codec (decodeUserBuckets, encodeViewEvent)
+import SweetSpot.Data.Api (TestMap)
+import SweetSpot.Data.Codec (decodeTestMaps, encodeViewEvent)
 import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
 import SweetSpot.Data.Event (ViewEvent)
 
-data UserBucketProvisions
+data TestMapProvisions
   = OnlyCampaignId CampaignId
   | OnlyUserId UserId
   | UserAndCampaignId UserId CampaignId
@@ -24,8 +25,8 @@ fetch = M.fetch windowFetch
 jsonHeader :: M.Headers
 jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
 
-fetchUserBuckets :: UserBucketProvisions -> Aff (Either String (Array UserBucket))
-fetchUserBuckets provisions = do
+fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))
+fetchTestMaps provisions = do
   let
     opts =
       { method: M.getMethod
@@ -38,7 +39,7 @@ fetchUserBuckets provisions = do
       OnlyUserId (UserId uid) -> "?uid=" <> uid
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
-    Right res -> M.text res >>= decodeUserBuckets >>> pure
+    Right res -> M.text res >>= Ar.fromString >>> decodeTestMaps >>> pure
     Left err -> pure $ Left $ show err
 
 postLogPayload :: String -> Aff M.Response

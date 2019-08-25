@@ -11,7 +11,7 @@ import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
 import SweetSpot.DOM (getOptionVariantId, nodesToElements, queryDocument)
-import SweetSpot.Data.Api (UserBucket)
+import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import Web.DOM (Element)
 import Web.DOM.Element as El
@@ -46,14 +46,14 @@ import Web.DOM.ParentNode (QuerySelector(..))
 --       (Just variantId), DryRun -> E.setAttribute "ssdr__data-varid" variantId el
 --       (Just variantId), Live -> E.setAttribute "data-varid" variantId el
 -- This is the way we collect checkout options on LibertyPrice that appeared not to work on Longvadon before.
-swapCheckoutVariantId :: NonEmptyArray UserBucket -> Effect Unit
-swapCheckoutVariantId buckets = do
+swapCheckoutVariantId :: NonEmptyArray TestMap -> Effect Unit
+swapCheckoutVariantId testMaps = do
   nodeList <- queryDocument (QuerySelector "select.product-form__master-select option")
   nodes <- NL.toArray nodeList
   let
     elements = catMaybes $ map El.fromNode nodes
   for_ (elements :: Array Element) \el -> do
-    mVariantId <- getOptionVariantId buckets "value" el
+    mVariantId <- getOptionVariantId testMaps "value" el
     case mVariantId, dryRunMode of
       Nothing, _ -> pure unit
       (Just variantId), DryRun -> El.setAttribute "data-ssdr__value" variantId el

@@ -1,9 +1,7 @@
 module SweetSpot.Api where
 
 import Prelude
-
-import Data.Argonaut (fromString) as Ar
-import Data.Argonaut.Core (stringify)
+import Data.Argonaut as Ar
 import Data.Either (Either(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
@@ -39,7 +37,7 @@ fetchTestMaps provisions = do
       OnlyUserId (UserId uid) -> "?uid=" <> uid
   response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
   case response of
-    Right res -> M.text res >>= Ar.fromString >>> decodeTestMaps >>> pure
+    Right res -> M.text res >>= (Ar.jsonParser >=> decodeTestMaps) >>> pure
     Left err -> pure $ Left $ show err
 
 postLogPayload :: String -> Aff M.Response
@@ -61,5 +59,5 @@ postEventPayload tv = apathize $ fetch url opts
   opts =
     { method: M.postMethod
     , headers: jsonHeader
-    , body: stringify $ encodeViewEvent tv
+    , body: Ar.stringify $ encodeViewEvent tv
     }

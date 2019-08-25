@@ -67,14 +67,7 @@ awaitDomReady =
         pure nonCanceler
 
 collectPriceEls :: Effect (Array Element)
-collectPriceEls = do
-  docNode <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
-  checkoutOptionNodes <-
-    querySelectorAll
-      (QuerySelector ("[class*=" <> idClass <> "]"))
-      docNode
-  nodesArray <- NL.toArray checkoutOptionNodes
-  pure $ catMaybes (map El.fromNode nodesArray)
+collectPriceEls = queryDocument (QuerySelector ("[class*=" <> idClass <> "]")) >>= nodesToElements
 
 getMatchingUserBucket :: NonEmptyArray UserBucket -> String -> Maybe UserBucket
 getMatchingUserBucket buckets id =

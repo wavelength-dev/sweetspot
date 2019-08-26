@@ -12,6 +12,7 @@
     , "milkis"
     , "newtype"
     , "numbers"
+    , "record"
     , "prelude"
     , "psci-support"
     , "web-dom"

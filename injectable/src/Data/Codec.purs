@@ -1,13 +1,15 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
-
-import Data.Argonaut.Core (Json, jsonEmptyObject)
+import Data.Argonaut (encodeJson)
+import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson, (.:))
 import Data.Argonaut.Encode ((:=), (~>))
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (Either)
+import Data.Symbol (SProxy(..))
 import Data.Traversable (sequence)
+import Record (delete)
 import SweetSpot.Data.Event (CheckoutEvent, ViewEvent)
 import SweetSpot.Data.Shopify (Product, Variant)
 
@@ -28,21 +30,15 @@ decodeProduct str = do
   pure { id, variants }
 
 encodeViewEvent :: ViewEvent -> Json
-encodeViewEvent { page, pageUrl, userId, productId, productIds } =
-  "page" := (show page)
-  ~> "pageUrl" := pageUrl
-  ~> "userId" := userId
-  ~> "productId" := productId
-  ~> "productIds" := productIds
-  ~> jsonEmptyObject
+encodeViewEvent viewEvent@{ page } =
+  let
+    simpleRows = delete (SProxy :: SProxy "page") viewEvent
+  in
+    "page" := (show page) ~> encodeJson simpleRows
 
 encodeCheckoutEvent :: CheckoutEvent -> Json
-encodeCheckoutEvent { page, pageUrl, step, token, orderId, lineItems, userId } =
-  "page" := (show page)
-  ~> "pageUrl" := pageUrl
-  ~> "step" := step
-  ~> "token" := token
-  ~> "orderId" := orderId
-  ~> "lineItems" := lineItems
-  ~> "userId" := userId
-  ~> jsonEmptyObject
+encodeCheckoutEvent checkoutEvent@{ page } =
+  let
+    simpleRows = delete (SProxy :: SProxy "page") checkoutEvent
+  in
+    "page" := (show page) ~> encodeJson simpleRows

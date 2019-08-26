@@ -48,10 +48,7 @@ import Web.DOM.ParentNode (QuerySelector(..))
 -- This is the way we collect checkout options on LibertyPrice that appeared not to work on Longvadon before.
 swapCheckoutVariantId :: NonEmptyArray TestMap -> Effect Unit
 swapCheckoutVariantId testMaps = do
-  nodeList <- queryDocument (QuerySelector "select.product-form__master-select option")
-  nodes <- NL.toArray nodeList
-  let
-    elements = catMaybes $ map El.fromNode nodes
+  elements <- queryDocument (QuerySelector "select.product-form__master-select option") >>= nodesToElements
   for_ (elements :: Array Element) \el -> do
     mVariantId <- getOptionVariantId testMaps "value" el
     case mVariantId, dryRunMode of

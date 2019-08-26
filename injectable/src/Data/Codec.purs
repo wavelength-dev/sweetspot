@@ -28,21 +28,21 @@ decodeProduct str = do
   pure { id, variants }
 
 encodeViewEvent :: ViewEvent -> Json
-encodeViewEvent ve =
-  "page" := (show ve.page)
-  ~> "pageUrl" := ve.pageUrl
-  ~> "userId" := ve.userId
-  ~> "productId" := ve.productId
-  ~> "productIds" := ve.productIds
+encodeViewEvent { page, pageUrl, userId, productId, productIds } =
+  "page" := (show page)
+  ~> "pageUrl" := pageUrl
+  ~> "userId" := userId
+  ~> "productId" := productId
+  ~> "productIds" := productIds
   ~> jsonEmptyObject
 
 encodeCheckoutEvent :: CheckoutEvent -> Json
-encodeCheckoutEvent ve =
-  "page" := (show ve.page)
-  ~> "pageUrl" := ve.pageUrl
-  ~> "step" := ve.step
-  ~> "token" := ve.token
-  ~> "orderId" := ve.orderId
-  ~> "lineItems" := ve.lineItems
-  ~> "userId" := ve.userId
+encodeCheckoutEvent { page, pageUrl, step, token, orderId, lineItems, userId } =
+  "page" := (show page)
+  ~> "pageUrl" := pageUrl
+  ~> "step" := step
+  ~> "token" := token
+  ~> "orderId" := orderId
+  ~> "lineItems" := lineItems
+  ~> "userId" := userId
   ~> jsonEmptyObject

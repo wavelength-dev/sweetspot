@@ -60,8 +60,8 @@ swapCheckoutVariantId testMaps = do
       (Just variantId), Live -> El.setAttribute "value" variantId el
 
 
-replaceTestVariantUrlOnCartPage :: Effect Unit
-replaceTestVariantUrlOnCartPage = do
+replaceTestVariantUrlOnCart :: Effect Unit
+replaceTestVariantUrlOnCart = do
   nodeList <- queryDocument (QuerySelector "[href*=-ssv]")
   elements <- nodesToElements nodeList
   for_ elements \el -> do

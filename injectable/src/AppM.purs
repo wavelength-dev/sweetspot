@@ -220,4 +220,4 @@ unhidePrice = do
 
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId =
-  when (siteId == Longvadon) Lv.replaceTestVariantUrlOnCartPage
+  when (siteId == Longvadon) Lv.replaceTestVariantUrlOnCart

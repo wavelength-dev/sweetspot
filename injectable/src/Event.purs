@@ -45,19 +45,19 @@ readInjectedProducts = do
   pure $ sequence maybePs
 
 collectionUrlRegex :: Regex
-collectionUrlRegex = unsafeRegex "^/collections/[\\w\\d-_.%~]+/?$" ignoreCase
+collectionUrlRegex = unsafeRegex """^/collections/[\w-_.%~]+/?$""" ignoreCase
 
 collectionsUrlRegex :: Regex
-collectionsUrlRegex = unsafeRegex "^/collections/?$" ignoreCase
+collectionsUrlRegex = unsafeRegex """^/collections/?$""" ignoreCase
 
 productDetailsUrlRegex :: Regex
-productDetailsUrlRegex = unsafeRegex "^/collections/[\\w\\d-_.%~]+/products/?" ignoreCase
+productDetailsUrlRegex = unsafeRegex """^/collections/[\w-_.%~]+/products/?""" ignoreCase
 
 ordersUrlRegex :: Regex
-ordersUrlRegex = unsafeRegex "^/[\\w\\d-_.%~]+/orders/?" ignoreCase
+ordersUrlRegex = unsafeRegex """^/[\w-_.%~]+/orders/?""" ignoreCase
 
 checkoutUrlRegex :: Regex
-checkoutUrlRegex = unsafeRegex "^/[\\w\\d-_.%~]+/checkouts/?" ignoreCase
+checkoutUrlRegex = unsafeRegex """^/[\w-_.%~]+/checkouts/?""" ignoreCase
 
 homeUrlRegex :: Regex
 homeUrlRegex = unsafeRegex "^/?$" ignoreCase

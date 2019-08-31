@@ -193,7 +193,7 @@ getCheckoutEventsForBucket conn (BucketId id) = do
                                                     (   (evs ^. evPayload)
                                                     ->$ "userId"
                                                     )
-                                                    serial
+                                                    int
                         )
                         (all_ (db ^. bucketUsers))
 

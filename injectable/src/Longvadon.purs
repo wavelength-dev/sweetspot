@@ -37,7 +37,8 @@ isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "
 setCheckout :: forall m. DomAction m => Array TestMap -> m Unit
 setCheckout testMaps = do
   SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (setCheckoutOption testMaps)
-  SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setSlickCarousel testMaps)
+  SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  SiteC.queryDocument cartSlickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
 
 -- Normal product page add-to-cart source. The id of the select is manipulated so that on form submit the right data gets sent by Shopify's add-to-cart script.
 -- <select name="id[]" class="product-form__master-select supports-no-js" data-master-select="">
@@ -53,8 +54,8 @@ setCheckoutOption testMaps el = do
     mTestMap = mVariantId >>= findMatchingTestMap testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
-    (Just testMap), DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
-    (Just testMap), Live -> SiteC.setAttribute "value" testMap.swapId el
+    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
+    Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId el
 
 -- TODO: deal with price and add to cart in Slick carousel
 -- button.product__add-to-cart-button
@@ -70,15 +71,6 @@ setCheckoutOption testMaps el = do
 --     <option value="16408520753195" data-pric=" Sold out" data-stock="deny">38/40 / XL / Black</option>
 --   </select>
 -- </div>
-setSlickCarousel :: forall m. DomAction m => Array TestMap -> Element -> m Unit
-setSlickCarousel testMaps element = do
-  mVariantId <- SiteC.getAttribute "value" element
-  let
-    mTestMap = mVariantId >>= findMatchingTestMap testMaps
-  case mTestMap, dryRunMode of
-    Nothing, _ -> pure unit
-    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
-    Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
 
 -- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL.
 convertSsvCollectionUrls :: forall m. DomAction m => m Unit

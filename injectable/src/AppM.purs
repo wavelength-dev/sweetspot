@@ -3,17 +3,16 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
-import Data.Array (find) as Array
-import Data.Array as A
+import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
 import Data.Int (toNumber) as Int
-import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
-import Data.String as S
+import Data.String as String
 import Effect (Effect)
-import Effect.Aff (Aff, forkAff, launchAff_)
+import Effect.Aff (Aff, forkAff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
@@ -24,7 +23,6 @@ import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..), TestMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
-import SweetSpot.Longvadon (convertSsvCollectionUrls)
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -96,15 +94,15 @@ getSiteId = do
 parseCampaignId :: String -> Maybe CampaignId
 parseCampaignId queryString =
   let
-    clean = fromMaybe queryString (S.stripPrefix (S.Pattern "?") queryString)
+    clean = fromMaybe queryString (String.stripPrefix (String.Pattern "?") queryString)
 
-    kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
+    kvPairs = String.split (String.Pattern "&") >>> map (String.split $ String.Pattern "=") $ clean
 
-    campaignPred = \arr -> maybe false ((==) Config.campaignIdQueryParam) (A.index arr 0)
+    campaignPred = \arr -> maybe false ((==) Config.campaignIdQueryParam) (Array.index arr 0)
 
-    match = A.find campaignPred kvPairs
+    match = Array.find campaignPred kvPairs
   in
-    match >>= flip A.index 1 <#> CampaignId
+    match >>= flip Array.index 1 <#> CampaignId
 
 setCheckout :: Site -> Array TestMap -> AppM Unit
 setCheckout siteId testMaps = do
@@ -182,19 +180,12 @@ getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
 
 getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
+-- It's unlikely but possible not all collected Elements are HTMLElements
+-- We should only add sweetspot ids to elements which are HTMLElements
 applyPriceVariations :: (NonEmptyArray TestMap) -> Effect Unit
 applyPriceVariations userBuckets = do
   priceElements <- SiteC.queryDocument priceElementSelector
-  let
-    priceHTMLElements = A.catMaybes $ map fromElement priceElements
-  -- It's unlikely but possible not all collected Elements are HTMLElements
-  -- We should only add sweetspot ids to elements which are HTMLElements
-  -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
-  _ <-
-    if A.length priceElements /= A.length priceHTMLElements then
-      launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements"
-    else
-      pure unit
+  let priceHTMLElements = Array.catMaybes $ map fromElement priceElements
   traverse_ (applyPriceVariation userBuckets) priceElements
   traverse_ (SiteC.removeClass Config.hiddenPriceId) priceHTMLElements
 
@@ -204,7 +195,7 @@ attachPriceObserver testMaps = do
   muOb <- mutationObserver callback
   for_ priceElements \el -> observe (Element.toNode el) { childList: true } muOb
   where
-  callback mutationRecords _ = case A.head mutationRecords of
+  callback mutationRecords _ = case Array.head mutationRecords of
     Nothing -> C.log "No mutation records"
     Just mr -> target mr >>= \node ->
             maybe
@@ -217,25 +208,22 @@ applyFacadeUrl = do
   path <- SiteC.getPathname
   when (isMatch path) (SiteC.replacePathname $ strip path)
   where
-  strip path = fromMaybe path $ S.stripSuffix (S.Pattern Config.variantUrlPattern) path
+  strip path = fromMaybe path $ String.stripSuffix (String.Pattern Config.variantUrlPattern) path
 
   isMatch =
-    S.split (S.Pattern "/")
-      >>> A.last
-      >>> maybe false (S.contains (S.Pattern Config.variantUrlPattern))
+    String.split (String.Pattern "/")
+      >>> Array.last
+      >>> maybe false (String.contains (String.Pattern Config.variantUrlPattern))
 
+-- It's unlikely but possible not all collected Elements are HTMLElements
+-- We should only add sweetspot ids to elements which are HTMLElements
 unhidePrice :: Effect Unit
-unhidePrice = do
-  priceElements <- SiteC.queryDocument priceElementSelector
-  -- It's unlikely but possible not all collected Elements are HTMLElements
-  -- We should only add sweetspot ids to elements which are HTMLElements
-  -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements
-  let
-    priceHTMLElements = map fromElement priceElements
-
-    anyInvalidElements = A.any isNothing priceHTMLElements
-  _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
-  traverse_ (SiteC.removeClass Config.hiddenPriceId) (A.catMaybes $ priceHTMLElements)
+unhidePrice =
+  SiteC.queryDocument priceElementSelector
+    >>= (map fromElement)
+    >>> Array.catMaybes
+    >>> pure
+    >>= traverse_ (SiteC.removeClass Config.hiddenPriceId)
 
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls

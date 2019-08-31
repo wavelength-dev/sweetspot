@@ -96,7 +96,7 @@ replaceTestVariantUrlOnCart = do
           fixed = replace urlPattern "" h
         case dryRunMode of
           Live -> SiteC.setAttribute "href" fixed el
-          DryRun -> SiteC.setAttribute "data-sshref" fixed el
+          DryRun -> SiteC.setAttribute "data-ssdr__href" fixed el
       Nothing -> pure unit
   where
   urlPattern = unsafeRegex "^/collections/" ignoreCase

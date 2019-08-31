@@ -24,6 +24,7 @@ import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..), TestMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
+import SweetSpot.Longvadon (convertSsvCollectionUrls)
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -237,4 +238,4 @@ unhidePrice = do
   traverse_ (SiteC.removeClass Config.hiddenPriceId) (A.catMaybes $ priceHTMLElements)
 
 fixCartItemUrls :: Site -> Effect Unit
-fixCartItemUrls siteId = when (siteId == Longvadon) Lv.replaceTestVariantUrlOnCart
+fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls

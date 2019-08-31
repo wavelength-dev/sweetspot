@@ -1,12 +1,10 @@
 module SweetSpot.Longvadon where
 
 import Prelude
-
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), maybe)
-import Data.String.Regex (replace)
-import Data.String.Regex.Flags (ignoreCase)
-import Data.String.Regex.Unsafe (unsafeRegex)
+import Data.String (Pattern(..))
+import Data.String (stripPrefix) as String
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMap, findMatchingTestMap)
@@ -51,7 +49,8 @@ setCheckout testMaps = do
 setCheckoutOption :: forall m. DomAction m => Array TestMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
-  let mTestMap = mVariantId >>= findMatchingTestMap testMaps
+  let
+    mTestMap = mVariantId >>= findMatchingTestMap testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
     (Just testMap), DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
@@ -81,18 +80,16 @@ setSlickCarousel testMaps element = do
     Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
     Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
 
-replaceTestVariantUrlOnCart :: forall m. DomAction m => m Unit
-replaceTestVariantUrlOnCart = do
-  elements <- SiteC.queryDocument (QuerySelector "[href*=-ssv]")
-  for_ elements \el -> do
-    href <- SiteC.getAttribute "href" el
-    case href of
-      (Just h) -> do
-        let
-          fixed = replace urlPattern "" h
-        case dryRunMode of
-          Live -> SiteC.setAttribute "href" fixed el
-          DryRun -> SiteC.setAttribute "data-ssdr__href" fixed el
-      Nothing -> pure unit
+-- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL.
+convertSsvCollectionUrls :: forall m. DomAction m => m Unit
+convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>= traverse_ updateLink
   where
-  urlPattern = unsafeRegex "^/collections/" ignoreCase
+  updateLink :: Element -> m Unit
+  updateLink el = do
+    mHref <- SiteC.getAttribute "href" el
+    let
+      mProductUrl = mHref >>= String.stripPrefix (Pattern "/collections/")
+    case mProductUrl, dryRunMode of
+      Nothing, _ -> pure unit
+      Just productUrl, Live -> SiteC.setAttribute "href" productUrl el
+      Just productUrl, DryRun -> SiteC.setAttribute "data-ssdr__href" productUrl el

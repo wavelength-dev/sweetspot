@@ -29,7 +29,7 @@ slickCarouselOptionSelector = QuerySelector "#color-slider input[value]"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
 cartSlickCarouselOptionSelector :: QuerySelector
-cartSlickCarouselOptionSelector = QuerySelector "#buy input[value]"
+cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure

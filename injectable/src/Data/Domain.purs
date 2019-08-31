@@ -44,5 +44,8 @@ type TestMap
 decodeTestMaps :: Json -> Either String (Array TestMap)
 decodeTestMaps json = decodeJson json >>= traverse decodeJson
 
-getSwapId :: Array TestMap -> String -> Maybe String
-getSwapId testMaps variantId = Array.find (_.targetId >>> (==) variantId) testMaps <#> _.swapId
+type TargetId
+  = String
+
+findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
+findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps

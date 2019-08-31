@@ -5,7 +5,7 @@ import Prelude
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMap, getSwapId)
+import SweetSpot.Data.Domain (TestMap, findMatchingTestMap)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities (getAttribute, queryDocument, setAttribute) as SiteC
 import Web.DOM (Element)
@@ -20,7 +20,7 @@ setCheckout testMaps = SiteC.queryDocument productCheckoutOptionSelector
 
 setCheckoutOption :: forall m. DomAction m => Array TestMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
-  mSwapId <- SiteC.getAttribute "value" el <#> (\mVariantId -> mVariantId >>= getSwapId testMaps)
+  mSwapId <- SiteC.getAttribute "value" el <#> (\mVariantId -> mVariantId >>= findMatchingTestMap testMaps <#> _.swapId)
   case mSwapId, dryRunMode of
     Nothing, _ -> pure unit
     (Just swapId), DryRun -> SiteC.setAttribute "data-ssdr__value" swapId el

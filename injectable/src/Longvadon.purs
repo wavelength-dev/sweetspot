@@ -2,7 +2,6 @@ module SweetSpot.Longvadon where
 
 import Prelude
 
-import Data.Array (find) as Array
 import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Regex (replace)
@@ -10,7 +9,7 @@ import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMap, getSwapId)
+import SweetSpot.Data.Domain (TestMap, findMatchingTestMap)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -23,7 +22,6 @@ import Web.DOM.ParentNode (QuerySelector(..))
 -- cart page, add to cart slider
 -- Product Page Add to Cart Query Selector
 -- Matches the elements that determine the product that is added to cart on the product page.
-
 productCheckoutOptionSelector :: QuerySelector
 productCheckoutOptionSelector = QuerySelector "select.product-form__master-select option"
 
@@ -52,15 +50,15 @@ setCheckout testMaps = do
 -- </select>
 setCheckoutOption :: forall m. DomAction m => Array TestMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
-  mSwapId <- SiteC.getAttribute "value" el <#> (\mVariantId -> mVariantId >>= getSwapId testMaps)
-  case mSwapId, dryRunMode of
+  mVariantId <- SiteC.getAttribute "value" el
+  let mTestMap = mVariantId >>= findMatchingTestMap testMaps
+  case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
-    (Just swapId), DryRun -> SiteC.setAttribute "data-ssdr__value" swapId el
-    (Just swapId), Live -> SiteC.setAttribute "value" swapId el
+    (Just testMap), DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
+    (Just testMap), Live -> SiteC.setAttribute "value" testMap.swapId el
 
 -- TODO: deal with price and add to cart in Slick carousel
 -- button.product__add-to-cart-button
-
 -- Slick silder has a hidden select which is used as the source from which to update the price and add to cart button
 -- We should check 'data-stock', if 'deny', leave the data-pric as it is, otherwise swap in our price.
 -- Use the value attribute in combination with our buckets or testmaps
@@ -74,17 +72,14 @@ setCheckoutOption testMaps el = do
 --   </select>
 -- </div>
 setSlickCarousel :: forall m. DomAction m => Array TestMap -> Element -> m Unit
-setSlickCarousel testMaps element = findMatchingTargetMap element >>= case _, dryRunMode of
-        Nothing, _ -> pure unit
-        Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
-        Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
-  where
-  findMatchingTargetMap el = do
-    mVariantId <- SiteC.getAttribute "value" el
-    pure
-      $ case mVariantId of
-          Nothing -> Nothing
-          Just variantId -> Array.find (_.targetId >>> ((==) variantId)) testMaps
+setSlickCarousel testMaps element = do
+  mVariantId <- SiteC.getAttribute "value" element
+  let
+    mTestMap = mVariantId >>= findMatchingTestMap testMaps
+  case mTestMap, dryRunMode of
+    Nothing, _ -> pure unit
+    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
+    Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
 
 replaceTestVariantUrlOnCart :: forall m. DomAction m => m Unit
 replaceTestVariantUrlOnCart = do

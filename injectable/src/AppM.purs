@@ -1,6 +1,7 @@
 module SweetSpot.AppM where
 
 import Prelude
+
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array (find) as Array
 import Data.Array as A
@@ -18,8 +19,9 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, idClass, uidStorageKey, variantUrlPattern)
-import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
+import SweetSpot.Data.Config (DryRunMode(..))
+import SweetSpot.Data.Config as Config
+import SweetSpot.Data.Domain (CampaignId(..), UserId(..), TestMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
@@ -79,7 +81,7 @@ instance showSite :: Show Site where
   show (Unknown hostname) = hostname
 
 priceElementSelector :: QuerySelector
-priceElementSelector = QuerySelector $ "[class*=" <> idClass <> "]"
+priceElementSelector = QuerySelector $ "[class*=" <> Config.idClass <> "]"
 
 getSiteId :: Effect Site
 getSiteId = do
@@ -97,7 +99,7 @@ parseCampaignId queryString =
 
     kvPairs = S.split (S.Pattern "&") >>> map (S.split $ S.Pattern "=") $ clean
 
-    campaignPred = \arr -> maybe false ((==) campaignIdQueryParam) (A.index arr 0)
+    campaignPred = \arr -> maybe false ((==) Config.campaignIdQueryParam) (A.index arr 0)
 
     match = A.find campaignPred kvPairs
   in
@@ -112,15 +114,15 @@ setCheckout siteId testMaps = do
 
 applyPriceVariation :: NonEmptyArray TestMap -> Element -> Effect Unit
 applyPriceVariation testMaps el = do
-  mElementSku <- getIdFromPriceElement el
+  mElementSku <- SiteC.getIdFromPriceElement el
   let
     mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
-  case mTestMap, dryRunMode of
+  case mTestMap, Config.dryRunMode of
     (Just testMap), DryRun -> do
       nf <- numberFormat
       formattedPrice <- formatNumber (Int.toNumber testMap.swapPrice) nf
       Element.setAttribute "data-ssdr__price" formattedPrice el
-    (Just testMap), Live -> setPrice (Int.toNumber testMap.swapPrice) el
+    (Just testMap), Live -> SiteC.setPrice (Int.toNumber testMap.swapPrice) el
     Nothing, _ -> pure unit
 
 ensureDeps :: AppM Unit
@@ -140,11 +142,11 @@ ensureDeps = case promise, fetch of
 
 getUserId :: Effect (Maybe UserId)
 getUserId = do
-  mUid <- liftEffect $ window >>= localStorage >>= getItem uidStorageKey
+  mUid <- liftEffect $ window >>= localStorage >>= getItem Config.uidStorageKey
   pure $ UserId <$> mUid
 
 setUserId :: TestMap -> Effect Unit
-setUserId testMap = liftEffect $ window >>= localStorage >>= setItem uidStorageKey testMap.userId
+setUserId testMap = liftEffect $ window >>= localStorage >>= setItem Config.uidStorageKey testMap.userId
 
 getUserBuckets :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
 getUserBuckets userBucketProvisions = do
@@ -193,7 +195,7 @@ applyPriceVariations userBuckets = do
     else
       pure unit
   traverse_ (applyPriceVariation userBuckets) priceElements
-  traverse_ (removeClass hiddenPriceId) priceHTMLElements
+  traverse_ (SiteC.removeClass Config.hiddenPriceId) priceHTMLElements
 
 attachPriceObserver :: (NonEmptyArray TestMap) -> Effect Unit
 attachPriceObserver testMaps = do
@@ -211,15 +213,15 @@ attachPriceObserver testMaps = do
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do
-  path <- getPathname
-  when (isMatch path) (replacePathname $ strip path)
+  path <- SiteC.getPathname
+  when (isMatch path) (SiteC.replacePathname $ strip path)
   where
-  strip path = fromMaybe path $ S.stripSuffix (S.Pattern variantUrlPattern) path
+  strip path = fromMaybe path $ S.stripSuffix (S.Pattern Config.variantUrlPattern) path
 
   isMatch =
     S.split (S.Pattern "/")
       >>> A.last
-      >>> maybe false (S.contains (S.Pattern variantUrlPattern))
+      >>> maybe false (S.contains (S.Pattern Config.variantUrlPattern))
 
 unhidePrice :: Effect Unit
 unhidePrice = do
@@ -232,7 +234,7 @@ unhidePrice = do
 
     anyInvalidElements = A.any isNothing priceHTMLElements
   _ <- when anyInvalidElements (launchAff_ $ postLogPayload "WARN: some collected price elements are not HTMLElements")
-  traverse_ (removeClass hiddenPriceId) (A.catMaybes $ priceHTMLElements)
+  traverse_ (SiteC.removeClass Config.hiddenPriceId) (A.catMaybes $ priceHTMLElements)
 
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.replaceTestVariantUrlOnCart

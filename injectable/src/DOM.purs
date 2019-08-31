@@ -1,28 +1,21 @@
 module SweetSpot.DOM where
 
 import Prelude
-
-import Data.Array (catMaybes)
-import Data.Array as A
-import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array (find, last) as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
-import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
-import Global (readFloat)
-import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (idClass)
-import SweetSpot.Data.Product (Sku(..))
+import SweetSpot.Data.Domain (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
-import Web.DOM (Element, Node, NodeList)
+import Web.DOM (Element, Node)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document as Doc
 import Web.DOM.Element as El
 import Web.DOM.Node (setTextContent, textContent)
-import Web.DOM.NodeList as NL
-import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)
+import Web.DOM.ParentNode (QuerySelector(..), querySelector)
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (HTMLElement, window)
 import Web.HTML.Event.EventTypes as ET
@@ -67,20 +60,6 @@ awaitDomReady =
         callback (Right unit)
         pure nonCanceler
 
-collectElements :: QuerySelector -> Effect (Array Element)
-collectElements querySelector = queryDocument querySelector >>= nodesToElements
-
-getMatchingTestMap :: NonEmptyArray TestMap -> String -> Maybe TestMap
-getMatchingTestMap testMaps id =
-  A.find
-    ((==) (readFloat id) <<< _.targetId)
-    testMaps
-
-getOptionVariantId :: NonEmptyArray TestMap -> String -> Element -> Effect (Maybe String)
-getOptionVariantId testMaps attribute el = do
-  attrValue <- El.getAttribute attribute el
-  pure $ attrValue >>= getMatchingTestMap testMaps # map (toString <<< _.swapId)
-
 removeClass :: String -> HTMLElement -> Effect Unit
 removeClass className = classList >=> remove' className
   where
@@ -94,11 +73,12 @@ addClass className el = do
 getIdFromPriceElement :: Element -> Effect (Maybe Sku)
 getIdFromPriceElement el = do
   classNames <- (S.split $ S.Pattern " ") <$> El.className el
-  let
-    match = A.find (S.contains (S.Pattern idClass)) classNames
-
-    sku = A.last =<< (S.split $ S.Pattern "--") <$> match
-  pure $ Sku <$> sku
+  pure $ findSweetSpotTag classNames >>= getSkuFromTag <#> Sku
+  where
+    findSweetSpotTag :: Array String -> Maybe String
+    findSweetSpotTag = Array.find (S.contains (S.Pattern idClass))
+    getSkuFromTag :: String -> Maybe String
+    getSkuFromTag tag = Array.last $ S.split (S.Pattern "--") tag
 
 setNodePrice :: Number -> Node -> Effect Unit
 setNodePrice price node = do
@@ -116,15 +96,3 @@ replacePathname :: String -> Effect Unit
 replacePathname url = do
   h <- window >>= Window.history
   state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h
-
-queryDocument :: QuerySelector -> Effect NodeList
-queryDocument querySelector =
-  window
-    >>= Window.document
-    >>= toDocument
-    >>> Doc.toParentNode
-    >>> pure
-    >>= querySelectorAll querySelector
-
-nodesToElements :: NodeList -> Effect (Array Element)
-nodesToElements = NL.toArray >=> map El.fromNode >>> catMaybes >>> pure

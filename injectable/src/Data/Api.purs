@@ -1,17 +1,17 @@
 module SweetSpot.Data.Api where
 
-import Prelude ((>>=))
-
+import Prelude
 import Data.Argonaut (Json, decodeJson)
 import Data.Either (Either)
 import Data.Traversable (traverse)
+import SweetSpot.Data.Domain (Sku)
 
 type TestMap
-  = { sku :: String
-    , swapId :: Number
-    , swapPrice :: Number
-    , targetId :: Number
-    , userId :: Number
+  = { sku :: Sku
+    , swapId :: String
+    , swapPrice :: Int
+    , targetId :: String
+    , userId :: String
     }
 
 decodeTestMaps :: Json -> Either String (Array TestMap)

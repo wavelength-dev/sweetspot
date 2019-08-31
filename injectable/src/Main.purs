@@ -2,7 +2,7 @@ module SweetSpot.Main where
 
 import Prelude
 
-import Data.Array.NonEmpty (head)
+import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_, runAff_)
@@ -10,10 +10,10 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Console as Console
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getUserBucketProvisions, getUserBuckets, getUserId, overrideCheckout, runAppM, setUserId, unhidePrice)
+import SweetSpot.Api (postLogPayload)
+import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getUserBucketProvisions, getUserBuckets, getUserId, runAppM, setCheckout, setUserId, unhidePrice)
 import SweetSpot.DOM (awaitDomReady)
 import SweetSpot.Event (trackView)
-import SweetSpot.Api (postLogPayload)
 
 app :: AppM Unit
 app = do
@@ -24,13 +24,12 @@ app = do
   mCid <- liftEffect $ getCampaignId
   siteId <- liftEffect $ getSiteId
   ubp <- getUserBucketProvisions mUid mCid
-  buckets <- getUserBuckets ubp
-  liftEffect $ setUserId (head buckets)
-  overrideCheckout siteId buckets
-  liftEffect $ applyPriceVariations buckets
-  liftEffect $ attachPriceObserver buckets
+  testMaps <- getUserBuckets ubp
+  liftEffect $ setUserId (NonEmptyArray.head testMaps)
+  setCheckout siteId (NonEmptyArray.toArray testMaps)
+  liftEffect $ applyPriceVariations testMaps
+  liftEffect $ attachPriceObserver testMaps
   liftEffect $ fixCartItemUrls siteId
-
   liftEffect $ launchAff_ trackView
 
 logResult :: forall a. Either Error a -> Effect Unit

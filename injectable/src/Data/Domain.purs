@@ -1,5 +1,8 @@
 module SweetSpot.Data.Domain where
 
+import Prelude
+import Data.Argonaut (class DecodeJson, caseJsonString)
+import Data.Either (Either(..))
 import Data.Newtype (class Newtype)
 
 -- | Id which corresponds to a SweetSpot campaign. Campaigns are time bound events within which price tests take place.
@@ -15,3 +18,14 @@ newtype UserId
   = UserId String
 
 derive instance newtypeUserId :: Newtype UserId _
+
+newtype Sku
+  = Sku String
+
+derive instance eqSku :: Eq Sku
+
+instance decodeJsonSku :: DecodeJson Sku where
+  decodeJson json = caseJsonString (Left "sku is not a string") (Right <<< Sku) json
+
+instance showSku :: Show Sku where
+  show (Sku sku) = show sku

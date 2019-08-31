@@ -3,31 +3,32 @@ module SweetSpot.AppM where
 import Prelude
 
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
+import Data.Array (find) as Array
 import Data.Array as A
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
+import Data.Int (toNumber) as Int
 import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Newtype (unwrap)
-import Data.Number.Format (toString)
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, forkAff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console as C
+import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.DOM (collectElements, getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
+import SweetSpot.DOM (getIdFromPriceElement, getPathname, removeClass, replacePathname, setPrice)
 import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (DryRunMode(..), campaignIdQueryParam, dryRunMode, hiddenPriceId, idClass, uidStorageKey, variantUrlPattern)
 import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
-import SweetSpot.Data.Product (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
-import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
+import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element as E
+import Web.DOM.Element as Element
 import Web.DOM.MutationObserver (mutationObserver, observe)
 import Web.DOM.MutationRecord (target)
 import Web.DOM.ParentNode (QuerySelector(..))
@@ -50,6 +51,11 @@ derive newtype instance monadAppM :: Monad AppM
 derive newtype instance monadAffAppM :: MonadAff AppM
 derive newtype instance monadEffectAppM :: MonadEffect AppM
 derive newtype instance monadThrowAppM :: MonadThrow ShortCircuit AppM
+
+-- instance domActionAppM :: DomAction AppM where
+--   getAttribute = SiteC.getAttribute
+--   setAttribute = SiteC.setAttribute
+--   queryDocument = SiteC.queryDocument
 
 runAppM :: forall a. AppM a -> Aff (Either ShortCircuit a)
 runAppM (AppM m) = runExceptT m
@@ -87,41 +93,32 @@ parseCampaignId queryString =
   in
    match >>= flip A.index 1 <#> CampaignId
 
-overrideCheckout :: Site -> NonEmptyArray TestMap -> AppM Unit
-overrideCheckout siteId testMaps = do
+setCheckout :: Site -> Array TestMap -> AppM Unit
+setCheckout siteId testMaps = do
   case siteId of
-    Longvadon -> liftEffect $ Lv.swapCheckoutVariantId testMaps
-    LibertyPrice -> liftEffect $ do
-      elements <- LP.collectCheckoutOptions (map _.targetId testMaps)
-      LP.swapCheckoutVariantId testMaps elements
+    Longvadon -> liftEffect $ Lv.setCheckout testMaps
+    LibertyPrice -> liftEffect $ LP.setCheckout testMaps
     _ -> throwError $ ReportErr { message : "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload : "" }
 
 applyPriceVariation :: NonEmptyArray TestMap -> Element -> Effect Unit
 applyPriceVariation testMaps el = do
-  mSku <- getIdFromPriceElement el
-  let mBucket = mSku >>= (\(Sku sku) -> A.find ((==) sku <<< _.sku) testMaps)
-  maybe (pure unit) (\testMap -> maybeInjectPrice testMap.sku testMap.swapPrice) mBucket
-  where
-    maybeInjectPrice :: String -> Number -> Effect Unit
-    maybeInjectPrice variantSku variantPrice = do
-      mSku <- getIdFromPriceElement el
-      let match = maybe false (\(Sku sku) -> sku == variantSku) mSku
-      case match, dryRunMode of
-        true, DryRun -> do
+  mElementSku <- getIdFromPriceElement el
+  let mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
+  case mTestMap, dryRunMode of
+    (Just testMap), DryRun -> do
           nf <- numberFormat
-          formattedPrice <- formatNumber variantPrice nf
-          E.setAttribute "data-ssdr__price" formattedPrice el
-        true, Live -> setPrice variantPrice el
-        _, _ -> pure unit
+          formattedPrice <- formatNumber (Int.toNumber testMap.swapPrice) nf
+          Element.setAttribute "data-ssdr__price" formattedPrice el
+    (Just testMap), Live -> setPrice (Int.toNumber testMap.swapPrice) el
+    Nothing, _ -> pure unit
 
 ensureDeps :: AppM Unit
 ensureDeps =
   case promise, fetch of
     true, true -> pure unit
-    _, _ ->
-      throwError (ReportErr { message: "Missing required dependencies"
-                            , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
-                            })
+    _, _ -> throwError (ReportErr { message: "Missing required dependencies"
+                                  , payload: "Promise: " <> (show promise) <> " Fetch: " <> (show fetch)
+                                  })
   where
     promise = hasPromise
     fetch = hasFetch
@@ -133,15 +130,15 @@ getUserId = do
 
 setUserId :: TestMap -> Effect Unit
 setUserId testMap =
-  liftEffect $ window >>= localStorage >>= setItem uidStorageKey (toString testMap.userId)
+  liftEffect $ window >>= localStorage >>= setItem uidStorageKey testMap.userId
 
 getUserBuckets :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
 getUserBuckets userBucketProvisions = do
   mBuckets <- liftAff $ fetchTestMaps userBucketProvisions
   case fromArray <$> mBuckets of
+       Left err -> throwError (ReportErr { message: "Error fetching user testMaps", payload: err })
        Right Nothing -> throwError (ReportErr { message: noBucketErr, payload: "" })
        Right (Just testMaps) -> pure testMaps
-       Left err -> throwError (ReportErr { message: "Error fetching user testMaps", payload: err })
   where
   noBucketErr = "User " <> (maybe "UnknownUid" unwrap mUserId) <> " has no testMaps!"
   mUserId = case userBucketProvisions of
@@ -166,7 +163,7 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
 applyPriceVariations :: (NonEmptyArray TestMap) -> Effect Unit
 applyPriceVariations userBuckets = do
-  priceElements <- collectElements priceElementSelector
+  priceElements <- SiteC.queryDocument priceElementSelector
   let priceHTMLElements = A.catMaybes $ map fromElement priceElements
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
@@ -181,7 +178,7 @@ applyPriceVariations userBuckets = do
 
 attachPriceObserver :: (NonEmptyArray TestMap) -> Effect Unit
 attachPriceObserver testMaps = do
-  priceElements <- collectElements priceElementSelector
+  priceElements <- SiteC.queryDocument priceElementSelector
   let cb = (\mrs _ ->
             case A.head mrs of
                 Nothing -> C.log "No mutation records"
@@ -189,9 +186,9 @@ attachPriceObserver testMaps = do
                   maybe
                     (C.log  "Node was not of type element")
                     (applyPriceVariation testMaps)
-                    (E.fromNode node))
+                    (Element.fromNode node))
   muOb <- mutationObserver cb
-  for_ priceElements \el -> observe (E.toNode el) { childList: true } muOb
+  for_ priceElements \el -> observe (Element.toNode el) { childList: true } muOb
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do
@@ -206,7 +203,7 @@ applyFacadeUrl = do
 
 unhidePrice :: Effect Unit
 unhidePrice = do
-  priceElements <- collectElements priceElementSelector
+  priceElements <- SiteC.queryDocument priceElementSelector
   -- It's unlikely but possible not all collected Elements are HTMLElements
   -- We should only add sweetspot ids to elements which are HTMLElements
   -- In case we made a mistake, we log a warning and continue with those elements which are HTMLElements

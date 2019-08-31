@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7f75e3bc79341024b889370231ab7b3036447c1f12e7b190b5af11cb186023f1
+-- hash: 223b91634b9d40d10c54f93b0891125e960077dec26418f46b689bbf3bdd6cb4
 
 name:           sweetspot
 version:        0.1.0.0
@@ -33,9 +33,6 @@ library
       SweetSpot.Database.Queries.Dashboard
       SweetSpot.Database.Queries.Injectable
       SweetSpot.Database.Schema
-      SweetSpot.Database.Sessions
-      SweetSpot.Database.Statements
-      SweetSpot.Database.Statements.Dashboard
       SweetSpot.Env
       SweetSpot.Logger
       SweetSpot.Middleware
@@ -65,10 +62,6 @@ library
     , envy
     , erf
     , fast-logger
-    , hasql
-    , hasql-migration
-    , hasql-pool
-    , hasql-transaction
     , hspec
     , hspec-wai
     , http-client
@@ -78,6 +71,7 @@ library
     , load-env
     , mtl
     , mwc-random
+    , postgresql-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -122,10 +116,6 @@ executable bridge-exe
     , envy
     , erf
     , fast-logger
-    , hasql
-    , hasql-migration
-    , hasql-pool
-    , hasql-transaction
     , hspec
     , hspec-wai
     , http-client
@@ -135,6 +125,7 @@ executable bridge-exe
     , load-env
     , mtl
     , mwc-random
+    , postgresql-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -179,10 +170,6 @@ executable sweetspot-exe
     , envy
     , erf
     , fast-logger
-    , hasql
-    , hasql-migration
-    , hasql-pool
-    , hasql-transaction
     , hspec
     , hspec-wai
     , http-client
@@ -192,6 +179,7 @@ executable sweetspot-exe
     , load-env
     , mtl
     , mwc-random
+    , postgresql-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -238,10 +226,6 @@ test-suite sweetspot-test
     , envy
     , erf
     , fast-logger
-    , hasql
-    , hasql-migration
-    , hasql-pool
-    , hasql-transaction
     , hspec
     , hspec-wai
     , http-client
@@ -251,6 +235,7 @@ test-suite sweetspot-test
     , load-env
     , mtl
     , mwc-random
+    , postgresql-simple
     , purescript-bridge
     , random
     , resource-pool

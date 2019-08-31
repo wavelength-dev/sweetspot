@@ -7,7 +7,7 @@ module SweetSpot.Data.Domain where
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (ToJSON, FromJSON(..), withObject, (.:))
 import Data.Text (Text)
-import Data.Time (LocalTime, UTCTime)
+import Data.Time (LocalTime)
 import GHC.Generics (Generic)
 import SweetSpot.Data.Common
 

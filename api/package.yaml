@@ -32,10 +32,6 @@ dependencies:
 - envy
 - erf
 - fast-logger
-- hasql
-- hasql-migration
-- hasql-pool
-- hasql-transaction
 - hspec
 - hspec-wai
 - http-client
@@ -45,6 +41,7 @@ dependencies:
 - load-env
 - mtl
 - mwc-random
+- postgresql-simple
 - purescript-bridge
 - random
 - resource-pool

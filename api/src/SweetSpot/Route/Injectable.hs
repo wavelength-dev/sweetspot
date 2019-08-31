@@ -71,7 +71,7 @@ createTestMap ub =
 getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [TestMap]
 -- Existing user
 getUserBucketsHandler mCmpId (Just uid) = do
-  pool <- asks _getNewDbPool
+  pool <- asks _getDbPool
   res <- liftIO . withResource pool $ \conn -> getUserBuckets conn (UserId uid)
   case (mCmpId, res) of
     (_, buckets@(b:bs)) -> do
@@ -92,7 +92,7 @@ getUserBucketsHandler mCmpId (Just uid) = do
           throwError badRequestErr
 -- New user
 getUserBucketsHandler (Just cmpId) Nothing = do
-  pool <- asks _getNewDbPool
+  pool <- asks _getDbPool
   isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn (CampaignId cmpId)
   if isValidCampaign
     then do
@@ -114,14 +114,14 @@ trackEventHandler val = do
         case (pageType, step) of
           (Just "checkout", Just "thank_you") -> (Checkout, val)
           _ -> (View, val)
-  pool <- asks _getNewDbPool
+  pool <- asks _getDbPool
   liftIO . withResource pool $ \conn -> insertEvent conn input
   L.info "Tracked event"
   return OkResponse {message = "Event received"}
 
 trackLogMessageHandler :: Value -> AppM OkResponse
 trackLogMessageHandler val = do
-  pool <- asks _getNewDbPool
+  pool <- asks _getDbPool
   liftIO . withResource pool $ \conn -> insertEvent conn (Log, val)
   return OkResponse {message = "Event received"}
 

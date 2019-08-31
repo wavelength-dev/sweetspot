@@ -19,6 +19,7 @@ import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
 import           Database.Beam.Postgres
 
+import qualified SweetSpot.Data.Api            as Api
 import           SweetSpot.Data.Common
 import           SweetSpot.Data.Domain   hiding ( Campaign )
 import           SweetSpot.Database.Schema
@@ -84,6 +85,29 @@ createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, Ca
     where
         toExpKey exp = exp ^. expId & ExperimentKey
         toBktKey bkt = bkt ^. bktId & BucketKey
+
+
+getDashboardExperiments :: Connection -> IO [Api.ExperimentBuckets]
+getDashboardExperiments conn = do
+        exps <- runBeamPostgres conn $ runSelectReturningList $ select $ all_
+                (db ^. experiments)
+        traverse addBuckets exps
+    where
+        toApiBucket b = Api.Bucket { Api._bBucketId     = b ^. bktId & unSerial & BucketId
+                                   , Api._bBucketType   = b ^. bktType & bucketTypeFromText
+                                   , Api._bOriginalSvid = b ^. bktCtrlSvid & Svid
+                                   , Api._bTestSvid     = b ^. bktTestSvid & Svid
+                                   , Api._bPrice        = b ^. bktPrice & Price
+                                   }
+        addBuckets exp = do
+                let id = exp ^. expId & unSerial & ExpId
+                bs <- getBucketsForExperiment conn id
+                return Api.ExperimentBuckets
+                        { Api._ebExpId       = id
+                        , Api._ebBuckets     = toApiBucket <$> bs
+                        , Api._ebProductName = exp ^. expProductName
+                        , Api._ebSku         = exp ^. expSku & Sku
+                        }
 
 -- | ---------------------------------------------------------------------------
 -- | Stats

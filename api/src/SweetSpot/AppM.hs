@@ -5,11 +5,9 @@ module SweetSpot.AppM where
 import Control.Monad.Reader (ReaderT)
 import GHC.Generics (Generic)
 import Servant (Handler)
-import SweetSpot.Database (Pool)
 import System.Log.FastLogger (LoggerSet)
 
-import qualified Database.Beam.Postgres as PG
-import qualified Data.Pool as P
+import SweetSpot.Database (Pool)
 
 data AppConfig = AppConfig
   { environment :: !String
@@ -23,7 +21,6 @@ data AppCtx = AppCtx
   { _getConfig :: !AppConfig
   , _getLogger :: !LoggerSet
   , _getDbPool :: !Pool
-  , _getNewDbPool :: !(P.Pool PG.Connection)
   }
 
 type AppM = ReaderT AppCtx Handler

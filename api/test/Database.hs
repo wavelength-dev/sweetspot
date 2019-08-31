@@ -3,29 +3,32 @@
 module Database where
 
 import qualified Data.ByteString as B
-import qualified Hasql.Connection as Connection
-import qualified Hasql.Session as Session
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.Types (Query(..))
 
+
+
+connectInfo = ConnectInfo
+  { connectHost = "localhost"
+  , connectPort = 5432
+  , connectUser = "postgres"
+  , connectPassword = ""
+  , connectDatabase = "sweetspot"
+  }
 
 migrateUp :: IO ()
 migrateUp = do
   sql <- B.readFile "test/migrations/test-data-up.sql"
-  Right connection <- Connection.acquire connectionSettings
-  Session.run (Session.sql sql) connection
+  conn <- connect connectInfo
+  execute_ conn (Query sql)
   return ()
-  where
-    connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "sweetspot"
 
 migrateDown :: IO ()
 migrateDown = do
   sql <- B.readFile "test/migrations/test-data-down.sql"
-  Right connection <- Connection.acquire connectionSettings
-  Session.run (Session.sql sql) connection
+  conn <- connect connectInfo
+  execute_ conn (Query sql)
   return ()
-  where
-    connectionSettings =
-      Connection.settings "localhost" 5432 "postgres" "" "sweetspot"
 
 reset :: IO ()
 reset = migrateDown >> migrateUp

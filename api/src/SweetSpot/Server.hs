@@ -14,7 +14,7 @@ import Network.Wai.Logger (withStdoutLogger)
 import Network.Wai.Handler.Warp (defaultSettings, setPort, runSettings, setLogger)
 import Servant
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
-import SweetSpot.Database (DbConfig(..), getDbPool, migrate, getNewDbPool)
+import SweetSpot.Database (DbConfig(..), getDbPool, migrate)
 import qualified SweetSpot.Env as Env
 import qualified SweetSpot.Logger as L
 import SweetSpot.Middleware (getMiddleware)
@@ -58,7 +58,6 @@ runServer = do
           , user = Env.dbUser envConfig
           }
   dbPool <- getDbPool dbConfig
-  newDbPool <- getNewDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
   let
     config = AppConfig
@@ -72,11 +71,10 @@ runServer = do
       { _getConfig = config
       , _getLogger = appLogger
       , _getDbPool = dbPool
-      , _getNewDbPool = newDbPool
       }
 
   L.info' appLogger "Running migrations"
-  res <- withResource newDbPool $ \conn -> migrate conn
+  res <- withResource dbPool $ \conn -> migrate conn
 
   case res of
     Nothing -> do

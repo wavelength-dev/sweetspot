@@ -23,11 +23,8 @@ import SweetSpot.AppM (AppCtx(..), AppM)
 import SweetSpot.Calc (enhanceDBStats)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Database
-  ( getExperimentBuckets
-  )
 import SweetSpot.Database.Queries.Injectable (validateCampaign)
-import SweetSpot.Database.Queries.Dashboard (createExperiment, getCampaignStats)
+import SweetSpot.Database.Queries.Dashboard (createExperiment, getCampaignStats, getDashboardExperiments)
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
@@ -55,18 +52,12 @@ getProductsHandler = do
 getExperimentsHandler :: AppM [ExperimentBuckets]
 getExperimentsHandler = do
   pool <- asks _getDbPool
-  res <- liftIO $ getExperimentBuckets pool
-  case res of
-    Right exps -> return exps
-    Left err -> do
-      L.error $ "Error getting experiments " <> err
-      throwError internalServerErr
+  liftIO . withResource pool $ \conn -> getDashboardExperiments conn
 
 createExperimentHandler :: CreateExperiment -> AppM OkResponse
 createExperimentHandler ce = do
   pool <- asks _getDbPool
-  pool' <- asks _getNewDbPool
-  isValidCampaign <- liftIO . withResource pool'
+  isValidCampaign <- liftIO . withResource pool
     $ \conn -> validateCampaign conn (ce ^. ceCampaignId)
   unless isValidCampaign (throwError badRequestErr)
   json <- fetchProduct $ ce ^. ceProductId
@@ -97,7 +88,7 @@ createExperimentHandler ce = do
             contPrice = controlVariant ^. vPrice
             testSvid = v ^. vId
 
-          liftIO . withResource pool'
+          liftIO . withResource pool
             $ \conn -> createExperiment conn (sku, contSvid, testSvid, contPrice, testPrice, cmpId, title))
 
       L.info "Created experiment(s)"
@@ -113,7 +104,7 @@ createExperimentHandler ce = do
 
 getCampaignStatsHandler :: T.Text -> AppM CampaignStats
 getCampaignStatsHandler cmpId = do
-  pool <- asks _getNewDbPool
+  pool <- asks _getDbPool
   dbStats <- liftIO . withResource pool  $ \conn -> getCampaignStats conn (CampaignId cmpId)
   L.info ("Got experiment stats for campaignId: " <> cid)
   enhanceDBStats dbStats

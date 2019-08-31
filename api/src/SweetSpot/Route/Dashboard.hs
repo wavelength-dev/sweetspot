@@ -105,11 +105,15 @@ createExperimentHandler ce = do
 getCampaignStatsHandler :: T.Text -> AppM CampaignStats
 getCampaignStatsHandler cmpId = do
   pool <- asks _getDbPool
-  dbStats <- liftIO . withResource pool  $ \conn -> getCampaignStats conn (CampaignId cmpId)
-  L.info ("Got experiment stats for campaignId: " <> cid)
-  enhanceDBStats dbStats
-  where
-    cid = T.pack $ show cmpId
+  let cid = CampaignId cmpId
+  isValid <- liftIO . withResource pool $ \conn -> validateCampaign conn cid
+  if isValid
+    then do
+      L.info ("Got experiment stats for campaignId: " <> cmpId)
+      dbStats <- liftIO . withResource pool  $ \conn -> getCampaignStats conn cid
+      enhanceDBStats dbStats
+    else
+      throwError err404
 
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler

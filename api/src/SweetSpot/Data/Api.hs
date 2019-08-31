@@ -8,6 +8,8 @@ module SweetSpot.Data.Api where
 import           Control.Lens.TH                ( makeLenses )
 import           Data.Aeson                     ( FromJSON(..)
                                                 , ToJSON(..)
+                                                , object
+                                                , (.=)
                                                 )
 import           Statistics.Types               ( Estimate(..)
                                                 , ConfInt(..)
@@ -218,8 +220,14 @@ data TestMap = TestMap
   , sku :: !Sku
   , swapId :: !Svid
   , swapPrice :: !Price
-  } deriving (Eq, Generic, Show)
+  } deriving (Eq, Generic)
 
-instance ToJSON TestMap
-
-instance FromJSON TestMap
+instance ToJSON TestMap where
+  toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price) =
+    object
+      [ "userId" .= show userId
+      , "targetId" .= show targetId
+      , "sku" .= sku
+      , "swapId" .= show swapId
+      , "swapPrice" .= price
+      ]

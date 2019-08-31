@@ -74,9 +74,10 @@ setCheckoutOption testMaps el = do
 --   </select>
 -- </div>
 setSlickCarousel :: forall m. DomAction m => Array TestMap -> Element -> m Unit
-setSlickCarousel testMaps element = findMatchingTargetMap element >>= case _ of
-        Nothing -> pure unit
-        Just testMap -> SiteC.setAttribute "value" testMap.swapId element
+setSlickCarousel testMaps element = findMatchingTargetMap element >>= case _, dryRunMode of
+        Nothing, _ -> pure unit
+        Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
+        Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
   where
   findMatchingTargetMap el = do
     mVariantId <- SiteC.getAttribute "value" el

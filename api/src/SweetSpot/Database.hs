@@ -7,7 +7,6 @@ module SweetSpot.Database
         , getDbPool
         , getNewDbPool
         , getExperimentBuckets
-        , getCampaignStats
         , DbConfig(..)
         , migrate
         )
@@ -82,12 +81,6 @@ getExperimentBuckets :: Pool -> IO (Either T.Text [ExperimentBuckets])
 getExperimentBuckets pool = do
         res <- Pool.use pool getBucketsSession
         return $ over _Left wrapQueryError res
-
-getCampaignStats :: Pool -> CampaignId -> IO (Either T.Text DBCampaignStats)
-getCampaignStats pool cmpId = do
-        res <- Pool.use pool (getCampaignStatsSession cmpId)
-        return $ over _Left wrapQueryError res
-
 
 -- | ---------------------------------------------------------------------------
 -- | Migration

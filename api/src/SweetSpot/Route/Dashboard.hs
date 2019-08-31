@@ -25,10 +25,9 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database
   ( getExperimentBuckets
-  , getCampaignStats
   )
 import SweetSpot.Database.Queries.Injectable (validateCampaign)
-import SweetSpot.Database.Queries.Dashboard (createExperiment)
+import SweetSpot.Database.Queries.Dashboard (createExperiment, getCampaignStats)
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
@@ -114,16 +113,10 @@ createExperimentHandler ce = do
 
 getCampaignStatsHandler :: T.Text -> AppM CampaignStats
 getCampaignStatsHandler cmpId = do
-  pool <- asks _getDbPool
-  res <- liftIO $ getCampaignStats pool (CampaignId cmpId)
-  case res of
-    Right dbStats ->
-      L.info ("Got experiment stats for campaignId: " <> cid)
-      >> enhanceDBStats dbStats
-    Left err -> do
-      L.error $ "Error getting experiment stats for campaignId: "
-        <> cid <> " " <> err
-      throwError err404 { errBody = "Could not find experiment" }
+  pool <- asks _getNewDbPool
+  dbStats <- liftIO . withResource pool  $ \conn -> getCampaignStats conn (CampaignId cmpId)
+  L.info ("Got experiment stats for campaignId: " <> cid)
+  enhanceDBStats dbStats
   where
     cid = T.pack $ show cmpId
 

@@ -7,7 +7,7 @@ module SweetSpot.Data.Domain where
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (ToJSON, FromJSON(..), withObject, (.:))
 import Data.Text (Text)
-import Data.Time (UTCTime)
+import Data.Time (LocalTime, UTCTime)
 import GHC.Generics (Generic)
 import SweetSpot.Data.Common
 
@@ -46,7 +46,7 @@ data CheckoutEvent = CheckoutEvent
   , _chkUserId :: !UserId
   , _chkBucketId :: !BucketId
   , _chkOrderId :: !OrderId
-  , _chkTimestamp :: !UTCTime
+  , _chkTimestamp :: !LocalTime
   , _chkLineItems :: ![LineItem]
   } deriving (Eq, Generic, Show)
 
@@ -61,8 +61,8 @@ data Campaign = Campaign
   { _cCampaignId :: !CampaignId
   , _cCampaignName :: !Text
   , _cMinProfitIncrease :: !Int
-  , _cStartDate :: !(Maybe UTCTime)
-  , _cEndDate :: !(Maybe UTCTime)
+  , _cStartDate :: !LocalTime
+  , _cEndDate :: !LocalTime
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Campaign
@@ -101,8 +101,8 @@ data DBCampaignStats = DBCampaignStats
   { _dcsCampaignId :: !CampaignId
   , _dcsCampaignName :: !Text
   , _dcsMinProfitIncrease :: !Int
-  , _dcsStartDate :: !(Maybe UTCTime)
-  , _dcsEndDate :: !(Maybe UTCTime)
+  , _dcsStartDate :: !LocalTime
+  , _dcsEndDate :: !LocalTime
   , _dcsExperiments :: ![DBExperimentStats]
   } deriving (Eq, Generic, Show)
 

@@ -15,7 +15,7 @@ import           Statistics.Types               ( Estimate(..)
                                                 , ConfInt(..)
                                                 )
 import           Data.Text                      ( Text )
-import           Data.Time                      ( UTCTime )
+import           Data.Time                      ( LocalTime )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 
@@ -172,8 +172,8 @@ data CampaignStats = CampaignStats
   { _csCampaignId :: !CampaignId
   , _csCampaignName :: !Text
   , _csMinProfitIncrease :: !Int
-  , _csStartDate :: !(Maybe UTCTime)
-  , _csEndDate :: !(Maybe UTCTime)
+  , _csStartDate :: !LocalTime
+  , _csEndDate :: !LocalTime
   , _csExperiments :: ![ExperimentStats]
   , _csProfitPerUserControl :: !(Estimate ConfInt Double)
   , _csProfitPerUserTest :: !(Estimate ConfInt Double)

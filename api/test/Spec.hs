@@ -105,7 +105,7 @@ businessLogicSpec =
         result <- runClientM (getBucket (Just "longv123") (Just 1001)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 2 ^. ubSku `shouldBe` Sku "714449933423"
+          Right bs -> bs ^?! ix 1 ^. ubSku `shouldBe` Sku "714449933423"
 
       it "should not assign existing user to new campaign when old one is still running" $ do
         result <- runClientM (getBucket (Just "somenewcampaign") (Just 1000)) clientEnv

@@ -1,9 +1,12 @@
 module SweetSpot.Data.Domain where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, caseJsonString)
+import Data.Argonaut (class DecodeJson, Json, caseJsonString, decodeJson)
+import Data.Array (find) as Array
 import Data.Either (Either(..))
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
+import Data.Traversable (traverse)
 
 -- | Id which corresponds to a SweetSpot campaign. Campaigns are time bound events within which price tests take place.
 newtype CampaignId
@@ -29,3 +32,17 @@ instance decodeJsonSku :: DecodeJson Sku where
 
 instance showSku :: Show Sku where
   show (Sku sku) = show sku
+
+type TestMap
+  = { sku :: Sku
+    , swapId :: String
+    , swapPrice :: Int
+    , targetId :: String
+    , userId :: String
+    }
+
+decodeTestMaps :: Json -> Either String (Array TestMap)
+decodeTestMaps json = decodeJson json >>= traverse decodeJson
+
+getSwapId :: Array TestMap -> String -> Maybe String
+getSwapId testMaps variantId = Array.find (_.targetId >>> (==) variantId) testMaps <#> _.swapId

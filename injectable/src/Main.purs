@@ -12,8 +12,8 @@ import Effect.Console as Console
 import Effect.Exception (Error, throw)
 import SweetSpot.Api (postLogPayload)
 import SweetSpot.AppM (AppM, ShortCircuit(..), applyFacadeUrl, applyPriceVariations, attachPriceObserver, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getUserBucketProvisions, getUserBuckets, getUserId, runAppM, setCheckout, setUserId, unhidePrice)
-import SweetSpot.DOM (awaitDomReady)
 import SweetSpot.Event (trackView)
+import SweetSpot.SiteCapabilities (awaitDomReady)
 
 app :: AppM Unit
 app = do

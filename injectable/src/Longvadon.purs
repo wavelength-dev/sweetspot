@@ -9,59 +9,58 @@ import Data.String.Regex (replace)
 import Data.String.Regex.Flags (ignoreCase)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
-import SweetSpot.Data.Api (TestMap)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
+import SweetSpot.Data.Domain (TestMap, getSwapId)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
 import Web.DOM.ParentNode (QuerySelector(..))
 
--- Longvadon needs to be better inspected as to how it decides what to add to cart
--- collectCheckoutOptions :: NonEmptyArray Number -> Effect (Array Element)
--- collectCheckoutOptions variantIds = do
---   htmlDoc <- window >>= Win.document
---   let
---     docNode = Doc.toParentNode <<< toDocument $ htmlDoc
---   checkoutOptionNodes <- querySelectorAll (QuerySelector "[data-varid]") docNode
---   nodesArray <- NL.toArray checkoutOptionNodes
---   -- We expect these elements to be coercible to Element, so we ignore nodes which can not be converted to elements, as they shouldn't exist.
---   let
---     elements = A.catMaybes (map E.fromNode nodesArray)
---   A.filterA getIsKnownVariantOption elements
---   where
---   getIsKnownVariantOption :: Element -> Effect Boolean
---   getIsKnownVariantOption el = do
---     dataVarid <- E.getAttribute "data-varid" el
---     pure $ maybe false (\id -> A.elem (readFloat id) variantIds) dataVarid
--- swapCheckoutVariantId :: NonEmptyArray UserBucket -> Array Element -> Effect Unit
--- swapCheckoutVariantId buckets elements = traverse_ swapCheckoutIds elements
---   where
---   swapCheckoutIds :: Element -> Effect Unit
---   swapCheckoutIds el = do
---     mVariantId <- getOptionVariantId buckets "data-varid" el
---     case mVariantId, dryRunMode of
---       Nothing, _ -> pure unit
---       (Just variantId), DryRun -> E.setAttribute "ssdr__data-varid" variantId el
---       (Just variantId), Live -> E.setAttribute "data-varid" variantId el
--- This is the way we collect checkout options on LibertyPrice that appeared not to work on Longvadon before.
+-- Longvadon has four known price forms
+-- collections page, every product in a collection lists a price
+-- product page, variant selectiion, price and add to cart button
+-- product page, add to add to cart slider
+-- cart page, add to cart slider
 -- Product Page Add to Cart Query Selector
 -- Matches the elements that determine the product that is added to cart on the product page.
+
 productCheckoutOptionSelector :: QuerySelector
 productCheckoutOptionSelector = QuerySelector "select.product-form__master-select option"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
 slickCarouselOptionSelector :: QuerySelector
 slickCarouselOptionSelector = QuerySelector "#color-slider input[value]"
+
+-- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
+cartSlickCarouselOptionSelector :: QuerySelector
+cartSlickCarouselOptionSelector = QuerySelector "#buy input[value]"
+
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
 setCheckout :: forall m. DomAction m => Array TestMap -> m Unit
 setCheckout testMaps = do
-  SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (SiteC.setCheckoutOption testMaps)
+  SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setSlickCarousel testMaps)
+
+-- Normal product page add-to-cart source. The id of the select is manipulated so that on form submit the right data gets sent by Shopify's add-to-cart script.
+-- <select name="id[]" class="product-form__master-select supports-no-js" data-master-select="">
+--   <option data-inplc="continue" data-sku="LVWomens1Pearl42ClaspB" data-stock="15" value="17028931551275">42/44 / M / Black</option>
+--   <option data-inplc="deny" data-sku="LVWomens1Pearl42SClaspB" data-stock="-100" value="17028931584043">42/44 / XS / Black</option>
+--   <option data-inplc="continue" data-sku="LVWomens1Pearl38ClaspB" data-stock="17" value="17028931649579">38/40 / M / Black</option>
+--   <option data-inplc="deny" data-sku="LVWomens1Pearl38SClaspB" data-stock="-100" value="16408532844587">38/40 / XS / Black</option>
+-- </select>
+setCheckoutOption :: forall m. DomAction m => Array TestMap -> Element -> m Unit
+setCheckoutOption testMaps el = do
+  mSwapId <- SiteC.getAttribute "value" el <#> (\mVariantId -> mVariantId >>= getSwapId testMaps)
+  case mSwapId, dryRunMode of
+    Nothing, _ -> pure unit
+    (Just swapId), DryRun -> SiteC.setAttribute "data-ssdr__value" swapId el
+    (Just swapId), Live -> SiteC.setAttribute "value" swapId el
 
 -- TODO: deal with price and add to cart in Slick carousel
 -- button.product__add-to-cart-button
+
 -- Slick silder has a hidden select which is used as the source from which to update the price and add to cart button
 -- We should check 'data-stock', if 'deny', leave the data-pric as it is, otherwise swap in our price.
 -- Use the value attribute in combination with our buckets or testmaps

@@ -1,15 +1,15 @@
 module SweetSpot.Api where
 
 import Prelude
+
 import Data.Argonaut as Ar
 import Data.Either (Either(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
-import SweetSpot.Data.Api (TestMap, decodeTestMaps)
 import SweetSpot.Data.Codec (encodeViewEvent)
 import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
-import SweetSpot.Data.Domain (CampaignId(..), UserId(..))
+import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), decodeTestMaps)
 import SweetSpot.Data.Event (ViewEvent)
 
 data TestMapProvisions

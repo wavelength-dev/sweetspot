@@ -164,5 +164,5 @@ bucketTypeFromText "control" = Control
 bucketTypeFromText _ = Test
 
 wrapUserId userId = UserId $ fromIntegral userId
-wrapCampaignId cmpId = CampaignId cmpId
+wrapCampaignId = CampaignId
 unwrapCampaignId (CampaignId cmpId) = cmpId

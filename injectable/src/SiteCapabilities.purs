@@ -84,9 +84,7 @@ awaitDomReady =
         pure nonCanceler
 
 removeClass :: String -> HTMLElement -> Effect Unit
-removeClass className = classList >=> remove' className
-  where
-  remove' = flip DTL.remove
+removeClass className = classList >=> (flip DTL.remove) className
 
 addClass :: String -> Element -> Effect Unit
 addClass className el = do

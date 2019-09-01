@@ -5,7 +5,12 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module SweetSpot.Database.Queries.Dashboard where
+module SweetSpot.Database.Queries.Dashboard
+        ( createExperiment
+        , getCampaignStats
+        , getDashboardExperiments
+        )
+where
 
 import           Control.Lens
 import           Data.Aeson                     ( fromJSON

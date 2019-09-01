@@ -4,7 +4,13 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module SweetSpot.Database.Queries.Injectable where
+module SweetSpot.Database.Queries.Injectable
+        ( getNewCampaignBuckets
+        , getUserBuckets
+        , validateCampaign
+        , insertEvent
+        )
+where
 
 import           Control.Lens            hiding ( (<.)
                                                 , (>.)

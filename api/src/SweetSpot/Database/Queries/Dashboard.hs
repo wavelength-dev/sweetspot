@@ -29,6 +29,9 @@ import           SweetSpot.Data.Common
 import           SweetSpot.Data.Domain   hiding ( Campaign )
 import           SweetSpot.Database.Schema
 
+
+getUserId evs = cast_ ((evs ^. evPayload) ->$ "userId") int
+
 createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
@@ -162,9 +165,7 @@ getBucketUserCount conn (BucketId id) = do
                 $ runSelectReturningOne
                 $ select
                 $ aggregate_
-                          (\bktUsr -> countOver_ distinctInGroup_
-                                                 (bktUsr ^. bktForUsr)
-                          )
+                          (countOver_ distinctInGroup_ . (^. bktForUsr))
                           (distinctUsersInBucket bktKey)
         return $ fromMaybe 0 mCount
         where bktKey = val_ $ SqlSerial id
@@ -194,14 +195,7 @@ getCheckoutEventsForBucket conn (BucketId id) = do
         events <- runBeamPostgres conn $ runSelectReturningList $ select $ do
                 evs <- all_ (db ^. events)
                 bu  <- filter_
-                        (\bu ->
-                                (bu ^. usrForBkt)
-                                        ==. cast_
-                                                    (   (evs ^. evPayload)
-                                                    ->$ "userId"
-                                                    )
-                                                    int
-                        )
+                        (\bu -> (bu ^. usrForBkt) ==. getUserId evs)
                         (all_ (db ^. bucketUsers))
 
                 guard_ (evs ^. evType ==. "checkout")
@@ -222,9 +216,7 @@ getBucketImpressionCount conn b = do
                           evs <- filter_ ((==. "view") . (^. evType))
                                   $ all_ (db ^. events)
 
-                          let     uid = cast_
-                                          ((evs ^. evPayload) ->$ "userId")
-                                          int
+                          let     uid = getUserId evs
                                   bid = val_ (b ^. bktId)
 
                           bktUs <- distinctUsersInBucket bid
@@ -246,10 +238,7 @@ getBucketStats conn b = do
                 $ select
                 $ aggregate_ (const countAll_)
                 $ pgNubBy_ _usrForBkt
-                $ filter_
-                          (\bu -> _bktForUsr bu
-                                  ==. BucketKey (val_ (SqlSerial bid))
-                          )
+                $ filter_ ((==. val_ (SqlSerial bid)) . (^. bktForUsr))
                           (all_ (db ^. bucketUsers))
 
         imprCount <- getBucketImpressionCount conn b
@@ -272,7 +261,7 @@ getBucketsForExperiment conn (ExpId eid) =
                 bs  <- all_ (db ^. buckets)
 
                 guard_ (_bktForExp ebs `references_` bs)
-                guard_ (_expForBkt ebs ==. ExperimentKey (val_ (SqlSerial eid)))
+                guard_ ((ebs ^. expForBkt) ==. val_ (SqlSerial eid))
 
                 pure bs
 

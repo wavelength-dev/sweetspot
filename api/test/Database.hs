@@ -13,7 +13,7 @@ connectInfo = ConnectInfo
   , connectPort = 5432
   , connectUser = "postgres"
   , connectPassword = ""
-  , connectDatabase = "sweetspot"
+  , connectDatabase = "sweetspot_test"
   }
 
 migrateUp :: IO ()

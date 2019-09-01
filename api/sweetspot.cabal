@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ded11ee3fa994bc74f3c1b7d89aed31620c51ec98aa1ced3f7a08efc2720bdb1
+-- hash: cbafa5a17560ff4e574182cb16b4a203259c580c44770a86015e7e70c6124cef
 
 name:           sweetspot
 version:        0.1.0.0
@@ -55,11 +55,8 @@ library
     , beam-migrate
     , beam-postgres
     , bytestring
-    , casing
     , containers
-    , data-default
     , envy
-    , erf
     , fast-logger
     , hspec
     , hspec-wai
@@ -108,11 +105,8 @@ executable bridge-exe
     , beam-migrate
     , beam-postgres
     , bytestring
-    , casing
     , containers
-    , data-default
     , envy
-    , erf
     , fast-logger
     , hspec
     , hspec-wai
@@ -161,11 +155,8 @@ executable sweetspot-exe
     , beam-migrate
     , beam-postgres
     , bytestring
-    , casing
     , containers
-    , data-default
     , envy
-    , erf
     , fast-logger
     , hspec
     , hspec-wai
@@ -216,11 +207,8 @@ test-suite sweetspot-test
     , beam-migrate
     , beam-postgres
     , bytestring
-    , casing
     , containers
-    , data-default
     , envy
-    , erf
     , fast-logger
     , hspec
     , hspec-wai

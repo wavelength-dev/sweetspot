@@ -55,7 +55,7 @@ businessLogicSpec =
       it "should not return buckets for invalid campaign ids" $ do
         result <- runClientM (getBucket (Just "unknown_campaign") Nothing) clientEnv
         case result of
-          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status400
+          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status400
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
@@ -68,21 +68,21 @@ businessLogicSpec =
       it "should not return buckets for unknown user ids" $ do
         result <- runClientM (getBucket Nothing (Just 9001)) clientEnv
         case result of
-          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
+          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
       it "should not return buckets for expired campaign" $ do
         result <- runClientM (getBucket Nothing (Just 1001)) clientEnv
         case result of
-          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
+          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
       it "should not return buckets for not yet active campaign" $ do
         result <- runClientM (getBucket Nothing (Just 1002)) clientEnv
         case result of
-          Left (FailureResponse res) -> responseStatusCode res `shouldBe` status404
+          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 

@@ -4,7 +4,7 @@ services:
   postgres-db:
     container_name: postgres-db
     restart: unless-stopped
-    image: postgres:latest
+    image: postgres:11
     ports:
       - "5432:5432"
     environment:

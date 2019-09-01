@@ -212,8 +212,9 @@ instance ToJSON OkResponse
 instance FromJSON OkResponse
 
 --
--- TestMap
---
+-- | ---------------------------------------------------------------------------
+-- | TestMap
+-- | ---------------------------------------------------------------------------
 data TestMap = TestMap
   { userId :: !UserId
   , targetId :: !Svid

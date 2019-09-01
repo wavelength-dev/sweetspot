@@ -98,6 +98,7 @@ getDashboardExperiments conn = do
                 , Api._bBucketType   = b ^. bktType & bucketTypeFromText
                 , Api._bOriginalSvid = b ^. bktCtrlSvid & Svid
                 , Api._bTestSvid     = b ^. bktTestSvid & Svid
+                , Api._bControlPrice = b ^. bktCtrlPrice & Price
                 , Api._bPrice        = b ^. bktPrice & Price
                 }
         addBuckets exp = do

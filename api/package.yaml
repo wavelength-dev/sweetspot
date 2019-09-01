@@ -27,7 +27,6 @@ dependencies:
 - bytestring
 - casing
 - containers
-- contravariant
 - data-default
 - envy
 - erf

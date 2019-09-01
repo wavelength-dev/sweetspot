@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 223b91634b9d40d10c54f93b0891125e960077dec26418f46b689bbf3bdd6cb4
+-- hash: ded11ee3fa994bc74f3c1b7d89aed31620c51ec98aa1ced3f7a08efc2720bdb1
 
 name:           sweetspot
 version:        0.1.0.0
@@ -57,7 +57,6 @@ library
     , bytestring
     , casing
     , containers
-    , contravariant
     , data-default
     , envy
     , erf
@@ -111,7 +110,6 @@ executable bridge-exe
     , bytestring
     , casing
     , containers
-    , contravariant
     , data-default
     , envy
     , erf
@@ -165,7 +163,6 @@ executable sweetspot-exe
     , bytestring
     , casing
     , containers
-    , contravariant
     , data-default
     , envy
     , erf
@@ -221,7 +218,6 @@ test-suite sweetspot-test
     , bytestring
     , casing
     , containers
-    , contravariant
     , data-default
     , envy
     , erf

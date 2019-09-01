@@ -151,7 +151,7 @@ getExperimentBuckets conn (ExpId eid) =
         where expKey = val_ (ExperimentKey (SqlSerial eid))
 
 
-distinctUsersInBucket bktKey = pgNubBy_ (^. bktForUsr) $ filter_
+distinctUsersInBucket bktKey = pgNubBy_ (^. usrForBkt) $ filter_
         ((==. bktKey) . (^. bktForUsr))
         (all_ (db ^. bucketUsers))
 
@@ -227,10 +227,7 @@ getBucketImpressionCount conn b = do
                                           int
                                   bid = val_ (b ^. bktId)
 
-                          bktUs <-
-                                  pgNubBy_ (^. usrForBkt)
-                                  $ filter_ ((==. bid) . (^. bktForUsr))
-                                  $ all_ (db ^. bucketUsers)
+                          bktUs <- distinctUsersInBucket bid
 
                           guard_ (uid ==. (bktUs ^. usrForBkt))
 

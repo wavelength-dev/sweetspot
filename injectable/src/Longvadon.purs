@@ -1,7 +1,6 @@
 module SweetSpot.Longvadon where
 
 import Prelude
-
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -33,6 +32,9 @@ slickCarouselOptionSelector = QuerySelector "#color-slider input[value]"
 cartSlickCarouselOptionSelector :: QuerySelector
 cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 
+cartSlickCarouselCheckoutButtonSelector :: QuerySelector
+cartSlickCarouselCheckoutButtonSelector = QuerySelector "button.product__add-to-cart-button"
+
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
@@ -41,6 +43,7 @@ setCheckout testMaps = do
   SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   SiteC.queryDocument cartSlickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  SiteC.queryDocument cartSlickCarouselCheckoutButtonSelector >>= traverse_ (setSlickCheckoutOption testMaps)
 
 -- Normal product page add-to-cart source. The id of the select is manipulated so that on form submit the right data gets sent by Shopify's add-to-cart script.
 -- <select name="id[]" class="product-form__master-select supports-no-js" data-master-select="">
@@ -61,17 +64,15 @@ setCheckoutOption testMaps el = do
 
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button
-setCheckoutButton :: forall m. DomAction m => TestMapsMap -> m Unit
-setCheckoutButton testMaps = do
-  elements <- SiteC.queryDocument (QuerySelector "button.product__add-to-cart-button")
-  for_ elements \el -> do
-    mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
-    let
-      mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
-    case mTestMap, dryRunMode of
-      Nothing, _ -> pure unit
-      Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.targetId el
-      Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.targetId el
+setSlickCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setSlickCheckoutOption testMaps el = do
+  mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
+  let
+    mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
+  case mTestMap, dryRunMode of
+    Nothing, _ -> pure unit
+    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.targetId el
+    Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.targetId el
 
 -- Slick silder has a hidden select which is used as the source from which to update the price and add to cart button
 -- We should check 'data-stock', if 'deny', leave the data-pric as it is, otherwise swap in our price.

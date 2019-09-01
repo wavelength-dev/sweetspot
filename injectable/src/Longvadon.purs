@@ -1,7 +1,7 @@
 module SweetSpot.Longvadon where
 
 import Prelude
-import Data.Foldable (traverse_)
+import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String (stripPrefix) as String
@@ -57,8 +57,20 @@ setCheckoutOption testMaps el = do
     Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
     Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId el
 
--- TODO: deal with price and add to cart in Slick carousel
+-- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button
+setCheckoutButton :: forall m. DomAction m => Array TestMap -> m Unit
+setCheckoutButton testMaps = do
+  elements <- SiteC.queryDocument (QuerySelector "button.product__add-to-cart-button")
+  for_ elements \el -> do
+    mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
+    let
+      mTestMap = mCurrentVariantId >>= findMatchingTestMap testMaps
+    case mTestMap, dryRunMode of
+      Nothing, _ -> pure unit
+      Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.targetId el
+      Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.targetId el
+
 -- Slick silder has a hidden select which is used as the source from which to update the price and add to cart button
 -- We should check 'data-stock', if 'deny', leave the data-pric as it is, otherwise swap in our price.
 -- Use the value attribute in combination with our buckets or testmaps
@@ -71,7 +83,6 @@ setCheckoutOption testMaps el = do
 --     <option value="16408520753195" data-pric=" Sold out" data-stock="deny">38/40 / XL / Black</option>
 --   </select>
 -- </div>
-
 -- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL.
 convertSsvCollectionUrls :: forall m. DomAction m => m Unit
 convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>= traverse_ updateLink

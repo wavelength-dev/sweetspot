@@ -12,10 +12,10 @@ import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
 import Data.String as String
 import Effect (Effect)
-import Effect.Aff (Aff, forkAff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console as C
+import Effect.Console as Console
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config (DryRunMode(..))
@@ -27,8 +27,9 @@ import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element as Element
-import Web.DOM.MutationObserver (mutationObserver, observe)
-import Web.DOM.MutationRecord (target)
+import Web.DOM.MutationObserver (MutationObserver, mutationObserver, observe)
+import Web.DOM.MutationRecord (MutationRecord)
+import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement)
@@ -111,7 +112,7 @@ setCheckout siteId testMaps = do
     LibertyPrice -> liftEffect $ LP.setCheckout testMaps
     _ -> throwError $ ReportErr { message: "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload: "" }
 
-applyPriceVariation :: NonEmptyArray TestMap -> Element -> Effect Unit
+applyPriceVariation :: Array TestMap -> Element -> Effect Unit
 applyPriceVariation testMaps el = do
   mElementSku <- SiteC.getIdFromPriceElement el
   let
@@ -162,12 +163,6 @@ getUserBuckets userBucketProvisions = do
     (OnlyUserId uid) -> Just uid
     _ -> Nothing
 
-log :: String -> AppM Unit
-log msg = do
-  -- Fork aff since we don't care about result
-  _ <- liftAff $ forkAff $ postLogPayload msg
-  liftEffect $ C.log msg
-
 getCampaignId :: Effect (Maybe CampaignId)
 getCampaignId = window >>= location >>= search >>= pure <<< parseCampaignId
 
@@ -182,26 +177,36 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
 -- It's unlikely but possible not all collected Elements are HTMLElements
 -- We should only add sweetspot ids to elements which are HTMLElements
-applyPriceVariations :: (NonEmptyArray TestMap) -> Effect Unit
+applyPriceVariations :: Array TestMap -> Effect Unit
 applyPriceVariations userBuckets = do
   priceElements <- SiteC.queryDocument priceElementSelector
   let priceHTMLElements = Array.catMaybes $ map fromElement priceElements
   traverse_ (applyPriceVariation userBuckets) priceElements
   traverse_ (SiteC.removeClass Config.hiddenPriceId) priceHTMLElements
 
-attachPriceObserver :: (NonEmptyArray TestMap) -> Effect Unit
-attachPriceObserver testMaps = do
-  priceElements <- SiteC.queryDocument priceElementSelector
+type MutationCallback = Array MutationRecord → MutationObserver → Effect Unit
+
+attachObserver :: MutationCallback -> Array TestMap -> Array Element -> Effect Unit
+attachObserver callback testMaps elements = do
   muOb <- mutationObserver callback
-  for_ priceElements \el -> observe (Element.toNode el) { childList: true } muOb
+  for_ elements \el -> observe (Element.toNode el) { childList: true } muOb
+
+attachPriceObserver :: Site -> Array TestMap -> Effect Unit
+attachPriceObserver site testMaps = do
+  elements <- SiteC.queryDocument priceElementSelector
+  attachObserver callback testMaps elements
   where
   callback mutationRecords _ = case Array.head mutationRecords of
-    Nothing -> C.log "No mutation records"
-    Just mr -> target mr >>= \node ->
-            maybe
-              (C.log "Node was not of type element")
-              (applyPriceVariation testMaps)
-              (Element.fromNode node)
+    Nothing -> launchAff_ $ postLogPayload "Mutation observer got called without mutation records"
+    Just mr ->
+      MutationRecord.target mr >>= \node ->
+        case Element.fromNode node of
+          Nothing -> launchAff_ $ postLogPayload "Observed node was not of type Element"
+          Just element -> case site of
+            Longvadon -> do
+              applyPriceVariation testMaps element
+              Lv.setCheckoutButton testMaps
+            _ -> pure unit
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do

@@ -27,8 +27,8 @@ app = do
   testMaps <- getUserBuckets ubp
   liftEffect $ setUserId (NonEmptyArray.head testMaps)
   setCheckout siteId (NonEmptyArray.toArray testMaps)
-  liftEffect $ applyPriceVariations testMaps
-  liftEffect $ attachPriceObserver testMaps
+  liftEffect $ applyPriceVariations (NonEmptyArray.toArray testMaps)
+  liftEffect $ attachPriceObserver siteId (NonEmptyArray.toArray testMaps)
   liftEffect $ fixCartItemUrls siteId
   liftEffect $ launchAff_ trackView
 

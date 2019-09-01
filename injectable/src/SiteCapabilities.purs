@@ -1,20 +1,23 @@
 module SweetSpot.SiteCapabilities where
 
 import Prelude
-import Data.Array (catMaybes, find, last) as Array
+
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.String as String
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
+import Effect.Console (log) as Console
 import SweetSpot.Data.Config (idClass)
-import SweetSpot.Data.Domain (Sku(..))
+import SweetSpot.Data.Domain (Sku(..), TestMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
 import Web.DOM.Document as Doc
 import Web.DOM.Element as Element
+import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.Node (setTextContent, textContent)
 import Web.DOM.NodeList (toArray) as NodeList
 import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)

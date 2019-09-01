@@ -1,7 +1,7 @@
 module SweetSpot.Longvadon where
 
 import Prelude
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
@@ -12,7 +12,9 @@ import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
+import Web.DOM.Element (toParentNode) as Element
 import Web.DOM.ParentNode (QuerySelector(..))
+import Web.DOM.ParentNode (querySelector) as ParentNode
 
 -- Longvadon has four known price forms
 -- collections page, every product in a collection lists a price
@@ -99,3 +101,10 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
       Nothing, _ -> pure unit
       Just productUrl, Live -> SiteC.setAttribute "href" productUrl el
       Just productUrl, DryRun -> SiteC.setAttribute "data-ssdr__href" productUrl el
+
+-- The traversal here is a bit risky. We watch for price elements being touched, this is taken as our que that the cart page slick carousel add to cart button has also been updated with a variant that possibly has a test price variant associated. We therefore find the button using an assumption heavy DOM traversal and reset the button to its correct state.
+resetSlickAddToCartButton :: TestMapsMap -> Element -> Effect Unit
+resetSlickAddToCartButton testMapsMap mutatedPriceElement = do
+    let parentNode = Element.toParentNode mutatedPriceElement
+    mButton <- ParentNode.querySelector (QuerySelector "button.product__add-to-cart-button") parentNode
+    maybe (pure unit) (setSlickCheckoutOption testMapsMap) mButton

@@ -1,7 +1,6 @@
 module SweetSpot.AppM where
 
 import Prelude
-
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
@@ -34,7 +33,7 @@ import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement)
 import Web.HTML.Location (hostname, search)
 import Web.HTML.Window (localStorage, location)
-import Web.HTML.Window (location) as Win
+import Web.HTML.Window as Win
 import Web.Storage.Storage (getItem, setItem)
 
 data ShortCircuit
@@ -179,11 +178,13 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 applyPriceVariations :: TestMapsMap -> Effect Unit
 applyPriceVariations userBuckets = do
   priceElements <- SiteC.queryDocument priceElementSelector
-  let priceHTMLElements = Array.catMaybes $ map fromElement priceElements
+  let
+    priceHTMLElements = Array.catMaybes $ map fromElement priceElements
   traverse_ (applyPriceVariation userBuckets) priceElements
   traverse_ (SiteC.removeClass Config.hiddenPriceId) priceHTMLElements
 
-type MutationCallback = Array MutationRecord → MutationObserver → Effect Unit
+type MutationCallback
+  = Array MutationRecord → MutationObserver → Effect Unit
 
 attachObserver :: MutationCallback -> TestMapsMap -> Array Element -> Effect Unit
 attachObserver callback testMaps elements = do
@@ -193,19 +194,19 @@ attachObserver callback testMaps elements = do
 attachPriceObserver :: Site -> TestMapsMap -> Effect Unit
 attachPriceObserver site testMaps = do
   elements <- SiteC.queryDocument priceElementSelector
-  attachObserver callback testMaps elements
+  attachObserver resetTestForNode testMaps elements
   where
-  callback mutationRecords _ = case Array.head mutationRecords of
-    Nothing -> launchAff_ $ postLogPayload "Mutation observer got called without mutation records"
+  resetTestForNode mutationRecords _ = case Array.head mutationRecords of
+    Nothing -> launchAff_ $ postLogPayload "WARN: Mutation observer got called without mutation records"
     Just mr ->
-      MutationRecord.target mr >>= \node ->
-        case Element.fromNode node of
-          Nothing -> launchAff_ $ postLogPayload "Observed node was not of type Element"
-          Just element -> case site of
-            Longvadon -> do
+      MutationRecord.target mr
+        >>= \node -> case Element.fromNode node of
+            Nothing -> launchAff_ $ postLogPayload "WARN: Observed Node was not of type Element"
+            Just element -> do
               applyPriceVariation testMaps element
-              Lv.setCheckoutButton testMaps
-            _ -> pure unit
+              case site of
+                Longvadon -> Lv.resetSlickAddToCartButton testMaps element
+                _ -> pure unit
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do

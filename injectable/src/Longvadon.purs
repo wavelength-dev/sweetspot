@@ -73,8 +73,8 @@ setSlickCheckoutOption testMaps el = do
     mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
-    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.targetId el
-    Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.targetId el
+    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.swapId el
+    Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.swapId el
 
 -- Slick silder has a hidden select which is used as the source from which to update the price and add to cart button
 -- We should check 'data-stock', if 'deny', leave the data-pric as it is, otherwise swap in our price.

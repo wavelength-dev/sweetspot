@@ -14,7 +14,6 @@ RUN stack build --only-dependencies --verbosity warn
 
 COPY ./api /opt/build
 RUN stack build --verbosity warn
-# RUN stack build --verbosity warn
 
 # Build the PureScript injectables
 FROM node:12 AS build-dist

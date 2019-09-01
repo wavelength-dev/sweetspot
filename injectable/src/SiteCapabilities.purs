@@ -1,30 +1,28 @@
 module SweetSpot.SiteCapabilities where
 
 import Prelude
-
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.String as String
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
-import Effect.Console (log) as Console
 import SweetSpot.Data.Config (idClass)
-import SweetSpot.Data.Domain (Sku(..), TestMap)
+import SweetSpot.Data.Domain (Sku(..))
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
 import Web.DOM.Document as Doc
 import Web.DOM.Element as Element
-import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.Node (setTextContent, textContent)
 import Web.DOM.NodeList (toArray) as NodeList
-import Web.DOM.ParentNode (QuerySelector(..), querySelector, querySelectorAll)
+import Web.DOM.ParentNode (QuerySelector(..))
+import Web.DOM.ParentNode (querySelector, querySelectorAll) as ParentNode
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (HTMLElement, window)
 import Web.HTML.Event.EventTypes as ET
-import Web.HTML.HTMLDocument (readyState, toDocument)
+import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.HTMLElement (classList)
 import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
@@ -60,8 +58,8 @@ data Site
 getSiteId :: Effect (Maybe Site)
 getSiteId = do
   hostUrl <- window >>= Window.location >>= hostname
-  doc <- window >>= Window.document >>= toDocument >>> Doc.toParentNode >>> pure
-  mEl <- querySelector (QuerySelector "#sweetspot__site-id") doc
+  doc <- window >>= Window.document >>= HTMLDocument.toDocument >>> Doc.toParentNode >>> pure
+  mEl <- ParentNode.querySelector (QuerySelector "#sweetspot__site-id") doc
   let
     textToSite text = case text of
       "longvadon" -> Just Longvadon
@@ -75,7 +73,7 @@ getSiteId = do
 awaitDomReady :: Aff Unit
 awaitDomReady =
   makeAff \callback -> do
-    rs <- readyState =<< Window.document =<< window
+    rs <- HTMLDocument.readyState =<< Window.document =<< window
     case rs of
       Loading -> do
         et <- Window.toEventTarget <$> window
@@ -126,10 +124,10 @@ queryDocument_ :: QuerySelector -> Effect (Array Element)
 queryDocument_ querySelector =
   window
     >>= Window.document
-    >>= toDocument
+    >>= HTMLDocument.toDocument
     >>> Document.toParentNode
     >>> pure
-    >>= querySelectorAll querySelector
+    >>= ParentNode.querySelectorAll querySelector
     >>= nodesToElements
 
 nodesToElements :: NodeList -> Effect (Array Element)

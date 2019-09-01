@@ -15,12 +15,11 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console as Console
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config as Config
-import SweetSpot.Data.Domain (CampaignId(..), UserId(..), TestMap)
+import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
@@ -105,14 +104,14 @@ parseCampaignId queryString =
   in
     match >>= flip Array.index 1 <#> CampaignId
 
-setCheckout :: Site -> Array TestMap -> AppM Unit
+setCheckout :: Site -> TestMapsMap -> AppM Unit
 setCheckout siteId testMaps = do
   case siteId of
     Longvadon -> liftEffect $ Lv.setCheckout testMaps
     LibertyPrice -> liftEffect $ LP.setCheckout testMaps
     _ -> throwError $ ReportErr { message: "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload: "" }
 
-applyPriceVariation :: Array TestMap -> Element -> Effect Unit
+applyPriceVariation :: TestMapsMap -> Element -> Effect Unit
 applyPriceVariation testMaps el = do
   mElementSku <- SiteC.getIdFromPriceElement el
   let
@@ -148,8 +147,8 @@ getUserId = do
 setUserId :: TestMap -> Effect Unit
 setUserId testMap = liftEffect $ window >>= localStorage >>= setItem Config.uidStorageKey testMap.userId
 
-getUserBuckets :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
-getUserBuckets userBucketProvisions = do
+getTestMaps :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
+getTestMaps userBucketProvisions = do
   mBuckets <- liftAff $ fetchTestMaps userBucketProvisions
   case fromArray <$> mBuckets of
     Left err -> throwError (ReportErr { message: "Error fetching user testMaps", payload: err })
@@ -177,7 +176,7 @@ getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
 -- It's unlikely but possible not all collected Elements are HTMLElements
 -- We should only add sweetspot ids to elements which are HTMLElements
-applyPriceVariations :: Array TestMap -> Effect Unit
+applyPriceVariations :: TestMapsMap -> Effect Unit
 applyPriceVariations userBuckets = do
   priceElements <- SiteC.queryDocument priceElementSelector
   let priceHTMLElements = Array.catMaybes $ map fromElement priceElements
@@ -186,12 +185,12 @@ applyPriceVariations userBuckets = do
 
 type MutationCallback = Array MutationRecord → MutationObserver → Effect Unit
 
-attachObserver :: MutationCallback -> Array TestMap -> Array Element -> Effect Unit
+attachObserver :: MutationCallback -> TestMapsMap -> Array Element -> Effect Unit
 attachObserver callback testMaps elements = do
   muOb <- mutationObserver callback
   for_ elements \el -> observe (Element.toNode el) { childList: true } muOb
 
-attachPriceObserver :: Site -> Array TestMap -> Effect Unit
+attachPriceObserver :: Site -> TestMapsMap -> Effect Unit
 attachPriceObserver site testMaps = do
   elements <- SiteC.queryDocument priceElementSelector
   attachObserver callback testMaps elements

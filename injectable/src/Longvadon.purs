@@ -1,13 +1,15 @@
 module SweetSpot.Longvadon where
 
 import Prelude
+
 import Data.Foldable (for_, traverse_)
+import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String (stripPrefix) as String
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMap, findMatchingTestMap)
+import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -34,7 +36,7 @@ cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
-setCheckout :: forall m. DomAction m => Array TestMap -> m Unit
+setCheckout :: forall m. DomAction m => TestMapsMap -> m Unit
 setCheckout testMaps = do
   SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
@@ -47,11 +49,11 @@ setCheckout testMaps = do
 --   <option data-inplc="continue" data-sku="LVWomens1Pearl38ClaspB" data-stock="17" value="17028931649579">38/40 / M / Black</option>
 --   <option data-inplc="deny" data-sku="LVWomens1Pearl38SClaspB" data-stock="-100" value="16408532844587">38/40 / XS / Black</option>
 -- </select>
-setCheckoutOption :: forall m. DomAction m => Array TestMap -> Element -> m Unit
+setCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
   let
-    mTestMap = mVariantId >>= findMatchingTestMap testMaps
+    mTestMap = mVariantId >>= flip Map.lookup testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
     Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
@@ -59,13 +61,13 @@ setCheckoutOption testMaps el = do
 
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button
-setCheckoutButton :: forall m. DomAction m => Array TestMap -> m Unit
+setCheckoutButton :: forall m. DomAction m => TestMapsMap -> m Unit
 setCheckoutButton testMaps = do
   elements <- SiteC.queryDocument (QuerySelector "button.product__add-to-cart-button")
   for_ elements \el -> do
     mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
     let
-      mTestMap = mCurrentVariantId >>= findMatchingTestMap testMaps
+      mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
     case mTestMap, dryRunMode of
       Nothing, _ -> pure unit
       Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.targetId el

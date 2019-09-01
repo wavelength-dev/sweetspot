@@ -1,9 +1,11 @@
 module SweetSpot.Data.Domain where
 
 import Prelude
+
 import Data.Argonaut (class DecodeJson, Json, caseJsonString, decodeJson)
 import Data.Array (find) as Array
 import Data.Either (Either(..))
+import Data.Map (Map)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
@@ -49,3 +51,5 @@ type TargetId
 
 findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
 findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps
+
+type TestMapsMap = Map String TestMap

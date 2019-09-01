@@ -9,7 +9,9 @@ import           Control.Lens.TH                ( makeLenses )
 import           Data.Aeson                     ( FromJSON(..)
                                                 , ToJSON(..)
                                                 , object
+                                                , withObject
                                                 , (.=)
+                                                , (.:)
                                                 )
 import           Statistics.Types               ( Estimate(..)
                                                 , ConfInt(..)
@@ -232,3 +234,19 @@ instance ToJSON TestMap where
       , "swapId" .= show swapId
       , "swapPrice" .= price
       ]
+
+instance FromJSON TestMap where
+  parseJSON = withObject "TestMap" $ \v -> do
+    userId <- v .: "userId"
+    targetId <- v .: "targetId"
+    sku <- v .: "sku"
+    swapId <- v .: "swapId"
+    swapPrice <- v .: "swapPrice"
+
+    return TestMap
+      { userId = UserId (read userId :: Int)
+      , targetId = Svid (read targetId :: Int)
+      , sku = Sku sku
+      , swapId = Svid (read swapId :: Int)
+      , swapPrice = Price swapPrice
+      }

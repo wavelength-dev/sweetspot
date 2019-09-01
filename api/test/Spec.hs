@@ -6,8 +6,8 @@ import Control.Lens hiding (Context)
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.Foldable (traverse_)
-import Data.List (nub)
-import Data.Maybe (fromJust)
+import Data.List (nub, find)
+import Data.Maybe (fromJust, isJust)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Types
 import Servant
@@ -44,22 +44,13 @@ businessLogicSpec =
         result <- runClientM (getBucket Nothing (Just 1000)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` UserId 1000
+          Right tms -> (userId . head $ tms)  `shouldBe` UserId 1000
 
       it "should create a new user when given a valid campaign id" $ do
         result <- runClientM (getBucket (Just "longv123") Nothing) clientEnv
         case result of
           Left err -> error (show err)
           Right _ -> return ()
-
-      it "should assign a new user to either test or control for all buckets" $ do
-        result <- runClientM (getBucket (Just "longv123") Nothing) clientEnv
-        case result of
-          Left err -> error (show err)
-          Right buckets -> length uniqTypes `shouldBe` 1
-            where
-              bucketTypes = buckets ^.. traverse . ubBucketType
-              uniqTypes = nub bucketTypes
 
       it "should not return buckets for invalid campaign ids" $ do
         result <- runClientM (getBucket (Just "unknown_campaign") Nothing) clientEnv
@@ -99,19 +90,21 @@ businessLogicSpec =
         result <- runClientM (getBucket (Just "longv123") (Just 1000)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 0 ^. ubUserId `shouldBe` UserId 1000
+          Right tms -> uniqUserIds `shouldBe` 1
+            where
+              uniqUserIds = length . nub $ filter (== UserId 1000) $ fmap userId tms
 
       it "should assign existing user to new campaign when old campaigns have expired" $ do
         result <- runClientM (getBucket (Just "longv123") (Just 1001)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 1 ^. ubSku `shouldBe` Sku "714449933423"
+          Right tms -> (isJust $ find ((== Sku "714449933423") . sku) tms) `shouldBe` True
 
       it "should not assign existing user to new campaign when old one is still running" $ do
         result <- runClientM (getBucket (Just "somenewcampaign") (Just 1000)) clientEnv
         case result of
           Left err -> error (show err)
-          Right bs -> bs ^?! ix 0 ^. ubSku `shouldBe` Sku "714449933422"
+          Right tms -> (sku . head $ tms) `shouldBe` Sku "714449933422"
 
     describe "POST /api/event" $ do
       evStr <- runIO $ BS.readFile "./test/data/events.json"

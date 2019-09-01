@@ -12,6 +12,7 @@
     , "milkis"
     , "newtype"
     , "numbers"
+    , "ordered-collections"
     , "prelude"
     , "psci-support"
     , "record"

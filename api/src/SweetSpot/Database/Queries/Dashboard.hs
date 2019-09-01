@@ -93,12 +93,13 @@ getDashboardExperiments conn = do
                 (db ^. experiments)
         traverse addBuckets exps
     where
-        toApiBucket b = Api.Bucket { Api._bBucketId     = b ^. bktId & unSerial & BucketId
-                                   , Api._bBucketType   = b ^. bktType & bucketTypeFromText
-                                   , Api._bOriginalSvid = b ^. bktCtrlSvid & Svid
-                                   , Api._bTestSvid     = b ^. bktTestSvid & Svid
-                                   , Api._bPrice        = b ^. bktPrice & Price
-                                   }
+        toApiBucket b = Api.Bucket
+                { Api._bBucketId     = b ^. bktId & unSerial & BucketId
+                , Api._bBucketType   = b ^. bktType & bucketTypeFromText
+                , Api._bOriginalSvid = b ^. bktCtrlSvid & Svid
+                , Api._bTestSvid     = b ^. bktTestSvid & Svid
+                , Api._bPrice        = b ^. bktPrice & Price
+                }
         addBuckets exp = do
                 let id = exp ^. expId & unSerial & ExpId
                 bs <- getBucketsForExperiment conn id
@@ -204,6 +205,34 @@ getCheckoutEventsForBucket conn (BucketId id) = do
         return $ fmap toCheckoutEvent events
         where bktKey = val_ $ SqlSerial id
 
+getBucketImpressionCount :: Connection -> Bucket -> IO Int
+getBucketImpressionCount conn b = do
+        [count] <-
+                runBeamPostgres conn
+                $ runSelectReturningList
+                $ select
+                $ aggregate_ (const countAll_)
+                $ do
+                          evs <- filter_ ((==. "view") . (^. evType))
+                                  $ all_ (db ^. events)
+
+                          let     uid = cast_
+                                          ((evs ^. evPayload) ->$ "userId")
+                                          int
+                                  bid = val_ (b ^. bktId)
+
+                          bktUs <-
+                                  pgNubBy_ (^. usrForBkt)
+                                  $ filter_ ((==. bid) . (^. bktForUsr))
+                                  $ all_ (db ^. bucketUsers)
+
+                          guard_ (uid ==. (bktUs ^. usrForBkt))
+
+                          pure evs
+
+        return count
+
+
 getBucketStats :: Connection -> Bucket -> IO DBBucketStats
 getBucketStats conn b = do
         let bid = b ^. bktId & unSerial
@@ -220,13 +249,15 @@ getBucketStats conn b = do
                           )
                           (all_ (db ^. bucketUsers))
 
+        imprCount <- getBucketImpressionCount conn b
+
         return $ DBBucketStats
                 { _dbsBucketId        = BucketId bid
                 , _dbsBucketType      = bucketTypeFromText $ b ^. bktType
                 , _dbsOriginalSvid    = Svid $ b ^. bktCtrlSvid
                 , _dbsTestSvid        = Svid $ b ^. bktTestSvid
                 , _dbsUserCount       = usrCount
-                , _dbsImpressionCount = 0
+                , _dbsImpressionCount = imprCount
                 , _dbsCheckoutEvents  = chkEvs
                 , _dbsPrice           = Price $ b ^. bktPrice
                 }

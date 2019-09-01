@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "run from root!"
+docker build --target build -t sweetspot-build .
+docker tag sweetspot-build 586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot-build
+docker push 586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot-build

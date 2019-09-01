@@ -1,2 +1,2 @@
 #!/bin/sh
-DB_NAME=sweetspot_test stack test $1
+DB_NAME=sweetspot_test stack test --fast "$@"

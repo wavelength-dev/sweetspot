@@ -8,9 +8,6 @@ import           System.Envy                    ( FromEnv
                                                 , envMaybe
                                                 , (.!=)
                                                 )
-import           System.Environment             ( getArgs
-                                                , getEnvironment
-                                                )
 
 data EnvConfig = EnvConfig
   { dbHost :: String
@@ -26,7 +23,7 @@ data EnvConfig = EnvConfig
   } deriving (Show)
 
 instance FromEnv EnvConfig where
-  fromEnv =
+  fromEnv _ =
     EnvConfig
       <$> env "DB_HOST"
       <*> env "DB_NAME"

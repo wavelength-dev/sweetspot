@@ -1,7 +1,16 @@
 module SweetSpot.Env where
 
-import LoadEnv (loadEnv)
-import System.Envy (FromEnv, decodeEnv, env, fromEnv, envMaybe, (.!=))
+import           LoadEnv                        ( loadEnv )
+import           System.Envy                    ( FromEnv
+                                                , decodeEnv
+                                                , env
+                                                , fromEnv
+                                                , envMaybe
+                                                , (.!=)
+                                                )
+import           System.Environment             ( getArgs
+                                                , getEnvironment
+                                                )
 
 data EnvConfig = EnvConfig
   { dbHost :: String
@@ -18,16 +27,18 @@ data EnvConfig = EnvConfig
 
 instance FromEnv EnvConfig where
   fromEnv =
-    EnvConfig <$> env "DB_HOST" <*>
-    env "DB_NAME" <*>
-    envMaybe "DB_PASSWORD" .!= "" <*>
-    env "DB_PORT" <*>
-    env "DB_USER" <*>
-    env "ENVIRONMENT" <*>
-    env "SHOPIFY_API_ROOT" <*>
-    env "SHOPIFY_CLIENT_ID" <*>
-    env "SHOPIFY_CLIENT_SECRET" <*>
-    env "SHOPIFY_OAUTH_ACCESS_TOKEN"
+    EnvConfig
+      <$> env "DB_HOST"
+      <*> env "DB_NAME"
+      <*> envMaybe "DB_PASSWORD"
+      .!= ""
+      <*> env "DB_PORT"
+      <*> env "DB_USER"
+      <*> env "ENVIRONMENT"
+      <*> env "SHOPIFY_API_ROOT"
+      <*> env "SHOPIFY_CLIENT_ID"
+      <*> env "SHOPIFY_CLIENT_SECRET"
+      <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

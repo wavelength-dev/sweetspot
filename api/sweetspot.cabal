@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cbafa5a17560ff4e574182cb16b4a203259c580c44770a86015e7e70c6124cef
+-- hash: a3f19cbee78932ba2f4a0345feeeee5b1f5b15ae0a73f3cdd297b235323a163d
 
 name:           sweetspot
 version:        0.1.0.0
@@ -64,7 +64,7 @@ library
     , http-types
     , lens
     , lens-aeson
-    , load-env
+    , load-env >=0.2.1.0
     , mtl
     , mwc-random
     , postgresql-simple
@@ -114,7 +114,7 @@ executable bridge-exe
     , http-types
     , lens
     , lens-aeson
-    , load-env
+    , load-env >=0.2.1.0
     , mtl
     , mwc-random
     , postgresql-simple
@@ -164,7 +164,7 @@ executable sweetspot-exe
     , http-types
     , lens
     , lens-aeson
-    , load-env
+    , load-env >=0.2.1.0
     , mtl
     , mwc-random
     , postgresql-simple
@@ -216,7 +216,7 @@ test-suite sweetspot-test
     , http-types
     , lens
     , lens-aeson
-    , load-env
+    , load-env >=0.2.1.0
     , mtl
     , mwc-random
     , postgresql-simple

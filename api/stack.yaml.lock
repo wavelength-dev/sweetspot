@@ -19,13 +19,6 @@ packages:
     git: https://github.com/eskimor/purescript-bridge.git
     commit: cb00f5e746a05d06eb32001e4579af64c29d567b
 - completed:
-    hackage: hasql-migration-0.2.0@sha256:dd687d2dbf301801ab0616475c8ced3bb13e20f131c31238d8b17263c1e44749,2853
-    pantry-tree:
-      size: 589
-      sha256: c2cc4132a687cb24771836cc3d61a765169f6998b78d6c45c01f45b3b967ff52
-  original:
-    hackage: hasql-migration-0.2.0@sha256:dd687d2dbf301801ab0616475c8ced3bb13e20f131c31238d8b17263c1e44749
-- completed:
     hackage: beam-postgres-0.4.0.0@sha256:a01443ce503cfc58cbe28f476252672282347579444b65f2925a12ba6a2c13f5,4173
     pantry-tree:
       size: 1519
@@ -39,6 +32,13 @@ packages:
       sha256: 7ab124f3ac3c74bf5b342d2ef73c9ef3c13ddd7b0804aea340423ceb1baf72a1
   original:
     hackage: beam-migrate-0.4.0.1@sha256:c53948a84972f67e97ba9c56f3dda9abfed556ba2f1672dc3070eb2512791efb
+- completed:
+    hackage: load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
+    pantry-tree:
+      size: 601
+      sha256: 12947042909a99d32d10cb72865db781867f34c0bd28c430091c2b80db1f1109
+  original:
+    hackage: load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
 snapshots:
 - completed:
     size: 498402

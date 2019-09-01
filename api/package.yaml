@@ -34,7 +34,7 @@ dependencies:
 - http-types
 - lens
 - lens-aeson
-- load-env
+- load-env >= 0.2.1.0
 - mtl
 - mwc-random
 - postgresql-simple

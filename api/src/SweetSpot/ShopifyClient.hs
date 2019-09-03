@@ -1,14 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module SweetSpot.ShopifyClient where
+
+import Prelude hiding (id, product)
 
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Aeson
 import Data.Aeson.Lens (key, values, _String)
-import Data.Aeson.Types (Parser, parse)
+import Data.Aeson.Types (parse)
 import qualified Data.ByteString.UTF8 as BLU
 import Data.Either (fromRight)
 import Data.Text (Text, pack)
@@ -16,45 +19,55 @@ import Data.Text.Read (rational)
 import Debug.Trace (trace)
 import GHC.Generics (Generic)
 import Network.Wreq
-import Prelude hiding (product)
 import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
 import SweetSpot.Data.Api (Image(..), Product(..), Variant(..))
-import SweetSpot.Data.Common (Pid(..), Price(..))
+import SweetSpot.Data.Common
 
-parseImage :: Value -> Parser Image
-parseImage =
-  withObject "image" $ \o -> do
-    src <- o .: "src"
-    return $ Image {_iSrc = src}
+data StoreVariant = StoreVariant
+  { id :: !Int
+  , product_id :: !Int
+  , title :: !Text
+  , sku :: !Text
+  , price :: !Text
+  } deriving (Generic)
 
-parseVariant :: Value -> Parser Variant
-parseVariant =
-  withObject "variant" $ \o -> do
-    id <- o .: "id"
-    pid <- o .: "product_id"
-    title <- o .: "title"
-    sku <- o .: "sku"
-    price <- o .: "price"
-    return Variant
-      { _vId = id
-      , _vProductId = pid
-      , _vTitle = title
-      , _vSku = sku
-      , _vPrice = Price $ fst $ fromRight (0, "") (rational price)}
+instance FromJSON StoreVariant
 
-parseProduct :: Value -> Result Product
-parseProduct = parse parser
+data StoreImage = StoreImage
+ { src :: !Text
+ } deriving (Generic)
+
+instance FromJSON StoreImage
+
+data StoreProduct = StoreProduct
+ { id :: !Int
+ , title :: !Text
+ , image :: !StoreImage
+ , variants :: ![StoreVariant]
+ } deriving (Generic)
+
+instance FromJSON StoreProduct
+
+toVariant :: StoreVariant -> Variant
+toVariant v =
+  Variant
+    { _vId = Svid . pack . show $ id (v :: StoreVariant)
+    , _vProductId = Pid . pack . show . product_id $ v
+    , _vTitle = title (v :: StoreVariant)
+    , _vSku = Sku . sku $ v
+    , _vPrice = Price $ fst $ fromRight (0, "") (rational $ price v)
+    }
+
+toProduct :: StoreProduct -> Product
+toProduct p =
+  Product
+    { _pId = Pid . pack . show $ id (p :: StoreProduct)
+    , _pTitle = title (p :: StoreProduct)
+    , _pVariants = toVariant <$> variants p
+    , _pImage = toImage . image $ p
+    }
   where
-    parser =
-      withObject "product" $ \o -> do
-        id <- o .: "id"
-        title <- o .: "title"
-        image <- o .: "image" >>= parseImage
-        arr <- o .: "variants"
-        variants <- mapM parseVariant arr
-        return
-          Product
-            {_pId = id, _pTitle = title, _pImage = image, _pVariants = variants}
+    toImage i = Image { _iSrc = src i }
 
 getOpts :: AppM Network.Wreq.Options
 getOpts = do
@@ -71,10 +84,10 @@ fetchProducts = do
   json <- asValue r
   let result =
         (json ^?! responseBody . key "products") ^.. values
-          & traverse parseProduct
+          & traverse (parse parseJSON)
   return $
     case result of
-      Success ps -> Just ps
+      Success ps -> Just (fmap toProduct ps)
       Error e -> trace e Nothing
 
 fetchProduct :: Pid -> AppM Value
@@ -91,7 +104,7 @@ createProduct v = do
   opts <- getOpts
   r <- liftIO $ postWith opts (apiRoot <> "/products.json") v
   json <- asValue r
-  return $ json ^?! responseBody . key "product" & parseProduct
+  return $ json ^?! responseBody . key "product" & parse parseJSON & fmap toProduct
 
 data ExchangeBody = ExchangeBody
   { client_id :: Text

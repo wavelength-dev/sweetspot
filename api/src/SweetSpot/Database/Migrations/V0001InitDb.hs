@@ -97,8 +97,8 @@ data BucketT f
   = Bucket
   { _bktId :: Columnar f (SqlSerial Int)
   , _bktType :: Columnar f Text
-  , _bktCtrlSvid :: Columnar f Int
-  , _bktTestSvid :: Columnar f Int
+  , _bktCtrlSvid :: Columnar f Text
+  , _bktTestSvid :: Columnar f Text
   , _bktPrice :: Columnar f Scientific
   , _bktCtrlPrice :: Columnar f Scientific
   } deriving (Generic, Beamable)
@@ -288,10 +288,10 @@ migration () =
                                                             notNull
                                     , _bktCtrlSvid  = field
                                                               "original_svid"
-                                                              bigint
+                                                              text
                                                               notNull
                                     , _bktTestSvid  = field "test_svid"
-                                                            bigint
+                                                            text
                                                             notNull
                                     , _bktPrice     =
                                             field

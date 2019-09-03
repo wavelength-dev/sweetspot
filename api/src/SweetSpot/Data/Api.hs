@@ -213,7 +213,6 @@ instance ToJSON OkResponse
 
 instance FromJSON OkResponse
 
---
 -- | ---------------------------------------------------------------------------
 -- | TestMap
 -- | ---------------------------------------------------------------------------
@@ -228,10 +227,10 @@ data TestMap = TestMap
 instance ToJSON TestMap where
   toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price) =
     object
-      [ "userId" .= show userId
-      , "targetId" .= show targetId
+      [ "userId" .= userId
+      , "targetId" .= targetId
       , "sku" .= sku
-      , "swapId" .= show swapId
+      , "swapId" .= swapId
       , "swapPrice" .= price
       ]
 
@@ -244,9 +243,9 @@ instance FromJSON TestMap where
     swapPrice <- v .: "swapPrice"
 
     return TestMap
-      { userId = UserId (read userId :: Int)
-      , targetId = Svid (read targetId :: Int)
+      { userId = UserId userId
+      , targetId = Svid targetId
       , sku = Sku sku
-      , swapId = Svid (read swapId :: Int)
+      , swapId = Svid swapId
       , swapPrice = Price swapPrice
       }

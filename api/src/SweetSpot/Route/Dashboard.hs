@@ -11,8 +11,9 @@ import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Control.Monad (unless)
-import Data.Aeson (Result(..))
+import Data.Aeson (Result(..), parseJSON)
 import Data.Aeson.Lens (_String, key, values)
+import Data.Aeson.Types (parse)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
 import Data.Pool (withResource)
@@ -27,7 +28,7 @@ import SweetSpot.Database.Queries.Injectable (validateCampaign)
 import SweetSpot.Database.Queries.Dashboard (createExperiment, getCampaignStats, getDashboardExperiments)
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
-import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, parseProduct)
+import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, toProduct)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -62,7 +63,7 @@ createExperimentHandler ce = do
   unless isValidCampaign (throwError badRequestErr)
   json <- fetchProduct $ ce ^. ceProductId
   let
-    contProduct = parseProduct $ json ^?! key "product"
+    contProduct = parse parseJSON $ json ^?! key "product"
     textPrice = T.pack . show $ ce ^. cePrice
     -- Assumes all variants have the same price
     withNewPrice =
@@ -72,8 +73,9 @@ createExperimentHandler ce = do
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of
-    (Success contProduct, Success newProduct) -> do
-      let variant = newProduct ^?! pVariants . element 0
+    (Success contProduct', Success newProduct) -> do
+      let contProduct = toProduct contProduct'
+          variant = newProduct ^?! pVariants . element 0
           testPrice = ce ^. cePrice
           title = contProduct ^. pTitle
           cmpId = ce ^. ceCampaignId

@@ -4,13 +4,9 @@
 module SweetSpot.Data.Common where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Int (Int64)
 import Data.Scientific (Scientific)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-
-class ToDatabaseInt a where
-  toDatabaseInt :: a -> Int64
 
 -- | ---------------------------------------------------------------------------
 -- | Price
@@ -27,21 +23,18 @@ instance FromJSON Price
 -- | Svid
 -- | ---------------------------------------------------------------------------
 newtype Svid =
-  Svid Int
+  Svid Text
   deriving (Eq, Show, Generic)
 
 instance ToJSON Svid
 
 instance FromJSON Svid
 
-instance ToDatabaseInt Svid where
-  toDatabaseInt (Svid i) = fromIntegral i
-
 -- | ---------------------------------------------------------------------------
 -- | Pid
 -- | ---------------------------------------------------------------------------
 newtype Pid =
-  Pid Int
+  Pid Text
   deriving (Eq, Show, Generic)
 
 instance ToJSON Pid
@@ -70,9 +63,6 @@ instance ToJSON UserId
 
 instance FromJSON UserId
 
-instance ToDatabaseInt UserId where
-  toDatabaseInt (UserId i) = fromIntegral i
-
 -- | ---------------------------------------------------------------------------
 -- | ExpId
 -- | ---------------------------------------------------------------------------
@@ -84,9 +74,6 @@ instance ToJSON ExpId
 
 instance FromJSON ExpId
 
-instance ToDatabaseInt ExpId where
-  toDatabaseInt (ExpId i) = fromIntegral i
-
 -- | ---------------------------------------------------------------------------
 -- | BucketId
 -- | ---------------------------------------------------------------------------
@@ -97,9 +84,6 @@ newtype BucketId =
 instance ToJSON BucketId
 
 instance FromJSON BucketId
-
-instance ToDatabaseInt BucketId where
-  toDatabaseInt (BucketId i) = fromIntegral i
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignId
@@ -162,7 +146,3 @@ bucketTypeToText Test = "test"
 bucketTypeFromText :: Text -> BucketType
 bucketTypeFromText "control" = Control
 bucketTypeFromText _ = Test
-
-wrapUserId userId = UserId $ fromIntegral userId
-wrapCampaignId = CampaignId
-unwrapCampaignId (CampaignId cmpId) = cmpId

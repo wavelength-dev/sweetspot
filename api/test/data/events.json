@@ -8,8 +8,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -24,8 +24,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -40,8 +40,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -56,8 +56,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -72,8 +72,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -88,8 +88,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -104,8 +104,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -120,8 +120,8 @@
     "orderId": 1001,
     "lineItems": [
       {
-        "productId": 123456,
-        "variantId": 12502066561096,
+        "productId": "123456",
+        "variantId": "12502066561096",
         "sku": "714449933422",
         "quantity": 1
       }
@@ -131,35 +131,35 @@
     "page": "product",
     "pageUrl": "https://sweetspot.com/cool-product",
     "userId": 1000,
-    "productId": 123456,
-    "productIds": [123456]
+    "productId": "123456",
+    "productIds": ["123456"]
   },
   {
     "page": "product",
     "pageUrl": "https://sweetspot.com/cool-product",
     "userId": 1000,
-    "productId": 123456,
-    "productIds": [123456]
+    "productId": "123456",
+    "productIds": ["123456"]
   },
   {
     "page": "product",
     "pageUrl": "https://sweetspot.com/cool-product",
     "userId": 1000,
-    "productId": 123456,
-    "productIds": [123456]
+    "productId": "123456",
+    "productIds": ["123456"]
   },
   {
     "page": "product",
     "pageUrl": "https://sweetspot.com/cool-product",
     "userId": 1000,
-    "productId": 123456,
-    "productIds": [123456]
+    "productId": "123456",
+    "productIds": ["123456"]
   },
   {
     "page": "product",
     "pageUrl": "https://sweetspot.com/cool-product",
     "userId": 1000,
-    "productId": 123456,
-    "productIds": [123456]
+    "productId": "123456",
+    "productIds": ["123456"]
   }
 ]

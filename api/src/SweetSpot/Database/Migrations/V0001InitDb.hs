@@ -16,10 +16,12 @@ import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
 import           Database.Beam.Postgres
+import           Database.Beam.Postgres.Syntax  ( pgTextType )
 import           Database.Beam.Migrate
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
+import           SweetSpot.Data.Common          ( CampaignId )
 
 -- | ---------------------------------------------------------------------------
 -- | User
@@ -47,7 +49,7 @@ User (LensFor usrId) = tableLenses
 -- | ---------------------------------------------------------------------------
 data CampaignT f
   = Campaign
-  { _cmpId :: Columnar f Text
+  { _cmpId :: Columnar f CampaignId
   , _cmpName :: Columnar f Text
   , _cmpMinProfitIncrease :: Columnar f Int
   , _cmpStartDate :: Columnar f LocalTime
@@ -61,7 +63,7 @@ deriving instance Show Campaign
 
 instance Table CampaignT where
         data PrimaryKey CampaignT f
-          = CampaignKey (Columnar f Text) deriving (Generic, Beamable)
+          = CampaignKey (Columnar f CampaignId) deriving (Generic, Beamable)
         primaryKey = CampaignKey . _cmpId
 
 Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensFor cmpStartDate) (LensFor cmpEndDate)
@@ -247,6 +249,9 @@ SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (Tab
 pricePrecision :: Maybe (Word, Maybe Word)
 pricePrecision = Just (12, Just 2)
 
+campaignIdType :: DataType Postgres CampaignId
+campaignIdType = DataType pgTextType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -256,7 +261,9 @@ migration () =
                 <*> createTable
                             "campaigns"
                             Campaign
-                                    { _cmpId = field "campaign_id" text notNull
+                                    { _cmpId = field "campaign_id"
+                                                     campaignIdType
+                                                     notNull
                                     , _cmpName = field "name" text notNull
                                     , _cmpMinProfitIncrease =
                                             field "min_profit_increase"
@@ -326,9 +333,10 @@ migration () =
                             CampaignUser
                                     { _cmpForUsr =
                                             CampaignKey
-                                                    (field "campaign_id"
-                                                           text
-                                                           notNull
+                                                    (field
+                                                            "campaign_id"
+                                                            campaignIdType
+                                                            notNull
                                                     )
                                     , _usrForCmp =
                                             UserKey
@@ -343,9 +351,10 @@ migration () =
                             CampaignExperiment
                                     { _cmpForExp =
                                             CampaignKey
-                                                    (field "campaign_id"
-                                                           text
-                                                           notNull
+                                                    (field
+                                                            "campaign_id"
+                                                            campaignIdType
+                                                            notNull
                                                     )
                                     , _expForCmp =
                                             ExperimentKey

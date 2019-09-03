@@ -36,7 +36,7 @@ createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
         -> IO ()
-createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, CampaignId c, name)
+createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, c, name)
         = do
                 [exp] <-
                         runBeamPostgres conn
@@ -123,16 +123,16 @@ getDashboardExperiments conn = do
 -- | Stats
 -- | ---------------------------------------------------------------------------
 getCampaign :: Connection -> CampaignId -> IO (Maybe Campaign)
-getCampaign conn (CampaignId id) =
+getCampaign conn cid =
         runBeamPostgres conn
                 $ runSelectReturningOne
                 $ select
-                $ filter_ (\c -> _cmpId c ==. val_ id)
+                $ filter_ (\c -> _cmpId c ==. val_ cid)
                 $ all_ (_campaigns db)
 
 
 getCampaignExperiments :: Connection -> CampaignId -> IO [Experiment]
-getCampaignExperiments conn (CampaignId cmpId) =
+getCampaignExperiments conn cmpId =
         runBeamPostgres conn $ runSelectReturningList $ select $ do
                 exps    <- all_ (db ^. experiments)
                 cmpExps <- all_ (db ^. campaignExperiments)

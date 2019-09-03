@@ -85,7 +85,7 @@ insertUser conn = do
         return $ user ^. usrId & unSerial & UserId
 
 assignUserToCampaign :: Connection -> (CampaignId, UserId) -> IO CampaignId
-assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
+assignUserToCampaign conn (cmpId, UserId usrId) = do
         [cmpUsr] <-
                 runBeamPostgres conn
                 $ BeamExt.runInsertReturningList
@@ -94,7 +94,7 @@ assignUserToCampaign conn (CampaignId cmpId, UserId usrId) = do
                           [ CampaignUser (CampaignKey cmpId)
                                          (usrId & SqlSerial & UserKey)
                           ]
-        return $ cmpUsr ^. cmpForUsr & CampaignId
+        return $ cmpUsr ^. cmpForUsr
 
 assignUserToBucket :: Connection -> (UserId, BucketId) -> IO ()
 assignUserToBucket conn (UserId usrId', BucketId bktId') =
@@ -109,7 +109,7 @@ assignUserToBucket conn (UserId usrId', BucketId bktId') =
 
 bucketByTypePerExpInCampaign
         :: Connection -> (CampaignId, BucketType) -> IO [(ExpId, BucketId)]
-bucketByTypePerExpInCampaign conn (CampaignId cid, btype) = do
+bucketByTypePerExpInCampaign conn (cid, btype) = do
         res <- runBeamPostgres conn $ runSelectReturningList $ select $ do
                 cmps    <- all_ (db ^. campaigns)
                 cmpExps <- all_ (db ^. campaignExperiments)
@@ -150,10 +150,10 @@ getNewCampaignBuckets conn cmpId mUid = do
         getUserBuckets conn uid
 
 validateCampaign :: Connection -> CampaignId -> IO Bool
-validateCampaign conn (CampaignId cmpId') = do
+validateCampaign conn cmpId = do
         res <- runBeamPostgres conn $ runSelectReturningList $ select $ do
                 cmps <- all_ (db ^. campaigns)
-                guard_ (cmps ^. cmpId ==. val_ cmpId')
+                guard_ (_cmpId cmps ==. val_ cmpId)
                 guard_ (cmps ^. cmpStartDate <. now_)
                 guard_ (cmps ^. cmpEndDate >. now_)
 

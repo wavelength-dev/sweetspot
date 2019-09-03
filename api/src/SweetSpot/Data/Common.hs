@@ -1,11 +1,17 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 
 module SweetSpot.Data.Common where
 
+import Database.Beam.Backend.SQL
+import Database.Beam.Query (HasSqlEqualityCheck(..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific (Scientific)
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 import GHC.Generics (Generic)
 
 -- | ---------------------------------------------------------------------------
@@ -95,6 +101,15 @@ newtype CampaignId =
 instance ToJSON CampaignId
 
 instance FromJSON CampaignId
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CampaignId where
+  sqlValueSyntax = sqlValueSyntax . \(CampaignId txt) -> txt
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CampaignId where
+  fromBackendRow = CampaignId <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be CampaignId
+
 
 -- | ---------------------------------------------------------------------------
 -- | OrderId

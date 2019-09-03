@@ -21,7 +21,9 @@ import           Database.Beam.Migrate
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
-import           SweetSpot.Data.Common          ( CampaignId )
+import           SweetSpot.Data.Common          ( CampaignId
+                                                , Svid
+                                                )
 
 -- | ---------------------------------------------------------------------------
 -- | User
@@ -99,8 +101,8 @@ data BucketT f
   = Bucket
   { _bktId :: Columnar f (SqlSerial Int)
   , _bktType :: Columnar f Text
-  , _bktCtrlSvid :: Columnar f Text
-  , _bktTestSvid :: Columnar f Text
+  , _bktCtrlSvid :: Columnar f Svid
+  , _bktTestSvid :: Columnar f Svid
   , _bktPrice :: Columnar f Scientific
   , _bktCtrlPrice :: Columnar f Scientific
   } deriving (Generic, Beamable)
@@ -252,6 +254,9 @@ pricePrecision = Just (12, Just 2)
 campaignIdType :: DataType Postgres CampaignId
 campaignIdType = DataType pgTextType
 
+svidType :: DataType Postgres Svid
+svidType = DataType pgTextType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -295,10 +300,10 @@ migration () =
                                                             notNull
                                     , _bktCtrlSvid  = field
                                                               "original_svid"
-                                                              text
+                                                              svidType
                                                               notNull
                                     , _bktTestSvid  = field "test_svid"
-                                                            text
+                                                            svidType
                                                             notNull
                                     , _bktPrice     =
                                             field

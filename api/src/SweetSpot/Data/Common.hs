@@ -36,6 +36,14 @@ instance ToJSON Svid
 
 instance FromJSON Svid
 
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Svid where
+  sqlValueSyntax = sqlValueSyntax . \(Svid txt) -> txt
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Svid where
+  fromBackendRow = Svid <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Svid
+
 -- | ---------------------------------------------------------------------------
 -- | Pid
 -- | ---------------------------------------------------------------------------

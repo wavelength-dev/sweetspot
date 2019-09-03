@@ -36,7 +36,7 @@ createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
         -> IO ()
-createExperiment conn (Sku s, Svid ctrl, Svid test, Price ctrlP, Price testP, c, name)
+createExperiment conn (Sku s, ctrl, test, Price ctrlP, Price testP, c, name)
         = do
                 [exp] <-
                         runBeamPostgres conn
@@ -104,8 +104,8 @@ getDashboardExperiments conn = do
         toApiBucket b = Api.Bucket
                 { Api._bBucketId     = b ^. bktId & unSerial & BucketId
                 , Api._bBucketType   = b ^. bktType & bucketTypeFromText
-                , Api._bOriginalSvid = b ^. bktCtrlSvid & Svid
-                , Api._bTestSvid     = b ^. bktTestSvid & Svid
+                , Api._bOriginalSvid = b ^. bktCtrlSvid
+                , Api._bTestSvid     = b ^. bktTestSvid
                 , Api._bControlPrice = b ^. bktCtrlPrice & Price
                 , Api._bPrice        = b ^. bktPrice & Price
                 }
@@ -246,8 +246,8 @@ getBucketStats conn b = do
         return $ DBBucketStats
                 { _dbsBucketId        = BucketId bid
                 , _dbsBucketType      = bucketTypeFromText $ b ^. bktType
-                , _dbsOriginalSvid    = Svid $ b ^. bktCtrlSvid
-                , _dbsTestSvid        = Svid $ b ^. bktTestSvid
+                , _dbsOriginalSvid    = b ^. bktCtrlSvid
+                , _dbsTestSvid        = b ^. bktTestSvid
                 , _dbsUserCount       = usrCount
                 , _dbsImpressionCount = imprCount
                 , _dbsCheckoutEvents  = chkEvs

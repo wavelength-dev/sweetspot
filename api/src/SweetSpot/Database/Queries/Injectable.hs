@@ -64,8 +64,8 @@ getUserBuckets conn uid@(UserId id) = do
                 (\(exp, bkt) -> UserBucket
                         { _ubUserId       = uid
                         , _ubSku          = Sku $ exp ^. expSku
-                        , _ubOriginalSvid = Svid $ bkt ^. bktCtrlSvid
-                        , _ubTestSvid     = Svid $ bkt ^. bktTestSvid
+                        , _ubOriginalSvid = bkt ^. bktCtrlSvid
+                        , _ubTestSvid     = bkt ^. bktTestSvid
                         , _ubPrice        = Price $ bkt ^. bktPrice
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
                         , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial

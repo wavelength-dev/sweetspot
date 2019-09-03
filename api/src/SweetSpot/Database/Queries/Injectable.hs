@@ -63,7 +63,7 @@ getUserBuckets conn uid@(UserId id) = do
         return $ fmap
                 (\(exp, bkt) -> UserBucket
                         { _ubUserId       = uid
-                        , _ubSku          = Sku $ exp ^. expSku
+                        , _ubSku          = exp ^. expSku
                         , _ubOriginalSvid = bkt ^. bktCtrlSvid
                         , _ubTestSvid     = bkt ^. bktTestSvid
                         , _ubPrice        = Price $ bkt ^. bktPrice

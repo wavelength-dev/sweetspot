@@ -36,7 +36,7 @@ createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
         -> IO ()
-createExperiment conn (Sku s, ctrl, test, Price ctrlP, Price testP, c, name)
+createExperiment conn (s, ctrl, test, Price ctrlP, Price testP, c, name)
         = do
                 [exp] <-
                         runBeamPostgres conn
@@ -116,7 +116,7 @@ getDashboardExperiments conn = do
                         { Api._ebExpId       = id
                         , Api._ebBuckets     = toApiBucket <$> bs
                         , Api._ebProductName = exp ^. expProductName
-                        , Api._ebSku         = exp ^. expSku & Sku
+                        , Api._ebSku         = exp ^. expSku
                         }
 
 -- | ---------------------------------------------------------------------------

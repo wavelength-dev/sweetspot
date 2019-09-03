@@ -22,6 +22,7 @@ import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
 import           SweetSpot.Data.Common          ( CampaignId
+                                                , Sku
                                                 , Svid
                                                 )
 
@@ -77,7 +78,7 @@ Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensF
 data ExperimentT f
   = Experiment
   { _expId :: Columnar f (SqlSerial Int)
-  , _expSku :: Columnar f Text
+  , _expSku :: Columnar f Sku
   , _expProductName :: Columnar f Text
   } deriving (Generic, Beamable)
 
@@ -246,7 +247,7 @@ SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (Tab
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
--- | Price
+-- | Types
 -- | ---------------------------------------------------------------------------
 pricePrecision :: Maybe (Word, Maybe Word)
 pricePrecision = Just (12, Just 2)
@@ -256,6 +257,9 @@ campaignIdType = DataType pgTextType
 
 svidType :: DataType Postgres Svid
 svidType = DataType pgTextType
+
+skuType :: DataType Postgres Sku
+skuType = DataType pgTextType
 
 -- | ---------------------------------------------------------------------------
 -- | Migration
@@ -284,7 +288,7 @@ migration () =
                             "experiments"
                             Experiment
                                     { _expId = field "exp_id" serial notNull
-                                    , _expSku = field "sku" text notNull
+                                    , _expSku = field "sku" skuType notNull
                                     , _expProductName = field
                                                                 "product_name"
                                                                 text

@@ -66,6 +66,14 @@ instance ToJSON Sku
 
 instance FromJSON Sku
 
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Sku where
+  sqlValueSyntax = sqlValueSyntax . \(Sku txt) -> txt
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Sku where
+  fromBackendRow = Sku <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Sku
+
 -- | ---------------------------------------------------------------------------
 -- | UserId
 -- | ---------------------------------------------------------------------------

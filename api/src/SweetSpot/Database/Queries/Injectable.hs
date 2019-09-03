@@ -168,7 +168,7 @@ insertEvent conn (eventType, json) =
                 $ insert (db ^. events)
                 $ insertExpressions
                           [ Event { _evId        = default_
-                                  , _evType = val_ $ eventTypeToText eventType
+                                  , _evType = val_ eventType
                                   , _evTimestamp = now_
                                   , _evPayload   = val_ $ PgJSONB json
                                   }

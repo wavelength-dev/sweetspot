@@ -11,7 +11,7 @@ import Database.Beam.Backend.SQL
 import Database.Beam.Query (HasSqlEqualityCheck(..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific (Scientific)
-import Data.Text (Text, unpack)
+import Data.Text (Text, unpack, pack)
 import GHC.Generics (Generic)
 
 -- | ---------------------------------------------------------------------------
@@ -153,10 +153,23 @@ data EventType
   | Checkout
   | Log
 
-eventTypeToText :: EventType -> Text
-eventTypeToText Checkout = "checkout"
-eventTypeToText Log = "log"
-eventTypeToText View = "view"
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be EventType where
+  sqlValueSyntax = sqlValueSyntax . \evType ->
+    case evType of
+      View -> "view" :: Text
+      Checkout -> "checkout" :: Text
+      Log -> "log" :: Text
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be EventType where
+  fromBackendRow = do
+    val <- fromBackendRow
+    case val :: Text of
+      "view" -> pure View
+      "checkout" -> pure Checkout
+      "log" -> pure Log
+      _ -> fail ("Invalid value for EventType: " ++ unpack val)
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be EventType
 
 -- | ---------------------------------------------------------------------------
 -- | BucketType

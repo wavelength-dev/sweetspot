@@ -198,7 +198,7 @@ getCheckoutEventsForBucket conn (BucketId id) = do
                         (\bu -> (bu ^. usrForBkt) ==. getUserId evs)
                         (all_ (db ^. bucketUsers))
 
-                guard_ (evs ^. evType ==. "checkout")
+                guard_ (evs ^. evType ==. val_ Checkout)
                 guard_ (bu ^. bktForUsr ==. bktKey)
 
                 pure (evs, bu)
@@ -213,7 +213,7 @@ getBucketImpressionCount conn b = do
                 $ select
                 $ aggregate_ (const countAll_)
                 $ do
-                          evs <- filter_ ((==. "view") . (^. evType))
+                          evs <- filter_ ((==. val_ View) . (^. evType))
                                   $ all_ (db ^. events)
 
                           let     uid = getUserId evs

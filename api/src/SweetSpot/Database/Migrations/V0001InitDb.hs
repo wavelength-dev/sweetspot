@@ -22,6 +22,7 @@ import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
 import           SweetSpot.Data.Common          ( CampaignId
+                                                , EventType
                                                 , Sku
                                                 , Svid
                                                 )
@@ -210,7 +211,7 @@ ExperimentBucket (ExperimentKey (LensFor expForBkt)) (BucketKey (LensFor bktForE
 data EventT f
   = Event
   { _evId :: Columnar f (SqlSerial Int)
-  , _evType :: Columnar f Text
+  , _evType :: Columnar f EventType
   , _evTimestamp :: Columnar f LocalTime
   , _evPayload :: Columnar f (PgJSONB Value)
   } deriving (Generic, Beamable)
@@ -260,6 +261,9 @@ svidType = DataType pgTextType
 
 skuType :: DataType Postgres Sku
 skuType = DataType pgTextType
+
+etType :: DataType Postgres EventType
+etType = DataType pgTextType
 
 -- | ---------------------------------------------------------------------------
 -- | Migration
@@ -393,7 +397,7 @@ migration () =
                             "events"
                             Event
                                     { _evId        = field "id" serial notNull
-                                    , _evType      = field "type" text notNull
+                                    , _evType      = field "type" etType notNull
                                     , _evTimestamp = field "timestamp"
                                                            timestamptz
                                                            notNull

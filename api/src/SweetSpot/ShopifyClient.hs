@@ -14,7 +14,7 @@ import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (parse)
 import qualified Data.ByteString.UTF8 as BLU
 import Data.Either (fromRight)
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unpack)
 import Data.Text.Read (rational)
 import Debug.Trace (trace)
 import GHC.Generics (Generic)
@@ -94,7 +94,7 @@ fetchProduct :: Pid -> AppM Value
 fetchProduct (Pid pid) = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
   opts <- getOpts
-  r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> show pid <> ".json"
+  r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> (unpack pid) <> ".json"
   json <- asJSON r
   return $ json ^. responseBody
 

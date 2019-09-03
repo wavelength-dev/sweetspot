@@ -70,6 +70,7 @@ createExperimentHandler ce = do
       json
         & key "product" . key "variants" . values . key "price" . _String .~ textPrice
         & key "product" . key "handle" . _String <>~ "-ssv"
+        & key "product" . key "product_type" . _String .~ "sweetspot-variant"
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of

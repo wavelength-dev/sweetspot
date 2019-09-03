@@ -69,7 +69,7 @@ getUserBuckets conn uid@(UserId id) = do
                         , _ubPrice        = Price $ bkt ^. bktPrice
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
                         , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial
-                        , _ubBucketType   = bkt ^. bktType & bucketTypeFromText
+                        , _ubBucketType   = bkt ^. bktType
                         , _ubControlPrice = Price $ bkt ^. bktCtrlPrice
                         }
                 )
@@ -123,7 +123,7 @@ bucketByTypePerExpInCampaign conn (cid, btype) = do
                 guard_ (_expForBkt expBkts `references_` exps)
                 guard_ (_bktForExp expBkts `references_` bkts)
 
-                guard_ (bkts ^. bktType ==. (btype & bucketTypeToText & val_))
+                guard_ (bkts ^. bktType ==. (val_ btype))
                 guard_ ((cmps ^. cmpId) ==. val_ cid)
 
                 pure (exps, bkts)

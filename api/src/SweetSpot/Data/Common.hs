@@ -183,10 +183,18 @@ instance ToJSON BucketType
 
 instance FromJSON BucketType
 
-bucketTypeToText :: BucketType -> Text
-bucketTypeToText Control = "control"
-bucketTypeToText Test = "test"
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be BucketType where
+  sqlValueSyntax = sqlValueSyntax . \evType ->
+    case evType of
+      Control -> "control" :: Text
+      Test -> "test" :: Text
 
-bucketTypeFromText :: Text -> BucketType
-bucketTypeFromText "control" = Control
-bucketTypeFromText _ = Test
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be BucketType where
+  fromBackendRow = do
+    val <- fromBackendRow
+    case val :: Text of
+      "control" -> pure Control
+      "test" -> pure Test
+      _ -> fail ("Invalid value for EventType: " ++ unpack val)
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be BucketType

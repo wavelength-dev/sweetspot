@@ -21,7 +21,8 @@ import           Database.Beam.Migrate
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
-import           SweetSpot.Data.Common          ( CampaignId
+import           SweetSpot.Data.Common          ( BucketType
+                                                , CampaignId
                                                 , EventType
                                                 , Sku
                                                 , Svid
@@ -102,7 +103,7 @@ Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
 data BucketT f
   = Bucket
   { _bktId :: Columnar f (SqlSerial Int)
-  , _bktType :: Columnar f Text
+  , _bktType :: Columnar f BucketType
   , _bktCtrlSvid :: Columnar f Svid
   , _bktTestSvid :: Columnar f Svid
   , _bktPrice :: Columnar f Scientific
@@ -265,6 +266,9 @@ skuType = DataType pgTextType
 etType :: DataType Postgres EventType
 etType = DataType pgTextType
 
+btType :: DataType Postgres BucketType
+btType = DataType pgTextType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -304,7 +308,7 @@ migration () =
                             Bucket
                                     { _bktId = field "bucket_id" serial notNull
                                     , _bktType      = field "bucket_type"
-                                                            text
+                                                            btType
                                                             notNull
                                     , _bktCtrlSvid  = field
                                                               "original_svid"

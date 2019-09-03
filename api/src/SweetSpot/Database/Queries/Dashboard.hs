@@ -36,60 +36,58 @@ createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
         -> IO ()
-createExperiment conn (s, ctrl, test, Price ctrlP, Price testP, c, name)
-        = do
-                [exp] <-
-                        runBeamPostgres conn
-                        $ BeamExt.runInsertReturningList
-                        $ insert (db ^. experiments)
-                        $ insertExpressions
-                                  [ Experiment { _expId          = default_
-                                               , _expSku         = val_ s
-                                               , _expProductName = val_ name
+createExperiment conn (s, ctrl, test, Price ctrlP, Price testP, c, name) = do
+        [exp] <-
+                runBeamPostgres conn
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. experiments)
+                $ insertExpressions
+                          [ Experiment { _expId          = default_
+                                       , _expSku         = val_ s
+                                       , _expProductName = val_ name
+                                       }
+                          ]
+
+        runBeamPostgres conn
+                $ runInsert
+                $ insert (db ^. campaignExperiments)
+                $ insertValues
+                          [ CampaignExperiment { _cmpForExp = CampaignKey c
+                                               , _expForCmp = toExpKey exp
                                                }
-                                  ]
-
+                          ]
+        [cb, tb] <-
                 runBeamPostgres conn
-                        $ runInsert
-                        $ insert (db ^. campaignExperiments)
-                        $ insertValues
-                                  [ CampaignExperiment
-                                            { _cmpForExp = CampaignKey c
-                                            , _expForCmp = toExpKey exp
-                                            }
-                                  ]
-                [cb, tb] <-
-                        runBeamPostgres conn
-                        $ BeamExt.runInsertReturningList
-                        $ insert (db ^. buckets)
-                        $ insertExpressions
-                                  [ Bucket { _bktId        = default_
-                                           , _bktType      = val_ "control"
-                                           , _bktCtrlSvid  = val_ ctrl
-                                           , _bktTestSvid  = val_ ctrl
-                                           , _bktCtrlPrice = val_ ctrlP
-                                           , _bktPrice     = val_ ctrlP
-                                           }
-                                  , Bucket { _bktId        = default_
-                                           , _bktType      = val_ "test"
-                                           , _bktCtrlSvid  = val_ ctrl
-                                           , _bktTestSvid  = val_ test
-                                           , _bktCtrlPrice = val_ ctrlP
-                                           , _bktPrice     = val_ testP
-                                           }
-                                  ]
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. buckets)
+                $ insertExpressions
+                          [ Bucket { _bktId        = default_
+                                   , _bktType      = val_ Control
+                                   , _bktCtrlSvid  = val_ ctrl
+                                   , _bktTestSvid  = val_ ctrl
+                                   , _bktCtrlPrice = val_ ctrlP
+                                   , _bktPrice     = val_ ctrlP
+                                   }
+                          , Bucket { _bktId        = default_
+                                   , _bktType      = val_ Test
+                                   , _bktCtrlSvid  = val_ ctrl
+                                   , _bktTestSvid  = val_ test
+                                   , _bktCtrlPrice = val_ ctrlP
+                                   , _bktPrice     = val_ testP
+                                   }
+                          ]
 
-                runBeamPostgres conn
-                        $ runInsert
-                        $ insert (db ^. experimentBuckets)
-                        $ insertValues
-                                  [ ExperimentBucket { _expForBkt = toExpKey exp
-                                                     , _bktForExp = toBktKey cb
-                                                     }
-                                  , ExperimentBucket { _expForBkt = toExpKey exp
-                                                     , _bktForExp = toBktKey tb
-                                                     }
-                                  ]
+        runBeamPostgres conn
+                $ runInsert
+                $ insert (db ^. experimentBuckets)
+                $ insertValues
+                          [ ExperimentBucket { _expForBkt = toExpKey exp
+                                             , _bktForExp = toBktKey cb
+                                             }
+                          , ExperimentBucket { _expForBkt = toExpKey exp
+                                             , _bktForExp = toBktKey tb
+                                             }
+                          ]
     where
         toExpKey exp = exp ^. expId & ExperimentKey
         toBktKey bkt = bkt ^. bktId & BucketKey
@@ -103,7 +101,7 @@ getDashboardExperiments conn = do
     where
         toApiBucket b = Api.Bucket
                 { Api._bBucketId     = b ^. bktId & unSerial & BucketId
-                , Api._bBucketType   = b ^. bktType & bucketTypeFromText
+                , Api._bBucketType   = b ^. bktType
                 , Api._bOriginalSvid = b ^. bktCtrlSvid
                 , Api._bTestSvid     = b ^. bktTestSvid
                 , Api._bControlPrice = b ^. bktCtrlPrice & Price
@@ -243,16 +241,15 @@ getBucketStats conn b = do
 
         imprCount <- getBucketImpressionCount conn b
 
-        return $ DBBucketStats
-                { _dbsBucketId        = BucketId bid
-                , _dbsBucketType      = bucketTypeFromText $ b ^. bktType
-                , _dbsOriginalSvid    = b ^. bktCtrlSvid
-                , _dbsTestSvid        = b ^. bktTestSvid
-                , _dbsUserCount       = usrCount
-                , _dbsImpressionCount = imprCount
-                , _dbsCheckoutEvents  = chkEvs
-                , _dbsPrice           = Price $ b ^. bktPrice
-                }
+        return $ DBBucketStats { _dbsBucketId        = BucketId bid
+                               , _dbsBucketType      = b ^. bktType
+                               , _dbsOriginalSvid    = b ^. bktCtrlSvid
+                               , _dbsTestSvid        = b ^. bktTestSvid
+                               , _dbsUserCount       = usrCount
+                               , _dbsImpressionCount = imprCount
+                               , _dbsCheckoutEvents  = chkEvs
+                               , _dbsPrice           = Price $ b ^. bktPrice
+                               }
 
 getBucketsForExperiment :: Connection -> ExpId -> IO [Bucket]
 getBucketsForExperiment conn (ExpId eid) =

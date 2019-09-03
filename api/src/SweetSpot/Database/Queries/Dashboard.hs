@@ -36,7 +36,7 @@ createExperiment
         :: Connection
         -> (Sku, Svid, Svid, Price, Price, CampaignId, Text)
         -> IO ()
-createExperiment conn (s, ctrl, test, Price ctrlP, Price testP, c, name) = do
+createExperiment conn (s, ctrl, test, ctrlP, testP, c, name) = do
         [exp] <-
                 runBeamPostgres conn
                 $ BeamExt.runInsertReturningList
@@ -104,8 +104,8 @@ getDashboardExperiments conn = do
                 , Api._bBucketType   = b ^. bktType
                 , Api._bOriginalSvid = b ^. bktCtrlSvid
                 , Api._bTestSvid     = b ^. bktTestSvid
-                , Api._bControlPrice = b ^. bktCtrlPrice & Price
-                , Api._bPrice        = b ^. bktPrice & Price
+                , Api._bControlPrice = b ^. bktCtrlPrice
+                , Api._bPrice        = b ^. bktPrice
                 }
         addBuckets exp = do
                 let id = exp ^. expId & unSerial & ExpId
@@ -248,7 +248,7 @@ getBucketStats conn b = do
                                , _dbsUserCount       = usrCount
                                , _dbsImpressionCount = imprCount
                                , _dbsCheckoutEvents  = chkEvs
-                               , _dbsPrice           = Price $ b ^. bktPrice
+                               , _dbsPrice           = b ^. bktPrice
                                }
 
 getBucketsForExperiment :: Connection -> ExpId -> IO [Bucket]

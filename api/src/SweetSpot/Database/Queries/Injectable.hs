@@ -66,11 +66,11 @@ getUserBuckets conn uid@(UserId id) = do
                         , _ubSku          = exp ^. expSku
                         , _ubOriginalSvid = bkt ^. bktCtrlSvid
                         , _ubTestSvid     = bkt ^. bktTestSvid
-                        , _ubPrice        = Price $ bkt ^. bktPrice
+                        , _ubPrice        = bkt ^. bktPrice
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
                         , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial
                         , _ubBucketType   = bkt ^. bktType
-                        , _ubControlPrice = Price $ bkt ^. bktCtrlPrice
+                        , _ubControlPrice = bkt ^. bktCtrlPrice
                         }
                 )
                 tuples

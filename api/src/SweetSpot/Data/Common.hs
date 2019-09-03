@@ -7,12 +7,17 @@
 
 module SweetSpot.Data.Common where
 
-import Database.Beam.Backend.SQL
-import Database.Beam.Query (HasSqlEqualityCheck(..))
-import Data.Aeson (FromJSON, ToJSON)
-import Data.Scientific (Scientific)
-import Data.Text (Text, unpack, pack)
-import GHC.Generics (Generic)
+import           Database.Beam.Backend.SQL
+import           Database.Beam.Query            ( HasSqlEqualityCheck(..) )
+import           Data.Aeson                     ( FromJSON
+                                                , ToJSON
+                                                )
+import           Data.Scientific                ( Scientific )
+import           Data.Text                      ( Text
+                                                , unpack
+                                                , pack
+                                                )
+import           GHC.Generics                   ( Generic )
 
 -- | ---------------------------------------------------------------------------
 -- | Price
@@ -24,6 +29,14 @@ newtype Price =
 instance ToJSON Price
 
 instance FromJSON Price
+
+instance HasSqlValueSyntax be Scientific => HasSqlValueSyntax be Price where
+        sqlValueSyntax = sqlValueSyntax . \(Price p) -> p
+
+instance (BeamSqlBackend be, FromBackendRow be Scientific) => FromBackendRow be Price where
+        fromBackendRow = Price <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Scientific) => HasSqlEqualityCheck be Price
 
 -- | ---------------------------------------------------------------------------
 -- | Svid
@@ -37,10 +50,10 @@ instance ToJSON Svid
 instance FromJSON Svid
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Svid where
-  sqlValueSyntax = sqlValueSyntax . \(Svid txt) -> txt
+        sqlValueSyntax = sqlValueSyntax . \(Svid txt) -> txt
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Svid where
-  fromBackendRow = Svid <$> fromBackendRow
+        fromBackendRow = Svid <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Svid
 
@@ -67,10 +80,10 @@ instance ToJSON Sku
 instance FromJSON Sku
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Sku where
-  sqlValueSyntax = sqlValueSyntax . \(Sku txt) -> txt
+        sqlValueSyntax = sqlValueSyntax . \(Sku txt) -> txt
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Sku where
-  fromBackendRow = Sku <$> fromBackendRow
+        fromBackendRow = Sku <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Sku
 
@@ -119,10 +132,10 @@ instance ToJSON CampaignId
 instance FromJSON CampaignId
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CampaignId where
-  sqlValueSyntax = sqlValueSyntax . \(CampaignId txt) -> txt
+        sqlValueSyntax = sqlValueSyntax . \(CampaignId txt) -> txt
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CampaignId where
-  fromBackendRow = CampaignId <$> fromBackendRow
+        fromBackendRow = CampaignId <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be CampaignId
 
@@ -154,20 +167,23 @@ data EventType
   | Log
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be EventType where
-  sqlValueSyntax = sqlValueSyntax . \evType ->
-    case evType of
-      View -> "view" :: Text
-      Checkout -> "checkout" :: Text
-      Log -> "log" :: Text
+        sqlValueSyntax = sqlValueSyntax . \evType -> case evType of
+                View     -> "view" :: Text
+                Checkout -> "checkout" :: Text
+                Log      -> "log" :: Text
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be EventType where
-  fromBackendRow = do
-    val <- fromBackendRow
-    case val :: Text of
-      "view" -> pure View
-      "checkout" -> pure Checkout
-      "log" -> pure Log
-      _ -> fail ("Invalid value for EventType: " ++ unpack val)
+        fromBackendRow = do
+                val <- fromBackendRow
+                case val :: Text of
+                        "view"     -> pure View
+                        "checkout" -> pure Checkout
+                        "log"      -> pure Log
+                        _ ->
+                                fail
+                                        (  "Invalid value for EventType: "
+                                        ++ unpack val
+                                        )
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be EventType
 
@@ -184,17 +200,20 @@ instance ToJSON BucketType
 instance FromJSON BucketType
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be BucketType where
-  sqlValueSyntax = sqlValueSyntax . \evType ->
-    case evType of
-      Control -> "control" :: Text
-      Test -> "test" :: Text
+        sqlValueSyntax = sqlValueSyntax . \evType -> case evType of
+                Control -> "control" :: Text
+                Test    -> "test" :: Text
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be BucketType where
-  fromBackendRow = do
-    val <- fromBackendRow
-    case val :: Text of
-      "control" -> pure Control
-      "test" -> pure Test
-      _ -> fail ("Invalid value for EventType: " ++ unpack val)
+        fromBackendRow = do
+                val <- fromBackendRow
+                case val :: Text of
+                        "control" -> pure Control
+                        "test"    -> pure Test
+                        _ ->
+                                fail
+                                        (  "Invalid value for EventType: "
+                                        ++ unpack val
+                                        )
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be BucketType

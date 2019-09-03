@@ -15,18 +15,15 @@ import           Data.Aeson                     ( Value )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
+import           Database.Beam.Backend.SQL.SQL92
+                                                ( numericType )
 import           Database.Beam.Postgres
 import           Database.Beam.Postgres.Syntax  ( pgTextType )
 import           Database.Beam.Migrate
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
-import           SweetSpot.Data.Common          ( BucketType
-                                                , CampaignId
-                                                , EventType
-                                                , Sku
-                                                , Svid
-                                                )
+import           SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
 -- | User
@@ -106,8 +103,8 @@ data BucketT f
   , _bktType :: Columnar f BucketType
   , _bktCtrlSvid :: Columnar f Svid
   , _bktTestSvid :: Columnar f Svid
-  , _bktPrice :: Columnar f Scientific
-  , _bktCtrlPrice :: Columnar f Scientific
+  , _bktPrice :: Columnar f Price
+  , _bktCtrlPrice :: Columnar f Price
   } deriving (Generic, Beamable)
 
 type Bucket = BucketT Identity
@@ -269,6 +266,9 @@ etType = DataType pgTextType
 btType :: DataType Postgres BucketType
 btType = DataType pgTextType
 
+priceType :: DataType Postgres Price
+priceType = DataType (numericType pricePrecision)
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -320,12 +320,12 @@ migration () =
                                     , _bktPrice     =
                                             field
                                                     "price"
-                                                    (numeric pricePrecision)
+                                                    priceType
                                                     notNull
                                     , _bktCtrlPrice =
                                             field
                                                     "original_price"
-                                                    (numeric pricePrecision)
+                                                    priceType
                                                     notNull
                                     }
                 <*> createTable

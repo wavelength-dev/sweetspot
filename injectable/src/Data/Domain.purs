@@ -4,11 +4,14 @@ import Prelude
 
 import Data.Argonaut (class DecodeJson, Json, caseJsonString, decodeJson)
 import Data.Array (find) as Array
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
 import Data.Map (Map)
+import Data.Map (fromFoldable) as Map
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
 
 -- | Id which corresponds to a SweetSpot campaign. Campaigns are time bound events within which price tests take place.
 newtype CampaignId
@@ -53,3 +56,6 @@ findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
 findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps
 
 type TestMapsMap = Map String TestMap
+
+getTestMapsByTargetId :: NonEmptyArray TestMap -> TestMapsMap
+getTestMapsByTargetId = map (\testMap -> Tuple testMap.targetId testMap) >>> Map.fromFoldable

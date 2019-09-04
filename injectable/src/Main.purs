@@ -1,12 +1,9 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Control.Monad.Except (throwError)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
-import Data.Map (fromFoldable) as Map
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
@@ -15,6 +12,7 @@ import Effect.Console as Console
 import Effect.Exception (Error, throw)
 import SweetSpot.Api (postLogPayload)
 import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPriceVariations, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getTestMaps, getUserBucketProvisions, getUserId, runAppM, setUserId, unhidePrice)
+import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
@@ -34,7 +32,7 @@ app = do
   ubp <- getUserBucketProvisions mUid mCid
   testMaps <- getTestMaps ubp
   let
-    testMapsMap = Map.fromFoldable $ map (\testMap -> Tuple testMap.targetId testMap) testMaps
+    testMapsMap = getTestMapsByTargetId testMaps
   liftEffect $ setUserId (NonEmptyArray.head testMaps)
   liftEffect
     $ case site of

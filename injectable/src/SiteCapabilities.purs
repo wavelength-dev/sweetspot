@@ -1,24 +1,26 @@
 module SweetSpot.SiteCapabilities where
 
 import Prelude
+
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Int (toNumber) as Int
+import Data.Maybe (Maybe(..))
 import Data.String as String
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
-import SweetSpot.Data.Config (idClass)
-import SweetSpot.Data.Domain (Sku(..))
+import SweetSpot.Data.Config (DryRunMode(..), idClass)
+import SweetSpot.Data.Config (dryRunMode, idClass) as Config
+import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
 import SweetSpot.Intl (formatNumber, numberFormat)
 import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
-import Web.DOM.Document as Doc
 import Web.DOM.Element as Element
-import Web.DOM.Node (setTextContent, textContent)
+import Web.DOM.Node (setTextContent)
 import Web.DOM.NodeList (toArray) as NodeList
 import Web.DOM.ParentNode (QuerySelector(..))
-import Web.DOM.ParentNode (querySelector, querySelectorAll) as ParentNode
+import Web.DOM.ParentNode (querySelectorAll) as ParentNode
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (HTMLElement, window)
 import Web.HTML.Event.EventTypes as ET
@@ -26,7 +28,7 @@ import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.HTMLElement (classList)
 import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
-import Web.HTML.Location (hostname, pathname)
+import Web.HTML.Location (pathname)
 import Web.HTML.Window as Window
 
 class
@@ -40,6 +42,9 @@ instance domActionEffect :: DomAction Effect where
   setAttribute = Element.setAttribute
   queryDocument = queryDocument_
 
+priceElementSelector :: QuerySelector
+priceElementSelector = QuerySelector $ "[class*=" <> Config.idClass <> "]"
+
 -- instance domActionTest :: DomInteraction ?identity where
 --   getAttribute = ?get
 --   setAttribute = ?set
@@ -50,25 +55,11 @@ instance domActionEffect :: DomAction Effect where
 -- data SC a --   = SwapProductPrices (NonEmptyArray Element -> a)
 --   | SwapCheckoutOptions (NonEmptyArray Element -> a)
 --   | CollectPriceElements (a -> Effect (Array Element))
+
 data Site
   = Longvadon
   | LibertyPrice
   | Unknown
-
-getSiteId :: Effect (Maybe Site)
-getSiteId = do
-  hostUrl <- window >>= Window.location >>= hostname
-  doc <- window >>= Window.document >>= HTMLDocument.toDocument >>> Doc.toParentNode >>> pure
-  mEl <- ParentNode.querySelector (QuerySelector "#sweetspot__site-id") doc
-  let
-    textToSite text = case text of
-      "longvadon" -> Just Longvadon
-      "libertyprice" -> Just LibertyPrice
-      _ -> Nothing
-  maybe
-    (pure $ Nothing)
-    (\el -> Element.toNode el # textContent >>= textToSite >>> pure)
-    mEl
 
 awaitDomReady :: Aff Unit
 awaitDomReady =
@@ -132,3 +123,16 @@ queryDocument_ querySelector =
 
 nodesToElements :: NodeList -> Effect (Array Element)
 nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+
+applyPriceVariation :: TestMapsMap -> Element -> Effect Unit
+applyPriceVariation testMaps el = do
+  mElementSku <- getIdFromPriceElement el
+  let
+    mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
+  case mTestMap, Config.dryRunMode of
+    (Just testMap), DryRun -> do
+      nf <- numberFormat
+      formattedPrice <- formatNumber (Int.toNumber testMap.swapPrice) nf
+      Element.setAttribute "data-ssdr__price" formattedPrice el
+    (Just testMap), Live -> setPrice (Int.toNumber testMap.swapPrice) el
+    Nothing, _ -> pure unit

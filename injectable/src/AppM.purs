@@ -5,30 +5,21 @@ import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwE
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
-import Data.Foldable (for_, traverse_)
-import Data.Int (toNumber) as Int
+import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
 import Data.String as String
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps, postLogPayload)
+import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
-import SweetSpot.Intl (formatNumber, numberFormat)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
-import Web.DOM (Element)
-import Web.DOM.Element as Element
-import Web.DOM.MutationObserver (MutationObserver, mutationObserver, observe)
-import Web.DOM.MutationRecord (MutationRecord)
-import Web.DOM.MutationRecord (target) as MutationRecord
-import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement)
 import Web.HTML.Location (hostname, search)
@@ -69,26 +60,24 @@ runAppM (AppM m) = runExceptT m
 data Site
   = Longvadon
   | LibertyPrice
-  | Unknown String
 
 derive instance eqSite :: Eq Site
 
 instance showSite :: Show Site where
   show Longvadon = "longvadon.com"
   show LibertyPrice = "libertyprice.myshopify.com"
-  show (Unknown hostname) = hostname
 
-priceElementSelector :: QuerySelector
-priceElementSelector = QuerySelector $ "[class*=" <> Config.idClass <> "]"
-
-getSiteId :: Effect Site
-getSiteId = do
-  siteHostname <- window >>= Win.location >>= hostname
-  pure
-    $ case siteHostname of
-        "longvadon.com" -> Longvadon
-        "libertyprice.myshopify.com" -> LibertyPrice
-        _ -> Unknown siteHostname
+getSiteId :: Effect (Either String Site)
+getSiteId =
+  window
+    >>= Win.location
+    >>= hostname
+    >>= \siteHostname ->
+        pure
+          $ case siteHostname of
+              "longvadon.com" -> Right Longvadon
+              "libertyprice.myshopify.com" -> Right LibertyPrice
+              _ -> Left siteHostname
 
 parseCampaignId :: String -> Maybe CampaignId
 parseCampaignId queryString =
@@ -102,26 +91,6 @@ parseCampaignId queryString =
     match = Array.find campaignPred kvPairs
   in
     match >>= flip Array.index 1 <#> CampaignId
-
-setCheckout :: Site -> TestMapsMap -> AppM Unit
-setCheckout siteId testMaps = do
-  case siteId of
-    Longvadon -> liftEffect $ Lv.setCheckout testMaps
-    LibertyPrice -> liftEffect $ LP.setCheckout testMaps
-    _ -> throwError $ ReportErr { message: "Site not recognized, can't control checkout, hostname was " <> (show siteId), payload: "" }
-
-applyPriceVariation :: TestMapsMap -> Element -> Effect Unit
-applyPriceVariation testMaps el = do
-  mElementSku <- SiteC.getIdFromPriceElement el
-  let
-    mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
-  case mTestMap, Config.dryRunMode of
-    (Just testMap), DryRun -> do
-      nf <- numberFormat
-      formattedPrice <- formatNumber (Int.toNumber testMap.swapPrice) nf
-      Element.setAttribute "data-ssdr__price" formattedPrice el
-    (Just testMap), Live -> SiteC.setPrice (Int.toNumber testMap.swapPrice) el
-    Nothing, _ -> pure unit
 
 ensureDeps :: AppM Unit
 ensureDeps = case promise, fetch of
@@ -173,40 +142,10 @@ getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
 
 getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
 
--- It's unlikely but possible not all collected Elements are HTMLElements
--- We should only add sweetspot ids to elements which are HTMLElements
-applyPriceVariations :: TestMapsMap -> Effect Unit
-applyPriceVariations userBuckets = do
-  priceElements <- SiteC.queryDocument priceElementSelector
-  let
-    priceHTMLElements = Array.catMaybes $ map fromElement priceElements
-  traverse_ (applyPriceVariation userBuckets) priceElements
-  traverse_ (SiteC.removeClass Config.hiddenPriceId) priceHTMLElements
-
-type MutationCallback
-  = Array MutationRecord → MutationObserver → Effect Unit
-
-attachObserver :: MutationCallback -> TestMapsMap -> Array Element -> Effect Unit
-attachObserver callback testMaps elements = do
-  muOb <- mutationObserver callback
-  for_ elements \el -> observe (Element.toNode el) { childList: true } muOb
-
-attachPriceObserver :: Site -> TestMapsMap -> Effect Unit
-attachPriceObserver site testMaps = do
-  elements <- SiteC.queryDocument priceElementSelector
-  attachObserver resetTestForNode testMaps elements
-  where
-  resetTestForNode mutationRecords _ = case Array.head mutationRecords of
-    Nothing -> launchAff_ $ postLogPayload "WARN: Mutation observer got called without mutation records"
-    Just mr ->
-      MutationRecord.target mr
-        >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ postLogPayload "WARN: Observed Node was not of type Element"
-            Just element -> do
-              applyPriceVariation testMaps element
-              case site of
-                Longvadon -> Lv.resetSlickAddToCartButton testMaps element
-                _ -> pure unit
+attachSiteObservers :: Site -> TestMapsMap -> Effect Unit
+attachSiteObservers site testMapsMap = case site of
+  Longvadon -> Lv.attachObservers testMapsMap
+  LibertyPrice -> LP.observePrices testMapsMap
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do
@@ -224,7 +163,7 @@ applyFacadeUrl = do
 -- We should only add sweetspot ids to elements which are HTMLElements
 unhidePrice :: Effect Unit
 unhidePrice =
-  SiteC.queryDocument priceElementSelector
+  SiteC.queryDocument SiteC.priceElementSelector
     >>= (map fromElement)
     >>> Array.catMaybes
     >>> pure
@@ -232,3 +171,10 @@ unhidePrice =
 
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
+
+applyPriceVariations :: TestMapsMap -> Effect Unit
+applyPriceVariations testMapsMap = do
+  priceElements <- SiteC.queryDocument SiteC.priceElementSelector
+  let
+    priceHTMLElements = Array.catMaybes $ map fromElement priceElements
+  traverse_ (SiteC.applyPriceVariation testMapsMap) priceElements

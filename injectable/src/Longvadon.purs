@@ -1,18 +1,24 @@
 module SweetSpot.Longvadon where
 
 import Prelude
-import Data.Foldable (traverse_)
+import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String (stripPrefix) as String
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element (toParentNode) as Element
+import Web.DOM.Element (fromNode, toNode, toParentNode) as Element
+import Web.DOM.MutationObserver (MutationObserver)
+import Web.DOM.MutationObserver as MutationObserver
+import Web.DOM.MutationRecord (MutationRecord)
+import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode (querySelector) as ParentNode
 
@@ -105,6 +111,40 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
 -- The traversal here is a bit risky. We watch for price elements being touched, this is taken as our que that the cart page slick carousel add to cart button has also been updated with a variant that possibly has a test price variant associated. We therefore find the button using an assumption heavy DOM traversal and reset the button to its correct state.
 resetSlickAddToCartButton :: TestMapsMap -> Element -> Effect Unit
 resetSlickAddToCartButton testMapsMap mutatedPriceElement = do
-    let parentNode = Element.toParentNode mutatedPriceElement
-    mButton <- ParentNode.querySelector (QuerySelector "button.product__add-to-cart-button") parentNode
-    maybe (pure unit) (setSlickCheckoutOption testMapsMap) mButton
+  let
+    parentNode = Element.toParentNode mutatedPriceElement
+  mButton <- ParentNode.querySelector (QuerySelector "button.product__add-to-cart-button") parentNode
+  maybe (pure unit) (setSlickCheckoutOption testMapsMap) mButton
+
+observePrices :: TestMapsMap -> Effect Unit
+observePrices testMapsMap = do
+  elements <- SiteC.queryDocument SiteC.priceElementSelector
+  mutationObserver <- MutationObserver.mutationObserver onMutation
+  for_ elements \el -> MutationObserver.observe (Element.toNode el) { characterData: true } mutationObserver
+  where
+  onMutation :: Array MutationRecord → MutationObserver → Effect Unit
+  onMutation mutationRecords _ = do
+    for_ mutationRecords \mutationRecord ->
+      MutationRecord.target mutationRecord
+        >>= \node -> case Element.fromNode node of
+            Nothing -> launchAff_ $ Api.postLogPayload "WARN: observed node was not an element"
+            Just element -> SiteC.applyPriceVariation testMapsMap element
+
+observeButtons :: TestMapsMap -> Effect Unit
+observeButtons testMapsMap = do
+  elements <- SiteC.queryDocument cartSlickCarouselCheckoutButtonSelector
+  mutationObserver <- MutationObserver.mutationObserver onMutation
+  for_ elements \el -> MutationObserver.observe (Element.toNode el) { attributes: true, attributeFilter: [ "data-vrnt" ] } mutationObserver
+  where
+  onMutation :: Array MutationRecord → MutationObserver → Effect Unit
+  onMutation mutationRecords _ = do
+    for_ mutationRecords \mutationRecord ->
+      MutationRecord.target mutationRecord
+        >>= \node -> case Element.fromNode node of
+            Nothing -> launchAff_ $ Api.postLogPayload "WARN: observed node was not an element"
+            Just element -> setCheckoutOption testMapsMap element
+
+attachObservers :: TestMapsMap -> Effect Unit
+attachObservers testMapsMap = do
+  observePrices testMapsMap
+  observeButtons testMapsMap

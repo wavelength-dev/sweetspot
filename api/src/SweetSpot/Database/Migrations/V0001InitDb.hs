@@ -211,7 +211,7 @@ ExperimentBucket (ExperimentKey (LensFor expForBkt)) (BucketKey (LensFor bktForE
 -- | ---------------------------------------------------------------------------
 data EventT f
   = Event
-  { _evId :: Columnar f (SqlSerial Int)
+  { _evId :: Columnar f (SqlSerial EventId)
   , _evType :: Columnar f EventType
   , _evTimestamp :: Columnar f LocalTime
   , _evPayload :: Columnar f (PgJSONB Value)
@@ -222,7 +222,7 @@ type EventKey = PrimaryKey EventT Identity
 
 instance Table EventT where
         data PrimaryKey EventT f
-          = EventKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+          = EventKey (Columnar f (SqlSerial EventId)) deriving (Generic, Beamable)
         primaryKey = EventKey . _evId
 
 Event (LensFor evId) (LensFor evType) (LensFor evTimestamp) (LensFor evPayload)
@@ -278,11 +278,11 @@ uidType = DataType intType
 uidMigrType :: DataType Postgres (SqlSerial UserId)
 uidMigrType = DataType pgSerialType
 
-bidType :: DataType Postgres (SqlSerial BucketId)
-bidType = DataType intType
-
 bidMigrType :: DataType Postgres (SqlSerial BucketId)
 bidMigrType = DataType pgSerialType
+
+eidMigrType :: DataType Postgres (SqlSerial EventId)
+eidMigrType = DataType pgSerialType
 
 -- | ---------------------------------------------------------------------------
 -- | Migration
@@ -414,7 +414,7 @@ migration () =
                 <*> createTable
                             "events"
                             Event
-                                    { _evId        = field "id" serial notNull
+                                    { _evId        = field "id" eidMigrType notNull
                                     , _evType      = field "type" etType notNull
                                     , _evTimestamp = field "timestamp"
                                                            timestamptz

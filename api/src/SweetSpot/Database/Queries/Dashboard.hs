@@ -171,7 +171,7 @@ getBucketUserCount conn bucketId = do
 
 toCheckoutEvent :: (Event, BucketUser) -> CheckoutEvent
 toCheckoutEvent (e, bu) = CheckoutEvent
-        { _chkId        = EventId $ e ^. evId & unSerial
+        { _chkId        = e ^. evId & unSerial
         , _chkUserId    = uid
         , _chkBucketId  = bu ^. bktForUsr & unSerial
         , _chkOrderId   = oid

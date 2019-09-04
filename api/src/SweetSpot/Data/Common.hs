@@ -182,6 +182,14 @@ newtype EventId =
 
 instance ToJSON EventId
 
+instance HasSqlValueSyntax be Int => HasSqlValueSyntax be EventId where
+        sqlValueSyntax = sqlValueSyntax . \(EventId id) -> id
+
+instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be EventId where
+        fromBackendRow = EventId <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be EventId
+
 -- | ---------------------------------------------------------------------------
 -- | EventType
 -- | ---------------------------------------------------------------------------

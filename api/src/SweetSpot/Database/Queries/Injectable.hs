@@ -33,7 +33,7 @@ import           SweetSpot.Data.Common
 
 
 getUserBuckets :: Connection -> UserId -> IO [UserBucket]
-getUserBuckets conn uid@(UserId id) = do
+getUserBuckets conn uid = do
         tuples <- runBeamPostgres conn $ runSelectReturningList $ select $ do
 
                 usrs    <- all_ (db ^. users)
@@ -54,7 +54,7 @@ getUserBuckets conn uid@(UserId id) = do
                 guard_ (_usrForCmp cmpUsrs `references_` usrs)
                 guard_ (_cmpForUsr cmpUsrs `references_` cmps)
 
-                guard_ (_usrId usrs ==. val_ (SqlSerial id))
+                guard_ (usrs ^. usrId ==. val_ (SqlSerial uid))
                 guard_ (cmps ^. cmpStartDate <. now_)
                 guard_ (cmps ^. cmpEndDate >. now_)
 
@@ -82,10 +82,10 @@ insertUser conn = do
                 $ BeamExt.runInsertReturningList
                 $ insert (db ^. users)
                 $ insertExpressions [User default_]
-        return $ user ^. usrId & unSerial & UserId
+        return $ user ^. usrId & unSerial
 
 assignUserToCampaign :: Connection -> (CampaignId, UserId) -> IO CampaignId
-assignUserToCampaign conn (cmpId, UserId usrId) = do
+assignUserToCampaign conn (cmpId, usrId) = do
         [cmpUsr] <-
                 runBeamPostgres conn
                 $ BeamExt.runInsertReturningList
@@ -97,7 +97,7 @@ assignUserToCampaign conn (cmpId, UserId usrId) = do
         return $ cmpUsr ^. cmpForUsr
 
 assignUserToBucket :: Connection -> (UserId, BucketId) -> IO ()
-assignUserToBucket conn (UserId usrId', BucketId bktId') =
+assignUserToBucket conn (usrId', BucketId bktId') =
         runBeamPostgres conn
                 $ runInsert
                 $ insert (db ^. bucketUsers)

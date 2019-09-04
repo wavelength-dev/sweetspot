@@ -30,7 +30,7 @@ import           SweetSpot.Data.Domain   hiding ( Campaign )
 import           SweetSpot.Database.Schema
 
 
-getUserId evs = cast_ ((evs ^. evPayload) ->$ "userId") int
+getUserId evs = cast_ ((evs ^. evPayload) ->$ "userId") uidType
 
 createExperiment
         :: Connection

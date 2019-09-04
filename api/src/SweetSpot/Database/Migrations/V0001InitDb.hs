@@ -16,11 +16,14 @@ import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial )
 import           Database.Beam.Backend.SQL.SQL92
-                                                ( numericType )
+                                                ( numericType
+                                                , intType
+                                                )
 import           Database.Beam.Postgres
-import           Database.Beam.Postgres.Syntax  ( pgTextType )
+import           Database.Beam.Postgres.Syntax  ( pgTextType
+                                                , pgSerialType
+                                                )
 import           Database.Beam.Migrate
-import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
 import           SweetSpot.Data.Common
@@ -30,7 +33,7 @@ import           SweetSpot.Data.Common
 -- | ---------------------------------------------------------------------------
 newtype UserT f
   = User
-  { _usrId :: Columnar f (SqlSerial Int)
+  { _usrId :: Columnar f (SqlSerial UserId)
   } deriving (Generic, Beamable)
 
 type User = UserT Identity
@@ -41,7 +44,7 @@ deriving instance Eq User
 
 instance Table UserT where
         data PrimaryKey UserT f
-          = UserKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+          = UserKey (Columnar f (SqlSerial UserId)) deriving (Generic, Beamable)
         primaryKey = UserKey . _usrId
 
 User (LensFor usrId) = tableLenses
@@ -269,12 +272,20 @@ btType = DataType pgTextType
 priceType :: DataType Postgres Price
 priceType = DataType (numericType pricePrecision)
 
+uidType :: DataType Postgres (SqlSerial UserId)
+uidType = DataType intType
+
+uidMigrType :: DataType Postgres (SqlSerial UserId)
+uidMigrType = DataType pgSerialType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
 migration () =
         SweetSpotDb
-                <$> createTable "users" User { _usrId = field "user_id" serial }
+                <$> createTable
+                            "users"
+                            User { _usrId = field "user_id" uidMigrType }
                 <*> createTable
                             "campaigns"
                             Campaign
@@ -317,16 +328,13 @@ migration () =
                                     , _bktTestSvid  = field "test_svid"
                                                             svidType
                                                             notNull
-                                    , _bktPrice     =
-                                            field
-                                                    "price"
-                                                    priceType
-                                                    notNull
-                                    , _bktCtrlPrice =
-                                            field
-                                                    "original_price"
-                                                    priceType
-                                                    notNull
+                                    , _bktPrice     = field "price"
+                                                            priceType
+                                                            notNull
+                                    , _bktCtrlPrice = field
+                                                              "original_price"
+                                                              priceType
+                                                              notNull
                                     }
                 <*> createTable
                             "bucket_users"
@@ -340,7 +348,7 @@ migration () =
                                     , _usrForBkt =
                                             UserKey
                                                     (field "user_id"
-                                                           serial
+                                                           uidMigrType
                                                            notNull
                                                     )
                                     }
@@ -358,7 +366,7 @@ migration () =
                                     , _usrForCmp =
                                             UserKey
                                                     (field "user_id"
-                                                           serial
+                                                           uidMigrType
                                                            notNull
                                                     )
                                     }

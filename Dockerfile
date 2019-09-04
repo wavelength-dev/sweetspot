@@ -38,7 +38,7 @@ RUN apt-get update --quiet && apt-get install -y --quiet \
   ca-certificates \
   libgmp-dev \
   libpq-dev
-COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-13.24/8.6.5/bin/sweetspot-exe .
+COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-14.4/8.6.5/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY --from=build-dist /opt/build-dist/sweetspot*.js /opt/dist/
 

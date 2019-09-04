@@ -99,16 +99,15 @@ getDashboardExperiments conn = do
                 (db ^. experiments)
         traverse addBuckets exps
     where
-        toApiBucket b = Api.Bucket
-                { Api._bBucketId     = b ^. bktId & unSerial
-                , Api._bBucketType   = b ^. bktType
-                , Api._bOriginalSvid = b ^. bktCtrlSvid
-                , Api._bTestSvid     = b ^. bktTestSvid
-                , Api._bControlPrice = b ^. bktCtrlPrice
-                , Api._bPrice        = b ^. bktPrice
-                }
+        toApiBucket b = Api.Bucket { Api._bBucketId     = b ^. bktId & unSerial
+                                   , Api._bBucketType   = b ^. bktType
+                                   , Api._bOriginalSvid = b ^. bktCtrlSvid
+                                   , Api._bTestSvid     = b ^. bktTestSvid
+                                   , Api._bControlPrice = b ^. bktCtrlPrice
+                                   , Api._bPrice        = b ^. bktPrice
+                                   }
         addBuckets exp = do
-                let id = exp ^. expId & unSerial & ExpId
+                let id = exp ^. expId & unSerial
                 bs <- getBucketsForExperiment conn id
                 return Api.ExperimentBuckets
                         { Api._ebExpId       = id
@@ -142,7 +141,7 @@ getCampaignExperiments conn cmpId =
         where cmpKey = val_ (CampaignKey cmpId)
 
 getExperimentBuckets :: Connection -> ExpId -> IO [Bucket]
-getExperimentBuckets conn (ExpId eid) =
+getExperimentBuckets conn eid =
         runBeamPostgres conn $ runSelectReturningList $ select $ do
                 expBkts <- all_ (db ^. experimentBuckets)
                 bkts    <- all_ (db ^. buckets)
@@ -251,7 +250,7 @@ getBucketStats conn b = do
                                }
 
 getBucketsForExperiment :: Connection -> ExpId -> IO [Bucket]
-getBucketsForExperiment conn (ExpId eid) =
+getBucketsForExperiment conn eid =
         runBeamPostgres conn $ runSelectReturningList $ select $ do
                 ebs <- all_ (db ^. experimentBuckets)
                 bs  <- all_ (db ^. buckets)
@@ -263,8 +262,7 @@ getBucketsForExperiment conn (ExpId eid) =
 
 getExperimentStats :: Connection -> Experiment -> IO DBExperimentStats
 getExperimentStats conn exp = do
-        let     id  = unSerial $ exp ^. expId
-                eid = ExpId id
+        let eid = exp ^. expId & unSerial
         bs     <- getBucketsForExperiment conn eid
         bStats <- traverse (getBucketStats conn) bs
         return DBExperimentStats { _desExpId       = eid

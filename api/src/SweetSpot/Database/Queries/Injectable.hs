@@ -67,7 +67,7 @@ getUserBuckets conn uid = do
                         , _ubOriginalSvid = bkt ^. bktCtrlSvid
                         , _ubTestSvid     = bkt ^. bktTestSvid
                         , _ubPrice        = bkt ^. bktPrice
-                        , _ubExpId        = ExpId $ exp ^. expId & unSerial
+                        , _ubExpId        = exp ^. expId & unSerial
                         , _ubBucketId     = bkt ^. bktId & unSerial
                         , _ubBucketType   = bkt ^. bktType
                         , _ubControlPrice = bkt ^. bktCtrlPrice
@@ -130,9 +130,7 @@ bucketByTypePerExpInCampaign conn (cid, btype) = do
 
         return $ fmap
                 (\(exp, bkt) ->
-                        ( exp ^. expId & unSerial & ExpId
-                        , bkt ^. bktId & unSerial
-                        )
+                        (exp ^. expId & unSerial, bkt ^. bktId & unSerial)
                 )
                 res
 

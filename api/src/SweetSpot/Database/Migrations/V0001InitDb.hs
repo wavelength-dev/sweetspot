@@ -79,7 +79,7 @@ Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensF
 -- | ---------------------------------------------------------------------------
 data ExperimentT f
   = Experiment
-  { _expId :: Columnar f (SqlSerial Int)
+  { _expId :: Columnar f (SqlSerial ExpId)
   , _expSku :: Columnar f Sku
   , _expProductName :: Columnar f Text
   } deriving (Generic, Beamable)
@@ -91,7 +91,7 @@ deriving instance Show Experiment
 
 instance Table ExperimentT where
         data PrimaryKey ExperimentT f
-          = ExperimentKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+          = ExperimentKey (Columnar f (SqlSerial ExpId)) deriving (Generic, Beamable)
         primaryKey = ExperimentKey . _expId
 
 Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
@@ -284,6 +284,9 @@ bidMigrType = DataType pgSerialType
 eidMigrType :: DataType Postgres (SqlSerial EventId)
 eidMigrType = DataType pgSerialType
 
+expIdMigrType :: DataType Postgres (SqlSerial ExpId)
+expIdMigrType = DataType pgSerialType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -312,7 +315,9 @@ migration () =
                 <*> createTable
                             "experiments"
                             Experiment
-                                    { _expId = field "exp_id" serial notNull
+                                    { _expId = field "exp_id"
+                                                     expIdMigrType
+                                                     notNull
                                     , _expSku = field "sku" skuType notNull
                                     , _expProductName = field
                                                                 "product_name"
@@ -323,7 +328,9 @@ migration () =
                 <*> createTable
                             "buckets"
                             Bucket
-                                    { _bktId = field "bucket_id" bidMigrType notNull
+                                    { _bktId        = field "bucket_id"
+                                                            bidMigrType
+                                                            notNull
                                     , _bktType      = field "bucket_type"
                                                             btType
                                                             notNull
@@ -390,7 +397,7 @@ migration () =
                                     , _expForCmp =
                                             ExperimentKey
                                                     (field "exp_id"
-                                                           serial
+                                                           expIdMigrType
                                                            notNull
                                                     )
                                     }
@@ -401,7 +408,7 @@ migration () =
                                     { _expForBkt =
                                             ExperimentKey
                                                     (field "exp_id"
-                                                           serial
+                                                           expIdMigrType
                                                            notNull
                                                     )
                                     , _bktForExp =
@@ -414,8 +421,8 @@ migration () =
                 <*> createTable
                             "events"
                             Event
-                                    { _evId        = field "id" eidMigrType notNull
-                                    , _evType      = field "type" etType notNull
+                                    { _evId = field "id" eidMigrType notNull
+                                    , _evType = field "type" etType notNull
                                     , _evTimestamp = field "timestamp"
                                                            timestamptz
                                                            notNull

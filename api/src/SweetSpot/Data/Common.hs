@@ -14,6 +14,7 @@ import           Data.Aeson                     ( FromJSON
                                                 )
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text
+                                                , pack
                                                 , unpack
                                                 )
 import           GHC.Generics                   ( Generic )
@@ -90,21 +91,23 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 -- | UserId
 -- | ---------------------------------------------------------------------------
 newtype UserId =
-  UserId Int
+  UserId Text
   deriving (Eq, Show, Generic, Ord)
 
 instance ToJSON UserId
 
 instance FromJSON UserId
 
-
 instance HasSqlValueSyntax be Int => HasSqlValueSyntax be UserId where
-        sqlValueSyntax = sqlValueSyntax . \(UserId id) -> id
+        sqlValueSyntax = sqlValueSyntax . \(UserId id) -> read $ unpack id :: Int
+
+usrIdFromRow :: Int -> UserId
+usrIdFromRow = UserId . pack . show
 
 instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be UserId where
-        fromBackendRow = UserId <$> fromBackendRow
+        fromBackendRow = usrIdFromRow <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be UserId
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be UserId
 
 -- | ---------------------------------------------------------------------------
 -- | ExpId

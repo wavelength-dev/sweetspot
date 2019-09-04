@@ -36,7 +36,7 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 
 type UserBucketRoute
-   = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Int :> Get '[ JSON] [TestMap]
+   = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Text :> Get '[ JSON] [TestMap]
 
 type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
@@ -68,17 +68,17 @@ createTestMap ub =
       , swapPrice = ub ^. ubPrice
       }
 
-getUserBucketsHandler :: Maybe Text -> Maybe Int -> AppM [TestMap]
+getUserBucketsHandler :: Maybe Text -> Maybe Text -> AppM [TestMap]
 -- Existing user
 getUserBucketsHandler mCmpId (Just uid) = do
   pool <- asks _getDbPool
   res <- liftIO . withResource pool $ \conn -> getUserBuckets conn (UserId uid)
   case (mCmpId, res) of
     (_, buckets@(b:bs)) -> do
-      L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> showNumber uid
+      L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> uid
       return (map createTestMap buckets)
     (Nothing, []) -> do
-      L.info $ "Could not find bucket(s) for userId: " <> showNumber uid
+      L.info $ "Could not find bucket(s) for userId: " <> uid
       throwError notFoundErr
     (Just newCmpId, []) -> do
       let cId = CampaignId newCmpId

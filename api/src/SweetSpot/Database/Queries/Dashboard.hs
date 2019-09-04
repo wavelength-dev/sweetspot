@@ -18,7 +18,8 @@ import           Data.Aeson                     ( fromJSON
                                                 )
 import           Data.Aeson.Lens
 import           Data.Maybe                     ( fromMaybe )
-import           Data.Text                      ( Text )
+import           Data.Text                      ( Text
+                                                , pack )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
@@ -179,7 +180,7 @@ toCheckoutEvent (e, bu) = CheckoutEvent
         }
     where
         (PgJSONB pl) = _evPayload e
-        uid          = UserId $ pl ^?! key "userId" . _Integral & fromIntegral
+        uid          = UserId $ pl ^?! key "userId" . _Integral & show & pack
         oid          = OrderId $ pl ^?! key "orderId" . _Integral & fromIntegral
 
         parseLineItems v = case fromJSON v of

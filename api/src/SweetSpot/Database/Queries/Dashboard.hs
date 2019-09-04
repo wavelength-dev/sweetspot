@@ -100,7 +100,7 @@ getDashboardExperiments conn = do
         traverse addBuckets exps
     where
         toApiBucket b = Api.Bucket
-                { Api._bBucketId     = b ^. bktId & unSerial & BucketId
+                { Api._bBucketId     = b ^. bktId & unSerial
                 , Api._bBucketType   = b ^. bktType
                 , Api._bOriginalSvid = b ^. bktCtrlSvid
                 , Api._bTestSvid     = b ^. bktTestSvid
@@ -157,7 +157,7 @@ distinctUsersInBucket bktKey = pgNubBy_ (^. usrForBkt) $ filter_
         (all_ (db ^. bucketUsers))
 
 getBucketUserCount :: Connection -> BucketId -> IO Int
-getBucketUserCount conn (BucketId id) = do
+getBucketUserCount conn bucketId = do
         mCount <-
                 runBeamPostgres conn
                 $ runSelectReturningOne
@@ -166,14 +166,14 @@ getBucketUserCount conn (BucketId id) = do
                           (countOver_ distinctInGroup_ . (^. bktForUsr))
                           (distinctUsersInBucket bktKey)
         return $ fromMaybe 0 mCount
-        where bktKey = val_ $ SqlSerial id
+        where bktKey = val_ $ SqlSerial bucketId
 
 
 toCheckoutEvent :: (Event, BucketUser) -> CheckoutEvent
 toCheckoutEvent (e, bu) = CheckoutEvent
         { _chkId        = EventId $ e ^. evId & unSerial
         , _chkUserId    = uid
-        , _chkBucketId  = BucketId $ bu ^. bktForUsr & unSerial
+        , _chkBucketId  = bu ^. bktForUsr & unSerial
         , _chkOrderId   = oid
         , _chkTimestamp = e ^. evTimestamp
         , _chkLineItems = pl ^?! key "lineItems" & parseLineItems
@@ -189,7 +189,7 @@ toCheckoutEvent (e, bu) = CheckoutEvent
 
 
 getCheckoutEventsForBucket :: Connection -> BucketId -> IO [CheckoutEvent]
-getCheckoutEventsForBucket conn (BucketId id) = do
+getCheckoutEventsForBucket conn bucketId = do
         events <- runBeamPostgres conn $ runSelectReturningList $ select $ do
                 evs <- all_ (db ^. events)
                 bu  <- filter_
@@ -197,11 +197,10 @@ getCheckoutEventsForBucket conn (BucketId id) = do
                         (all_ (db ^. bucketUsers))
 
                 guard_ (evs ^. evType ==. val_ Checkout)
-                guard_ (bu ^. bktForUsr ==. bktKey)
+                guard_ (bu ^. bktForUsr ==. val_ (SqlSerial bucketId))
 
                 pure (evs, bu)
         return $ fmap toCheckoutEvent events
-        where bktKey = val_ $ SqlSerial id
 
 getBucketImpressionCount :: Connection -> Bucket -> IO Int
 getBucketImpressionCount conn b = do
@@ -229,7 +228,7 @@ getBucketImpressionCount conn b = do
 getBucketStats :: Connection -> Bucket -> IO DBBucketStats
 getBucketStats conn b = do
         let bid = b ^. bktId & unSerial
-        chkEvs     <- getCheckoutEventsForBucket conn (BucketId bid)
+        chkEvs     <- getCheckoutEventsForBucket conn bid
         [usrCount] <-
                 runBeamPostgres conn
                 $ runSelectReturningList
@@ -241,7 +240,7 @@ getBucketStats conn b = do
 
         imprCount <- getBucketImpressionCount conn b
 
-        return $ DBBucketStats { _dbsBucketId        = BucketId bid
+        return $ DBBucketStats { _dbsBucketId        = bid
                                , _dbsBucketType      = b ^. bktType
                                , _dbsOriginalSvid    = b ^. bktCtrlSvid
                                , _dbsTestSvid        = b ^. bktTestSvid

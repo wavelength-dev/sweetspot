@@ -102,7 +102,7 @@ Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
 -- | ---------------------------------------------------------------------------
 data BucketT f
   = Bucket
-  { _bktId :: Columnar f (SqlSerial Int)
+  { _bktId :: Columnar f (SqlSerial BucketId)
   , _bktType :: Columnar f BucketType
   , _bktCtrlSvid :: Columnar f Svid
   , _bktTestSvid :: Columnar f Svid
@@ -118,7 +118,7 @@ deriving instance Eq Bucket
 
 instance Table BucketT where
         data PrimaryKey BucketT f
-          = BucketKey (Columnar f (SqlSerial Int)) deriving (Generic, Beamable)
+          = BucketKey (Columnar f (SqlSerial BucketId)) deriving (Generic, Beamable)
         primaryKey = BucketKey . _bktId
 
 Bucket (LensFor bktId) (LensFor bktType) (LensFor bktCtrlSvid) (LensFor bktTestSvid) (LensFor bktPrice) (LensFor bktCtrlPrice)
@@ -278,6 +278,12 @@ uidType = DataType intType
 uidMigrType :: DataType Postgres (SqlSerial UserId)
 uidMigrType = DataType pgSerialType
 
+bidType :: DataType Postgres (SqlSerial BucketId)
+bidType = DataType intType
+
+bidMigrType :: DataType Postgres (SqlSerial BucketId)
+bidMigrType = DataType pgSerialType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -317,7 +323,7 @@ migration () =
                 <*> createTable
                             "buckets"
                             Bucket
-                                    { _bktId = field "bucket_id" serial notNull
+                                    { _bktId = field "bucket_id" bidMigrType notNull
                                     , _bktType      = field "bucket_type"
                                                             btType
                                                             notNull
@@ -342,7 +348,7 @@ migration () =
                                     { _bktForUsr =
                                             BucketKey
                                                     (field "bucket_id"
-                                                           serial
+                                                           bidMigrType
                                                            notNull
                                                     )
                                     , _usrForBkt =
@@ -401,7 +407,7 @@ migration () =
                                     , _bktForExp =
                                             BucketKey
                                                     (field "bucket_id"
-                                                           serial
+                                                           bidMigrType
                                                            notNull
                                                     )
                                     }

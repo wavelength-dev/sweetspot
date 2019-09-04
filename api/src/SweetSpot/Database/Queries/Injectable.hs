@@ -68,7 +68,7 @@ getUserBuckets conn uid = do
                         , _ubTestSvid     = bkt ^. bktTestSvid
                         , _ubPrice        = bkt ^. bktPrice
                         , _ubExpId        = ExpId $ exp ^. expId & unSerial
-                        , _ubBucketId     = BucketId $ bkt ^. bktId & unSerial
+                        , _ubBucketId     = bkt ^. bktId & unSerial
                         , _ubBucketType   = bkt ^. bktType
                         , _ubControlPrice = bkt ^. bktCtrlPrice
                         }
@@ -97,7 +97,7 @@ assignUserToCampaign conn (cmpId, usrId) = do
         return $ cmpUsr ^. cmpForUsr
 
 assignUserToBucket :: Connection -> (UserId, BucketId) -> IO ()
-assignUserToBucket conn (usrId', BucketId bktId') =
+assignUserToBucket conn (usrId', bktId') =
         runBeamPostgres conn
                 $ runInsert
                 $ insert (db ^. bucketUsers)
@@ -123,15 +123,15 @@ bucketByTypePerExpInCampaign conn (cid, btype) = do
                 guard_ (_expForBkt expBkts `references_` exps)
                 guard_ (_bktForExp expBkts `references_` bkts)
 
-                guard_ (bkts ^. bktType ==. (val_ btype))
-                guard_ ((cmps ^. cmpId) ==. val_ cid)
+                guard_ (bkts ^. bktType ==. val_ btype)
+                guard_ (cmps ^. cmpId ==. val_ cid)
 
                 pure (exps, bkts)
 
         return $ fmap
                 (\(exp, bkt) ->
                         ( exp ^. expId & unSerial & ExpId
-                        , bkt ^. bktId & unSerial & BucketId
+                        , bkt ^. bktId & unSerial
                         )
                 )
                 res
@@ -168,7 +168,7 @@ insertEvent conn (eventType, json) =
                 $ insert (db ^. events)
                 $ insertExpressions
                           [ Event { _evId        = default_
-                                  , _evType = val_ eventType
+                                  , _evType      = val_ eventType
                                   , _evTimestamp = now_
                                   , _evPayload   = val_ $ PgJSONB json
                                   }

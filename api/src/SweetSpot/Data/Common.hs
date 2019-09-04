@@ -117,6 +117,14 @@ instance ToJSON ExpId
 
 instance FromJSON ExpId
 
+instance HasSqlValueSyntax be Int => HasSqlValueSyntax be ExpId where
+        sqlValueSyntax = sqlValueSyntax . \(ExpId id) -> id
+
+instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be ExpId where
+        fromBackendRow = ExpId <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be ExpId
+
 -- | ---------------------------------------------------------------------------
 -- | BucketId
 -- | ---------------------------------------------------------------------------
@@ -127,6 +135,14 @@ newtype BucketId =
 instance ToJSON BucketId
 
 instance FromJSON BucketId
+
+instance HasSqlValueSyntax be Int => HasSqlValueSyntax be BucketId where
+        sqlValueSyntax = sqlValueSyntax . \(BucketId id) -> id
+
+instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be BucketId where
+        fromBackendRow = BucketId <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be BucketId
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignId

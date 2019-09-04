@@ -145,6 +145,4 @@ observeButtons testMapsMap = do
             Just element -> setCheckoutOption testMapsMap element
 
 attachObservers :: TestMapsMap -> Effect Unit
-attachObservers testMapsMap = do
-  observePrices testMapsMap
-  observeButtons testMapsMap
+attachObservers testMapsMap = observePrices testMapsMap *> observeButtons testMapsMap

@@ -13,7 +13,7 @@ RUN stack setup
 RUN stack build --only-dependencies --verbosity warn
 
 COPY ./api /opt/build
-RUN stack build --verbosity warn
+RUN stack build --verbosity warn --copy-bins
 
 # Build the PureScript injectables
 FROM node:12 AS build-dist
@@ -38,7 +38,7 @@ RUN apt-get update --quiet && apt-get install -y --quiet \
   ca-certificates \
   libgmp-dev \
   libpq-dev
-COPY --from=build /opt/build/.stack-work/install/x86_64-linux/lts-14.4/8.6.5/bin/sweetspot-exe .
+COPY --from=build ~/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY --from=build-dist /opt/build-dist/sweetspot*.js /opt/dist/
 

@@ -1,9 +1,9 @@
-FROM 586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot-build AS build
+FROM fpco/stack-build:lts-14.4 AS build
 
 WORKDIR /opt/build
 
 # We depend on postgres
-RUN apt-get update --quiet && apt-get install -y --quiet libpq-dev
+RUN apt-get update --quiet && apt-get install -y --quiet libpq-dev libc6
 
 # Install deps first for improved caching
 COPY ./api/stack.yaml .

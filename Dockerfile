@@ -3,7 +3,7 @@ FROM fpco/stack-build:lts-14.4 AS build
 WORKDIR /opt/build
 
 # We depend on postgres
-RUN apt-get update --quiet && apt-get install -y --quiet libpq-dev libc6
+RUN apt-get update --quiet && apt-get install -y --quiet libpq-dev
 
 # Install deps first for improved caching
 COPY ./api/stack.yaml .
@@ -37,7 +37,8 @@ WORKDIR /opt/sweetspot
 RUN apt-get update --quiet && apt-get install -y --quiet \
   ca-certificates \
   libgmp-dev \
-  libpq-dev
+  libpq-dev \
+  libc6
 COPY --from=build /root/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY --from=build-dist /opt/build-dist/sweetspot*.js /opt/dist/

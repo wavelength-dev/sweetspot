@@ -12,6 +12,7 @@ import SweetSpot.Database (Pool)
 data AppConfig = AppConfig
   { environment :: !String
   , shopifyApiRoot :: !String
+  , shopifyAccessTokenEndpoint :: !String
   , shopifyClientId :: !String
   , shopifyClientSecret :: !String
   , shopifyOAuthAccessToken :: !String

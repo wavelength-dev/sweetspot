@@ -63,6 +63,7 @@ runServer = do
     config = AppConfig
       { environment = Env.environment envConfig
       , shopifyApiRoot = Env.shopifyApiRoot envConfig
+      , shopifyAccessTokenEndpoint = Env.shopifyAccessTokenEndpoint envConfig
       , shopifyClientId = Env.shopifyClientId envConfig
       , shopifyClientSecret = Env.shopifyClientSecret envConfig
       , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken envConfig

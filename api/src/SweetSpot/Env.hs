@@ -17,6 +17,7 @@ data EnvConfig = EnvConfig
   , dbUser :: String
   , environment :: String
   , shopifyApiRoot :: String
+  , shopifyAccessTokenEndpoint :: String
   , shopifyClientId :: String
   , shopifyClientSecret :: String
   , shopifyOAuthAccessToken :: String
@@ -33,6 +34,7 @@ instance FromEnv EnvConfig where
       <*> env "DB_USER"
       <*> env "ENVIRONMENT"
       <*> env "SHOPIFY_API_ROOT"
+      <*> env "SHOPIFY_ACCESS_TOKEN_ENDPOINT"
       <*> env "SHOPIFY_CLIENT_ID"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"

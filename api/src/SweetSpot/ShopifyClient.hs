@@ -118,7 +118,7 @@ exchangeAccessToken :: Text -> AppM Text
 exchangeAccessToken code = do
   config <- asks _getConfig
   let
-    apiRoot = shopifyApiRoot config
+    accessTokenRoute = shopifyAccessTokenEndpoint config
     body = toJSON $ ExchangeBody
       { client_id = pack $ shopifyClientId config
       , client_secret = pack $ shopifyClientSecret config
@@ -128,6 +128,6 @@ exchangeAccessToken code = do
       & header "Accept" .~ ["application/json"]
       & header "Content-Type" .~ ["application/json"]
 
-  r <- liftIO $ postWith opts (apiRoot <> "/oauth/access_token") body
+  r <- liftIO $ postWith opts accessTokenRoute body
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String

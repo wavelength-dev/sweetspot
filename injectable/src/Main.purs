@@ -27,7 +27,12 @@ app = do
   mCid <- liftEffect $ getCampaignId
   mSiteId <- liftEffect getSiteId
   site <- case mSiteId of
-    Left hostname -> throwError $ ReportErr { message: "Site not recognized, can't control checkout, hostname was " <> hostname, payload: "" }
+    Left hostname ->
+      throwError
+        $ ReportErr
+            { message: "Site not recognized, can't control checkout, hostname was " <> hostname
+            , payload: ""
+            }
     Right site -> pure site
   ubp <- getUserBucketProvisions mUid mCid
   testMaps <- getTestMaps ubp
@@ -36,8 +41,14 @@ app = do
   liftEffect $ setUserId (NonEmptyArray.head testMaps)
   liftEffect
     $ case site of
-        LibertyPrice -> LP.setCheckout testMapsMap *> applyPriceVariations testMapsMap *> LP.observePrices testMapsMap
-        Longvadon -> Lv.setCheckout testMapsMap *> applyPriceVariations testMapsMap *> Lv.attachObservers testMapsMap
+        LibertyPrice ->
+          LP.setCheckout testMapsMap
+          *> applyPriceVariations testMapsMap
+          *> LP.observePrices testMapsMap
+        Longvadon ->
+          Lv.setCheckout testMapsMap
+          *> applyPriceVariations testMapsMap
+          *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site
   liftEffect $ launchAff_ trackView
 

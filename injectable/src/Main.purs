@@ -43,8 +43,20 @@ app = do
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of
-  Left err -> runAff_ (\_ -> Console.error $ show err) (postLogPayload $ show err)
+  Left appErr -> runAff_ (onLogPosted appErr) (postLogPayload $ show appErr)
   Right _ -> pure unit
+  where
+  -- If logging to the server failed we still log to console.
+  onLogPosted appErr (Left logPostingErr) = Console.error $ format logPostingErr appErr
+
+  onLogPosted _ (Right _) = pure unit
+
+  format logErr appErr =
+    "Failed to post log message, falling back to console.\n"
+      <> "Logging error: "
+      <> show logErr
+      <> "App error: "
+      <> show appErr
 
 main :: Effect Unit
 main =
@@ -54,5 +66,10 @@ main =
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message
-          Left (Noop reason) -> runAff_ (\_ -> Console.error reason) (postLogPayload reason)
+          Left (Noop reason) -> runAff_ (onLogResult reason) (postLogPayload reason)
           Right _ -> pure unit
+  where
+  -- If we fail to communicate why we short-circuted to the server, we fallback to logging to console.
+  onLogResult reason (Left err) = Console.errorShow err *> Console.info reason
+
+  onLogResult _ (Right _) = pure unit

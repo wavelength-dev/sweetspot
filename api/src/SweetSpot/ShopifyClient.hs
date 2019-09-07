@@ -124,6 +124,10 @@ exchangeAccessToken code = do
       , client_secret = pack $ shopifyClientSecret config
       , code = code
       }
-  r <- liftIO $ post (apiRoot <> "/oauth/access_token") body
+    opts = defaults
+      & header "Accept" .~ ["application/json"]
+      & header "Content-Type" .~ ["application/json"]
+
+  r <- liftIO $ postWith opts (apiRoot <> "/oauth/access_token") body
   json <- asValue r
   return $ json ^?! responseBody . key "access_token" . _String

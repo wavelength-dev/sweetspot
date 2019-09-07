@@ -2,12 +2,12 @@
 
 module SweetSpot.AppM where
 
-import Control.Monad.Reader (ReaderT)
-import GHC.Generics (Generic)
-import Servant (Handler)
-import System.Log.FastLogger (LoggerSet)
+import           Control.Monad.Reader           ( ReaderT )
+import           GHC.Generics                   ( Generic )
+import           Servant                        ( Handler )
+import           System.Log.FastLogger          ( LoggerSet )
 
-import SweetSpot.Database (Pool)
+import           SweetSpot.Database             ( Pool )
 
 data AppConfig = AppConfig
   { environment :: !String

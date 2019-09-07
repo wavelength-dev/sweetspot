@@ -25,13 +25,13 @@ else
 fi
 
 echo "=> Checking commit has finished building"
-IMAGE_META="$( aws ecr describe-images --repository-name=sweetspot --image-ids=imageTag=${COMMIT} 2> /dev/null )"
+IMAGE_META="$(aws ecr describe-images --repository-name=sweetspot --image-ids=imageTag=${COMMIT} 2> /dev/null)"
 
 if [[ $? == 0 ]]; then
-    echo "=> Build has finished, continuing deployment"
+  echo "=> Build has finished, continuing deployment"
 else
-    echo "=> No image found by this tag, perhaps the build is still in progress"
-    exit 1
+  echo "=> No image found by this tag, perhaps the build is still in progress"
+  exit 1
 fi
 
 # Update sweetspot deployment to latest image

@@ -16,11 +16,9 @@ data EnvConfig = EnvConfig
   , dbPort :: Int
   , dbUser :: String
   , environment :: String
-  , shopifyApiRoot :: String
-  , shopifyAccessTokenEndpoint :: String
-  , shopifyClientId :: String
   , shopifyClientSecret :: String
   , shopifyOAuthAccessToken :: String
+  , targetShop :: String
   } deriving (Show)
 
 instance FromEnv EnvConfig where
@@ -33,11 +31,9 @@ instance FromEnv EnvConfig where
       <*> env "DB_PORT"
       <*> env "DB_USER"
       <*> env "ENVIRONMENT"
-      <*> env "SHOPIFY_API_ROOT"
-      <*> env "SHOPIFY_ACCESS_TOKEN_ENDPOINT"
-      <*> env "SHOPIFY_CLIENT_ID"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"
+      <*> env "TARGET_SHOP"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

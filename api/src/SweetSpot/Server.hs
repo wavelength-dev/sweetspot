@@ -23,6 +23,7 @@ import SweetSpot.Route.Health (HealthAPI, healthHandler)
 import SweetSpot.Route.Injectable (InjectableAPI, injectableHandler)
 import SweetSpot.Route.Static (StaticAPI, staticHandler)
 import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
+import SweetSpot.Shop as Shop
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 import System.Exit (exitWith, ExitCode(..))
 
@@ -59,12 +60,16 @@ runServer = do
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
+  shop <- case Shop.readShop (Env.targetShop envConfig) of
+            Left msg -> error msg
+            Right shop -> return shop
   let
+    shopConfig = getShopConfig shop
     config = AppConfig
       { environment = Env.environment envConfig
-      , shopifyApiRoot = Env.shopifyApiRoot envConfig
-      , shopifyAccessTokenEndpoint = Env.shopifyAccessTokenEndpoint envConfig
-      , shopifyClientId = Env.shopifyClientId envConfig
+      , shopifyApiRoot = Shop.shopApi shopConfig
+      , shopifyAccessTokenEndpoint = Shop.accessTokenEndpoint shopConfig
+      , shopifyClientId = Shop.clientId shopConfig
       , shopifyClientSecret = Env.shopifyClientSecret envConfig
       , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken envConfig
       }

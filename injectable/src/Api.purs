@@ -1,7 +1,7 @@
 module SweetSpot.Api where
 
 import Prelude
-
+import Data.Argonaut ((:=), (~>))
 import Data.Argonaut as Ar
 import Data.Either (Either(..))
 import Effect.Aff (Aff, apathize, attempt)
@@ -20,35 +20,33 @@ data TestMapProvisions
 fetch :: M.Fetch
 fetch = M.fetch windowFetch
 
-jsonHeader :: M.Headers
-jsonHeader = M.makeHeaders { "Content-Type": "application/json" }
-
 fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))
 fetchTestMaps provisions = do
   let
     opts =
       { method: M.getMethod
-      , headers: jsonHeader
+      , headers: M.makeHeaders { "Content-Type": "application/json" }
       }
 
     qs = case provisions of
       UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&" <> campaignIdQueryParam <> "=" <> cid
       OnlyCampaignId (CampaignId cid) -> "?" <> campaignIdQueryParam <> "=" <> cid
       OnlyUserId (UserId uid) -> "?uid=" <> uid
-  response <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts
-  case response of
-    Right res -> M.text res >>= (Ar.jsonParser >=> decodeTestMaps) >>> pure
-    Left err -> pure $ Left $ show err
+  eResponseText <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts >>= M.text
+  pure
+    $ case eResponseText of
+        Left error -> show >>> Left $ error
+        Right responseText -> Ar.jsonParser >=> decodeTestMaps $ responseText
 
-postLogPayload :: String -> Aff M.Response
+postLogPayload :: forall a. Show a => a -> Aff M.Response
 postLogPayload msg = fetch url opts
   where
   url = (M.URL logEndpoint)
 
   opts =
     { method: M.postMethod
-    , headers: jsonHeader
-    , body: "{\"message\": \"" <> msg <> "\"}"
+    , headers: M.makeHeaders { "Content-Type": "application/json" }
+    , body: Ar.stringify $ "message" := show msg ~> Ar.jsonEmptyObject
     }
 
 postEventPayload :: ViewEvent -> Aff Unit
@@ -58,6 +56,6 @@ postEventPayload tv = apathize $ fetch url opts
 
   opts =
     { method: M.postMethod
-    , headers: jsonHeader
+    , headers: M.makeHeaders { "Content-Type": "application/json" }
     , body: Ar.stringify $ encodeViewEvent tv
     }

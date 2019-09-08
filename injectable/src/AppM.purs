@@ -119,16 +119,16 @@ getTestMaps :: TestMapProvisions -> AppM (NonEmptyArray TestMap)
 getTestMaps userBucketProvisions = do
   mBuckets <- liftAff $ fetchTestMaps userBucketProvisions
   case fromArray <$> mBuckets of
-    Left err -> throwError (ReportErr { message: "Error fetching user testMaps", payload: err })
+    Left err -> throwError (ReportErr { message: err, payload: "" })
     Right Nothing -> throwError (ReportErr { message: noBucketErr, payload: "" })
     Right (Just testMaps) -> pure testMaps
   where
-  noBucketErr = "User " <> (maybe "UnknownUid" unwrap mUserId) <> " has no testMaps!"
+  noBucketErr = "User " <> userId <> " has no testMaps!"
 
-  mUserId = case userBucketProvisions of
-    (UserAndCampaignId uid cid) -> Just uid
-    (OnlyUserId uid) -> Just uid
-    _ -> Nothing
+  userId = case userBucketProvisions of
+    (UserAndCampaignId uid cid) -> unwrap uid
+    (OnlyUserId uid) -> unwrap uid
+    _ -> "Unknown UserId"
 
 getCampaignId :: Effect (Maybe CampaignId)
 getCampaignId = window >>= location >>= search >>= pure <<< parseCampaignId

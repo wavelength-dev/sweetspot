@@ -21,7 +21,7 @@ import Record (merge)
 import SweetSpot.Data.Codec (encodeCheckoutEvent)
 import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
-import SweetSpot.Api (jsonHeader, postLogPayload)
+import SweetSpot.Api (postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)
@@ -86,7 +86,7 @@ trackEvent :: CheckoutEvent -> Aff (Either Error Response)
 trackEvent event = attempt $ fetch (M.URL eventEndpoint) opts
   where
   opts = { method: M.postMethod
-         , headers: jsonHeader
+         , headers: M.makeHeaders { "Content-Type": "application/json" }
          , body: stringify $ encodeCheckoutEvent event
          }
 

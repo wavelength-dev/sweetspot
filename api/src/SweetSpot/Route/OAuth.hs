@@ -5,24 +5,25 @@
 module SweetSpot.Route.OAuth
   ( OAuthAPI
   , oauthHandler
-  ) where
+  )
+where
 
-import Data.Text (Text)
-import Servant
-import SweetSpot.AppM (AppM)
-import SweetSpot.Data.Api (OkResponse(..))
-import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (internalServerErr)
-import SweetSpot.ShopifyClient (exchangeAccessToken)
+import           Data.Text                      ( Text )
+import           Servant
+import           SweetSpot.AppM                 ( AppM )
+import           SweetSpot.Data.Api             ( OkResponse(..) )
+import qualified SweetSpot.Logger              as L
+import           SweetSpot.Route.Util           ( internalServerErr )
+import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
 
 type RedirectRoute
-   = "redirect" :> QueryParam "code" Text :> QueryParam "hmac" Text :> QueryParam "timestamp" Text :> QueryParam "state" Text :> QueryParam "shop" Text :> Get '[JSON] OkResponse
+  = "redirect" :> QueryParam "code" Text :> QueryParam "hmac" Text :> QueryParam "timestamp" Text :> QueryParam "state" Text :> QueryParam "shop" Text :> Get '[JSON] OkResponse
 
 type OAuthAPI = "oauth" :> RedirectRoute
 
 -- | TODO: implement this properly
-redirectHandler ::
-     Maybe Text
+redirectHandler
+  :: Maybe Text
   -> Maybe Text
   -> Maybe Text
   -> Maybe Text

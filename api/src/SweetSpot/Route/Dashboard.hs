@@ -11,7 +11,7 @@ import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Control.Monad (unless)
-import Data.Aeson (Result(..), parseJSON)
+import Data.Aeson (Result(..), parseJSON, Value(..))
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
 import qualified Data.List as L
@@ -69,6 +69,7 @@ createExperimentHandler ce = do
     withNewPrice =
       json
         & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+        & key "product" . key "variants" . values . key "image_id" .~ Null
         & key "product" . key "handle" . _String <>~ "-ssv"
         & key "product" . key "product_type" . _String .~ "sweetspot-variant"
 

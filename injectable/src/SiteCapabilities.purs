@@ -132,7 +132,7 @@ applyPriceVariation testMaps el = do
   case mTestMap, Config.dryRunMode of
     (Just testMap), DryRun -> do
       nf <- numberFormat
-      formattedPrice <- formatNumber (Int.toNumber testMap.swapPrice) nf
+      formattedPrice <- formatNumber testMap.swapPrice nf
       Element.setAttribute "data-ssdr__price" formattedPrice el
-    (Just testMap), Live -> setPrice (Int.toNumber testMap.swapPrice) el
+    (Just testMap), Live -> setPrice testMap.swapPrice el
     Nothing, _ -> pure unit

@@ -147,10 +147,12 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
   updateLink el = do
     mHref <- SiteC.getAttribute "href" el
     let
-      mProductUrl = mHref
-        >>= String.split (Pattern "?") >>> A.head
-        >>= String.stripPrefix (Pattern "/collections/")
-        >>= String.stripSuffix (Pattern "-ssv")
+      mProductUrl =
+        mHref
+          >>= String.split (Pattern "?")
+          >>> A.head
+          >>= String.stripPrefix (Pattern "/collections/")
+          >>= String.stripSuffix (Pattern "-ssv")
     case mProductUrl, dryRunMode of
       Nothing, _ -> pure unit
       Just productUrl, DryRun -> SiteC.setAttribute "data-ssdr__href" productUrl el

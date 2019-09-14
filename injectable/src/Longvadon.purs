@@ -5,7 +5,7 @@ import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
-import Data.String (stripPrefix) as String
+import Data.String as String
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import SweetSpot.Api (postLogPayload) as Api

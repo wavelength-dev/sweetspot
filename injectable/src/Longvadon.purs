@@ -71,6 +71,9 @@ setCheckoutOption testMaps el = do
 
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button
+-- <button class="btn product__add-to-cart-button my-additional-btn" data-cart-submit="" type="button" name="add" data-vrnt="20609192362027" tabindex="0">
+--  ADD TO CART
+-- </button>
 setSlickCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
 setSlickCheckoutOption testMaps el = do
   mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el

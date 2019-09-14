@@ -1,6 +1,7 @@
 module SweetSpot.Longvadon where
 
 import Prelude
+import Data.Array as A
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
@@ -144,6 +145,7 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
     mHref <- SiteC.getAttribute "href" el
     let
       mProductUrl = mHref
+        >>= String.split (Pattern "?") >>> A.head
         >>= String.stripPrefix (Pattern "/collections/")
         >>= String.stripSuffix (Pattern "-ssv")
     case mProductUrl, dryRunMode of

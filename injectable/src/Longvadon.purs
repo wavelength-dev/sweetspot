@@ -28,29 +28,33 @@ import Web.DOM.ParentNode (QuerySelector(..))
 -- cart page, add to cart slider
 -- Product Page Add to Cart Query Selector
 -- Matches the elements that determine the product that is added to cart on the product page.
-productCheckoutOptionSelector :: QuerySelector
-productCheckoutOptionSelector = QuerySelector "select.product-form__master-select option"
+productAddToCartOptionSelector :: QuerySelector
+productAddToCartOptionSelector = QuerySelector "select.product-form__master-select option"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
-slickCarouselOptionSelector :: QuerySelector
-slickCarouselOptionSelector = QuerySelector "#color-slider input[value]"
+productSlickAddToCartOptionSelector :: QuerySelector
+productSlickAddToCartOptionSelector = QuerySelector "#color-slider input[value]"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
 cartSlickCarouselOptionSelector :: QuerySelector
 cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 
-cartSlickCarouselCheckoutButtonSelector :: QuerySelector
-cartSlickCarouselCheckoutButtonSelector = QuerySelector "button.product__add-to-cart-button"
+cartSlickCarouselAddToCartButtonSelector :: QuerySelector
+cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to-cart-button"
 
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
 setCheckout :: forall m. DomAction m => TestMapsMap -> m Unit
 setCheckout testMaps = do
-  SiteC.queryDocument productCheckoutOptionSelector >>= traverse_ (setCheckoutOption testMaps)
-  SiteC.queryDocument slickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
-  SiteC.queryDocument cartSlickCarouselOptionSelector >>= traverse_ (setCheckoutOption testMaps)
-  SiteC.queryDocument cartSlickCarouselCheckoutButtonSelector >>= traverse_ (setSlickCheckoutOption testMaps)
+  -- Makes sure the correct variant is added to cart on product page.
+  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  -- Makes sure the correct variant is co-added to cart with the slick carousel on product page.
+  SiteC.queryDocument productSlickAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  -- Makes sure the correct variant is offered to add to cart, when selecting a variant from the slick carousel on the cart page.
+  SiteC.queryDocument cartSlickCarouselOptionSelector >>= traverse_ (setCheckoutSlickCheckout testMaps)
+  -- Makes sure the correct variant is added to cart from the slick carousel on the cart page, without ever selecting a variant.
+  SiteC.queryDocument cartSlickCarouselAddToCartButtonSelector >>= traverse_ (setSlickCheckoutOption testMaps)
 
 -- Normal product page add-to-cart source. The id of the select is manipulated so that on form submit the right data gets sent by Shopify's add-to-cart script.
 -- <select name="id[]" class="product-form__master-select supports-no-js" data-master-select="">
@@ -78,8 +82,8 @@ readStock = case _ of
   "deny" -> Deny
   _ -> Other
 
-setSlickCheckoutOptionPrice :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
-setSlickCheckoutOptionPrice testMaps el = do
+setCheckoutSlickCheckout :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setCheckoutSlickCheckout testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
   mRawStockStatus <- SiteC.getAttribute "data-stock" el
   let
@@ -163,7 +167,7 @@ observePrices testMapsMap = do
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
 observeSlickButtons testMapsMap = do
-  elements <- SiteC.queryDocument cartSlickCarouselCheckoutButtonSelector
+  elements <- SiteC.queryDocument cartSlickCarouselAddToCartButtonSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation
   for_ elements \el -> MutationObserver.observe (Element.toNode el) { attributes: true, attributeFilter: [ "data-vrnt" ] } mutationObserver
   where

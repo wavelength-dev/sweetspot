@@ -12,6 +12,7 @@ import Effect.Aff (launchAff_)
 import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
+import SweetSpot.Intl (formatNumber, numberFormat) as Intl
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -46,7 +47,7 @@ cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
-setCheckout :: forall m. DomAction m => TestMapsMap -> m Unit
+setCheckout :: TestMapsMap -> Effect Unit
 setCheckout testMaps = do
   -- Makes sure the correct variant is added to cart on product page.
   SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
@@ -83,7 +84,7 @@ readStock = case _ of
   "deny" -> Deny
   _ -> Other
 
-setCheckoutSlickCheckout :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setCheckoutSlickCheckout :: TestMapsMap -> Element -> Effect Unit
 setCheckoutSlickCheckout testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
   mRawStockStatus <- SiteC.getAttribute "data-stock" el
@@ -97,17 +98,19 @@ setCheckoutSlickCheckout testMaps el = do
       SiteC.setAttribute "data-ssdr__value" testMap.swapId el
         *> case mStockStatus of
             Nothing -> SiteC.setAttribute "data-ssdr__pric" (show testMap.swapPrice) el
-            Just stockStatus -> SiteC.setAttribute "data-ssdr__pric" (getPrice testMap stockStatus) el
+            Just stockStatus -> getPrice testMap stockStatus >>= \price -> SiteC.setAttribute "data-ssdr__pric" price el
     Just testMap, Live ->
       do
         SiteC.setAttribute "value" testMap.swapId el
         *> case mStockStatus of
             Nothing -> SiteC.setAttribute "data-pric" (show testMap.swapPrice) el
-            Just stockStatus -> SiteC.setAttribute "data-pric" (getPrice testMap stockStatus) el
+            Just stockStatus -> getPrice testMap stockStatus >>= \price -> SiteC.setAttribute "data-pric" price el
   where
   getPrice testMap = case _ of
-    Deny -> "Sold out"
-    Other -> show testMap.swapPrice
+    Deny -> pure "Sold out"
+    Other -> do
+      nf <- Intl.numberFormat
+      Intl.formatNumber testMap.swapPrice nf
 
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button

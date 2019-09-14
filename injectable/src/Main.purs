@@ -77,10 +77,5 @@ main =
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message
-          Left (Noop reason) -> runAff_ (onLogResult reason) (postLogPayload reason)
+          Left (Noop reason) -> pure unit
           Right _ -> pure unit
-  where
-  -- If we fail to communicate why we short-circuted to the server, we fallback to logging to console.
-  onLogResult reason (Left err) = Console.errorShow err *> Console.info reason
-
-  onLogResult _ (Right _) = pure unit

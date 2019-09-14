@@ -132,8 +132,8 @@ observePrices testMapsMap = do
             Nothing -> launchAff_ $ Api.postLogPayload "WARN: observed node was not an element"
             Just element -> SiteC.applyPriceVariation testMapsMap element
 
-observeButtons :: TestMapsMap -> Effect Unit
-observeButtons testMapsMap = do
+observeSlickButtons :: TestMapsMap -> Effect Unit
+observeSlickButtons testMapsMap = do
   elements <- SiteC.queryDocument cartSlickCarouselCheckoutButtonSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation
   for_ elements \el -> MutationObserver.observe (Element.toNode el) { attributes: true, attributeFilter: [ "data-vrnt" ] } mutationObserver
@@ -147,4 +147,4 @@ observeButtons testMapsMap = do
             Just element -> setCheckoutOption testMapsMap element
 
 attachObservers :: TestMapsMap -> Effect Unit
-attachObservers testMapsMap = observePrices testMapsMap *> observeButtons testMapsMap
+attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap

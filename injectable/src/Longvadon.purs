@@ -69,6 +69,41 @@ setCheckoutOption testMaps el = do
     Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
     Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId el
 
+data StockStatus
+  = Deny
+  | Other
+
+readStock :: String -> StockStatus
+readStock = case _ of
+  "deny" -> Deny
+  _ -> Other
+
+setSlickCheckoutOptionPrice :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setSlickCheckoutOptionPrice testMaps el = do
+  mVariantId <- SiteC.getAttribute "value" el
+  mRawStockStatus <- SiteC.getAttribute "data-stock" el
+  let
+    mTestMap = mVariantId >>= flip Map.lookup testMaps
+
+    mStockStatus = readStock <$> mRawStockStatus
+  case mTestMap, dryRunMode of
+    Nothing, _ -> pure unit
+    Just testMap, DryRun ->
+      SiteC.setAttribute "data-ssdr__value" testMap.swapId el
+        *> case mStockStatus of
+            Nothing -> SiteC.setAttribute "data-ssdr__pric" (show testMap.swapPrice) el
+            Just stockStatus -> SiteC.setAttribute "data-ssdr__pric" (getPrice testMap stockStatus) el
+    Just testMap, Live ->
+      do
+        SiteC.setAttribute "value" testMap.swapId el
+        *> case mStockStatus of
+            Nothing -> SiteC.setAttribute "data-pric" (show testMap.swapPrice) el
+            Just stockStatus -> SiteC.setAttribute "data-pric" (getPrice testMap stockStatus) el
+  where
+  getPrice testMap = case _ of
+    Deny -> "Sold out"
+    Other -> show testMap.swapPrice
+
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button
 -- <button class="btn product__add-to-cart-button my-additional-btn" data-cart-submit="" type="button" name="add" data-vrnt="20609192362027" tabindex="0">

@@ -4,7 +4,6 @@ import Prelude
 
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Int (toNumber) as Int
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Effect (Effect)

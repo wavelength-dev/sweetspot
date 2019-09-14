@@ -12,7 +12,7 @@ import Effect.Aff (launchAff_)
 import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
-import SweetSpot.Intl (formatNumber, numberFormat) as Intl
+import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -108,9 +108,7 @@ setCheckoutSlickCheckout testMaps el = do
   where
   getPrice testMap = case _ of
     Deny -> pure "Sold out"
-    Other -> do
-      nf <- Intl.numberFormat
-      Intl.formatNumber testMap.swapPrice nf
+    Other -> Intl.formatPrice testMap.swapPrice
 
 -- Deal with price and add to cart in Slick carousel.
 -- button.product__add-to-cart-button

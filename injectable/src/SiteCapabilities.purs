@@ -12,7 +12,7 @@ import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
 import SweetSpot.Data.Config (DryRunMode(..), idClass)
 import SweetSpot.Data.Config (dryRunMode, idClass) as Config
 import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
-import SweetSpot.Intl (formatNumber, numberFormat)
+import SweetSpot.Intl (formatPrice) as Intl
 import Web.DOM (Element, Node, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
@@ -96,8 +96,7 @@ getIdFromPriceElement el = do
 
 setNodePrice :: Number -> Node -> Effect Unit
 setNodePrice price node = do
-  nf <- numberFormat
-  formattedPrice <- formatNumber price nf
+  formattedPrice <- Intl.formatPrice price
   setTextContent formattedPrice node
 
 setPrice :: Number -> Element -> Effect Unit
@@ -131,8 +130,7 @@ applyPriceVariation testMaps el = do
     mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
   case mTestMap, Config.dryRunMode of
     (Just testMap), DryRun -> do
-      nf <- numberFormat
-      formattedPrice <- formatNumber testMap.swapPrice nf
+      formattedPrice <- Intl.formatPrice testMap.swapPrice
       Element.setAttribute "data-ssdr__price" formattedPrice el
     (Just testMap), Live -> setPrice testMap.swapPrice el
     Nothing, _ -> pure unit

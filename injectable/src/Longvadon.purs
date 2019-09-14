@@ -94,7 +94,7 @@ setSlickCheckoutOption testMaps el = do
 --     <option value="16408520753195" data-pric=" Sold out" data-stock="deny">38/40 / XL / Black</option>
 --   </select>
 -- </div>
--- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL.
+-- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL. Also removes the `-ssv` from the slug so that link takes you to original product.
 convertSsvCollectionUrls :: forall m. DomAction m => m Unit
 convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>= traverse_ updateLink
   where

@@ -97,14 +97,22 @@ setCheckoutSlickCheckout testMaps el = do
     Just testMap, DryRun ->
       SiteC.setAttribute "data-ssdr__value" testMap.swapId el
         *> case mStockStatus of
-            Nothing -> SiteC.setAttribute "data-ssdr__pric" (show testMap.swapPrice) el
-            Just stockStatus -> getPrice testMap stockStatus >>= \price -> SiteC.setAttribute "data-ssdr__pric" price el
+            Nothing -> do
+              price <- Intl.formatPrice testMap.swapPrice
+              SiteC.setAttribute "data-ssdr__pric" price el
+            Just stockStatus -> do
+              price <- getPrice testMap stockStatus
+              SiteC.setAttribute "data-ssdr__pric" price el
     Just testMap, Live ->
       do
         SiteC.setAttribute "value" testMap.swapId el
         *> case mStockStatus of
-            Nothing -> SiteC.setAttribute "data-pric" (show testMap.swapPrice) el
-            Just stockStatus -> getPrice testMap stockStatus >>= \price -> SiteC.setAttribute "data-pric" price el
+            Nothing -> do
+              price <- Intl.formatPrice testMap.swapPrice
+              SiteC.setAttribute "data-pric" price el
+            Just stockStatus -> do
+              price <- getPrice testMap stockStatus
+              SiteC.setAttribute "data-pric" price el
   where
   getPrice testMap = case _ of
     Deny -> pure "Sold out"

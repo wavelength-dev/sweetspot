@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.String as String
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
-import SweetSpot.Data.Config (DryRunMode(..), idClass)
+import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config (dryRunMode, idClass) as Config
 import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
@@ -88,7 +88,7 @@ getIdFromPriceElement el = do
   pure $ findSweetSpotTag classNames >>= getSkuFromTag <#> Sku
   where
   findSweetSpotTag :: Array String -> Maybe String
-  findSweetSpotTag = Array.find (String.contains (String.Pattern idClass))
+  findSweetSpotTag = Array.find (String.contains (String.Pattern Config.idClass))
 
   getSkuFromTag :: String -> Maybe String
   getSkuFromTag tag = Array.last $ String.split (String.Pattern "--") tag

@@ -107,8 +107,8 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
         >>= String.stripSuffix (Pattern "-ssv")
     case mProductUrl, dryRunMode of
       Nothing, _ -> pure unit
-      Just productUrl, Live -> SiteC.setAttribute "href" productUrl el
       Just productUrl, DryRun -> SiteC.setAttribute "data-ssdr__href" productUrl el
+      Just productUrl, Live -> SiteC.setAttribute "href" productUrl el
 
 -- The traversal here is a bit risky. We watch for price elements being touched, this is taken as our que that the cart page slick carousel add to cart button has also been updated with a variant that possibly has a test price variant associated. We therefore find the button using an assumption heavy DOM traversal and reset the button to its correct state.
 resetSlickAddToCartButton :: TestMapsMap -> Element -> Effect Unit

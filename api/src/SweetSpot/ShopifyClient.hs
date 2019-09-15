@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.ShopifyClient where
 
 import Prelude hiding (id, product)
 
 import Control.Lens
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
+import Control.Monad.Catch (MonadThrow)
+import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad.Reader.Class (asks, MonadReader(..))
 import Data.Aeson
 import Data.Aeson.Lens (key, values, _String)
 import Data.Aeson.Types (parse)
@@ -69,14 +71,14 @@ toProduct p =
   where
     toImage i = Image { _iSrc = src i }
 
-getOpts :: AppM Network.Wreq.Options
+getOpts :: (MonadReader AppCtx m) => m Network.Wreq.Options
 getOpts = do
   oauthToken <- asks (shopifyOAuthAccessToken . _getConfig)
   let token = BLU.fromString oauthToken
   return $ defaults & header "X-Shopify-Access-Token" .~ [token]
 
 
-fetchProducts :: AppM (Maybe [Product])
+fetchProducts :: (MonadReader AppCtx m, MonadIO m, MonadThrow m) => m (Maybe [Product])
 fetchProducts = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
   opts <- getOpts
@@ -90,15 +92,15 @@ fetchProducts = do
       Success ps -> Just (fmap toProduct ps)
       Error e -> trace e Nothing
 
-fetchProduct :: Pid -> AppM Value
+fetchProduct :: (MonadReader AppCtx m, MonadIO m, MonadThrow m) => Pid -> m Value
 fetchProduct (Pid pid) = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
   opts <- getOpts
-  r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> (unpack pid) <> ".json"
+  r <- liftIO $ getWith opts $ apiRoot <> "/products/" <> unpack pid <> ".json"
   json <- asJSON r
   return $ json ^. responseBody
 
-createProduct :: Value -> AppM (Result Product)
+createProduct :: (MonadReader AppCtx m, MonadIO m, MonadThrow m) => Value -> m (Result Product)
 createProduct v = do
   apiRoot <- asks (shopifyApiRoot . _getConfig)
   opts <- getOpts
@@ -114,7 +116,7 @@ data ExchangeBody = ExchangeBody
 
 instance ToJSON ExchangeBody
 
-exchangeAccessToken :: Text -> AppM Text
+exchangeAccessToken :: (MonadReader AppCtx m, MonadIO m, MonadThrow m) => Text -> m Text
 exchangeAccessToken code = do
   config <- asks _getConfig
   let

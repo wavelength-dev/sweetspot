@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Route.Dashboard
   ( DashboardAPI
@@ -8,8 +9,10 @@ module SweetSpot.Route.Dashboard
   ) where
 
 import Control.Lens
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
+import Control.Monad.Catch (MonadThrow)
+import Control.Monad.Except (MonadError)
+import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad.Reader.Class (asks, MonadReader)
 import Control.Monad (unless)
 import Data.Aeson (Result(..), parseJSON, Value(..))
 import Data.Aeson.Lens (_String, key, values)
@@ -20,7 +23,7 @@ import Data.Pool (withResource)
 import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
-import SweetSpot.AppM (AppCtx(..), AppM)
+import SweetSpot.AppM (AppCtx(..))
 import SweetSpot.Calc (enhanceDBStats)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
@@ -43,19 +46,22 @@ type CampaignStatsRoute
 type DashboardAPI
    = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
 
-getProductsHandler :: AppM [Product]
+getProductsHandler :: (MonadIO m, MonadReader AppCtx m, MonadThrow m, MonadError ServerError m) => m [Product]
 getProductsHandler = do
   maybeProducts <- fetchProducts
   case maybeProducts of
     Just ps -> return ps
     Nothing -> throwError internalServerErr
 
-getExperimentsHandler :: AppM [ExperimentBuckets]
+getExperimentsHandler :: (MonadIO m, MonadReader AppCtx m) => m [ExperimentBuckets]
 getExperimentsHandler = do
   pool <- asks _getDbPool
   liftIO . withResource pool $ \conn -> getDashboardExperiments conn
 
-createExperimentHandler :: CreateExperiment -> AppM OkResponse
+createExperimentHandler
+  :: (MonadIO m, MonadReader AppCtx m, MonadError ServerError m, MonadThrow m)
+  => CreateExperiment
+  -> m OkResponse
 createExperimentHandler ce = do
   pool <- asks _getDbPool
   isValidCampaign <- liftIO . withResource pool
@@ -108,7 +114,9 @@ createExperimentHandler ce = do
       throwError internalServerErr
 
 
-getCampaignStatsHandler :: T.Text -> AppM CampaignStats
+getCampaignStatsHandler
+  :: (MonadIO m, MonadReader AppCtx m, MonadError ServerError m)
+  => T.Text -> m CampaignStats
 getCampaignStatsHandler cmpId = do
   pool <- asks _getDbPool
   let cid = CampaignId cmpId
@@ -121,5 +129,11 @@ getCampaignStatsHandler cmpId = do
     else
       throwError err404
 
+dashboardHandler
+  ::   (MonadReader AppCtx m, MonadIO m, MonadError ServerError m, MonadThrow m)
+  =>   m [Product]
+  :<|> m [ExperimentBuckets]
+  :<|> (CreateExperiment -> m OkResponse)
+  :<|> (T.Text -> m CampaignStats)
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler

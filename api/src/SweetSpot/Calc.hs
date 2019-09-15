@@ -1,7 +1,12 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module SweetSpot.Calc (enhanceDBStats) where
 
 import Control.Lens
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Catch (MonadThrow)
+import Control.Monad.Except (MonadError)
+import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad.Reader.Class (asks, MonadReader)
 import qualified Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe (fromJust)
@@ -84,7 +89,10 @@ enhanceDBExperimentStats stats =
         , _esBuckets = enhancedBucketStats
         }
 
-enhanceDBStats :: DBCampaignStats -> AppM CampaignStats
+enhanceDBStats
+  :: (MonadIO m, MonadReader AppCtx m)
+  => DBCampaignStats
+  -> m CampaignStats
 enhanceDBStats stats = do
     gen <- liftIO createSystemRandom
     controlEstimate <- liftIO $ bootstrap gen controlSample

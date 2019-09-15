@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Route.OAuth
   ( OAuthAPI
@@ -8,9 +9,13 @@ module SweetSpot.Route.OAuth
   )
 where
 
+import           Control.Monad.Catch            ( MonadThrow )
+import           Control.Monad.Except           ( MonadError )
+import           Control.Monad.IO.Class         ( MonadIO )
+import           Control.Monad.Reader.Class     ( asks, MonadReader(..) )
 import           Data.Text                      ( Text )
 import           Servant
-import           SweetSpot.AppM                 ( AppM )
+import           SweetSpot.AppM                 ( AppM, AppCtx )
 import           SweetSpot.Data.Api             ( OkResponse(..) )
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Route.Util           ( internalServerErr )
@@ -39,12 +44,13 @@ type OAuthAPI = "oauth" :> "redirect"
   :> Get '[JSON] OkResponse
 
 redirectHandler
-  :: Maybe Text
+  :: (MonadReader AppCtx m, MonadError ServerError m, MonadIO m, MonadThrow m)
+  => Maybe Text
   -> Maybe Text
   -> Maybe Text
   -> Maybe Text
   -> Maybe Text
-  -> AppM OkResponse
+  -> m OkResponse
 redirectHandler code hmac timestamp state shop = case code of
   Just c -> do
     permCode <- exchangeAccessToken c
@@ -52,4 +58,12 @@ redirectHandler code hmac timestamp state shop = case code of
     return $ OkResponse { message = "Authenticated app" }
   Nothing -> throwError internalServerErr
 
+oauthHandler
+  :: (MonadReader AppCtx m, MonadIO m, MonadError ServerError m, MonadThrow m)
+  => Maybe Text
+  -> Maybe Text
+  -> Maybe Text
+  -> Maybe Text
+  -> Maybe Text
+  -> m OkResponse
 oauthHandler = redirectHandler

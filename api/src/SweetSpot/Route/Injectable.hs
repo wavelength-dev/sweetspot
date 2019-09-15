@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Route.Injectable
   ( InjectableAPI
@@ -10,8 +11,9 @@ module SweetSpot.Route.Injectable
   ) where
 
 import Control.Lens ((^.), (^?))
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
+import Control.Monad.Except (MonadError)
+import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad.Reader.Class (asks, MonadReader)
 import Data.Aeson (Value, encode)
 import Data.Aeson.Lens (_String, key)
 import Data.ByteString as BS (isInfixOf)
@@ -22,7 +24,7 @@ import Network.HTTP.Types (hContentType, status400)
 import Network.Wai (Middleware, requestHeaders, responseLBS)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
-import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM)
+import SweetSpot.AppM (AppConfig(..), AppCtx(..))
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable
@@ -68,7 +70,11 @@ createTestMap ub =
       , swapPrice = ub ^. ubPrice
       }
 
-getUserBucketsHandler :: Maybe Text -> Maybe Text -> AppM [TestMap]
+getUserBucketsHandler
+  :: (MonadReader AppCtx m, MonadIO m, MonadError ServerError m)
+  => Maybe Text
+  -> Maybe Text
+  -> m [TestMap]
 -- Existing user
 getUserBucketsHandler mCmpId (Just uid) = do
   pool <- asks _getDbPool
@@ -105,7 +111,7 @@ getUserBucketsHandler (Just cmpId) Nothing = do
 
 getUserBucketsHandler Nothing Nothing = throwError badRequestErr
 
-trackEventHandler :: Value -> AppM OkResponse
+trackEventHandler :: (MonadReader AppCtx m, MonadIO m) => Value -> m OkResponse
 trackEventHandler val = do
   let pageType = val ^? key "page" . _String
       step = val ^? key "step" . _String
@@ -119,7 +125,7 @@ trackEventHandler val = do
   L.info "Tracked event"
   return OkResponse {message = "Event received"}
 
-trackLogMessageHandler :: Value -> AppM OkResponse
+trackLogMessageHandler :: (MonadReader AppCtx m, MonadIO m) => Value -> m OkResponse
 trackLogMessageHandler val = do
   pool <- asks _getDbPool
   liftIO . withResource pool $ \conn -> insertEvent conn (Log, val)
@@ -150,5 +156,10 @@ originMiddleware ctx app req respond =
         Nothing -> False
         Just referer -> "longvadon" `BS.isInfixOf` referer
 
+injectableHandler
+  :: (MonadReader AppCtx m, MonadIO m, MonadError ServerError m)
+  =>   (Maybe Text -> Maybe Text -> m [TestMap])
+  :<|> (Value -> m OkResponse)
+  :<|> (Value -> m OkResponse)
 injectableHandler =
   getUserBucketsHandler :<|> trackEventHandler :<|> trackLogMessageHandler

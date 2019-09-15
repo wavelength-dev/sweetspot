@@ -8,9 +8,8 @@ module SweetSpot.Route.Health
   ) where
 
 import Servant
-import SweetSpot.AppM (AppM)
 
 type HealthAPI = "health" :> Get '[PlainText] NoContent
 
-healthHandler :: AppM NoContent
+healthHandler :: (Monad m) => m NoContent
 healthHandler = return NoContent

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Logger
   ( info
@@ -9,8 +10,9 @@ module SweetSpot.Logger
   , error'
   ) where
 
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class (liftIO, MonadIO(..))
 import Control.Monad.Reader (asks)
+import Control.Monad.Reader.Class     ( MonadReader(..) )
 import Data.Aeson
   ( ToJSON(..)
   , defaultOptions
@@ -22,7 +24,7 @@ import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
 import Prelude hiding (error, log)
-import SweetSpot.AppM (AppCtx(..), AppM)
+import SweetSpot.AppM (AppCtx(..))
 import System.Log.FastLogger (LoggerSet, ToLogStr(..), pushLogStrLn)
 
 data LogLevel
@@ -50,7 +52,7 @@ instance ToJSON LogMessage where
 instance ToLogStr LogMessage where
   toLogStr = toLogStr . encode
 
-log :: LogLevel -> Text -> AppM ()
+log :: (MonadReader AppCtx m, MonadIO m) => LogLevel -> Text -> m ()
 log lvl msg = do
   logset <- asks _getLogger
   ts <- liftIO getCurrentTime
@@ -58,15 +60,14 @@ log lvl msg = do
     pushLogStrLn logset $
     toLogStr LogMessage {level = lvl, message = msg, timestamp = ts}
 
-info :: Text -> AppM ()
-info msg = log Info msg
+info :: (MonadReader AppCtx m, MonadIO m) => Text -> m ()
+info = log Info
 
-warn :: Text -> AppM ()
-warn msg = log Warn msg
+warn :: (MonadReader AppCtx m, MonadIO m) => Text -> m ()
+warn = log Warn
 
-error :: Text -> AppM ()
-error msg = log Error msg
-
+error :: (MonadReader AppCtx m, MonadIO m) => Text -> m ()
+error = log Error
 
 log' :: LogLevel -> LoggerSet -> Text -> IO ()
 log' lvl logset msg = do

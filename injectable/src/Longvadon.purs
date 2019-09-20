@@ -207,9 +207,6 @@ observeSlickButtons testMapsMap = do
             Nothing -> launchAff_ $ Api.postLogPayload "ERROR: observed node was not an element"
             Just element -> setCheckoutOption testMapsMap element
 
-attachObservers :: TestMapsMap -> Effect Unit
-attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap *> observeProductAddToCartButton testMapsMap
-
 -- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">
 --     <span class="primary-text prdistxt" aria-hidden="false" data-cart-primary-submit-text=""><span class="money" style="text-decoration: line-through;opacity: 0.6;"></span> <span class="money sweetspot__price--hidden sweetspot__price_id--LVMens1Black42ClaspB">$79</span><span> | ADD TO CART</span></span>
 --     <span class="secondary-text" aria-hidden="true" data-cart-secondary-submit-text="">View cart</span>
@@ -227,3 +224,6 @@ observeProductAddToCartButton testMapsMap = do
     -- We expect there to be one
     priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
     for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
+
+attachObservers :: TestMapsMap -> Effect Unit
+attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap

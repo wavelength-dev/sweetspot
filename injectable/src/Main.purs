@@ -43,13 +43,13 @@ app = do
     $ case site of
         LibertyPrice ->
           LP.setCheckout testMapsMap
-          *> applyPriceVariations testMapsMap
-          *> LP.observePrices testMapsMap
+            *> applyPriceVariations testMapsMap
+            *> LP.observePrices testMapsMap
         Longvadon ->
           Lv.setCheckout testMapsMap
-          *> applyPriceVariations testMapsMap
-          *> Lv.applyToVariantSelector testMapsMap
-          *> Lv.attachObservers testMapsMap
+            *> applyPriceVariations testMapsMap
+            *> Lv.applyToVariantSelector testMapsMap
+            *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site
   liftEffect $ launchAff_ trackView
 

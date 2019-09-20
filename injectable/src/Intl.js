@@ -1,7 +1,7 @@
 "use strict";
 
-exports.formatNumber = function (number) {
-    return function (numberFormat) {
+exports.formatNumber = function (numberFormat) {
+    return function (number) {
         return function () {
             return numberFormat.format(number)
         }

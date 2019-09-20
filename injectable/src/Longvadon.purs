@@ -2,11 +2,16 @@ module SweetSpot.Longvadon where
 
 import Prelude
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String as String
+import Data.String.Regex (Regex)
+import Data.String.Regex (replace) as Regex
+import Data.String.Regex.Flags (noFlags) as RegexFlags
+import Data.String.Regex.Unsafe (unsafeRegex) as RegexUnsafe
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import SweetSpot.Api (postLogPayload) as Api
@@ -16,7 +21,7 @@ import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element (fromNode, toNode) as Element
+import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
 import Web.DOM.MutationObserver (MutationObserver)
 import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
@@ -43,6 +48,10 @@ cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 
 cartSlickCarouselAddToCartButtonSelector :: QuerySelector
 cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to-cart-button"
+
+-- Selector for the element used as source for the variant selector on product pages.
+productVariantOptionSelector :: QuerySelector
+productVariantOptionSelector = QuerySelector "select.product-form__master-select option"
 
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
@@ -194,3 +203,37 @@ observeSlickButtons testMapsMap = do
 
 attachObservers :: TestMapsMap -> Effect Unit
 attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap
+
+applyToVariantSelector :: TestMapsMap -> Effect Unit
+applyToVariantSelector testMapsMap = do
+  variantOptionElements <- SiteC.queryDocument productVariantOptionSelector
+  for_ variantOptionElements \variantOptionElement -> do
+    eRawPriceHtml <- getRawPriceHtml variantOptionElement
+    eSwapPrice <- getSwapPrice variantOptionElement
+    case eRawPriceHtml, eSwapPrice of
+      Left err, _ -> launchAff_ $ Api.postLogPayload err
+      _, Left err -> launchAff_ $ Api.postLogPayload err
+      Right rawPriceHtml, Right swapPrice -> do
+        localSwapPrice <- Intl.formatPrice swapPrice
+        let
+          newPriceHtml = Regex.replace priceRegex localSwapPrice rawPriceHtml
+        Element.setAttribute "data-cartbtn" newPriceHtml variantOptionElement
+  where
+  priceRegex :: Regex
+  priceRegex = RegexUnsafe.unsafeRegex ">$.+<" RegexFlags.noFlags
+
+  getRawPriceHtml :: Element -> Effect (Either String String)
+  getRawPriceHtml variantOptionElement =
+    Element.getAttribute "data-cartbtn" variantOptionElement
+      >>= case _ of
+          Nothing -> pure $ Left "Variant source element had empty data-cartbtn attribute!"
+          Just rawPriceHtml -> pure $ Right rawPriceHtml
+
+  getSwapPrice :: Element -> Effect (Either String Number)
+  getSwapPrice variantOptionElement =
+    Element.getAttribute "value" variantOptionElement
+      >>= case _ of
+          Nothing -> pure $ Left "No variant id on variant selector option!"
+          Just variantId -> case Map.lookup variantId testMapsMap of
+            Nothing -> pure $ Left "Unknown variant in variant selector option!"
+            Just testMap -> pure $ Right testMap.swapPrice

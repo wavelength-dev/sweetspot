@@ -15,7 +15,7 @@ import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPr
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
-import SweetSpot.Longvadon (applyToVariantSelector, attachObservers, setCheckout) as Lv
+import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
 import SweetSpot.SiteCapabilities (awaitDomReady)
 
 app :: AppM Unit
@@ -48,7 +48,6 @@ app = do
         Longvadon ->
           Lv.setCheckout testMapsMap
             *> applyPriceVariations testMapsMap
-            *> Lv.applyToVariantSelector testMapsMap
             *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site
   liftEffect $ launchAff_ trackView

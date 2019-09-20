@@ -53,6 +53,12 @@ cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to
 productVariantOptionSelector :: QuerySelector
 productVariantOptionSelector = QuerySelector "select.product-form__master-select option"
 
+addToCartButtonSelector :: QuerySelector
+addToCartButtonSelector = QuerySelector "form.product-form button.product__add-to-cart-button"
+
+addToCartButtonPriceElementSelector :: QuerySelector
+addToCartButtonPriceElementSelector = QuerySelector "form.product-form button.product__add-to-cart-button span[class*=sweetspot__price_id--]"
+
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
 
@@ -202,38 +208,22 @@ observeSlickButtons testMapsMap = do
             Just element -> setCheckoutOption testMapsMap element
 
 attachObservers :: TestMapsMap -> Effect Unit
-attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap
+attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap *> observeProductAddToCartButton testMapsMap
 
-applyToVariantSelector :: TestMapsMap -> Effect Unit
-applyToVariantSelector testMapsMap = do
-  variantOptionElements <- SiteC.queryDocument productVariantOptionSelector
-  for_ variantOptionElements \variantOptionElement -> do
-    eRawPriceHtml <- getRawPriceHtml variantOptionElement
-    eSwapPrice <- getSwapPrice variantOptionElement
-    case eRawPriceHtml, eSwapPrice of
-      Left err, _ -> launchAff_ $ Api.postLogPayload err
-      _, Left err -> launchAff_ $ Api.postLogPayload err
-      Right rawPriceHtml, Right swapPrice -> do
-        localSwapPrice <- Intl.formatPrice swapPrice
-        let
-          newPriceHtml = Regex.replace priceRegex (">" <> localSwapPrice <> "<") rawPriceHtml
-        Element.setAttribute "data-cartbtn" newPriceHtml variantOptionElement
+-- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">
+--     <span class="primary-text prdistxt" aria-hidden="false" data-cart-primary-submit-text=""><span class="money" style="text-decoration: line-through;opacity: 0.6;"></span> <span class="money sweetspot__price--hidden sweetspot__price_id--LVMens1Black42ClaspB">$79</span><span> | ADD TO CART</span></span>
+--     <span class="secondary-text" aria-hidden="true" data-cart-secondary-submit-text="">View cart</span>
+-- </button>
+observeProductAddToCartButton :: TestMapsMap -> Effect Unit
+observeProductAddToCartButton testMapsMap = do
+  addToCartButtons <- SiteC.queryDocument productAddToCartOptionSelector
+  mutationObserver <- MutationObserver.mutationObserver onMutation
+  -- We expect there to be one
+  for_ addToCartButtons \button -> MutationObserver.observe (Element.toNode button) { characterData : true } mutationObserver
   where
-  priceRegex :: Regex
-  priceRegex = RegexUnsafe.unsafeRegex """>\$.+<""" RegexFlags.noFlags
-
-  getRawPriceHtml :: Element -> Effect (Either String String)
-  getRawPriceHtml variantOptionElement =
-    Element.getAttribute "data-cartbtn" variantOptionElement
-      >>= case _ of
-          Nothing -> pure $ Left "Variant source element had empty data-cartbtn attribute!"
-          Just rawPriceHtml -> pure $ Right rawPriceHtml
-
-  getSwapPrice :: Element -> Effect (Either String Number)
-  getSwapPrice variantOptionElement =
-    Element.getAttribute "value" variantOptionElement
-      >>= case _ of
-          Nothing -> pure $ Left "No variant id on variant selector option!"
-          Just variantId -> case Map.lookup variantId testMapsMap of
-            Nothing -> pure $ Left "Unknown variant in variant selector option!"
-            Just testMap -> pure $ Right testMap.swapPrice
+  onMutation :: Array MutationRecord → MutationObserver → Effect Unit
+  -- As the children of this element are replaced we can't monitor the actual price element for changes but instead monitor its parent. This means the element passed to the callback is a parent. We could traverse down using properties on this node, but instead elect to simply use another querySelectorAll that should now give us the price element that was just created.
+  onMutation _ _ = do
+    -- We expect there to be one
+    priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
+    for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement

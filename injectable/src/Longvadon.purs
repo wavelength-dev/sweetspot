@@ -76,6 +76,8 @@ setCheckout testMaps = do
 --   <option data-inplc="continue" data-sku="LVWomens1Pearl38ClaspB" data-stock="17" value="17028931649579">38/40 / M / Black</option>
 --   <option data-inplc="deny" data-sku="LVWomens1Pearl38SClaspB" data-stock="-100" value="16408532844587">38/40 / XS / Black</option>
 -- </select>
+-- Also used for slick checkout options
+-- <input class="check--color" type="checkbox" name="id[]" value="20609191706667" tabindex="-1">
 setCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el

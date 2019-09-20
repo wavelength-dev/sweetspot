@@ -190,7 +190,7 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload "WARN: observed node was not an element"
+            Nothing -> launchAff_ $ Api.postLogPayload "ERROR: observed node was not an element"
             Just element -> SiteC.applyPriceVariation testMapsMap element
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
@@ -204,7 +204,7 @@ observeSlickButtons testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload "WARN: observed node was not an element"
+            Nothing -> launchAff_ $ Api.postLogPayload "ERROR: observed node was not an element"
             Just element -> setCheckoutOption testMapsMap element
 
 attachObservers :: TestMapsMap -> Effect Unit

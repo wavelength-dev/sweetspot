@@ -216,11 +216,11 @@ applyToVariantSelector testMapsMap = do
       Right rawPriceHtml, Right swapPrice -> do
         localSwapPrice <- Intl.formatPrice swapPrice
         let
-          newPriceHtml = Regex.replace priceRegex localSwapPrice rawPriceHtml
+          newPriceHtml = Regex.replace priceRegex (">" <> localSwapPrice <> "<") rawPriceHtml
         Element.setAttribute "data-cartbtn" newPriceHtml variantOptionElement
   where
   priceRegex :: Regex
-  priceRegex = RegexUnsafe.unsafeRegex ">$.+<" RegexFlags.noFlags
+  priceRegex = RegexUnsafe.unsafeRegex """>\$.+<""" RegexFlags.noFlags
 
   getRawPriceHtml :: Element -> Effect (Either String String)
   getRawPriceHtml variantOptionElement =

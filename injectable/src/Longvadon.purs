@@ -245,7 +245,7 @@ applyToVariantSelector testMapsMap variantOptionElement = do
       Element.setAttribute "data-cartbtn" newPriceHtml variantOptionElement
   where
   priceRegex :: Regex
-  priceRegex = RegexUnsafe.unsafeRegex """>\$.+<""" RegexFlags.noFlags
+  priceRegex = RegexUnsafe.unsafeRegex """>\$.*?<""" RegexFlags.noFlags
 
   getRawPriceHtml :: Effect (Either String String)
   getRawPriceHtml =

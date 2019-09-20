@@ -61,7 +61,7 @@ isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "
 setCheckout :: TestMapsMap -> Effect Unit
 setCheckout testMaps = do
   -- Makes sure the correct variant is added to cart on product page.
-  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setProductAddToCartCheckoutOption testMaps)
+  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is co-added to cart with the slick carousel on product page.
   SiteC.queryDocument productSlickAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is offered to add to cart, when selecting a variant from the slick carousel on the cart page.
@@ -224,7 +224,10 @@ observeProductAddToCartButton testMapsMap = do
     for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
 
 attachObservers :: TestMapsMap -> Effect Unit
-attachObservers testMapsMap = observePrices testMapsMap *> observeSlickButtons testMapsMap
+attachObservers testMapsMap =
+  observePrices testMapsMap
+    *> observeSlickButtons testMapsMap
+    *> observeProductAddToCartButton testMapsMap
 
 setProductAddToCartCheckoutOption :: TestMapsMap -> Element -> Effect Unit
 setProductAddToCartCheckoutOption testMapsMap element =

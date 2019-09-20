@@ -211,7 +211,7 @@ observeSlickButtons testMapsMap = do
 -- </button>
 observeProductAddToCartButton :: TestMapsMap -> Effect Unit
 observeProductAddToCartButton testMapsMap = do
-  addToCartButtons <- SiteC.queryDocument productAddToCartOptionSelector
+  addToCartButtons <- SiteC.queryDocument addToCartButtonSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation
   -- We expect there to be one
   for_ addToCartButtons \button -> MutationObserver.observe (Element.toNode button) { characterData: true } mutationObserver

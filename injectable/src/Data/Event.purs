@@ -32,7 +32,7 @@ instance encodeJsonPage :: EncodeJson Page where
 type ViewEvent
   = { page :: Page
     , pageUrl :: String
-    , userId :: Maybe String
+    , userId :: Maybe UserId
     , productIds :: Maybe (Array Number)
     , productId :: Maybe Number
     }

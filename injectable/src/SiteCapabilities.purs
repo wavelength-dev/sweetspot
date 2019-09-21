@@ -12,7 +12,7 @@ import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config (dryRunMode, idClass) as Config
 import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
-import Web.DOM (Element, Node, NodeList)
+import Web.DOM (Element, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
 import Web.DOM.Element as Element

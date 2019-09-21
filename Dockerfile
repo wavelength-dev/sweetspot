@@ -26,6 +26,7 @@ RUN spago install --global-cache skip
 
 # Compile, test, bundle and uglify our scripts
 COPY ./injectable/src ./src
+COPY ./injectable/test ./test
 RUN spago test
 RUN spago bundle-app --main SweetSpot.Main --to ./sweetspot-main.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js

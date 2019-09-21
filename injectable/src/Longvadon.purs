@@ -211,7 +211,8 @@ observeProductAddToCartButton testMapsMap = do
   addToCartButtons <- SiteC.queryDocument addToCartButtonSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation
   -- We expect there to be one
-  for_ addToCartButtons \button -> MutationObserver.observe (Element.toNode button) { childList: true, subtree: true } mutationObserver
+  for_ addToCartButtons \button ->
+    MutationObserver.observe (Element.toNode button) { childList: true, subtree: true } mutationObserver
   where
   onMutation :: Array MutationRecord → MutationObserver → Effect Unit
   -- As the children of this element are replaced we can't monitor the actual price element for changes but instead monitor its parent. This means the element passed to the callback is a parent. We could traverse down using properties on this node, but instead elect to simply use another querySelectorAll that should now give us the price element that was just created.

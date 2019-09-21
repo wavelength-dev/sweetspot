@@ -16,7 +16,6 @@ import Data.Aeson.Types (parse)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
-import qualified Data.Vector as V
 import Prelude hiding (id)
 import Servant
 import SweetSpot.AppM (ServerM, AppM(..))
@@ -68,7 +67,7 @@ createExperimentHandler ce = runAppM $ do
         & key "product" . key "product_type" . _String .~ "sweetspot-variant"
         & key "product" . key "images" . values . key "variant_ids" .~ Null
         & key "product" . key "variants" . values . key "image_id" .~ Null
-        & key "product" . key "tags"  %~ Array . V.filter (T.isInfixOf "_sold-" . (^. _String)) . (^. _Array)
+        & key "product" . key "tags"  . _String %~ filterTags
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of
@@ -100,6 +99,9 @@ createExperimentHandler ce = runAppM $ do
     (_, Error err) -> do
       L.error $ "Failed to create new product" <> T.pack err
       throwError internalServerErr
+
+  where
+    filterTags = T.intercalate "," . filter (T.isInfixOf "_sold-") . fmap T.strip . T.splitOn ","
 
 
 getCampaignStatsHandler :: T.Text -> ServerM CampaignStats

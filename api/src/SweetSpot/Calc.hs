@@ -3,10 +3,8 @@
 module SweetSpot.Calc (enhanceDBStats) where
 
 import Control.Lens
-import Control.Monad.Catch (MonadThrow)
-import Control.Monad.Except (MonadError)
 import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Reader.Class (asks, MonadReader)
+import Control.Monad.Reader.Class (MonadReader)
 import qualified Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe (fromJust)

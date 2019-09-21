@@ -9,17 +9,13 @@ module SweetSpot.Route.OAuth
   )
 where
 
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.Except           ( MonadError )
-import           Control.Monad.IO.Class         ( MonadIO )
-import           Control.Monad.Reader.Class     ( asks, MonadReader(..) )
 import           Data.Text                      ( Text )
 import           Servant
 import           SweetSpot.AppM                 ( AppM(..), ServerM )
 import           SweetSpot.Data.Api             ( OkResponse(..) )
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Route.Util           ( internalServerErr )
-import           SweetSpot.ShopifyClient        ( MonadShopify, exchangeAccessToken )
+import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
 
 -- See: https://help.shopify.com/en/api/getting-started/authentication/oauth
 -- The below handler handles Shopify redirecting the merchant to us, with an authorization_code is the URL. We use that authorization_code to then make a request to Shopify that gets us an access token for the given store.

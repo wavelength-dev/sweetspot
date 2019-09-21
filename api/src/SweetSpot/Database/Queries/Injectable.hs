@@ -14,12 +14,8 @@ import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
 import           Control.Monad                  ( forM_ )
-import           Control.Monad.Reader.Class     ( asks
-                                                , MonadReader
-                                                )
 import           Data.Aeson                     ( Value )
 import           Data.Maybe                     ( Maybe(..) )
-import           Data.Pool                      ( withResource )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.Types
                                                 ( SqlSerial(..) )
@@ -28,9 +24,7 @@ import           Database.Beam.Backend.SQL.BeamExtensions
 import           Database.Beam.Postgres
 import           System.Random                  ( randomRIO )
 
-import           SweetSpot.AppM                 ( AppM(..)
-                                                , AppCtx(..)
-                                                )
+import           SweetSpot.AppM                 ( AppM(..) )
 import           SweetSpot.Database.Schema
                                          hiding ( UserId )
 import           SweetSpot.Database.Queries.Util

@@ -10,9 +10,7 @@ import           Prelude                 hiding ( id
                                                 )
 
 import           Control.Lens
-import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.IO.Class         ( liftIO
-                                                , MonadIO
                                                 )
 import           Control.Monad.Reader.Class     ( asks
                                                 , MonadReader(..)

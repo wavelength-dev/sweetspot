@@ -11,11 +11,12 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad (unless)
 import Data.Aeson (Result(..), parseJSON, Value(..))
-import Data.Aeson.Lens (_String, key, values)
+import Data.Aeson.Lens (_String, key, values, _Array)
 import Data.Aeson.Types (parse)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
+import qualified Data.Vector as V
 import Prelude hiding (id)
 import Servant
 import SweetSpot.AppM (ServerM, AppM(..))
@@ -67,7 +68,7 @@ createExperimentHandler ce = runAppM $ do
         & key "product" . key "product_type" . _String .~ "sweetspot-variant"
         & key "product" . key "images" . values . key "variant_ids" .~ Null
         & key "product" . key "variants" . values . key "image_id" .~ Null
-        & key "product" . key "tags" .~ Null
+        & key "product" . key "tags" . _Array %~ V.filter (T.isInfixOf "_sold-" . (^. _String))
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of

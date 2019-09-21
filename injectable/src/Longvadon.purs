@@ -56,7 +56,9 @@ addToCartButtonPriceElementSelector :: QuerySelector
 addToCartButtonPriceElementSelector = QuerySelector "form.product-form button.product__add-to-cart-button span[class*=sweetspot__price_id--]"
 
 isSoldOutElement :: Element -> Effect Boolean
-isSoldOutElement el = SiteC.getAttribute "data-stock" el >>= maybe false ((==) "deny") >>> pure
+isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceSoldOut >>> pure
+  where
+  isPriceSoldOut = String.toLower >>> String.contains (Pattern "sold out")
 
 setCheckout :: TestMapsMap -> Effect Unit
 setCheckout testMaps = do

@@ -11,27 +11,20 @@ module SweetSpot.Route.Injectable
   ) where
 
 import Control.Lens ((^.), (^?))
-import Control.Monad.Except (MonadError)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Reader.Class (asks, MonadReader)
 import Data.Aeson (Value, encode)
 import Data.Aeson.Lens (_String, key)
 import Data.ByteString as BS (isInfixOf)
-import Data.Pool (withResource)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Network.HTTP.Types (hContentType, status400)
 import Network.Wai (Middleware, requestHeaders, responseLBS)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import Servant
-import SweetSpot.AppM (AppConfig(..), AppCtx(..))
+import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM(..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable
- (  getNewCampaignBuckets
-  , getUserBuckets
-  , validateCampaign
-  , insertEvent
+ ( InjectableDB(..)
  )
 
 import qualified SweetSpot.Logger as L
@@ -70,15 +63,10 @@ createTestMap ub =
       , swapPrice = ub ^. ubPrice
       }
 
-getUserBucketsHandler
-  :: (MonadReader AppCtx m, MonadIO m, MonadError ServerError m)
-  => Maybe Text
-  -> Maybe Text
-  -> m [TestMap]
+getUserBucketsHandler :: Maybe Text -> Maybe Text -> ServerM [TestMap]
 -- Existing user
-getUserBucketsHandler mCmpId (Just uid) = do
-  pool <- asks _getDbPool
-  res <- liftIO . withResource pool $ \conn -> getUserBuckets conn (UserId uid)
+getUserBucketsHandler mCmpId (Just uid) = runAppM $ do
+  res <- getUserBuckets (UserId uid)
   case (mCmpId, res) of
     (_, buckets@(b:bs)) -> do
       L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> uid
@@ -88,22 +76,21 @@ getUserBucketsHandler mCmpId (Just uid) = do
       throwError notFoundErr
     (Just newCmpId, []) -> do
       let cId = CampaignId newCmpId
-      isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn cId
+      isValidCampaign <- validateCampaign cId
       if isValidCampaign
-        then liftIO $ do
-            buckets <- withResource pool $ \conn -> getNewCampaignBuckets conn cId (Just (UserId uid))
+        then do
+            buckets <- getNewCampaignBuckets cId (Just (UserId uid))
             return $ map createTestMap buckets
         else do
           L.info $ "Got invalid campaign id for existing user" <> newCmpId
           throwError badRequestErr
 -- New user
-getUserBucketsHandler (Just cmpId) Nothing = do
-  pool <- asks _getDbPool
-  isValidCampaign <- liftIO . withResource pool $ \conn -> validateCampaign conn (CampaignId cmpId)
+getUserBucketsHandler (Just cmpId) Nothing = runAppM $ do
+  isValidCampaign <- validateCampaign (CampaignId cmpId)
   if isValidCampaign
     then do
       L.info $ "Got campaign " <> cmpId
-      buckets <- liftIO $ withResource pool $ \conn -> getNewCampaignBuckets conn (CampaignId cmpId) Nothing
+      buckets <- getNewCampaignBuckets (CampaignId cmpId) Nothing
       return $ map createTestMap buckets
     else do
       L.info $ "Got invalid campaign id " <> cmpId
@@ -111,8 +98,8 @@ getUserBucketsHandler (Just cmpId) Nothing = do
 
 getUserBucketsHandler Nothing Nothing = throwError badRequestErr
 
-trackEventHandler :: (MonadReader AppCtx m, MonadIO m) => Value -> m OkResponse
-trackEventHandler val = do
+trackEventHandler :: Value -> ServerM OkResponse
+trackEventHandler val = runAppM $ do
   let pageType = val ^? key "page" . _String
       step = val ^? key "step" . _String
       -- Relies on show instance of page in injectable
@@ -120,15 +107,13 @@ trackEventHandler val = do
         case (pageType, step) of
           (Just "checkout", Just "thank_you") -> (Checkout, val)
           _ -> (View, val)
-  pool <- asks _getDbPool
-  liftIO . withResource pool $ \conn -> insertEvent conn input
+  insertEvent input
   L.info "Tracked event"
   return OkResponse {message = "Event received"}
 
-trackLogMessageHandler :: (MonadReader AppCtx m, MonadIO m) => Value -> m OkResponse
-trackLogMessageHandler val = do
-  pool <- asks _getDbPool
-  liftIO . withResource pool $ \conn -> insertEvent conn (Log, val)
+trackLogMessageHandler :: Value -> ServerM OkResponse
+trackLogMessageHandler val = runAppM $ do
+  insertEvent (Log, val)
   return OkResponse {message = "Event received"}
 
 experimentShield :: AppCtx -> Middleware
@@ -156,10 +141,5 @@ originMiddleware ctx app req respond =
         Nothing -> False
         Just referer -> "longvadon" `BS.isInfixOf` referer
 
-injectableHandler
-  :: (MonadReader AppCtx m, MonadIO m, MonadError ServerError m)
-  =>   (Maybe Text -> Maybe Text -> m [TestMap])
-  :<|> (Value -> m OkResponse)
-  :<|> (Value -> m OkResponse)
 injectableHandler =
   getUserBucketsHandler :<|> trackEventHandler :<|> trackLogMessageHandler

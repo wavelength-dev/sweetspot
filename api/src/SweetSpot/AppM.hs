@@ -3,8 +3,10 @@
 
 module SweetSpot.AppM where
 
+import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.Except           ( MonadError(..) )
 import           Control.Monad.Reader           ( ReaderT )
+import           Control.Monad.Reader.Class     ( MonadReader )
 import           Control.Monad.IO.Class         ( MonadIO(..) )
 
 import           GHC.Generics                   ( Generic )
@@ -30,6 +32,16 @@ data AppCtx = AppCtx
   , _getDbPool :: !Pool
   }
 
+type ServerM = ReaderT AppCtx Handler
+
 newtype AppM a = AppM
-  { runAppM :: ReaderT AppCtx Handler a
-  } deriving (Functor, Applicative, Monad, MonadIO, MonadError ServerError)
+  { runAppM :: ServerM a
+  } deriving
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadIO
+    , MonadError ServerError
+    , MonadReader AppCtx
+    , MonadThrow
+    )

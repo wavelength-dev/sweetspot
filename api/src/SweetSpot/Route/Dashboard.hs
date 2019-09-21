@@ -9,29 +9,24 @@ module SweetSpot.Route.Dashboard
   ) where
 
 import Control.Lens
-import Control.Monad.Catch (MonadThrow)
-import Control.Monad.Except (MonadError)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Reader.Class (asks, MonadReader)
 import Control.Monad (unless)
 import Data.Aeson (Result(..), parseJSON, Value(..))
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
 import qualified Data.List as L
 import Data.Maybe (fromJust)
-import Data.Pool (withResource)
 import qualified Data.Text as T
 import Prelude hiding (id)
 import Servant
-import SweetSpot.AppM (AppCtx(..))
+import SweetSpot.AppM (ServerM, AppM(..))
 import SweetSpot.Calc (enhanceDBStats)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Injectable (validateCampaign)
-import SweetSpot.Database.Queries.Dashboard (createExperiment, getCampaignStats, getDashboardExperiments)
+import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
+import SweetSpot.Database.Queries.Dashboard (DashboardDB(..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
-import SweetSpot.ShopifyClient (createProduct, fetchProduct, fetchProducts, toProduct)
+import SweetSpot.ShopifyClient (MonadShopify(..), toProduct)
 
 type ProductsRoute = "products" :> Get '[ JSON] [Product]
 
@@ -46,28 +41,21 @@ type CampaignStatsRoute
 type DashboardAPI
    = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
 
-getProductsHandler :: (MonadIO m, MonadReader AppCtx m, MonadThrow m, MonadError ServerError m) => m [Product]
-getProductsHandler = do
+getProductsHandler :: ServerM [Product]
+getProductsHandler = runAppM $ do
   maybeProducts <- fetchProducts
   case maybeProducts of
     Just ps -> return ps
     Nothing -> throwError internalServerErr
 
-getExperimentsHandler :: (MonadIO m, MonadReader AppCtx m) => m [ExperimentBuckets]
-getExperimentsHandler = do
-  pool <- asks _getDbPool
-  liftIO . withResource pool $ \conn -> getDashboardExperiments conn
+getExperimentsHandler :: ServerM [ExperimentBuckets]
+getExperimentsHandler = runAppM getDashboardExperiments
 
-createExperimentHandler
-  :: (MonadIO m, MonadReader AppCtx m, MonadError ServerError m, MonadThrow m)
-  => CreateExperiment
-  -> m OkResponse
-createExperimentHandler ce = do
-  pool <- asks _getDbPool
-  isValidCampaign <- liftIO . withResource pool
-    $ \conn -> validateCampaign conn (ce ^. ceCampaignId)
+createExperimentHandler :: CreateExperiment -> ServerM OkResponse
+createExperimentHandler ce = runAppM $ do
+  isValidCampaign <- validateCampaign (ce ^. ceCampaignId)
   unless isValidCampaign (throwError badRequestErr)
-  json <- fetchProduct $ ce ^. ceProductId
+  json <- fetchProductJson $ ce ^. ceProductId
   let
     contProduct = parse parseJSON $ json ^?! key "product"
     textPrice = T.pack . show $ ce ^. cePrice
@@ -89,7 +77,7 @@ createExperimentHandler ce = do
           testPrice = ce ^. cePrice
           title = contProduct ^. pTitle
           cmpId = ce ^. ceCampaignId
-      res <- liftIO $ newProduct ^. pVariants
+      res <- newProduct ^. pVariants
         & traverse (\v -> do
           let
             sku = v ^. vSku
@@ -100,8 +88,7 @@ createExperimentHandler ce = do
             contPrice = controlVariant ^. vPrice
             testSvid = v ^. vId
 
-          liftIO . withResource pool
-            $ \conn -> createExperiment conn (sku, contSvid, testSvid, contPrice, testPrice, cmpId, title))
+          createExperiment (sku, contSvid, testSvid, contPrice, testPrice, cmpId, title))
 
       L.info "Created experiment(s)"
       return OkResponse { message = "Created experiment(s)"}
@@ -114,26 +101,17 @@ createExperimentHandler ce = do
       throwError internalServerErr
 
 
-getCampaignStatsHandler
-  :: (MonadIO m, MonadReader AppCtx m, MonadError ServerError m)
-  => T.Text -> m CampaignStats
-getCampaignStatsHandler cmpId = do
-  pool <- asks _getDbPool
+getCampaignStatsHandler :: T.Text -> ServerM CampaignStats
+getCampaignStatsHandler cmpId = runAppM $ do
   let cid = CampaignId cmpId
-  isValid <- liftIO . withResource pool $ \conn -> validateCampaign conn cid
+  isValid <- validateCampaign cid
   if isValid
     then do
       L.info ("Got experiment stats for campaignId: " <> cmpId)
-      dbStats <- liftIO . withResource pool  $ \conn -> getCampaignStats conn cid
+      dbStats <- getCampaignStats cid
       enhanceDBStats dbStats
     else
       throwError err404
 
-dashboardHandler
-  ::   (MonadReader AppCtx m, MonadIO m, MonadError ServerError m, MonadThrow m)
-  =>   m [Product]
-  :<|> m [ExperimentBuckets]
-  :<|> (CreateExperiment -> m OkResponse)
-  :<|> (T.Text -> m CampaignStats)
 dashboardHandler =
   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler

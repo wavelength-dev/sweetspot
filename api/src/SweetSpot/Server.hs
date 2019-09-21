@@ -11,10 +11,6 @@ where
 
 import           Control.Concurrent             ( threadDelay )
 import           Control.Monad.Reader           ( runReaderT )
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.Except           ( MonadError )
-import           Control.Monad.IO.Class         ( MonadIO )
-import           Control.Monad.Reader.Class     ( MonadReader )
 import           Data.Pool                      ( withResource )
 import           Network.Wai.Logger             ( withStdoutLogger )
 import           Network.Wai.Handler.Warp       ( defaultSettings
@@ -25,7 +21,6 @@ import           Network.Wai.Handler.Warp       ( defaultSettings
 import           Servant
 import           SweetSpot.AppM                 ( AppConfig(..)
                                                 , AppCtx(..)
-                                                , AppM(..)
                                                 )
 import           SweetSpot.Database             ( DbConfig(..)
                                                 , getDbPool
@@ -63,13 +58,6 @@ type RootAPI
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
-server
-        :: ( MonadReader AppCtx m
-           , MonadIO m
-           , MonadError ServerError m
-           , MonadThrow m
-           )
-        => ServerT RootAPI m
 server =
         (dashboardHandler :<|> injectableHandler :<|> oauthHandler)
                 :<|> healthHandler

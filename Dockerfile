@@ -24,8 +24,9 @@ RUN yarn global add purescript spago uglify-js
 COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
 RUN spago install --global-cache skip
 
-# Compile, bundle and uglify our scripts
+# Compile, test, bundle and uglify our scripts
 COPY ./injectable/src ./src
+RUN spago test
 RUN spago bundle-app --main SweetSpot.Main --to ./sweetspot-main.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
 RUN spago bundle-app --main SweetSpot.Checkout --to ./sweetspot-checkout.js

@@ -1,4 +1,4 @@
-module SweetSpot.Intl where
+module SweetSpot.Intl (formatPrice) where
 
 import Effect (Effect)
 import Prelude ((>>=))

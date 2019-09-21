@@ -68,7 +68,7 @@ createExperimentHandler ce = runAppM $ do
         & key "product" . key "product_type" . _String .~ "sweetspot-variant"
         & key "product" . key "images" . values . key "variant_ids" .~ Null
         & key "product" . key "variants" . values . key "image_id" .~ Null
-        & key "product" . key "tags" . _Array %~ V.filter (T.isInfixOf "_sold-" . (^. _String))
+        & key "product" . key "tags"  %~ Array . V.filter (T.isInfixOf "_sold-" . (^. _String)) . (^. _Array)
 
   maybeNewProduct <- createProduct withNewPrice
   case (contProduct, maybeNewProduct) of

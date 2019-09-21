@@ -93,13 +93,10 @@ getIdFromPriceElement el = do
   getSkuFromTag :: String -> Maybe String
   getSkuFromTag tag = Array.last $ String.split (String.Pattern "--") tag
 
-setNodePrice :: Number -> Node -> Effect Unit
-setNodePrice price node = do
-  formattedPrice <- Intl.formatPrice price
-  setTextContent formattedPrice node
-
 setPrice :: Number -> Element -> Effect Unit
-setPrice price el = setNodePrice price (Element.toNode el)
+setPrice price el = do
+  formattedPrice <- Intl.formatPrice price
+  setTextContent formattedPrice (Element.toNode el)
 
 getPathname :: Effect String
 getPathname = window >>= Window.location >>= pathname

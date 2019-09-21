@@ -3,6 +3,7 @@ module SweetSpot.Checkout where
 import Prelude
 
 import Control.Monad.Except (runExcept)
+import Data.Argonaut (encodeJson) as Argonaut
 import Data.Argonaut (stringify)
 import Data.Either (Either(..), hush)
 import Data.List (foldr)
@@ -18,10 +19,9 @@ import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
-import SweetSpot.Data.Codec (encodeCheckoutEvent)
+import SweetSpot.Api (postLogPayload)
 import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
-import SweetSpot.Api (postLogPayload)
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)
@@ -87,7 +87,7 @@ trackEvent event = attempt $ fetch (M.URL eventEndpoint) opts
   where
   opts = { method: M.postMethod
          , headers: M.makeHeaders { "Content-Type": "application/json" }
-         , body: stringify $ encodeCheckoutEvent event
+         , body: stringify $ Argonaut.encodeJson event
          }
 
 getPageUrl :: Effect String

@@ -2,12 +2,12 @@ module SweetSpot.Api where
 
 import Prelude
 import Data.Argonaut ((:=), (~>))
+import Data.Argonaut (encodeJson) as Argonaut
 import Data.Argonaut as Ar
 import Data.Either (Either(..))
 import Effect.Aff (Aff, apathize, attempt)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
-import SweetSpot.Data.Codec (encodeViewEvent)
 import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), decodeTestMaps)
 import SweetSpot.Data.Event (ViewEvent)
@@ -57,5 +57,5 @@ postEventPayload tv = apathize $ fetch url opts
   opts =
     { method: M.postMethod
     , headers: M.makeHeaders { "Content-Type": "application/json" }
-    , body: Ar.stringify $ encodeViewEvent tv
+    , body: Ar.stringify $ Argonaut.encodeJson tv
     }

@@ -2,88 +2,65 @@ module SweetSpot.Event (trackView) where
 
 import Prelude
 
-import Data.Array as A
-import Data.Either (hush)
-import Data.Maybe (Maybe)
+import Data.Argonaut as Ar
+import Data.Array as Array
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
+import Data.Maybe (fromMaybe) as Maybe
 import Data.Newtype (unwrap)
-import Data.String.Regex (Regex, test)
-import Data.String.Regex.Flags (ignoreCase)
-import Data.String.Regex.Unsafe (unsafeRegex)
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import SweetSpot.Api (postEventPayload, postLogPayload) as Api
 import SweetSpot.AppM (getUserId)
-import SweetSpot.Data.Codec (decodeProduct)
 import SweetSpot.Data.Config (productClass)
 import SweetSpot.Data.Event (Page(..))
 import SweetSpot.Data.Shopify (Product)
-import SweetSpot.Api (postEventPayload)
-import Web.DOM.Document as D
-import Web.DOM.Element as E
-import Web.DOM.HTMLCollection (toArray)
-import Web.DOM.Internal.Types (Element)
-import Web.DOM.Node as N
-import Web.HTML (window)
-import Web.HTML.HTMLDocument (toDocument)
-import Web.HTML.Location (href, pathname)
-import Web.HTML.Window (document, location)
+import SweetSpot.Event.PageDetection (getCurrentPage) as PageDetection
+import Web.DOM (Element)
+import Web.DOM.Document as Document
+import Web.DOM.Element as Element
+import Web.DOM.HTMLCollection as HTMLCollection
+import Web.DOM.Node as Node
+import Web.HTML as HTML
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.Location (href)
+import Web.HTML.Window as Window
 
-extractInjectedProductJSON :: Element -> Effect (Maybe Product)
+extractInjectedProductJSON :: Element -> Effect (Either String Product)
 extractInjectedProductJSON el = do
-  text <- N.textContent $ E.toNode el
-  pure $ hush $ decodeProduct text
+  text <- Element.toNode >>> Node.textContent $ el
+  text # (Ar.jsonParser >=> Ar.decodeJson) >>> pure
 
-readInjectedProducts :: Effect (Maybe (Array Product))
+readInjectedProducts :: Effect (Either String (Array Product))
 readInjectedProducts = do
-  maybePs <- do
-      doc <- window >>= document
-      coll <- D.getElementsByClassName productClass (toDocument doc)
-      els <- toArray coll
-      sequence $ extractInjectedProductJSON <$> els
-
-  pure $ sequence maybePs
-
-collectionUrlRegex :: Regex
-collectionUrlRegex = unsafeRegex """^/collections/[\w-_.%~]+/?$""" ignoreCase
-
-collectionsUrlRegex :: Regex
-collectionsUrlRegex = unsafeRegex """^/collections/?$""" ignoreCase
-
-productDetailsUrlRegex :: Regex
-productDetailsUrlRegex = unsafeRegex """^/collections/[\w-_.%~]+/products/?""" ignoreCase
-
-ordersUrlRegex :: Regex
-ordersUrlRegex = unsafeRegex """^/[\w-_.%~]+/orders/?""" ignoreCase
-
-checkoutUrlRegex :: Regex
-checkoutUrlRegex = unsafeRegex """^/[\w-_.%~]+/checkouts/?""" ignoreCase
-
-homeUrlRegex :: Regex
-homeUrlRegex = unsafeRegex "^/?$" ignoreCase
-
-detectPage :: Effect Page
-detectPage = window >>= location >>= pathname >>= pure <<< getPage
-  where
-    getPage :: String -> Page
-    getPage path
-      | test collectionUrlRegex path = Collection
-      | test collectionsUrlRegex path = Collections
-      | test productDetailsUrlRegex path = Product
-      | test checkoutUrlRegex path || test ordersUrlRegex path = Checkout
-      | test homeUrlRegex path = Home
-      | otherwise = Unknown
+  document <- HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
+  productJsonElements <- Document.getElementsByClassName productClass document >>= HTMLCollection.toArray
+  mProducts <- traverse extractInjectedProductJSON productJsonElements
+  pure $ sequence mProducts
 
 trackView :: Aff Unit
 trackView = do
-  viewEvent <- liftEffect $ do
-    mUserId <- getUserId
-    let userId = unwrap <$> mUserId
-    page <- detectPage
-    pageUrl <- window >>= location >>= href
-    products <- readInjectedProducts
-    let
-      productIds = (map _.id) <$> products
-      productId = productIds >>= A.head
-    pure { page, pageUrl, userId, productId, productIds }
-  postEventPayload viewEvent
+  viewEvent <-
+    liftEffect
+      $ do
+          mUserId <- getUserId
+          let
+            userId = unwrap <$> mUserId
+          page <- PageDetection.getCurrentPage >>= Maybe.fromMaybe Unknown >>> pure
+          pageUrl <- HTML.window >>= Window.location >>= href
+          eProducts <- readInjectedProducts
+          productIds <- case eProducts of
+            Left msg -> do
+              launchAff_ $ Api.postLogPayload msg
+              pure Nothing
+            Right products -> do
+              pure $ Just $ map _.id products
+          productId <- case Array.head =<< productIds of
+            Nothing -> do
+              launchAff_ $ Api.postLogPayload "Empty list of extracted products"
+              pure Nothing
+            Just productId -> pure $ Just productId
+          pure { page, pageUrl, userId, productId, productIds }
+  Api.postEventPayload viewEvent

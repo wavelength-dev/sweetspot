@@ -1,4 +1,4 @@
-FROM haskell:8.6.5 AS build
+FROM 586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot-build AS build
 
 WORKDIR /opt/build
 

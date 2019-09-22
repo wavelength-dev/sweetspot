@@ -25,7 +25,6 @@ type Pool = P.Pool PG.Connection
 data DbConfig = DbConfig
   { host :: String
   , name :: String
-  , user :: String
   , password :: String
   }
 
@@ -39,7 +38,7 @@ getDbPool DbConfig {..} = P.createPool initConn
         initConn = PG.connect
                 (PG.ConnectInfo { connectHost     = host
                                 , connectPort     = 5432
-                                , connectUser     = user
+                                , connectUser     = "sweetspot"
                                 , connectPassword = password
                                 , connectDatabase = name
                                 }

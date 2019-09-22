@@ -13,7 +13,6 @@ data EnvConfig = EnvConfig
   { dbHost :: String
   , dbName :: String
   , dbPassword :: String
-  , dbUser :: String
   , environment :: String
   , shopifyClientSecret :: String
   , shopifyOAuthAccessToken :: String
@@ -25,9 +24,7 @@ instance FromEnv EnvConfig where
     EnvConfig
       <$> env "DB_HOST"
       <*> env "DB_NAME"
-      <*> envMaybe "DB_PASSWORD"
-      .!= ""
-      <*> env "DB_USER"
+      <*> envMaybe "DB_PASSWORD" .!= ""
       <*> env "ENVIRONMENT"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"

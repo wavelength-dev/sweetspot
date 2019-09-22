@@ -78,7 +78,6 @@ runServer = do
         let dbConfig = DbConfig { host     = Env.dbHost envConfig
                                 , name     = Env.dbName envConfig
                                 , password = Env.dbPassword envConfig
-                                , user     = Env.dbUser envConfig
                                 }
         dbPool    <- getDbPool dbConfig
         appLogger <- newStdoutLoggerSet defaultBufSize

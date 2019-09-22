@@ -11,7 +11,7 @@ module SweetSpot.Route.Dashboard
 import Control.Lens
 import Control.Monad (unless)
 import Data.Aeson (Result(..), parseJSON, Value(..))
-import Data.Aeson.Lens (_String, key, values, _Array)
+import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
 import qualified Data.List as L
 import Data.Maybe (fromJust)

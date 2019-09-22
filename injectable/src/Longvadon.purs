@@ -1,14 +1,16 @@
 module SweetSpot.Longvadon (attachObservers, convertSsvCollectionUrls, setCheckout) where
 
 import Prelude
-import Data.Array as A
+import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String as String
+import Data.Traversable (traverse)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
+import Prim.Row (class Union)
 import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
@@ -18,7 +20,7 @@ import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element (fromNode, toNode) as Element
-import Web.DOM.MutationObserver (MutationObserver)
+import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
 import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
@@ -35,8 +37,8 @@ productAddToCartOptionSelector :: QuerySelector
 productAddToCartOptionSelector = QuerySelector "select.product-form__master-select option"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
-productSlickAddToCartOptionSelector :: QuerySelector
-productSlickAddToCartOptionSelector = QuerySelector "#color-slider input[value]"
+productSlickAddToCartInputSelector :: QuerySelector
+productSlickAddToCartInputSelector = QuerySelector "#color-slider input[value]"
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
 cartSlickCarouselOptionSelector :: QuerySelector
@@ -61,7 +63,7 @@ setCheckout testMaps = do
   -- Makes sure the correct variant is added to cart on product page.
   SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is co-added to cart with the slick carousel on product page.
-  SiteC.queryDocument productSlickAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  SiteC.queryDocument productSlickAddToCartInputSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is offered to add to cart, when selecting a variant from the slick carousel on the cart page.
   SiteC.queryDocument cartSlickCarouselOptionSelector >>= traverse_ (setCheckoutSlickCheckout testMaps)
   -- Makes sure the correct variant is added to cart from the slick carousel on the cart page, without ever selecting a variant.
@@ -167,7 +169,7 @@ convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>
       mProductUrl =
         mHref
           >>= String.split (Pattern "?")
-          >>> A.head
+          >>> Array.head
           >>= String.stripPrefix (Pattern "/collections/")
           >>= String.stripSuffix (Pattern "-ssv")
     case mProductUrl, dryRunMode of
@@ -215,15 +217,41 @@ observeProductAddToCartButton testMapsMap = do
   for_ addToCartButtons \button ->
     MutationObserver.observe (Element.toNode button) { childList: true, subtree: true } mutationObserver
   where
-  onMutation :: Array MutationRecord → MutationObserver → Effect Unit
   -- As the children of this element are replaced we can't monitor the actual price element for changes but instead monitor its parent. This means the element passed to the callback is a parent. We could traverse down using properties on this node, but instead elect to simply use another querySelectorAll that should now give us the price element that was just created.
   onMutation _ _ = do
     -- We expect there to be one
     priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
     for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
 
+type MutationCallback
+  = Array Element -> Effect Unit
+
+onElementsMutation ::
+  forall r rx.
+  Union r rx MutationObserverInitFields =>
+  Array Element -> Record r -> MutationCallback -> Effect Unit
+onElementsMutation elements options callback = do
+  mutationObserver <- MutationObserver.mutationObserver (\mrs mo -> mutationRecordsToElements mrs mo >>= callback)
+  let
+    observe = Element.toNode >>> \node -> MutationObserver.observe node options mutationObserver
+  traverse_ observe elements
+  where
+  mutationRecordsToElements :: Array MutationRecord -> MutationObserver -> Effect (Array Element)
+  mutationRecordsToElements mutationRecords _ =
+    traverse (MutationRecord.target >=> Element.fromNode >>> pure) mutationRecords
+    -- We discard the possibilty of some observed nodes not being elements as the only nodes we watch are price elements which are necessarily Html elements.
+    >>= Array.catMaybes >>> pure
+
+observeProductSlickCarousel :: TestMapsMap -> Effect Unit
+observeProductSlickCarousel testMapsMap = do
+  elements <- SiteC.queryDocument productSlickAddToCartInputSelector
+  onElementsMutation elements { attributes: true } $ traverse_ setCheckoutOption'
+  where
+  setCheckoutOption' = setCheckoutOption testMapsMap
+
 attachObservers :: TestMapsMap -> Effect Unit
 attachObservers testMapsMap =
   observePrices testMapsMap
     *> observeSlickButtons testMapsMap
     *> observeProductAddToCartButton testMapsMap
+    *> observeProductSlickCarousel testMapsMap

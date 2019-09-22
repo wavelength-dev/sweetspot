@@ -39,10 +39,7 @@ RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspo
 # Leave only the executable in the second stage
 FROM debian:buster-slim
 WORKDIR /opt/sweetspot
-RUN apt-get update --quiet && apt-get install -y --quiet \
-  ca-certificates \
-  libgmp-dev \
-  libpq-dev
+RUN apt-get --quiet update && apt-get --quiet install --yes libpq-dev
 COPY --from=build /root/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY --from=build-dist /opt/build-dist/sweetspot*.js /opt/dist/

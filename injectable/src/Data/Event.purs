@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Maybe (Maybe)
+import SweetSpot.Data.Domain (UserId)
 
 data Page
   = Cart

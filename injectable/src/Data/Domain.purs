@@ -1,15 +1,15 @@
 module SweetSpot.Data.Domain where
 
 import Prelude
-
-import Data.Argonaut (class DecodeJson, Json, caseJsonString, decodeJson)
+import Data.Argonaut (caseJsonString, decodeJson, encodeJson) as Argonaut
+import Data.Argonaut (class DecodeJson, class EncodeJson, Json)
 import Data.Array (find) as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (fromFoldable) as Map
 import Data.Maybe (Maybe)
-import Data.Newtype (class Newtype)
+import Data.Newtype (class Newtype, unwrap)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 
@@ -27,13 +27,16 @@ newtype UserId
 
 derive instance newtypeUserId :: Newtype UserId _
 
+instance encodeJsonUserId :: EncodeJson UserId where
+  encodeJson = unwrap >>> Argonaut.encodeJson
+
 newtype Sku
   = Sku String
 
 derive instance eqSku :: Eq Sku
 
 instance decodeJsonSku :: DecodeJson Sku where
-  decodeJson json = caseJsonString (Left "sku is not a string") (Right <<< Sku) json
+  decodeJson json = Argonaut.caseJsonString (Left "sku is not a string") (Sku >>> Right) json
 
 instance showSku :: Show Sku where
   show (Sku sku) = show sku
@@ -47,7 +50,7 @@ type TestMap
     }
 
 decodeTestMaps :: Json -> Either String (Array TestMap)
-decodeTestMaps json = decodeJson json >>= traverse decodeJson
+decodeTestMaps json = Argonaut.decodeJson json >>= traverse Argonaut.decodeJson
 
 type TargetId
   = String
@@ -55,7 +58,8 @@ type TargetId
 findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
 findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps
 
-type TestMapsMap = Map String TestMap
+type TestMapsMap
+  = Map String TestMap
 
 getTestMapsByTargetId :: NonEmptyArray TestMap -> TestMapsMap
 getTestMapsByTargetId = map (\testMap -> Tuple testMap.targetId testMap) >>> Map.fromFoldable

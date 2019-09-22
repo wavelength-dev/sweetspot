@@ -13,6 +13,7 @@ import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
+import SweetSpot.Log (LogLevel(..))
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -185,7 +186,7 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload "ERROR: observed node was not an element"
+            Nothing -> launchAff_ $ Api.postLogPayload Error "ERROR: observed node was not an element"
             Just element -> SiteC.applyPriceVariation testMapsMap element
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
@@ -199,7 +200,7 @@ observeSlickButtons testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload "ERROR: observed node was not an element"
+            Nothing -> launchAff_ $ Api.postLogPayload Error "ERROR: observed node was not an element"
             Just element -> setCheckoutOption testMapsMap element
 
 -- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">

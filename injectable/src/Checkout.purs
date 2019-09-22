@@ -19,9 +19,10 @@ import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
-import SweetSpot.Api (postLogPayload)
+import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
+import SweetSpot.Log (LogLevel(..))
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)
@@ -111,6 +112,6 @@ main :: Effect Unit
 main = launchAff_ $ do
   let err = getCheckoutStateIssues checkoutA checkoutB
   _ <- case err of
-    Just err' -> apathize $ postLogPayload err'
+    Just err' -> apathize $ Api.postLogPayload Error err'
     Nothing -> pure unit
   trackCheckout

@@ -1,16 +1,18 @@
 module SweetSpot.Api where
 
 import Prelude
-import Data.Argonaut ((:=), (~>))
-import Data.Argonaut (encodeJson) as Argonaut
+import Data.Argonaut (class EncodeJson, Json, (:=), (~>))
+import Data.Argonaut (encodeJson, stringify) as Argonaut
 import Data.Argonaut as Ar
 import Data.Either (Either(..))
-import Effect.Aff (Aff, apathize, attempt)
+import Effect.Aff (Aff, attempt)
+import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), decodeTestMaps)
 import SweetSpot.Data.Event (ViewEvent)
+import SweetSpot.Log (LogLevel)
 
 data TestMapProvisions
   = OnlyCampaignId CampaignId
@@ -38,24 +40,23 @@ fetchTestMaps provisions = do
         Left error -> show >>> Left $ error
         Right responseText -> Ar.jsonParser >=> decodeTestMaps $ responseText
 
-postLogPayload :: forall a. Show a => a -> Aff M.Response
-postLogPayload msg = fetch url opts
-  where
-  url = (M.URL logEndpoint)
-
-  opts =
+jsonPost :: String -> Json -> Aff Response
+jsonPost url json =
+  fetch
+    (M.URL url)
     { method: M.postMethod
     , headers: M.makeHeaders { "Content-Type": "application/json" }
-    , body: Ar.stringify $ "message" := show msg ~> Ar.jsonEmptyObject
+    , body: Argonaut.stringify json
     }
 
-postEventPayload :: ViewEvent -> Aff Unit
-postEventPayload tv = apathize $ fetch url opts
+postLogPayload :: forall a. EncodeJson a => LogLevel -> a -> Aff Response
+postLogPayload level message = jsonPost logEndpoint json
   where
-  url = (M.URL eventEndpoint)
+  json =
+    "message" := message
+      ~> "level"
+      := level
+      ~> Ar.jsonEmptyObject
 
-  opts =
-    { method: M.postMethod
-    , headers: M.makeHeaders { "Content-Type": "application/json" }
-    , body: Ar.stringify $ Argonaut.encodeJson tv
-    }
+postEventPayload :: ViewEvent -> Aff Response
+postEventPayload viewEvent = jsonPost eventEndpoint (Argonaut.encodeJson viewEvent)

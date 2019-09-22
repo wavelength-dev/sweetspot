@@ -28,6 +28,7 @@ import           Data.Text                      ( Text
                                                 , pack
                                                 , unpack
                                                 )
+import Data.Text as T
 import           Data.Text.Read                 ( rational )
 import           Debug.Trace                    ( trace )
 import           GHC.Generics                   ( Generic )
@@ -110,9 +111,9 @@ instance MonadShopify AppM where
                 apiRoot <- asks (shopifyApiRoot . _getConfig)
                 opts    <- getOpts
                 liftIO $ case r of
-                        ShopifyGet path -> getWith opts $ apiRoot <> path
+                        ShopifyGet path -> getWith opts $ (T.unpack apiRoot) <> path
                         ShopifyPost path payload ->
-                                postWith opts (apiRoot <> path) payload
+                                postWith opts ((T.unpack apiRoot) <> path) payload
 
         fetchProducts = do
                 r <-
@@ -148,20 +149,19 @@ instance MonadShopify AppM where
                 config <- asks _getConfig
                 let     accessTokenRoute = shopifyAccessTokenEndpoint config
                         body             = toJSON $ ExchangeBody
-                                { client_id     = pack $ shopifyClientId config
-                                , client_secret =
-                                        pack $ shopifyClientSecret config
+                                { client_id     = shopifyClientId config
+                                , client_secret = shopifyClientSecret config
                                 , code          = code
                                 }
 
-                r    <- mkRequest $ ShopifyPost accessTokenRoute body
+                r    <- mkRequest $ ShopifyPost (T.unpack accessTokenRoute) body
                 json <- asValue r
                 return $ json ^?! responseBody . key "access_token" . _String
 
 getOpts :: (MonadReader AppCtx m) => m Network.Wreq.Options
 getOpts = do
         oauthToken <- asks (shopifyOAuthAccessToken . _getConfig)
-        let token = BLU.fromString oauthToken
+        let token = BLU.fromString (T.unpack oauthToken)
         return
                 $  defaults
                 &  header "X-Shopify-Access-Token"

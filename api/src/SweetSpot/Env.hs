@@ -1,5 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module SweetSpot.Env where
 
+import           Data.Text                      ( Text )
 import           LoadEnv                        ( loadEnv )
 import           System.Envy                    ( FromEnv
                                                 , decodeEnv
@@ -10,13 +13,13 @@ import           System.Envy                    ( FromEnv
                                                 )
 
 data EnvConfig = EnvConfig
-  { dbHost :: String
-  , dbName :: String
-  , dbPassword :: String
-  , environment :: String
-  , shopifyClientSecret :: String
-  , shopifyOAuthAccessToken :: String
-  , targetShop :: String
+  { dbHost :: !Text
+  , dbName :: !Text
+  , dbPassword :: !Text
+  , environment :: !Text
+  , shopifyClientSecret :: !Text
+  , shopifyOAuthAccessToken :: !Text
+  , targetShop :: !Text
   } deriving (Show)
 
 instance FromEnv EnvConfig where
@@ -24,7 +27,8 @@ instance FromEnv EnvConfig where
     EnvConfig
       <$> env "DB_HOST"
       <*> env "DB_NAME"
-      <*> envMaybe "DB_PASSWORD" .!= ""
+      <*> envMaybe "DB_PASSWORD"
+      .!= ""
       <*> env "ENVIRONMENT"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"

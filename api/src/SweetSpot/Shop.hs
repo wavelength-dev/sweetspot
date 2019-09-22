@@ -1,14 +1,18 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module SweetSpot.Shop where
+
+import Data.Text as Text
 
 data Shop = LibertyPrice | Longvadon
   deriving (Show)
 
-data ShopConfig = ShopConfig { shopApi :: !String
-                             , accessTokenEndpoint :: !String
-                             , clientId :: !String
+data ShopConfig = ShopConfig { shopApi :: !Text
+                             , accessTokenEndpoint :: !Text
+                             , clientId :: !Text
                              }
 
-readShop :: String -> Either String Shop
+readShop :: Text -> Either Text Shop
 readShop "libertyprice" = Right LibertyPrice
 readShop "longvadon"    = Right Longvadon
 readShop unknownShop =

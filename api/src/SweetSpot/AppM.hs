@@ -8,22 +8,21 @@ import           Control.Monad.Except           ( MonadError(..) )
 import           Control.Monad.Reader           ( ReaderT )
 import           Control.Monad.Reader.Class     ( MonadReader )
 import           Control.Monad.IO.Class         ( MonadIO(..) )
-
+import           Data.Text                      ( Text )
 import           GHC.Generics                   ( Generic )
 import           Servant                        ( Handler
                                                 , ServerError
                                                 )
 import           System.Log.FastLogger          ( LoggerSet )
-
 import           SweetSpot.Database             ( Pool )
 
 data AppConfig = AppConfig
-  { environment :: !String
-  , shopifyApiRoot :: !String
-  , shopifyAccessTokenEndpoint :: !String
-  , shopifyClientId :: !String
-  , shopifyClientSecret :: !String
-  , shopifyOAuthAccessToken :: !String
+  { environment :: !Text
+  , shopifyApiRoot :: !Text
+  , shopifyAccessTokenEndpoint :: !Text
+  , shopifyClientId :: !Text
+  , shopifyClientSecret :: !Text
+  , shopifyOAuthAccessToken :: !Text
   } deriving (Generic, Show)
 
 data AppCtx = AppCtx

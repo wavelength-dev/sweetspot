@@ -12,6 +12,7 @@ where
 import           Control.Concurrent             ( threadDelay )
 import           Control.Monad.Reader           ( runReaderT )
 import           Data.Pool                      ( withResource )
+import           Data.Text                     as T
 import           Network.Wai.Logger             ( withStdoutLogger )
 import           Network.Wai.Handler.Warp       ( defaultSettings
                                                 , setPort
@@ -82,7 +83,7 @@ runServer = do
         dbPool    <- getDbPool dbConfig
         appLogger <- newStdoutLoggerSet defaultBufSize
         shop      <- case Shop.readShop (Env.targetShop envConfig) of
-                Left  msg  -> error msg
+                Left  msg  -> error (T.unpack msg)
                 Right shop -> return shop
         let     shopConfig = getShopConfig shop
                 config     = AppConfig

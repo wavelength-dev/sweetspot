@@ -23,9 +23,9 @@ import           SweetSpot.Database.Schema      ( migration )
 type Pool = P.Pool PG.Connection
 
 data DbConfig = DbConfig
-  { host :: String
-  , name :: String
-  , password :: String
+  { host :: !T.Text
+  , name :: !T.Text
+  , password :: !T.Text
   }
 
 getDbPool :: DbConfig -> IO (P.Pool PG.Connection)
@@ -36,11 +36,11 @@ getDbPool DbConfig {..} = P.createPool initConn
                                        poolSize
     where
         initConn = PG.connect
-                (PG.ConnectInfo { connectHost     = host
+                (PG.ConnectInfo { connectHost     = T.unpack host
                                 , connectPort     = 5432
                                 , connectUser     = "sweetspot"
-                                , connectPassword = password
-                                , connectDatabase = name
+                                , connectPassword = T.unpack password
+                                , connectDatabase = T.unpack name
                                 }
                 )
         subPools  = 1

@@ -16,7 +16,7 @@ COPY ./api /opt/build
 RUN stack build --verbosity warn --copy-bins
 
 # Build the PureScript injectables
-FROM node:12 AS build-dist
+FROM node:12-buster AS build-dist
 WORKDIR /opt/build-dist
 
 # See: https://github.com/spacchetti/spago/issues/104
@@ -37,7 +37,7 @@ RUN spago bundle-app --main SweetSpot.Checkout --to ./sweetspot-checkout.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
 
 # Leave only the executable in the second stage
-FROM debian:stretch
+FROM debian:buster-slim
 WORKDIR /opt/sweetspot
 RUN apt-get update --quiet && apt-get install -y --quiet \
   ca-certificates \

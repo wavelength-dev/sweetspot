@@ -19,6 +19,9 @@ RUN stack build --verbosity warn --copy-bins
 FROM node:12 AS build-dist
 WORKDIR /opt/build-dist
 
+# See: https://github.com/spacchetti/spago/issues/104
+RUN apt-get --quiet update && apt-get --quiet install --yes libncurses5 git
+
 # Install build dependencies
 RUN yarn global add purescript spago uglify-js
 COPY ./injectable/spago.dhall ./injectable/packages.dhall ./

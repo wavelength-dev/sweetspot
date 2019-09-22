@@ -6,11 +6,10 @@ import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
-import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
-import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Logging (LogLevel(..))
+import SweetSpot.Logging (log) as Logging
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -48,5 +47,5 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload Warn "WARN: observed node was not an element"
+            Nothing -> Logging.log Warn "Observed node was not an element."
             Just element -> SiteC.applyPriceVariation testMapsMap element

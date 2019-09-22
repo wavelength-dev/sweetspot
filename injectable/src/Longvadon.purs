@@ -1,6 +1,7 @@
 module SweetSpot.Longvadon (attachObservers, convertSsvCollectionUrls, setCheckout) where
 
 import Prelude
+
 import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
@@ -9,13 +10,12 @@ import Data.String (Pattern(..))
 import Data.String as String
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (launchAff_)
 import Prim.Row (class Union)
-import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
-import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Logging (LogLevel(..))
+import SweetSpot.Logging (log) as Logging
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -188,7 +188,7 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload Error "ERROR: observed node was not an element"
+            Nothing -> Logging.log Error "Observed node was not an element."
             Just element -> SiteC.applyPriceVariation testMapsMap element
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
@@ -202,7 +202,7 @@ observeSlickButtons testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> launchAff_ $ Api.postLogPayload Error "ERROR: observed node was not an element"
+            Nothing -> Logging.log Error "Observed node was not an element."
             Just element -> setCheckoutOption testMapsMap element
 
 -- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">

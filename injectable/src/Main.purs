@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Control.Monad.Except (throwError)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
@@ -8,14 +9,13 @@ import Effect (Effect)
 import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Effect.Console as Console
 import Effect.Exception (Error, throw)
-import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPriceVariations, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getTestMaps, getUserBucketProvisions, getUserId, runAppM, setUserId, unhidePrice)
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
-import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Logging (LogLevel(..))
+import SweetSpot.Logging (log) as Logging
 import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
 import SweetSpot.SiteCapabilities (awaitDomReady)
 
@@ -55,20 +55,8 @@ app = do
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of
-  Left appErr -> runAff_ (onLogPosted appErr) (Api.postLogPayload Error $ show appErr)
+  Left appErr -> Logging.log Error $ show appErr
   Right _ -> pure unit
-  where
-  -- If logging to the server failed we still log to console.
-  onLogPosted appErr (Left logPostingErr) = Console.error $ format logPostingErr appErr
-
-  onLogPosted _ (Right _) = pure unit
-
-  format logErr appErr =
-    "Failed to post log message, falling back to console.\n"
-      <> "Logging error: "
-      <> show logErr
-      <> "App error: "
-      <> show appErr
 
 main :: Effect Unit
 main =
@@ -78,10 +66,5 @@ main =
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message
-          Left (Noop reason) -> runAff_ (onLogResult reason) (Api.postLogPayload Error reason)
-          Right _ -> runAff_ (onLogResult "Ran successfully for test") (Api.postLogPayload Error "Ran successfully for test")
-  where
-  -- If we fail to communicate why we short-circuted to the server, we fallback to logging to console.
-  onLogResult reason (Left err) = Console.errorShow err *> Console.info reason
-
-  onLogResult _ (Right _) = pure unit
+          Left (Noop reason) -> Logging.log Info reason
+          Right _ -> Logging.log Info "Ran successfully for test"

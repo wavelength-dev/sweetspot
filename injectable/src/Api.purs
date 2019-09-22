@@ -1,7 +1,7 @@
 module SweetSpot.Api where
 
 import Prelude
-import Data.Argonaut (class EncodeJson, Json, (:=), (~>))
+import Data.Argonaut (class EncodeJson, Json)
 import Data.Argonaut (encodeJson, stringify) as Argonaut
 import Data.Argonaut as Ar
 import Data.Either (Either(..))
@@ -12,7 +12,6 @@ import Milkis.Impl.Window (windowFetch)
 import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), decodeTestMaps)
 import SweetSpot.Data.Event (ViewEvent)
-import SweetSpot.Log (LogLevel)
 
 data TestMapProvisions
   = OnlyCampaignId CampaignId
@@ -40,8 +39,8 @@ fetchTestMaps provisions = do
         Left error -> show >>> Left $ error
         Right responseText -> Ar.jsonParser >=> decodeTestMaps $ responseText
 
-jsonPost :: String -> Json -> Aff Response
-jsonPost url json =
+postJson :: String -> Json -> Aff Response
+postJson url json =
   fetch
     (M.URL url)
     { method: M.postMethod
@@ -49,14 +48,8 @@ jsonPost url json =
     , body: Argonaut.stringify json
     }
 
-postLogPayload :: forall a. EncodeJson a => LogLevel -> a -> Aff Response
-postLogPayload level message = jsonPost logEndpoint json
-  where
-  json =
-    "message" := message
-      ~> "level"
-      := level
-      ~> Ar.jsonEmptyObject
+sendLog :: forall a. EncodeJson a => a -> Aff Response
+sendLog = Argonaut.encodeJson >>> postJson logEndpoint
 
-postEventPayload :: ViewEvent -> Aff Response
-postEventPayload viewEvent = jsonPost eventEndpoint (Argonaut.encodeJson viewEvent)
+sendEvent :: ViewEvent -> Aff Response
+sendEvent = Argonaut.encodeJson >>> postJson eventEndpoint

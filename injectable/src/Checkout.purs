@@ -8,10 +8,11 @@ import Data.Argonaut (stringify)
 import Data.Either (Either(..), hush)
 import Data.List (foldr)
 import Data.Maybe (Maybe(..))
+import Data.Maybe (maybe) as Maybe
 import Data.Number (fromString)
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (Aff, Error, apathize, attempt, launchAff_)
+import Effect.Aff (Aff, Error, attempt, launchAff_)
 import Effect.Class (liftEffect)
 import Foreign (Foreign, F, readArray, readNumber, readString, renderForeignError)
 import Foreign.Index (readProp, (!))
@@ -19,10 +20,10 @@ import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
 import Record (merge)
-import SweetSpot.Api (postLogPayload) as Api
 import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
-import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Logging (LogLevel(..))
+import SweetSpot.Logging (log) as Logging
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)
@@ -111,7 +112,5 @@ trackCheckout = do
 main :: Effect Unit
 main = launchAff_ $ do
   let err = getCheckoutStateIssues checkoutA checkoutB
-  _ <- case err of
-    Just err' -> apathize $ Api.postLogPayload Error err'
-    Nothing -> pure unit
+  liftEffect $ Maybe.maybe (pure unit) (Logging.log Error) err
   trackCheckout

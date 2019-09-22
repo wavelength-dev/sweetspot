@@ -1,4 +1,4 @@
-FROM 586715926679.dkr.ecr.us-east-2.amazonaws.com/sweetspot-build AS build
+FROM haskell:8.6.5 AS build
 
 WORKDIR /opt/build
 
@@ -34,7 +34,7 @@ RUN spago bundle-app --main SweetSpot.Checkout --to ./sweetspot-checkout.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
 
 # Leave only the executable in the second stage
-FROM ubuntu
+FROM debian:stretch
 WORKDIR /opt/sweetspot
 RUN apt-get update --quiet && apt-get install -y --quiet \
   ca-certificates \

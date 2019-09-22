@@ -8,5 +8,6 @@ product-form-collectors_box, injected product SKU.
 product-card, injected product SKU.
 
 ## Tagged prices (Incomplete list)
-cart-products.liquid
-product-card.liquid
+cart-products.liquid - cart page
+product-card.liquid - collection page
+see-moreproduct-ipad.liquid - product page slick carousel

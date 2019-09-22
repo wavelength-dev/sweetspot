@@ -6,21 +6,16 @@
 module SweetSpot.Route.Injectable
   ( InjectableAPI
   , injectableHandler
-  , experimentShield
   , UserBucketRoute
   ) where
 
 import Control.Lens ((^.), (^?))
-import Data.Aeson (Value, encode)
+import Data.Aeson (Value)
 import Data.Aeson.Lens (_String, key)
-import Data.ByteString as BS (isInfixOf)
-import qualified Data.Text as T
 import Data.Text (Text)
-import Network.HTTP.Types (hContentType, status400)
-import Network.Wai (Middleware, requestHeaders, responseLBS)
-import Network.Wai.Middleware.Routed (routedMiddleware)
+import qualified Data.Text as T
 import Servant
-import SweetSpot.AppM (AppConfig(..), AppCtx(..), AppM(..), ServerM)
+import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable
@@ -115,31 +110,6 @@ trackLogMessageHandler :: Value -> ServerM OkResponse
 trackLogMessageHandler val = runAppM $ do
   insertEvent (Log, val)
   return OkResponse {message = "Event received"}
-
-experimentShield :: AppCtx -> Middleware
-experimentShield ctx =
-  routedMiddleware
-    (\routes -> Prelude.any (`elem` routes) originProtectedRoutes)
-    (originMiddleware ctx)
-
--- Drops requests that are not from Kamikoto
-originMiddleware :: AppCtx -> Middleware
-originMiddleware ctx app req respond =
-  -- if not isOriginKamikoto && env /= "dev"
-  if False
-    then respond $
-         responseLBS
-           status400
-           [(hContentType, "application/json")]
-           (encode (OkResponse {message = "Referer needs to be kamikoto"}))
-    else app req respond
-  where
-    env = environment $ _getConfig ctx
-    headers = requestHeaders req
-    isOriginKamikoto =
-      case lookup "referer" headers of
-        Nothing -> False
-        Just referer -> "longvadon" `BS.isInfixOf` referer
 
 injectableHandler =
   getUserBucketsHandler :<|> trackEventHandler :<|> trackLogMessageHandler

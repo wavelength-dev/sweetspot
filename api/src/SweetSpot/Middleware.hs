@@ -14,7 +14,6 @@ import Network.Wai.Middleware.Gzip
 import Network.Wai.Middleware.HttpAuth (basicAuth)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import SweetSpot.AppM (AppConfig(..), AppCtx(..))
-import SweetSpot.Route.Injectable (experimentShield)
 
 -- WAI doesn't seem to want to know about routing.
 -- This should probably move into a Servant handler somehow.
@@ -26,14 +25,14 @@ gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
 auth :: Middleware
 auth = routedMiddleware ("dashboard" `elem`) mw
   where
-    check u p = return $ u == "sweetspot" && p == "***REMOVED***"
+    check u p = return $ u == "sweetspot" && p == "TM9n4gzy,3kMkw(rmn"
     mw = basicAuth check "Dashboard realm"
 
 getMiddleware :: AppCtx -> Middleware
 getMiddleware ctx =
   -- Disable auth in dev for ease of testing
   if env == "dev"
-    then gzipStatic . experimentShield ctx
-    else gzipStatic . auth . experimentShield ctx
+    then gzipStatic
+    else gzipStatic . auth
   where
     env = environment . _getConfig $ ctx

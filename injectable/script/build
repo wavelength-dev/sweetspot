@@ -23,7 +23,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "=> Finished building main"
 
-npx --quiet uglifyjs --compress --mangle --output ./output/sweetspot-main.min.js ./output/sweetspot-main.js
+npx --quiet uglify-js --compress --mangle --output ./output/sweetspot-main.min.js ./output/sweetspot-main.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify main"
   exit 1
@@ -52,7 +52,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-npx --quiet uglifyjs --compress --mangle --output ./output/sweetspot-checkout.min.js ./output/sweetspot-checkout.js
+npx --quiet uglify-js --compress --mangle --output ./output/sweetspot-checkout.min.js ./output/sweetspot-checkout.js
 if [ $? -ne 0 ]; then
   echo "=> Failed to minify checkout"
   exit 1

@@ -2,11 +2,16 @@ module SweetSpot.Longvadon (attachObservers, convertSsvCollectionUrls, setChecko
 
 import Prelude
 import Data.Array as Array
+import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..))
 import Data.String as String
+import Data.String.Regex (Regex)
+import Data.String.Regex (replace) as Regex
+import Data.String.Regex.Flags (noFlags) as RegexFlags
+import Data.String.Regex.Unsafe (unsafeRegex) as RegexUnsafe
 import Data.Traversable (traverse)
 import Effect (Effect)
 import Prim.Row (class Union)
@@ -19,7 +24,7 @@ import SweetSpot.Logging (log) as Logging
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element (fromNode, toNode) as Element
+import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
 import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
 import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
@@ -256,5 +261,45 @@ attachObservers :: TestMapsMap -> Effect Unit
 attachObservers testMapsMap =
   observePrices testMapsMap
     *> observeSlickButtons testMapsMap
-    *> observeProductAddToCartButton testMapsMap
     *> observeProductSlickCarousel testMapsMap
+
+setProductAddToCartCheckoutOption :: TestMapsMap -> Element -> Effect Unit
+setProductAddToCartCheckoutOption testMapsMap element =
+  applyToVariantSelector testMapsMap element
+    *> setCheckoutOption testMapsMap element
+
+applyToVariantSelector :: TestMapsMap -> Element -> Effect Unit
+applyToVariantSelector testMapsMap variantOptionElement = do
+  eRawHtml <- getRawHtml
+  eSwapPrice <- getSwapPrice
+  case eRawHtml, eSwapPrice of
+    Left err, _ -> Logging.log Error err
+    _, Left err -> Logging.log Error err
+    Right rawHtml, Right swapPrice -> do
+      localSwapPrice <- Intl.formatPrice swapPrice
+      rawHtml
+        # Regex.replace priceRegex (">" <> localSwapPrice <> "<")
+        >>> Regex.replace hiddenPriceClassRegex ""
+        >>> \newHtml -> Element.setAttribute "data-cartbtn" newHtml variantOptionElement
+  where
+  priceRegex :: Regex
+  priceRegex = RegexUnsafe.unsafeRegex """>\$.*?<""" RegexFlags.noFlags
+
+  hiddenPriceClassRegex :: Regex
+  hiddenPriceClassRegex = RegexUnsafe.unsafeRegex Config.hiddenPriceId RegexFlags.noFlags
+
+  getRawHtml :: Effect (Either String String)
+  getRawHtml =
+    Element.getAttribute "data-cartbtn" variantOptionElement
+      >>= case _ of
+          Nothing -> pure $ Left "Variant source element had empty data-cartbtn attribute!"
+          Just rawHtml -> pure $ Right rawHtml
+
+  getSwapPrice :: Effect (Either String Number)
+  getSwapPrice =
+    Element.getAttribute "value" variantOptionElement
+      >>= case _ of
+          Nothing -> pure $ Left "No variant id on variant selector option!"
+          Just variantId -> case Map.lookup variantId testMapsMap of
+            Nothing -> pure $ Left "Unknown variant in variant selector option!"
+            Just testMap -> pure $ Right testMap.swapPrice

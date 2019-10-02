@@ -21,7 +21,7 @@ import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
 import Web.HTML (window)
-import Web.HTML.HTMLElement (fromElement)
+import Web.HTML.HTMLElement (fromElement) as HTMLElement
 import Web.HTML.Location (hostname, search)
 import Web.HTML.Window (localStorage, location)
 import Web.HTML.Window as Win
@@ -164,7 +164,7 @@ applyFacadeUrl = do
 unhidePrice :: Effect Unit
 unhidePrice =
   SiteC.queryDocument SiteC.priceElementSelector
-    >>= (map fromElement)
+    >>= (map HTMLElement.fromElement)
     >>> Array.catMaybes
     >>> pure
     >>= traverse_ (SiteC.removeClass Config.hiddenPriceId)
@@ -176,5 +176,5 @@ applyPriceVariations :: TestMapsMap -> Effect Unit
 applyPriceVariations testMapsMap = do
   priceElements <- SiteC.queryDocument SiteC.priceElementSelector
   let
-    priceHTMLElements = Array.catMaybes $ map fromElement priceElements
+    priceHTMLElements = Array.catMaybes $ map HTMLElement.fromElement priceElements
   traverse_ (SiteC.applyPriceVariation testMapsMap) priceElements

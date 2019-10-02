@@ -24,7 +24,7 @@ import SweetSpot.Logging (log) as Logging
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
+import Web.DOM.Element (fromNode, getAttribute, toNode) as Element
 import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
 import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
@@ -267,6 +267,11 @@ setProductAddToCartCheckoutOption testMapsMap element =
   applyToVariantSelector testMapsMap element
     *> setCheckoutOption testMapsMap element
 
+type RawHtml
+  = String
+
+foreign import setCachedButtonHtml :: Element -> RawHtml -> Effect Unit
+
 applyToVariantSelector :: TestMapsMap -> Element -> Effect Unit
 applyToVariantSelector testMapsMap variantOptionElement = do
   eRawHtml <- getRawHtml
@@ -279,7 +284,7 @@ applyToVariantSelector testMapsMap variantOptionElement = do
       rawHtml
         # Regex.replace priceRegex (">" <> localSwapPrice <> "<")
         >>> Regex.replace hiddenPriceClassRegex ""
-        >>> \newHtml -> Element.setAttribute "data-cartbtn" newHtml variantOptionElement
+        >>> setCachedButtonHtml variantOptionElement
   where
   priceRegex :: Regex
   priceRegex = RegexUnsafe.unsafeRegex """>\$.*?<""" RegexFlags.noFlags

@@ -1,7 +1,6 @@
 module SweetSpot.Longvadon (attachObservers, convertSsvCollectionUrls, setCheckout) where
 
 import Prelude
-
 import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
@@ -12,6 +11,7 @@ import Data.Traversable (traverse)
 import Effect (Effect)
 import Prim.Row (class Union)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
+import SweetSpot.Data.Config (hiddenPriceId) as Config
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.Logging (LogLevel(..))
@@ -25,6 +25,7 @@ import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
+import Web.HTML.HTMLElement (fromElement) as HTMLElement
 
 -- Longvadon has four known price forms
 -- collections page, every product in a collection lists a price
@@ -222,6 +223,7 @@ observeProductAddToCartButton testMapsMap = do
     -- We expect there to be one
     priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
     for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
+    for_ priceElements \priceElement -> HTMLElement.fromElement priceElement <#> SiteC.removeClass Config.hiddenPriceId # pure
 
 type MutationCallback
   = Array Element -> Effect Unit

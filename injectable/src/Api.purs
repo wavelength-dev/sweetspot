@@ -9,7 +9,7 @@ import Effect.Aff (Aff, attempt)
 import Milkis (Response)
 import Milkis as M
 import Milkis.Impl.Window (windowFetch)
-import SweetSpot.Data.Config (campaignIdQueryParam, eventEndpoint, experimentEndpoint, logEndpoint)
+import SweetSpot.Data.Config (eventEndpoint, experimentEndpoint, logEndpoint)
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), decodeTestMaps)
 import SweetSpot.Data.Event (ViewEvent)
 
@@ -30,8 +30,8 @@ fetchTestMaps provisions = do
       }
 
     qs = case provisions of
-      UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&" <> campaignIdQueryParam <> "=" <> cid
-      OnlyCampaignId (CampaignId cid) -> "?" <> campaignIdQueryParam <> "=" <> cid
+      UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&sscid=" <> cid
+      OnlyCampaignId (CampaignId cid) -> "?sscid=" <> cid
       OnlyUserId (UserId uid) -> "?uid=" <> uid
   eResponseText <- attempt $ fetch (M.URL $ experimentEndpoint <> qs) opts >>= M.text
   pure

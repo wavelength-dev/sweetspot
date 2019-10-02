@@ -236,11 +236,12 @@ onElementsMutation elements options callback = do
     observe = Element.toNode >>> \node -> MutationObserver.observe node options mutationObserver
   traverse_ observe elements
   where
+  -- We discard the possibilty of some observed nodes not being elements as the only nodes we watch are price elements which are necessarily Html elements.
   mutationRecordsToElements :: Array MutationRecord -> MutationObserver -> Effect (Array Element)
   mutationRecordsToElements mutationRecords _ =
     traverse (MutationRecord.target >=> Element.fromNode >>> pure) mutationRecords
-    -- We discard the possibilty of some observed nodes not being elements as the only nodes we watch are price elements which are necessarily Html elements.
-    >>= Array.catMaybes >>> pure
+      >>= Array.catMaybes
+      >>> pure
 
 observeProductSlickCarousel :: TestMapsMap -> Effect Unit
 observeProductSlickCarousel testMapsMap = do

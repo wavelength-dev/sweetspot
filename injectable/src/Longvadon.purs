@@ -30,7 +30,6 @@ import Web.DOM.MutationObserver as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
-import Web.HTML.HTMLElement (fromElement) as HTMLElement
 
 -- Longvadon has four known price forms
 -- collections page, every product in a collection lists a price
@@ -67,7 +66,7 @@ isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceS
 setCheckout :: TestMapsMap -> Effect Unit
 setCheckout testMaps = do
   -- Makes sure the correct variant is added to cart on product page.
-  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
+  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setProductAddToCartCheckoutOption testMaps)
   -- Makes sure the correct variant is co-added to cart with the slick carousel on product page.
   SiteC.queryDocument productSlickAddToCartInputSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is offered to add to cart, when selecting a variant from the slick carousel on the cart page.
@@ -228,7 +227,6 @@ observeProductAddToCartButton testMapsMap = do
     -- We expect there to be one
     priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
     for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
-    for_ priceElements \priceElement -> HTMLElement.fromElement priceElement <#> SiteC.removeClass Config.hiddenPriceId # pure
 
 type MutationCallback
   = Array Element -> Effect Unit
@@ -263,6 +261,7 @@ attachObservers testMapsMap =
     *> observeSlickButtons testMapsMap
     *> observeProductSlickCarousel testMapsMap
 
+-- Checkout options are used not only to determine what to check out but also hold raw HTML in a class for variant toggling which updates the price in the add to cart button. We use the variant id in the checkout option to decide what price to use. If we update the option to checkout the correct variant, we can no longer look up the price. So in order to rewrite the raw HTML to set the correct price, we need to do this before we swap the variant id in the option to checkout the correct variant. In other words, ORDER MATTERS HERE, and we entangle price setting with checkout setting. All of this can be avoided by using the SKU in the option or setting a custom attribute.
 setProductAddToCartCheckoutOption :: TestMapsMap -> Element -> Effect Unit
 setProductAddToCartCheckoutOption testMapsMap element =
   applyToVariantSelector testMapsMap element

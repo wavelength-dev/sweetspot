@@ -6,15 +6,6 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split, stripPrefix) as String
 import Global (decodeURIComponent)
 
--- function parseQuery(queryString) {
---     var query = {};
---     var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
---     for (var i = 0; i < pairs.length; i++) {
---         var pair = pairs[i].split('=');
---         query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
---     }
---     return query;
--- }
 type Key
   = String
 
@@ -33,15 +24,15 @@ instance showQueryParam :: Show QueryParam where
 parseQueryString :: String -> Array (Either String QueryParam)
 parseQueryString =
   stripQuestionMark
-    >>> splitByAmpersand
-    >>> map splitByEquals
+    >>> splitOnAmpersand
+    >>> map splitOnEquals
     >>> map rawToQueryParam
   where
   stripQuestionMark = \str -> (String.stripPrefix (String.Pattern "?") str) # fromMaybe str
 
-  splitByAmpersand = String.split (String.Pattern "&")
+  splitOnAmpersand = String.split (String.Pattern "&")
 
-  splitByEquals = String.split (String.Pattern "=")
+  splitOnEquals = String.split (String.Pattern "=")
 
   -- parsing query parameters is hard, consider using lib
   rawToQueryParam :: Array String -> Either String QueryParam

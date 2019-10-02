@@ -9,6 +9,7 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
 import Data.String as String
+import Data.Traversable (oneOf)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -19,6 +20,7 @@ import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
+import SweetSpot.QueryString (QueryParam(..), parseQueryString)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement) as HTMLElement
@@ -79,19 +81,6 @@ getSiteId =
               "libertyprice.myshopify.com" -> Right LibertyPrice
               _ -> Left siteHostname
 
-parseCampaignId :: String -> Maybe CampaignId
-parseCampaignId queryString =
-  let
-    clean = fromMaybe queryString (String.stripPrefix (String.Pattern "?") queryString)
-
-    kvPairs = String.split (String.Pattern "&") >>> map (String.split $ String.Pattern "=") $ clean
-
-    campaignPred = \arr -> maybe false ((==) Config.campaignIdQueryParam) (Array.index arr 0)
-
-    match = Array.find campaignPred kvPairs
-  in
-    match >>= flip Array.index 1 <#> CampaignId
-
 ensureDeps :: AppM Unit
 ensureDeps = case promise, fetch of
   true, true -> pure unit
@@ -130,8 +119,18 @@ getTestMaps userBucketProvisions = do
     (OnlyUserId uid) -> unwrap uid
     _ -> "Unknown UserId"
 
-getCampaignId :: Effect (Maybe CampaignId)
-getCampaignId = window >>= location >>= search >>= pure <<< parseCampaignId
+readCampaignId :: Effect (Maybe CampaignId)
+readCampaignId = do
+  queryString <- window >>= location >>= search
+  queryString
+    # parseQueryString
+    >>> map matchCampaignQueryParam
+    >>> oneOf
+    >>> pure
+  where
+  matchCampaignQueryParam = case _ of
+    Right (QueryParam "sscid" (Just id)) -> id # CampaignId >>> Just
+    _ -> Nothing
 
 getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM TestMapProvisions
 getUserBucketProvisions Nothing Nothing = throwError $ Noop "No userId or campaign url parameter. Exiting..."

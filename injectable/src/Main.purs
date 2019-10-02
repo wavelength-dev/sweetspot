@@ -10,7 +10,7 @@ import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPriceVariations, ensureDeps, fixCartItemUrls, getCampaignId, getSiteId, getTestMaps, getUserBucketProvisions, getUserId, runAppM, setUserId, unhidePrice)
+import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPriceVariations, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getUserBucketProvisions, getUserId, readCampaignId, runAppM, setUserId, unhidePrice)
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
@@ -25,7 +25,7 @@ app = do
   liftAff awaitDomReady
   liftEffect applyFacadeUrl
   mUid <- liftEffect $ getUserId
-  mCid <- liftEffect $ getCampaignId
+  mCid <- liftEffect $ readCampaignId
   mSiteId <- liftEffect getSiteId
   site <- case mSiteId of
     Left hostname ->

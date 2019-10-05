@@ -12,17 +12,19 @@ module SweetSpot.SiteCapabilities
   ) where
 
 import Prelude
-
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String as String
+import Data.Traversable (oneOf)
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
 import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config (dryRunMode, idClass) as Config
 import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
+import SweetSpot.QueryString (QueryParam(..))
+import SweetSpot.QueryString (parseQueryString) as QueryString
 import Web.DOM (Element, NodeList)
 import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Document (toParentNode) as Document
@@ -37,8 +39,9 @@ import Web.HTML.Event.EventTypes as ET
 import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.HTMLElement (classList)
-import Web.HTML.History (DocumentTitle(..), replaceState, state, URL(..))
-import Web.HTML.Location (pathname)
+import Web.HTML.History (DocumentTitle(..), URL(..))
+import Web.HTML.History (replaceState, state) as History
+import Web.HTML.Location (pathname, search) as Location
 import Web.HTML.Window as Window
 
 class
@@ -46,31 +49,25 @@ class
   getAttribute :: String -> Element -> m (Maybe String)
   setAttribute :: String -> String -> Element -> m Unit
   queryDocument :: QuerySelector -> m (Array Element)
+  getUrlParam :: String -> m (Maybe String)
 
 instance browserActionEffect :: BrowserAction Effect where
   getAttribute = Element.getAttribute
   setAttribute = Element.setAttribute
   queryDocument = queryDocument_
+  getUrlParam = getUrlParam_
 
 priceElementSelector :: QuerySelector
 priceElementSelector = QuerySelector $ "[class*=" <> Config.idClass <> "]"
-
--- instance domActionTest :: DomInteraction ?identity where
---   getAttribute = ?get
---   setAttribute = ?set
--- class SiteCapabilities a where
---   swapProductPrices :: NonEmptyArray Element -> a
---   swapCheckoutOptions :: NonEmptyArray Element -> a
---   collectPriceElements :: a -> Effect (Array Element)
--- data SC a --   = SwapProductPrices (NonEmptyArray Element -> a)
---   | SwapCheckoutOptions (NonEmptyArray Element -> a)
---   | CollectPriceElements (a -> Effect (Array Element))
 
 data Site
   = Longvadon
   | LibertyPrice
   | Unknown
 
+--
+-- TODO: SweetSpot.SiteCapabilities.DOM
+--
 awaitDomReady :: Aff Unit
 awaitDomReady =
   makeAff \callback -> do
@@ -93,24 +90,8 @@ addClass className el = do
   current <- Element.className el
   Element.setClassName (current <> " " <> className) el
 
-getIdFromPriceElement :: Element -> Effect (Maybe Sku)
-getIdFromPriceElement el = do
-  classNames <- (String.split $ String.Pattern " ") <$> Element.className el
-  pure $ findSweetSpotTag classNames >>= getSkuFromTag <#> Sku
-  where
-  findSweetSpotTag :: Array String -> Maybe String
-  findSweetSpotTag = Array.find (String.contains (String.Pattern Config.idClass))
-
-  getSkuFromTag :: String -> Maybe String
-  getSkuFromTag tag = Array.last $ String.split (String.Pattern "--") tag
-
-getPathname :: Effect String
-getPathname = window >>= Window.location >>= pathname
-
-replacePathname :: String -> Effect Unit
-replacePathname url = do
-  h <- window >>= Window.history
-  state h >>= \st -> replaceState st (DocumentTitle "") (URL url) h
+nodesToElements :: NodeList -> Effect (Array Element)
+nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
 
 queryDocument_ :: QuerySelector -> Effect (Array Element)
 queryDocument_ querySelector =
@@ -122,8 +103,40 @@ queryDocument_ querySelector =
     >>= ParentNode.querySelectorAll querySelector
     >>= nodesToElements
 
-nodesToElements :: NodeList -> Effect (Array Element)
-nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+--
+-- TODO: SweetSpot.SiteCapabilities.URL
+--
+getPathname :: Effect String
+getPathname = window >>= Window.location >>= Location.pathname
+
+replacePathname :: String -> Effect Unit
+replacePathname url = do
+  history <- window >>= Window.history
+  History.state history >>= \historyState -> History.replaceState historyState (DocumentTitle "") (URL url) history
+
+getUrlParam_ :: String -> Effect (Maybe String)
+getUrlParam_ targetKey = do
+  queryString <- window >>= Window.location >>= Location.search
+  queryString
+    # QueryString.parseQueryString
+    >>> map matchQueryParam
+    >>> oneOf
+    >>> pure
+  where
+  matchQueryParam :: Either String QueryParam -> Maybe String
+  matchQueryParam eQueryParam = case eQueryParam of
+    Right (QueryParam key (Just value)) ->
+      if key == targetKey then
+        Just value
+      else
+        Nothing
+    _ -> Nothing
+
+-- TODO: SweetSpot.SiteCapabilities.PriceControl
+-- TODO: make this an Int
+type Price
+  = Number
+
 setControlledPrice :: TestMapsMap -> Element -> Effect Unit
 setControlledPrice testMaps el = do
   mElementSku <- getIdFromPriceElement el
@@ -138,3 +151,13 @@ setControlledPrice testMaps el = do
       setTextContent formattedPrice (Element.toNode el)
     Nothing, _ -> pure unit
 
+getIdFromPriceElement :: Element -> Effect (Maybe Sku)
+getIdFromPriceElement el = do
+  classNames <- (String.split $ String.Pattern " ") <$> Element.className el
+  pure $ findSweetSpotTag classNames >>= getSkuFromTag <#> Sku
+  where
+  findSweetSpotTag :: Array String -> Maybe String
+  findSweetSpotTag = Array.find (String.contains (String.Pattern Config.idClass))
+
+  getSkuFromTag :: String -> Maybe String
+  getSkuFromTag tag = Array.last $ String.split (String.Pattern "--") tag

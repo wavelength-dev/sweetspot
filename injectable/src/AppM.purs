@@ -9,23 +9,25 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
 import Data.String as String
-import Data.Traversable (oneOf)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
+import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
+import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
-import SweetSpot.QueryString (QueryParam(..), parseQueryString)
 import SweetSpot.SiteCapabilities as SiteC
+import Web.DOM (Element)
+import Web.DOM.Element (setAttribute) as Element
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement) as HTMLElement
-import Web.HTML.Location (hostname, search)
-import Web.HTML.Window (localStorage, location)
+import Web.HTML.Location (hostname)
+import Web.HTML.Window (localStorage)
 import Web.HTML.Window as Win
 import Web.Storage.Storage (getItem, setItem)
 
@@ -116,17 +118,7 @@ getTestMaps userBucketProvisions = do
     _ -> "Unknown UserId"
 
 readCampaignId :: Effect (Maybe CampaignId)
-readCampaignId = do
-  queryString <- window >>= location >>= search
-  queryString
-    # parseQueryString
-    >>> map matchCampaignQueryParam
-    >>> oneOf
-    >>> pure
-  where
-  matchCampaignQueryParam = case _ of
-    Right (QueryParam "sscid" (Just id)) -> id # CampaignId >>> Just
-    _ -> Nothing
+readCampaignId = SiteC.getUrlParam "sscid" >>= map CampaignId >>> pure
 
 getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM TestMapProvisions
 getUserBucketProvisions mUserId mCampaignId = case mUserId, mCampaignId of

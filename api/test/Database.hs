@@ -11,7 +11,7 @@ import Database.PostgreSQL.Simple.Types (Query(..))
 connectInfo = ConnectInfo
   { connectHost = "localhost"
   , connectPort = 5432
-  , connectUser = "postgres"
+  , connectUser = "sweetspot"
   , connectPassword = ""
   , connectDatabase = "sweetspot_test"
   }

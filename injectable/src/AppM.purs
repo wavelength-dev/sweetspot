@@ -31,7 +31,7 @@ import Web.Storage.Storage (getItem, setItem)
 
 data ShortCircuit
   = ReportErr { message :: String, payload :: String }
-  | Noop String
+  | Noop
 
 newtype AppM a
   = AppM (ExceptT ShortCircuit Aff a)
@@ -133,13 +133,11 @@ readCampaignId = do
     _ -> Nothing
 
 getUserBucketProvisions :: Maybe UserId -> Maybe CampaignId -> AppM TestMapProvisions
-getUserBucketProvisions Nothing Nothing = throwError $ Noop "No userId or campaign url parameter. Exiting..."
-
-getUserBucketProvisions (Just uid) (Just cid) = pure $ UserAndCampaignId uid cid
-
-getUserBucketProvisions (Just uid) Nothing = pure $ OnlyUserId uid
-
-getUserBucketProvisions Nothing (Just cid) = pure $ OnlyCampaignId cid
+getUserBucketProvisions mUserId mCampaignId = case mUserId, mCampaignId of
+  Nothing, Nothing -> throwError $ Noop
+  (Just uid), (Just cid) -> pure $ UserAndCampaignId uid cid
+  (Just uid), Nothing -> pure $ OnlyUserId uid
+  Nothing, (Just cid) -> pure $ OnlyCampaignId cid
 
 attachSiteObservers :: Site -> TestMapsMap -> Effect Unit
 attachSiteObservers site testMapsMap = case site of

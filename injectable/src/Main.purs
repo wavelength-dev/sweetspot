@@ -66,5 +66,6 @@ main =
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message
-          Left (Noop reason) -> Logging.log Info reason
+          -- On early exist we do nothing.
+          Left Noop -> pure unit
           Right _ -> Logging.log Info "Ran successfully for test"

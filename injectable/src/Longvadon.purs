@@ -1,4 +1,10 @@
-module SweetSpot.Longvadon (attachObservers, convertSsvCollectionUrls, setCheckout) where
+module SweetSpot.Longvadon
+  ( attachObservers
+  , convertSsvCollectionUrls
+  , setCheckout
+  , setProductAddToCartButtonControlledPrice
+  , setProductVariantSelectorSources
+  ) where
 
 import Prelude
 import Data.Array as Array
@@ -22,10 +28,7 @@ import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
 import SweetSpot.SiteCapabilities (class BrowserAction)
-import SweetSpot.SiteCapabilities
-  ( getAttribute, priceElementSelector, queryDocument, setAttribute, setControlledPrice
-  )
-  as SiteC
+import SweetSpot.SiteCapabilities (getAttribute, priceElementSelector, queryDocument, setAttribute, setControlledPrice) as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element (fromNode, getAttribute, toNode) as Element
 import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
@@ -221,10 +224,16 @@ observeSlickButtons testMapsMap = do
             Nothing -> Log.log Error "Observed node was not an element."
             Just element -> setCheckoutOption testMapsMap element
 
+-- Here we cannot observe mutations for Longvadon. They seem to run a script that freezes the page in Safari when used in combination with ours.
 -- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">
 --     <span class="primary-text prdistxt" aria-hidden="false" data-cart-primary-submit-text=""><span class="money" style="text-decoration: line-through;opacity: 0.6;"></span> <span class="money sweetspot__price--hidden sweetspot__price_id--LVMens1Black42ClaspB">$79</span><span> | ADD TO CART</span></span>
 --     <span class="secondary-text" aria-hidden="true" data-cart-secondary-submit-text="">View cart</span>
 -- </button>
+setProductAddToCartButtonControlledPrice :: TestMapsMap -> Effect Unit
+setProductAddToCartButtonControlledPrice testMapsMap =
+  SiteC.queryDocument productAddToCartButtonPriceSelector
+    >>= traverse_ (SiteC.setControlledPrice testMapsMap)
+
 observeProductAddToCartButton :: TestMapsMap -> Effect Unit
 observeProductAddToCartButton testMapsMap = do
   addToCartButtons <- SiteC.queryDocument productAddToCartButtonSelector
@@ -272,19 +281,25 @@ attachObservers testMapsMap =
     *> observeSlickButtons testMapsMap
     *> observeProductSlickCarousel testMapsMap
 
--- Checkout options are used not only to determine what to check out but also hold raw HTML in a class for variant toggling which updates the price in the add to cart button. We use the variant id in the checkout option to decide what price to use. If we update the option to checkout the correct variant, we can no longer look up the price. So in order to rewrite the raw HTML to set the correct price, we need to do this before we swap the variant id in the option to checkout the correct variant. In other words, ORDER MATTERS HERE, and we entangle price setting with checkout setting. All of this can be avoided by using the SKU in the option or setting a custom attribute.
-setProductAddToCartCheckoutOption :: TestMapsMap -> Element -> Effect Unit
-setProductAddToCartCheckoutOption testMapsMap element =
-  applyToVariantSelector testMapsMap element
-    *> setCheckoutOption testMapsMap element
-
 type RawHtml
   = String
 
 foreign import setCachedButtonHtml :: Element -> RawHtml -> Effect Unit
 
-applyToVariantSelector :: TestMapsMap -> Element -> Effect Unit
-applyToVariantSelector testMapsMap variantOptionElement = do
+-- make this use the variant element sku, not value
+setVariantSelectorToControlledPrice :: TestMapsMap -> Element -> Effect Unit
+setVariantSelectorToControlledPrice testMapsMap variantOptionElement = SiteC.setControlledPrice testMapsMap variantOptionElement
+
+setProductVariantSelectorSources :: TestMapsMap -> Effect Unit
+setProductVariantSelectorSources testMapsMap = do
+  variantSelectorOptionElements <- SiteC.queryDocument productAddToCartOptionSelector
+  traverse_ (setProductVariantSelectorSource testMapsMap) variantSelectorOptionElements
+
+-- | Mutates the source of the product variant selector. Meaning:
+-- | 1. subsequent variant selections set the price controlled price in the add-to-cart button
+-- | 2. the correct variant is used for add-to-cart
+setProductVariantSelectorSource :: TestMapsMap -> Element -> Effect Unit
+setProductVariantSelectorSource testMapsMap variantOptionElement = do
   eRawHtml <- getRawHtml
   eSwapPrice <- getSwapPrice
   case eRawHtml, eSwapPrice of

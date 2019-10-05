@@ -9,29 +9,12 @@ import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM
-  ( AppM
-  , ShortCircuit(..)
-  , Site(..)
-  , applyFacadeUrl
-  , ensureDeps
-  , fixCartItemUrls
-  , getSiteId
-  , getTestMaps
-  , getUserBucketProvisions
-  , getUserId
-  , readCampaignId
-  , revealPrices
-  , runAppM
-  , setControlledPrices
-  , setUserId
-  )
-import SweetSpot.Data.Domain (getTestMapsByTargetId)
+import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getTestMapsByTargetId, getUserBucketProvisions, getUserId, readCampaignId, revealPrices, runAppM, setControlledPrices, setUserId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
-import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
+import SweetSpot.Longvadon (attachObservers, setCheckout, setProductVariantSelectorSources, setProductAddToCartButtonControlledPrice) as Lv
 import SweetSpot.SiteCapabilities (awaitDomReady) as SiteC
 
 app :: AppM Unit
@@ -64,6 +47,8 @@ app = do
         Longvadon ->
           Lv.setCheckout testMapsMap
             *> setControlledPrices testMapsMap
+            *> Lv.setProductVariantSelectorSources testMapsMap
+            *> Lv.setProductAddToCartButtonControlledPrice testMapsMap
             *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site
   liftEffect $ launchAff_ trackView

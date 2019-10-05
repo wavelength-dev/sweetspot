@@ -21,10 +21,10 @@ import SweetSpot.AppM
   , getUserBucketProvisions
   , getUserId
   , readCampaignId
+  , revealPrices
   , runAppM
   , setControlledPrices
   , setUserId
-  , unhidePrice
   )
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
@@ -77,7 +77,7 @@ main :: Effect Unit
 main =
   runAff_ logResult do
     result <- runAppM app
-    liftEffect $ unhidePrice
+    liftEffect $ revealPrices
     liftEffect
       $ case result of
           Left (ReportErr { message }) -> throw message

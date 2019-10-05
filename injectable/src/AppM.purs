@@ -140,16 +140,6 @@ applyFacadeUrl = do
       >>> Array.last
       >>> maybe false (String.contains (String.Pattern Config.variantUrlPattern))
 
--- It's unlikely but possible not all collected Elements are HTMLElements
--- We should only add sweetspot ids to elements which are HTMLElements
-unhidePrice :: Effect Unit
-unhidePrice =
-  SiteC.queryDocument SiteC.priceElementSelector
-    >>= (map HTMLElement.fromElement)
-    >>> Array.catMaybes
-    >>> pure
-    >>= traverse_ (SiteC.removeClass Config.hiddenPriceId)
-
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
 
@@ -159,3 +149,8 @@ setControlledPrices testMapsMap = do
   let
     priceHTMLElements = Array.catMaybes $ map HTMLElement.fromElement priceElements
   traverse_ (SiteC.setControlledPrice testMapsMap) priceElements
+
+-- It's unlikely but possible not all collected Elements are HTMLElements
+-- We should only add sweetspot ids to elements which are HTMLElements
+revealPrices :: Effect Unit
+revealPrices = SiteC.queryDocument SiteC.priceElementSelector >>= traverse_ SiteC.revealPrice

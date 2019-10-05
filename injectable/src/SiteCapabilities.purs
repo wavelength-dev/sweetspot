@@ -6,17 +6,17 @@ module SweetSpot.SiteCapabilities
   , getUrlParam
   , priceElementSelector
   , queryDocument
-  , removeClass
   , replacePathname
+  , revealPrice
   , setAttribute
   , setControlledPrice
   ) where
 
 import Prelude
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import SweetSpot.Data.Config (idClass) as Config
+import SweetSpot.Data.Config (hiddenPriceId, idClass) as Config
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.SiteCapabilities.Dom (awaitDomReady, queryDocument_, removeClass) as SiteDom
 import SweetSpot.SiteCapabilities.PriceControl (setControlledPrice) as SitePriceControl
@@ -25,6 +25,7 @@ import Web.DOM (Element)
 import Web.DOM.Element (className, getAttribute, setAttribute, setClassName) as Element
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (HTMLElement)
+import Web.HTML.HTMLElement (fromElement) as HTMLElement
 
 class
   Monad m <= BrowserAction m where
@@ -67,3 +68,9 @@ replacePathname = SiteUrl.replacePathname
 
 setControlledPrice :: TestMapsMap -> Element -> Effect Unit
 setControlledPrice = SitePriceControl.setControlledPrice
+
+revealPrice :: Element -> Effect Unit
+revealPrice element = do
+  case HTMLElement.fromElement element of
+    Nothing -> pure unit
+    Just htmlElement -> removeClass Config.hiddenPriceId htmlElement

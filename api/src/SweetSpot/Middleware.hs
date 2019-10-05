@@ -4,6 +4,8 @@ module SweetSpot.Middleware
   ( getMiddleware
   ) where
 
+import Data.ByteString (ByteString)
+import Data.Text.Encoding (encodeUtf8)
 import Network.Wai (Middleware)
 import Network.Wai.Middleware.Gzip
   ( GzipFiles(GzipCacheFolder)
@@ -22,10 +24,10 @@ gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
   where
     settings = def {gzipFiles = GzipCacheFolder "../dist/"}
 
-auth :: Middleware
-auth = routedMiddleware ("dashboard" `elem`) mw
+auth :: ByteString -> ByteString -> Middleware
+auth user pass = routedMiddleware ("dashboard" `elem`) mw
   where
-    check u p = return $ u == "sweetspot" && p == "TM9n4gzy,3kMkw(rmn"
+    check u p = return $ u == user && p == pass
     mw = basicAuth check "Dashboard realm"
 
 getMiddleware :: AppCtx -> Middleware
@@ -33,6 +35,8 @@ getMiddleware ctx =
   -- Disable auth in dev for ease of testing
   if env == "dev"
     then gzipStatic
-    else gzipStatic . auth
+    else gzipStatic . auth user pass
   where
     env = environment . _getConfig $ ctx
+    user = encodeUtf8 $ basicAuthUser . _getConfig $ ctx
+    pass = encodeUtf8 $ basicAuthPassword . _getConfig $ ctx

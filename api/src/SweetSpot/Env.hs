@@ -20,6 +20,8 @@ data EnvConfig = EnvConfig
   , shopifyClientSecret :: !Text
   , shopifyOAuthAccessToken :: !Text
   , targetShop :: !Text
+  , basicAuthUser :: !Text
+  , basicAuthPassword :: !Text
   } deriving (Show)
 
 instance FromEnv EnvConfig where
@@ -33,6 +35,8 @@ instance FromEnv EnvConfig where
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"
       <*> env "TARGET_SHOP"
+      <*> env "BASIC_AUTH_USER"
+      <*> env "BASIC_AUTH_PASSWORD"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

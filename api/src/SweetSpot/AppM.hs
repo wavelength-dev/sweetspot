@@ -23,6 +23,8 @@ data AppConfig = AppConfig
   , shopifyClientId :: !Text
   , shopifyClientSecret :: !Text
   , shopifyOAuthAccessToken :: !Text
+  , basicAuthUser :: !Text
+  , basicAuthPassword :: !Text
   } deriving (Generic, Show)
 
 data AppCtx = AppCtx

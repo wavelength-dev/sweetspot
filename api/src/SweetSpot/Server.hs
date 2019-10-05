@@ -19,7 +19,7 @@ import           Network.Wai.Handler.Warp       ( defaultSettings
                                                 , runSettings
                                                 , setLogger
                                                 )
-import           Servant
+import           Servant                 hiding ( basicAuthPassword )
 import           SweetSpot.AppM                 ( AppConfig(..)
                                                 , AppCtx(..)
                                                 )
@@ -87,15 +87,17 @@ runServer = do
                 Right shop -> return shop
         let     shopConfig = getShopConfig shop
                 config     = AppConfig
-                        { environment                = Env.environment envConfig
-                        , shopifyApiRoot             = Shop.shopApi shopConfig
+                        { environment = Env.environment envConfig
+                        , shopifyApiRoot = Shop.shopApi shopConfig
                         , shopifyAccessTokenEndpoint = Shop.accessTokenEndpoint
                                                                shopConfig
-                        , shopifyClientId            = Shop.clientId shopConfig
-                        , shopifyClientSecret        = Env.shopifyClientSecret
-                                                               envConfig
+                        , shopifyClientId = Shop.clientId shopConfig
+                        , shopifyClientSecret = Env.shopifyClientSecret
+                                                        envConfig
                         , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken
                                                             envConfig
+                        , basicAuthUser = Env.basicAuthUser envConfig
+                        , basicAuthPassword = Env.basicAuthPassword envConfig
                         }
                 ctx = AppCtx { _getConfig = config
                              , _getLogger = appLogger

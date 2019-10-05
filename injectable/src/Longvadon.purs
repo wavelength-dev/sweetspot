@@ -55,11 +55,11 @@ cartSlickCarouselOptionSelector = QuerySelector "#buy option[value]"
 cartSlickCarouselAddToCartButtonSelector :: QuerySelector
 cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to-cart-button"
 
-addToCartButtonSelector :: QuerySelector
-addToCartButtonSelector = QuerySelector "form.product-form button.product__add-to-cart-button"
+productAddToCartButtonSelector :: QuerySelector
+productAddToCartButtonSelector = QuerySelector "form.product-form button.product__add-to-cart-button"
 
-addToCartButtonPriceElementSelector :: QuerySelector
-addToCartButtonPriceElementSelector = QuerySelector "form.product-form button.product__add-to-cart-button span[class*=sweetspot__price_id--]"
+productAddToCartButtonPriceSelector :: QuerySelector
+productAddToCartButtonPriceSelector = QuerySelector "form.product-form button.product__add-to-cart-button span[class*=sweetspot__price_id--]"
 
 isSoldOutElement :: Element -> Effect Boolean
 isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceSoldOut >>> pure
@@ -69,7 +69,7 @@ isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceS
 setCheckout :: TestMapsMap -> Effect Unit
 setCheckout testMaps = do
   -- Makes sure the correct variant is added to cart on product page.
-  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setProductAddToCartCheckoutOption testMaps)
+  SiteC.queryDocument productAddToCartOptionSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is co-added to cart with the slick carousel on product page.
   SiteC.queryDocument productSlickAddToCartInputSelector >>= traverse_ (setCheckoutOption testMaps)
   -- Makes sure the correct variant is offered to add to cart, when selecting a variant from the slick carousel on the cart page.
@@ -219,7 +219,7 @@ observeSlickButtons testMapsMap = do
 -- </button>
 observeProductAddToCartButton :: TestMapsMap -> Effect Unit
 observeProductAddToCartButton testMapsMap = do
-  addToCartButtons <- SiteC.queryDocument addToCartButtonSelector
+  addToCartButtons <- SiteC.queryDocument productAddToCartButtonSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation
   -- We expect there to be one
   for_ addToCartButtons \button ->
@@ -228,7 +228,7 @@ observeProductAddToCartButton testMapsMap = do
   -- As the children of this element are replaced we can't monitor the actual price element for changes but instead monitor its parent. This means the element passed to the callback is a parent. We could traverse down using properties on this node, but instead elect to simply use another querySelectorAll that should now give us the price element that was just created.
   onMutation _ _ = do
     -- We expect there to be one
-    priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
+    priceElements <- SiteC.queryDocument productAddToCartButtonPriceSelector
     for_ priceElements \priceElement -> SiteC.setControlledPrice testMapsMap priceElement
 
 type MutationCallback
@@ -253,8 +253,8 @@ onElementsMutation elements options callback = do
 
 observeProductSlickCarousel :: TestMapsMap -> Effect Unit
 observeProductSlickCarousel testMapsMap = do
-  elements <- SiteC.queryDocument productSlickAddToCartInputSelector
-  onElementsMutation elements { attributes: true } $ traverse_ setCheckoutOption'
+  addToCartInputSelectors <- SiteC.queryDocument productSlickAddToCartInputSelector
+  onElementsMutation addToCartInputSelectors { attributes: true } $ traverse_ setCheckoutOption'
   where
   setCheckoutOption' = setCheckoutOption testMapsMap
 

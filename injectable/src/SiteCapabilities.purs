@@ -1,4 +1,15 @@
-module SweetSpot.SiteCapabilities where
+module SweetSpot.SiteCapabilities
+  ( class BrowserAction
+  , getAttribute
+  , getPathname
+  , getUrlParam
+  , priceElementSelector
+  , queryDocument
+  , removeClass
+  , replacePathname
+  , setAttribute
+  , setControlledPrice
+  ) where
 
 import Prelude
 
@@ -31,12 +42,12 @@ import Web.HTML.Location (pathname)
 import Web.HTML.Window as Window
 
 class
-  Monad m <= DomAction m where
+  Monad m <= BrowserAction m where
   getAttribute :: String -> Element -> m (Maybe String)
   setAttribute :: String -> String -> Element -> m Unit
   queryDocument :: QuerySelector -> m (Array Element)
 
-instance domActionEffect :: DomAction Effect where
+instance browserActionEffect :: BrowserAction Effect where
   getAttribute = Element.getAttribute
   setAttribute = Element.setAttribute
   queryDocument = queryDocument_

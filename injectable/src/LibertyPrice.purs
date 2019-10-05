@@ -10,7 +10,7 @@ import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
-import SweetSpot.SiteCapabilities (class DomAction)
+import SweetSpot.SiteCapabilities (class BrowserAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element (fromNode, toNode) as Element
@@ -23,11 +23,11 @@ import Web.DOM.ParentNode (QuerySelector(..))
 productCheckoutOptionSelector :: QuerySelector
 productCheckoutOptionSelector = QuerySelector "#ProductSelect-product-template option"
 
-setCheckout :: forall m. DomAction m => TestMapsMap -> m Unit
+setCheckout :: forall m. BrowserAction m => TestMapsMap -> m Unit
 setCheckout testMaps = SiteC.queryDocument productCheckoutOptionSelector
   >>= traverse_ (setCheckoutOption testMaps)
 
-setCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
   let mSwapId = mVariantId >>= flip Map.lookup testMaps <#> _.swapId

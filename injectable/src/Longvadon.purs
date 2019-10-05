@@ -21,8 +21,11 @@ import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
-import SweetSpot.SiteCapabilities (class DomAction)
-import SweetSpot.SiteCapabilities as SiteC
+import SweetSpot.SiteCapabilities (class BrowserAction)
+import SweetSpot.SiteCapabilities
+  ( getAttribute, priceElementSelector, queryDocument, setAttribute, setControlledPrice
+  )
+  as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element (fromNode, getAttribute, toNode) as Element
 import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
@@ -83,7 +86,7 @@ setCheckout testMaps = do
 -- </select>
 -- Also used for slick checkout options
 -- <input class="check--color" type="checkbox" name="id[]" value="20609191706667" tabindex="-1">
-setCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mVariantId <- SiteC.getAttribute "value" el
   let
@@ -141,7 +144,7 @@ setCheckoutSlickCheckout testMaps el = do
 -- <button class="btn product__add-to-cart-button my-additional-btn" data-cart-submit="" type="button" name="add" data-vrnt="20609192362027" tabindex="0">
 --  ADD TO CART
 -- </button>
-setSlickCheckoutOption :: forall m. DomAction m => TestMapsMap -> Element -> m Unit
+setSlickCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setSlickCheckoutOption testMaps el = do
   mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
   let
@@ -164,7 +167,7 @@ setSlickCheckoutOption testMaps el = do
 --   </select>
 -- </div>
 -- takes a collections URL of shape: /collections/all/products/womens-pearl-gray-w-black-details?variant=15404845662251 and removes the /collections/all bit so it becomes a product URL. Also removes the `-ssv` from the slug so that link takes you to original product.
-convertSsvCollectionUrls :: forall m. DomAction m => m Unit
+convertSsvCollectionUrls :: forall m. BrowserAction m => m Unit
 convertSsvCollectionUrls = SiteC.queryDocument (QuerySelector "[href*=-ssv]") >>= traverse_ updateLink
   where
   updateLink :: Element -> m Unit

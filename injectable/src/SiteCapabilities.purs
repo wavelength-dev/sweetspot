@@ -1,5 +1,6 @@
 module SweetSpot.SiteCapabilities
   ( class BrowserAction
+  , awaitDomReady
   , getAttribute
   , getPathname
   , getUrlParam

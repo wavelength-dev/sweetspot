@@ -1,7 +1,6 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Control.Monad.Except (throwError)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
@@ -10,19 +9,35 @@ import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPriceVariations, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getUserBucketProvisions, getUserId, readCampaignId, runAppM, setUserId, unhidePrice)
+import SweetSpot.AppM
+  ( AppM
+  , ShortCircuit(..)
+  , Site(..)
+  , applyFacadeUrl
+  , ensureDeps
+  , fixCartItemUrls
+  , getSiteId
+  , getTestMaps
+  , getUserBucketProvisions
+  , getUserId
+  , readCampaignId
+  , runAppM
+  , setControlledPrices
+  , setUserId
+  , unhidePrice
+  )
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
 import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
-import SweetSpot.SiteCapabilities (awaitDomReady)
+import SweetSpot.SiteCapabilities (awaitDomReady) as SiteC
 
 app :: AppM Unit
 app = do
   ensureDeps
-  liftAff awaitDomReady
+  liftAff SiteC.awaitDomReady
   liftEffect applyFacadeUrl
   mUid <- liftEffect $ getUserId
   mCid <- liftEffect $ readCampaignId

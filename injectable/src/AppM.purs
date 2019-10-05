@@ -15,15 +15,11 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
-import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config as Config
 import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
-import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
-import Web.DOM (Element)
-import Web.DOM.Element (setAttribute) as Element
 import Web.HTML (window)
 import Web.HTML.HTMLElement (fromElement) as HTMLElement
 import Web.HTML.Location (hostname)

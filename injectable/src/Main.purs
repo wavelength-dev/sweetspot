@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Control.Monad.Except (throwError)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
@@ -9,7 +10,7 @@ import Effect.Aff (launchAff_, runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
-import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getTestMapsByTargetId, getUserBucketProvisions, getUserId, readCampaignId, revealPrices, runAppM, setControlledPrices, setUserId)
+import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getTestMapsBySku, getTestMapsByTargetId, getUserBucketProvisions, getUserId, readCampaignId, revealPrices, runAppM, setControlledPrices, setUserId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Log (LogLevel(..))
@@ -37,6 +38,7 @@ app = do
   testMaps <- getTestMaps ubp
   let
     testMapsMap = getTestMapsByTargetId testMaps
+    testMapsMap' = getTestMapsBySku testMaps
   liftEffect $ setUserId (NonEmptyArray.head testMaps)
   liftEffect
     $ case site of
@@ -47,7 +49,7 @@ app = do
         Longvadon ->
           Lv.setCheckout testMapsMap
             *> setControlledPrices testMapsMap
-            *> Lv.setProductVariantSelectorSources testMapsMap
+            *> Lv.setProductVariantSelectorSources testMapsMap'
             *> Lv.setProductAddToCartButtonControlledPrice testMapsMap
             *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site

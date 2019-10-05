@@ -64,3 +64,7 @@ findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetI
 -- | Map from VariantId to TestMaps for the current user.
 type TestMapsMap
   = Map VariantId TestMap
+
+-- | Map from Sku to TestMaps for the current user.
+type TestMapsMap'
+  = Map Sku TestMap

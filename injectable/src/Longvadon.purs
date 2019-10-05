@@ -7,6 +7,7 @@ module SweetSpot.Longvadon
   ) where
 
 import Prelude
+
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (for_, traverse_)
@@ -23,7 +24,7 @@ import Effect (Effect)
 import Prim.Row (class Union)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Config (hiddenPriceId) as Config
-import SweetSpot.Data.Domain (TestMapsMap, VariantId(..))
+import SweetSpot.Data.Domain (Sku(..), TestMapsMap, TestMapsMap', VariantId(..))
 import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
@@ -290,7 +291,7 @@ foreign import setCachedButtonHtml :: Element -> RawHtml -> Effect Unit
 setVariantSelectorToControlledPrice :: TestMapsMap -> Element -> Effect Unit
 setVariantSelectorToControlledPrice testMapsMap variantOptionElement = SiteC.setControlledPrice testMapsMap variantOptionElement
 
-setProductVariantSelectorSources :: TestMapsMap -> Effect Unit
+setProductVariantSelectorSources :: TestMapsMap' -> Effect Unit
 setProductVariantSelectorSources testMapsMap = do
   variantSelectorOptionElements <- SiteC.queryDocument productAddToCartOptionSelector
   traverse_ (setProductVariantSelectorSource testMapsMap) variantSelectorOptionElements
@@ -298,8 +299,14 @@ setProductVariantSelectorSources testMapsMap = do
 -- | Mutates the source of the product variant selector. Meaning:
 -- | 1. subsequent variant selections set the price controlled price in the add-to-cart button
 -- | 2. the correct variant is used for add-to-cart
-setProductVariantSelectorSource :: TestMapsMap -> Element -> Effect Unit
-setProductVariantSelectorSource testMapsMap variantOptionElement = do
+-- <select name="id[]" class="product-form__master-select supports-no-js" data-master-select="">
+--   <option data-cartbtn="<span class=&quot;money&quot; style=&quot;text-decoration: line-through;opacity: 0.6;&quot;></span> <span class=&quot;money sweetspot__price--hidden sweetspot__price_id--LVMens1Black42ClaspB&quot;>$79</span><span> | ADD TO CART</span>" data-inplc="continue" data-sku="LVMens1Black42ClaspB" data-stock="775" value="30273507459115">42/44 / M / Black</option>
+--   <option data-cartbtn="<span class=&quot;money&quot; style=&quot;text-decoration: line-through;opacity: 0.6;&quot;></span> <span class=&quot;money sweetspot__price--hidden sweetspot__price_id--LVMens1Black42LClaspB&quot;>$79</span><span> | ADD TO CART</span>" data-inplc="continue" data-sku="LVMens1Black42LClaspB" data-stock="-9" value="30273507491883">42/44 / XL / Black</option>
+--   <option data-cartbtn="<span class=&quot;money&quot; style=&quot;text-decoration: line-through;opacity: 0.6;&quot;></span> <span class=&quot;money sweetspot__price--hidden sweetspot__price_id--LVMens1Black38ClaspB&quot;>$79</span><span> | ADD TO CART</span>" data-inplc="continue" data-sku="LVMens1Black38ClaspB" data-stock="58" value="30273507524651">38/40 / M / Black</option>
+--   <option data-cartbtn="<span class=&quot;money&quot; style=&quot;text-decoration: line-through;opacity: 0.6;&quot;></span> <span class=&quot;money sweetspot__price--hidden sweetspot__price_id--LVMens1Black38LClaspB&quot;>$79</span><span> | ADD TO CART</span>" data-inplc="deny" data-sku="LVMens1Black38LClaspB" data-stock="-100" value="30273507557419">38/40 / XL / Black</option>
+-- </select>
+setProductVariantSelectorSource :: TestMapsMap' -> Element -> Effect Unit
+setProductVariantSelectorSource testMapsMap' variantOptionElement = do
   eRawHtml <- getRawHtml
   eSwapPrice <- getSwapPrice
   case eRawHtml, eSwapPrice of
@@ -328,11 +335,11 @@ setProductVariantSelectorSource testMapsMap variantOptionElement = do
 
   getSwapPrice :: Effect (Either String Number)
   getSwapPrice = do
-    mRawVariantId <- Element.getAttribute "value" variantOptionElement
+    mRawSku <- Element.getAttribute "data-sku" variantOptionElement
     let
-      mVariantId = VariantId <$> mRawVariantId
-    case mVariantId of
+      mSku = Sku <$> mRawSku
+    case mSku of
       Nothing -> pure $ Left "No variant id on variant selector option!"
-      Just variantId -> case Map.lookup variantId testMapsMap of
+      Just sku -> case Map.lookup sku testMapsMap' of
         Nothing -> pure $ Left "Unknown variant in variant selector option!"
         Just testMap -> pure $ Right testMap.swapPrice

@@ -1,6 +1,7 @@
 module SweetSpot.AppM where
 
 import Prelude
+
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
@@ -18,7 +19,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config as Config
-import SweetSpot.Data.Domain (CampaignId(..), TestMap, TestMapsMap, UserId(..), VariantId(..))
+import SweetSpot.Data.Domain (CampaignId(..), TestMap, TestMapsMap, TestMapsMap', UserId(..), VariantId(..))
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
@@ -163,3 +164,9 @@ getTestMapsByTargetId :: NonEmptyArray TestMap -> TestMapsMap
 getTestMapsByTargetId = map toKeyValuePair >>> Map.fromFoldable
   where
   toKeyValuePair testMap = Tuple (VariantId testMap.targetId) testMap
+
+-- TODO: too low level for AppM, find a better place
+getTestMapsBySku :: NonEmptyArray TestMap -> TestMapsMap'
+getTestMapsBySku = map toKeyValuePair >>> Map.fromFoldable
+  where
+  toKeyValuePair testMap = Tuple testMap.sku testMap

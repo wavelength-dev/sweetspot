@@ -48,4 +48,4 @@ observePrices testMapsMap = do
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
             Nothing -> Log.log Warn "Observed node was not an element."
-            Just element -> SiteC.applyPriceVariation testMapsMap element
+            Just element -> SiteC.setControlledPrice testMapsMap element

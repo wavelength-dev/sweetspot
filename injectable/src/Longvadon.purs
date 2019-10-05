@@ -194,7 +194,7 @@ observePrices testMapsMap = do
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
             Nothing -> Log.log Error "Observed node was not an element."
-            Just element -> SiteC.applyPriceVariation testMapsMap element
+            Just element -> SiteC.setControlledPrice testMapsMap element
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
 observeSlickButtons testMapsMap = do
@@ -226,7 +226,7 @@ observeProductAddToCartButton testMapsMap = do
   onMutation _ _ = do
     -- We expect there to be one
     priceElements <- SiteC.queryDocument addToCartButtonPriceElementSelector
-    for_ priceElements \priceElement -> SiteC.applyPriceVariation testMapsMap priceElement
+    for_ priceElements \priceElement -> SiteC.setControlledPrice testMapsMap priceElement
 
 type MutationCallback
   = Array Element -> Effect Unit

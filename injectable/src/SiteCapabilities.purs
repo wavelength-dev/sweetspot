@@ -93,11 +93,6 @@ getIdFromPriceElement el = do
   getSkuFromTag :: String -> Maybe String
   getSkuFromTag tag = Array.last $ String.split (String.Pattern "--") tag
 
-setPrice :: Number -> Element -> Effect Unit
-setPrice price el = do
-  formattedPrice <- Intl.formatPrice price
-  setTextContent formattedPrice (Element.toNode el)
-
 getPathname :: Effect String
 getPathname = window >>= Window.location >>= pathname
 
@@ -118,9 +113,8 @@ queryDocument_ querySelector =
 
 nodesToElements :: NodeList -> Effect (Array Element)
 nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
-
-applyPriceVariation :: TestMapsMap -> Element -> Effect Unit
-applyPriceVariation testMaps el = do
+setControlledPrice :: TestMapsMap -> Element -> Effect Unit
+setControlledPrice testMaps el = do
   mElementSku <- getIdFromPriceElement el
   let
     mTestMap = mElementSku >>= (\sku -> Array.find (_.sku >>> (==) sku) testMaps)
@@ -128,5 +122,8 @@ applyPriceVariation testMaps el = do
     (Just testMap), DryRun -> do
       formattedPrice <- Intl.formatPrice testMap.swapPrice
       Element.setAttribute "data-ssdr__price" formattedPrice el
-    (Just testMap), Live -> setPrice testMap.swapPrice el
+    (Just testMap), Live -> do
+      formattedPrice <- Intl.formatPrice testMap.swapPrice
+      setTextContent formattedPrice (Element.toNode el)
     Nothing, _ -> pure unit
+

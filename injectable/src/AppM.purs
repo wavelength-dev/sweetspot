@@ -165,9 +165,9 @@ unhidePrice =
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
 
-applyPriceVariations :: TestMapsMap -> Effect Unit
-applyPriceVariations testMapsMap = do
+setControlledPrices :: TestMapsMap -> Effect Unit
+setControlledPrices testMapsMap = do
   priceElements <- SiteC.queryDocument SiteC.priceElementSelector
   let
     priceHTMLElements = Array.catMaybes $ map HTMLElement.fromElement priceElements
-  traverse_ (SiteC.applyPriceVariation testMapsMap) priceElements
+  traverse_ (SiteC.setControlledPrice testMapsMap) priceElements

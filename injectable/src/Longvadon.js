@@ -1,5 +1,7 @@
 exports.setCachedButtonHtml = function(element) {
   return function(rawHtml) {
-    $(element).data("cartbtn", rawHtml);
+    return function() {
+      $(element).data("cartbtn", rawHtml);
+    }
   };
 };

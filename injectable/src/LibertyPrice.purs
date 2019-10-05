@@ -2,11 +2,12 @@ module SweetSpot.LibertyPrice where
 
 import Prelude
 import Data.Foldable (for_, traverse_)
+import Data.Map (Map)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMapsMap, VariantId(..))
+import SweetSpot.Data.Domain (VariantId(..), TestMap)
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
 import SweetSpot.SiteCapabilities (class BrowserAction)
@@ -22,23 +23,24 @@ import Web.DOM.ParentNode (QuerySelector(..))
 productCheckoutOptionSelector :: QuerySelector
 productCheckoutOptionSelector = QuerySelector "#ProductSelect-product-template option"
 
-setCheckout :: forall m. BrowserAction m => TestMapsMap -> m Unit
+setCheckout :: forall m. BrowserAction m => Map VariantId TestMap -> m Unit
 setCheckout testMaps =
   SiteC.queryDocument productCheckoutOptionSelector
     >>= traverse_ (setCheckoutOption testMaps)
 
-setCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
+setCheckoutOption :: forall m. BrowserAction m => Map VariantId TestMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
   mRawVariantId <- SiteC.getAttribute "value" el
   let
     mVariantId = VariantId <$> mRawVariantId
+
     mSwapId = mVariantId >>= flip Map.lookup testMaps <#> _.swapId
   case mSwapId, dryRunMode of
     Nothing, _ -> pure unit
     (Just swapId), DryRun -> SiteC.setAttribute "data-ssdr__value" swapId el
     (Just swapId), Live -> SiteC.setAttribute "value" swapId el
 
-observePrices :: TestMapsMap -> Effect Unit
+observePrices :: Map VariantId TestMap -> Effect Unit
 observePrices testMapsMap = do
   elements <- SiteC.queryDocument SiteC.priceElementSelector
   mutationObserver <- MutationObserver.mutationObserver onMutation

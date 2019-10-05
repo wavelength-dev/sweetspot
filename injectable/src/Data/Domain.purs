@@ -1,12 +1,10 @@
 module SweetSpot.Data.Domain where
 
 import Prelude
-
 import Data.Argonaut (caseJsonString, decodeJson, encodeJson) as Argonaut
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json)
 import Data.Array (find) as Array
 import Data.Either (Either(..))
-import Data.Map (Map)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Traversable (traverse)
@@ -20,6 +18,7 @@ newtype VariantId
   = VariantId String
 
 derive instance eqVariantId :: Eq VariantId
+
 derive instance ordVariantId :: Ord VariantId
 
 -- | UserIds are id's assigned to users within the SweetSpot system.
@@ -35,6 +34,7 @@ newtype Sku
   = Sku String
 
 derive instance eqSku :: Eq Sku
+
 derive instance ordSku :: Ord Sku
 
 instance decodeJsonSku :: DecodeJson Sku where
@@ -60,11 +60,3 @@ type TargetId
 
 findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
 findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps
-
--- | Map from VariantId to TestMaps for the current user.
-type TestMapsMap
-  = Map VariantId TestMap
-
--- | Map from Sku to TestMaps for the current user.
-type TestMapsMap'
-  = Map Sku TestMap

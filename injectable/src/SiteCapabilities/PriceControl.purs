@@ -2,12 +2,13 @@ module SweetSpot.SiteCapabilities.PriceControl (setControlledPrice) where
 
 import Prelude
 import Data.Array as Array
+import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..))
 import SweetSpot.Data.Config (dryRunMode, idClass) as Config
-import SweetSpot.Data.Domain (Sku(..), TestMapsMap)
+import SweetSpot.Data.Domain (Sku(..), TestMap, VariantId)
 import SweetSpot.Intl (formatPrice) as Intl
 import Web.DOM (Element)
 import Web.DOM.Element as Element
@@ -17,7 +18,7 @@ import Web.DOM.Node (setTextContent)
 type Price
   = Number
 
-setControlledPrice :: TestMapsMap -> Element -> Effect Unit
+setControlledPrice :: Map VariantId TestMap -> Element -> Effect Unit
 setControlledPrice testMaps el = do
   mElementSku <- getIdFromPriceElement el
   let

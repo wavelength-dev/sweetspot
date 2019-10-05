@@ -1,12 +1,12 @@
 module SweetSpot.AppM where
 
 import Prelude
-
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
+import Data.Map (Map)
 import Data.Map (fromFoldable) as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
@@ -19,7 +19,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config as Config
-import SweetSpot.Data.Domain (CampaignId(..), TestMap, TestMapsMap, TestMapsMap', UserId(..), VariantId(..))
+import SweetSpot.Data.Domain (CampaignId(..), Sku, TestMap, UserId(..), VariantId(..))
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
@@ -126,7 +126,7 @@ getUserBucketProvisions mUserId mCampaignId = case mUserId, mCampaignId of
   (Just uid), Nothing -> pure $ OnlyUserId uid
   Nothing, (Just cid) -> pure $ OnlyCampaignId cid
 
-attachSiteObservers :: Site -> TestMapsMap -> Effect Unit
+attachSiteObservers :: Site -> Map VariantId TestMap -> Effect Unit
 attachSiteObservers site testMapsMap = case site of
   Longvadon -> Lv.attachObservers testMapsMap
   LibertyPrice -> LP.observePrices testMapsMap
@@ -147,7 +147,7 @@ fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
 
 -- | This function collects all elements tagged with a sweetspot id, and sets them to their controlled price. Sadly, there's many ways in which LibertyPrice and Longvadon set prices on user interaction, this only covers simple cases.
-setControlledPrices :: TestMapsMap -> Effect Unit
+setControlledPrices :: Map VariantId TestMap -> Effect Unit
 setControlledPrices testMapsMap = do
   priceElements <- SiteC.queryDocument SiteC.priceElementSelector
   let
@@ -160,13 +160,13 @@ revealPrices :: Effect Unit
 revealPrices = SiteC.queryDocument SiteC.priceElementSelector >>= traverse_ SiteC.revealPrice
 
 -- TODO: too low level for AppM, find a better place
-getTestMapsByTargetId :: NonEmptyArray TestMap -> TestMapsMap
+getTestMapsByTargetId :: NonEmptyArray TestMap -> Map VariantId TestMap
 getTestMapsByTargetId = map toKeyValuePair >>> Map.fromFoldable
   where
   toKeyValuePair testMap = Tuple (VariantId testMap.targetId) testMap
 
 -- TODO: too low level for AppM, find a better place
-getTestMapsBySku :: NonEmptyArray TestMap -> TestMapsMap'
+getTestMapsBySku :: NonEmptyArray TestMap -> Map Sku TestMap
 getTestMapsBySku = map toKeyValuePair >>> Map.fromFoldable
   where
   toKeyValuePair testMap = Tuple testMap.sku testMap

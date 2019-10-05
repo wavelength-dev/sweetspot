@@ -145,6 +145,7 @@ applyFacadeUrl = do
 fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
 
+-- | This function collects all elements tagged with a sweetspot id, and sets them to their controlled price. Sadly, there's many ways in which LibertyPrice and Longvadon set prices on user interaction, this only covers simple cases.
 setControlledPrices :: TestMapsMap -> Effect Unit
 setControlledPrices testMapsMap = do
   priceElements <- SiteC.queryDocument SiteC.priceElementSelector

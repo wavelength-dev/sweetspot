@@ -1,13 +1,12 @@
 module SweetSpot.LibertyPrice where
 
 import Prelude
-
 import Data.Foldable (for_, traverse_)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMapsMap)
+import SweetSpot.Data.Domain (TestMapsMap, VariantId(..))
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
 import SweetSpot.SiteCapabilities (class BrowserAction)
@@ -24,13 +23,16 @@ productCheckoutOptionSelector :: QuerySelector
 productCheckoutOptionSelector = QuerySelector "#ProductSelect-product-template option"
 
 setCheckout :: forall m. BrowserAction m => TestMapsMap -> m Unit
-setCheckout testMaps = SiteC.queryDocument productCheckoutOptionSelector
-  >>= traverse_ (setCheckoutOption testMaps)
+setCheckout testMaps =
+  SiteC.queryDocument productCheckoutOptionSelector
+    >>= traverse_ (setCheckoutOption testMaps)
 
 setCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
-  mVariantId <- SiteC.getAttribute "value" el
-  let mSwapId = mVariantId >>= flip Map.lookup testMaps <#> _.swapId
+  mRawVariantId <- SiteC.getAttribute "value" el
+  let
+    mVariantId = VariantId <$> mRawVariantId
+    mSwapId = mVariantId >>= flip Map.lookup testMaps <#> _.swapId
   case mSwapId, dryRunMode of
     Nothing, _ -> pure unit
     (Just swapId), DryRun -> SiteC.setAttribute "data-ssdr__value" swapId el

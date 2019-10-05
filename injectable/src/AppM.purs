@@ -6,9 +6,11 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
+import Data.Map (fromFoldable) as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (unwrap)
 import Data.String as String
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -16,7 +18,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config as Config
-import SweetSpot.Data.Domain (CampaignId(..), TestMap, UserId(..), TestMapsMap)
+import SweetSpot.Data.Domain (CampaignId(..), TestMap, TestMapsMap, UserId(..), VariantId(..))
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
 import SweetSpot.SiteCapabilities as SiteC
@@ -154,3 +156,9 @@ setControlledPrices testMapsMap = do
 -- We should only add sweetspot ids to elements which are HTMLElements
 revealPrices :: Effect Unit
 revealPrices = SiteC.queryDocument SiteC.priceElementSelector >>= traverse_ SiteC.revealPrice
+
+-- TODO: too low level for AppM, find a better place
+getTestMapsByTargetId :: NonEmptyArray TestMap -> TestMapsMap
+getTestMapsByTargetId = map toKeyValuePair >>> Map.fromFoldable
+  where
+  toKeyValuePair testMap = Tuple (VariantId testMap.targetId) testMap

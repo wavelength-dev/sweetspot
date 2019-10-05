@@ -1,16 +1,12 @@
 module SweetSpot.Data.Shopify where
 
-type Price = Number
-type ProductId = Number
-type VariantId = Number
-
 type Variant =
-  { id :: VariantId
+  { id :: Number
   , sku :: String
-  , price :: Price
+  , price :: Number
   }
 
 type Product =
-  { id :: ProductId
+  { id :: Number
   , variants :: Array Variant
   }

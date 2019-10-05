@@ -17,7 +17,7 @@ import Effect (Effect)
 import Prim.Row (class Union)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Config (hiddenPriceId) as Config
-import SweetSpot.Data.Domain (TestMapsMap)
+import SweetSpot.Data.Domain (TestMapsMap, VariantId(..))
 import SweetSpot.Intl (formatPrice) as Intl
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
@@ -88,8 +88,10 @@ setCheckout testMaps = do
 -- <input class="check--color" type="checkbox" name="id[]" value="20609191706667" tabindex="-1">
 setCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setCheckoutOption testMaps el = do
-  mVariantId <- SiteC.getAttribute "value" el
+  mRawVariantId <- SiteC.getAttribute "value" el
   let
+    mVariantId = mRawVariantId <#> VariantId
+
     mTestMap = mVariantId >>= flip Map.lookup testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
@@ -107,9 +109,11 @@ readStock = case _ of
 
 setCheckoutSlickCheckout :: TestMapsMap -> Element -> Effect Unit
 setCheckoutSlickCheckout testMaps el = do
-  mVariantId <- SiteC.getAttribute "value" el
+  mRawVariantId <- SiteC.getAttribute "value" el
   mRawStockStatus <- SiteC.getAttribute "data-stock" el
   let
+    mVariantId = mRawVariantId <#> VariantId
+
     mTestMap = mVariantId >>= flip Map.lookup testMaps
 
     mStockStatus = readStock <$> mRawStockStatus
@@ -146,8 +150,10 @@ setCheckoutSlickCheckout testMaps el = do
 -- </button>
 setSlickCheckoutOption :: forall m. BrowserAction m => TestMapsMap -> Element -> m Unit
 setSlickCheckoutOption testMaps el = do
-  mCurrentVariantId <- SiteC.getAttribute "data-vrnt" el
+  mCurrentRawVariantId <- SiteC.getAttribute "data-vrnt" el
   let
+    mCurrentVariantId = mCurrentRawVariantId <#> VariantId
+
     mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
@@ -303,10 +309,12 @@ applyToVariantSelector testMapsMap variantOptionElement = do
           Just rawHtml -> pure $ Right rawHtml
 
   getSwapPrice :: Effect (Either String Number)
-  getSwapPrice =
-    Element.getAttribute "value" variantOptionElement
-      >>= case _ of
-          Nothing -> pure $ Left "No variant id on variant selector option!"
-          Just variantId -> case Map.lookup variantId testMapsMap of
-            Nothing -> pure $ Left "Unknown variant in variant selector option!"
-            Just testMap -> pure $ Right testMap.swapPrice
+  getSwapPrice = do
+    mRawVariantId <- Element.getAttribute "value" variantOptionElement
+    let
+      mVariantId = VariantId <$> mRawVariantId
+    case mVariantId of
+      Nothing -> pure $ Left "No variant id on variant selector option!"
+      Just variantId -> case Map.lookup variantId testMapsMap of
+        Nothing -> pure $ Left "Unknown variant in variant selector option!"
+        Just testMap -> pure $ Right testMap.swapPrice

@@ -8,8 +8,8 @@ import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Domain (TestMapsMap)
-import SweetSpot.Logging (LogLevel(..))
-import SweetSpot.Logging (log) as Logging
+import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Log (log) as Log
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -47,5 +47,5 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> Logging.log Warn "Observed node was not an element."
+            Nothing -> Log.log Warn "Observed node was not an element."
             Just element -> SiteC.applyPriceVariation testMapsMap element

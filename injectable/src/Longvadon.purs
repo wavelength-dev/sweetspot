@@ -19,8 +19,8 @@ import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
 import SweetSpot.Data.Config (hiddenPriceId) as Config
 import SweetSpot.Data.Domain (TestMapsMap)
 import SweetSpot.Intl (formatPrice) as Intl
-import SweetSpot.Logging (LogLevel(..))
-import SweetSpot.Logging (log) as Logging
+import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Log (log) as Log
 import SweetSpot.SiteCapabilities (class DomAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.DOM (Element)
@@ -193,7 +193,7 @@ observePrices testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> Logging.log Error "Observed node was not an element."
+            Nothing -> Log.log Error "Observed node was not an element."
             Just element -> SiteC.applyPriceVariation testMapsMap element
 
 observeSlickButtons :: TestMapsMap -> Effect Unit
@@ -207,7 +207,7 @@ observeSlickButtons testMapsMap = do
     for_ mutationRecords \mutationRecord ->
       MutationRecord.target mutationRecord
         >>= \node -> case Element.fromNode node of
-            Nothing -> Logging.log Error "Observed node was not an element."
+            Nothing -> Log.log Error "Observed node was not an element."
             Just element -> setCheckoutOption testMapsMap element
 
 -- <button class="add_cart btn btn--to-secondary btn--full product__add-to-cart-button   show" data-cart-submit="" type="submit" name="add" aria-live="polite">
@@ -277,8 +277,8 @@ applyToVariantSelector testMapsMap variantOptionElement = do
   eRawHtml <- getRawHtml
   eSwapPrice <- getSwapPrice
   case eRawHtml, eSwapPrice of
-    Left err, _ -> Logging.log Error err
-    _, Left err -> Logging.log Error err
+    Left err, _ -> Log.log Error err
+    _, Left err -> Log.log Error err
     Right rawHtml, Right swapPrice -> do
       localSwapPrice <- Intl.formatPrice swapPrice
       rawHtml

@@ -1,4 +1,4 @@
-module SweetSpot.Logging (class LogAction, log, buildLog, LogLevel(..)) where
+module SweetSpot.Log (class LogAction, log, buildLog, LogLevel(..)) where
 
 import Prelude
 

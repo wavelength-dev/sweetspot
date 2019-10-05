@@ -18,8 +18,8 @@ import SweetSpot.Data.Config (productClass)
 import SweetSpot.Data.Event (Page(..))
 import SweetSpot.Data.Shopify (Product)
 import SweetSpot.Event.PageDetection (getCurrentPage) as PageDetection
-import SweetSpot.Logging (LogLevel(..))
-import SweetSpot.Logging (log) as Logging
+import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Log (log) as Log
 import Web.DOM (Element)
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
@@ -50,10 +50,10 @@ trackView = do
     pageUrl <- HTML.window >>= Window.location >>= href
     eProducts <- readInjectedProducts
     productIds <- case eProducts of
-      Left msg -> Logging.log Warn msg *> pure Nothing
+      Left msg -> Log.log Warn msg *> pure Nothing
       Right products -> pure $ Just $ map _.id products
     productId <- case Array.head =<< productIds of
-      Nothing -> Logging.log Warn "Empty list of extracted products" *> pure Nothing
+      Nothing -> Log.log Warn "Empty list of extracted products" *> pure Nothing
       Just productId -> pure $ Just productId
     pure { page, pageUrl, userId, productId, productIds }
   Api.sendEvent event

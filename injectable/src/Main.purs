@@ -14,8 +14,8 @@ import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, applyPr
 import SweetSpot.Data.Domain (getTestMapsByTargetId)
 import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
-import SweetSpot.Logging (LogLevel(..))
-import SweetSpot.Logging (log) as Logging
+import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Log (log) as Log
 import SweetSpot.Longvadon (attachObservers, setCheckout) as Lv
 import SweetSpot.SiteCapabilities (awaitDomReady)
 
@@ -55,7 +55,7 @@ app = do
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of
-  Left appErr -> Logging.log Error $ show appErr
+  Left appErr -> Log.log Error $ show appErr
   Right _ -> pure unit
 
 main :: Effect Unit
@@ -68,4 +68,4 @@ main =
           Left (ReportErr { message }) -> throw message
           -- On early exist we do nothing.
           Left Noop -> pure unit
-          Right _ -> Logging.log Info "Ran successfully for test"
+          Right _ -> Log.log Info "Ran successfully for test"

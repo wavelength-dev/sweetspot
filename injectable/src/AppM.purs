@@ -52,10 +52,6 @@ derive newtype instance monadEffectAppM :: MonadEffect AppM
 
 derive newtype instance monadThrowAppM :: MonadThrow ShortCircuit AppM
 
--- instance domActionAppM :: DomAction AppM where
---   getAttribute = SiteC.getAttribute
---   setAttribute = SiteC.setAttribute
---   queryDocument = SiteC.queryDocument
 runAppM :: forall a. AppM a -> Aff (Either ShortCircuit a)
 runAppM (AppM m) = runExceptT m
 

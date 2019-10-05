@@ -22,8 +22,8 @@ import Milkis.Impl.Window (windowFetch)
 import Record (merge)
 import SweetSpot.Data.Config (eventEndpoint, uidStorageKey)
 import SweetSpot.Data.Event (CheckoutEvent, LineItem(..), Page(..))
-import SweetSpot.Logging (LogLevel(..))
-import SweetSpot.Logging (log) as Logging
+import SweetSpot.Log (LogLevel(..))
+import SweetSpot.Log (log) as Log
 import Web.HTML (window)
 import Web.HTML.Location (href)
 import Web.HTML.Window (localStorage, location)
@@ -112,5 +112,5 @@ trackCheckout = do
 main :: Effect Unit
 main = launchAff_ $ do
   let err = getCheckoutStateIssues checkoutA checkoutB
-  liftEffect $ Maybe.maybe (pure unit) (Logging.log Error) err
+  liftEffect $ Maybe.maybe (pure unit) (Log.log Error) err
   trackCheckout

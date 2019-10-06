@@ -6,12 +6,11 @@ import Control.Monad.Except (throwError)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
 import Effect (Effect)
-import Effect.Aff (launchAff_, runAff_)
+import Effect.Aff (runAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
 import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getTestMapsBySku, getTestMapsByTargetId, getUserBucketProvisions, getUserId, readCampaignId, revealPrices, runAppM, setControlledPrices, setUserId)
-import SweetSpot.Event (trackView)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
@@ -53,7 +52,6 @@ app = do
             *> Lv.setProductAddToCartButtonControlledPrice testMapsMap
             *> Lv.attachObservers testMapsMap
   liftEffect $ fixCartItemUrls site
-  liftEffect $ launchAff_ trackView
 
 logResult :: forall a. Either Error a -> Effect Unit
 logResult = case _ of

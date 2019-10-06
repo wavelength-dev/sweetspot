@@ -31,7 +31,6 @@ import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
 
--- TODO: split per page logic into sub modules
 -- Longvadon has four known price forms
 -- collections page, every product in a collection lists a price
 -- product page, variant selectiion, price and add to cart button

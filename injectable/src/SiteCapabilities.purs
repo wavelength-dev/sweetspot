@@ -13,12 +13,13 @@ module SweetSpot.SiteCapabilities
   ) where
 
 import Prelude
+
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import SweetSpot.Data.Config (hiddenPriceId, idClass) as Config
-import SweetSpot.Data.Domain (TestMap, VariantId)
+import SweetSpot.Data.Domain (Sku, TestMap)
 import SweetSpot.SiteCapabilities.Dom (awaitDomReady, queryDocument_, removeClass) as SiteDom
 import SweetSpot.SiteCapabilities.PriceControl (setControlledPrice) as SitePriceControl
 import SweetSpot.SiteCapabilities.Url (getPathname, getUrlParam_, replacePathname) as SiteUrl
@@ -67,7 +68,7 @@ getPathname = SiteUrl.getPathname
 replacePathname :: String -> Effect Unit
 replacePathname = SiteUrl.replacePathname
 
-setControlledPrice :: Map VariantId TestMap -> Element -> Effect Unit
+setControlledPrice :: Map Sku TestMap -> Element -> Effect Unit
 setControlledPrice = SitePriceControl.setControlledPrice
 
 revealPrice :: Element -> Effect Unit

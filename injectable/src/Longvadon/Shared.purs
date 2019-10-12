@@ -1,6 +1,8 @@
 module SweetSpot.Longvadon.Shared where
 
 import Prelude
+import Control.Monad.Reader (ask) as Reader
+import Control.Monad.Reader (class MonadAsk)
 import Data.Array as Array
 import Data.Foldable (traverse_)
 import Data.Map (Map)
@@ -10,15 +12,16 @@ import Data.String (Pattern(..))
 import Data.String as String
 import Data.Traversable (traverse)
 import Effect (Effect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Prim.Row (class Union)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (TestMap, VariantId(..))
+import SweetSpot.Data.Domain (TestMap, VariantId(..), TestContext)
 import SweetSpot.SiteCapabilities (class BrowserAction)
-import SweetSpot.SiteCapabilities (getAttribute, setAttribute) as SiteC
+import SweetSpot.SiteCapabilities (getAttribute, observeForMutation, setAttribute) as SiteC
 import Web.DOM (Element)
 import Web.DOM.Element (fromNode, toNode) as Element
-import Web.DOM.MutationObserver (MutationObserver, MutationObserverInitFields)
-import Web.DOM.MutationObserver as MutationObserver
+import Web.DOM.MutationObserver (MutationObserverInitFields)
+import Web.DOM.MutationObserver (mutationObserver) as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
 
@@ -31,27 +34,26 @@ readStock = case _ of
   "deny" -> Deny
   _ -> Other
 
-type MutationCallback
-  = Array Element -> Effect Unit
-
 onElementsMutation ::
-  forall r rx.
+  forall r rx m.
   Union r rx MutationObserverInitFields =>
-  Array Element -> Record r -> MutationCallback -> Effect Unit
+  MonadEffect m =>
+  BrowserAction m =>
+  Array Element -> Record r -> (Array Element -> Effect Unit) -> m Unit
 onElementsMutation elements options callback = do
-  mutationObserver <- MutationObserver.mutationObserver (\mrs mo -> mutationRecordsToElements mrs mo >>= callback)
+  mutationObserver <- liftEffect $ MutationObserver.mutationObserver (\mrs _ -> mutationRecordsToElements mrs >>= callback)
   let
-    observe = Element.toNode >>> \node -> MutationObserver.observe node options mutationObserver
+    observe = Element.toNode >>> \node -> SiteC.observeForMutation node options mutationObserver
   traverse_ observe elements
   where
   -- We discard the possibilty of some observed nodes not being elements as the only nodes we watch are price elements which are necessarily Html elements.
-  mutationRecordsToElements :: Array MutationRecord -> MutationObserver -> Effect (Array Element)
-  mutationRecordsToElements mutationRecords _ =
-    traverse (MutationRecord.target >=> Element.fromNode >>> pure) mutationRecords
+  mutationRecordsToElements :: Array MutationRecord -> Effect (Array Element)
+  mutationRecordsToElements mutationRecords =
+    traverse (MutationRecord.target >>> liftEffect >=> Element.fromNode >>> pure) mutationRecords
       >>= Array.catMaybes
       >>> pure
 
-isSoldOutElement :: Element -> Effect Boolean
+isSoldOutElement :: forall m. BrowserAction m => Element -> m Boolean
 isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceSoldOut >>> pure
   where
   isPriceSoldOut = String.toLower >>> String.contains (Pattern "sold out")
@@ -65,14 +67,22 @@ isSoldOutElement el = SiteC.getAttribute "data-pric" el >>= maybe false isPriceS
 -- </select>
 -- Also used for slick checkout options
 -- <input class="check--color" type="checkbox" name="id[]" value="20609191706667" tabindex="-1">
-setCheckoutOption :: forall m. BrowserAction m => Map VariantId TestMap -> Element -> m Unit
-setCheckoutOption testMaps el = do
-  mRawVariantId <- SiteC.getAttribute "value" el
+setCheckoutOption :: forall m. BrowserAction m => TestContext -> Element -> m Unit
+setCheckoutOption testContext element = do
+  mRawVariantId <- SiteC.getAttribute "value" element
   let
     mVariantId = mRawVariantId <#> VariantId
 
-    mTestMap = mVariantId >>= flip Map.lookup testMaps
+    mTestMap = mVariantId >>= getTestMap testContext.variantIdTestMap
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
-    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId el
-    Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId el
+    Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__value" testMap.swapId element
+    Just testMap, Live -> SiteC.setAttribute "value" testMap.swapId element
+  where
+  getTestMap :: Map VariantId TestMap -> VariantId -> Maybe TestMap
+  getTestMap testMaps variantId = Map.lookup variantId testMaps
+
+setCheckoutOptionM :: forall m. BrowserAction m => MonadAsk TestContext m => Element -> m Unit
+setCheckoutOptionM element = do
+  testContext <- Reader.ask
+  setCheckoutOption testContext element

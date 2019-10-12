@@ -2,6 +2,7 @@ module SweetSpot.AppM where
 
 import Prelude
 import Control.Monad.Except.Trans (class MonadThrow, ExceptT, runExceptT, throwError)
+import Control.Monad.Reader (class MonadAsk)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray, fromArray)
 import Data.Either (Either(..))
@@ -19,12 +20,12 @@ import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Api (TestMapProvisions(..), fetchTestMaps)
 import SweetSpot.Compatibility (hasFetch, hasPromise)
 import SweetSpot.Data.Config as Config
-import SweetSpot.Data.Domain (CampaignId(..), Sku, TestMap, UserId(..), VariantId(..))
+import SweetSpot.Data.Domain (CampaignId(..), Sku, TestMap, UserId(..), VariantId(..), TestContext)
 import SweetSpot.LibertyPrice as LP
 import SweetSpot.Longvadon as Lv
+import SweetSpot.SiteCapabilities (class BrowserAction)
 import SweetSpot.SiteCapabilities as SiteC
 import Web.HTML (window)
-import Web.HTML.HTMLElement (fromElement) as HTMLElement
 import Web.HTML.Location (hostname)
 import Web.HTML.Window (localStorage)
 import Web.HTML.Window as Win
@@ -126,10 +127,15 @@ getUserBucketProvisions mUserId mCampaignId = case mUserId, mCampaignId of
   (Just uid), Nothing -> pure $ OnlyUserId uid
   Nothing, (Just cid) -> pure $ OnlyCampaignId cid
 
-attachSiteObservers :: Site -> Map VariantId TestMap -> Effect Unit
-attachSiteObservers site testMapsMap = case site of
-  Longvadon -> Lv.attachObservers testMapsMap
-  LibertyPrice -> LP.observePrices testMapsMap
+attachSiteObservers ::
+  forall m.
+  MonadEffect m =>
+  MonadAsk TestContext m =>
+  BrowserAction m =>
+  Site -> m Unit
+attachSiteObservers site = case site of
+  Longvadon -> Lv.attachObservers
+  LibertyPrice -> LP.observePrices
 
 applyFacadeUrl :: Effect Unit
 applyFacadeUrl = do
@@ -147,12 +153,15 @@ fixCartItemUrls :: Site -> Effect Unit
 fixCartItemUrls siteId = when (siteId == Longvadon) Lv.convertSsvCollectionUrls
 
 -- | This function collects all elements tagged with a sweetspot id, and sets them to their controlled price. Sadly, there's many ways in which LibertyPrice and Longvadon set prices on user interaction, this only covers simple cases.
-setControlledPrices :: Map VariantId TestMap -> Effect Unit
-setControlledPrices testMapsMap = do
-  priceElements <- SiteC.queryDocument SiteC.priceElementSelector
-  let
-    priceHTMLElements = Array.catMaybes $ map HTMLElement.fromElement priceElements
-  traverse_ (SiteC.setControlledPrice testMapsMap) priceElements
+setControlledPrices ::
+  forall m.
+  BrowserAction m =>
+  MonadEffect m =>
+  MonadAsk TestContext m =>
+  m Unit
+setControlledPrices = do
+  priceElements <- liftEffect $ SiteC.queryDocument SiteC.priceElementSelector
+  traverse_ SiteC.setControlledPriceM priceElements
 
 -- It's unlikely but possible not all collected Elements are HTMLElements
 -- We should only add sweetspot ids to elements which are HTMLElements

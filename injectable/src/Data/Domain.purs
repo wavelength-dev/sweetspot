@@ -1,10 +1,12 @@
 module SweetSpot.Data.Domain where
 
 import Prelude
+
 import Data.Argonaut (caseJsonString, decodeJson, encodeJson) as Argonaut
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json)
 import Data.Array (find) as Array
 import Data.Either (Either(..))
+import Data.Map (Map)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Traversable (traverse)
@@ -60,3 +62,7 @@ type TargetId
 
 findMatchingTestMap :: Array TestMap -> TargetId -> Maybe TestMap
 findMatchingTestMap testMaps targetId = Array.find (_.targetId >>> ((==) targetId)) testMaps
+
+-- | Context in which the tests in effect are known.
+type TestContext
+  = { skuTestMap :: Map Sku TestMap, variantIdTestMap :: Map VariantId TestMap }

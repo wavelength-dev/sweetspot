@@ -1,26 +1,21 @@
 module SweetSpot.Longvadon.CartPage where
 
 import Prelude
-import Data.Foldable (for_)
-import Data.Map (Map)
+
+import Control.Monad.Reader (ask) as Reader
+import Control.Monad.Reader (class MonadAsk)
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..))
-import Effect (Effect)
+import Data.Traversable (traverse_)
+import Effect.Class (class MonadEffect, liftEffect)
 import SweetSpot.Data.Config (DryRunMode(..), dryRunMode)
-import SweetSpot.Data.Domain (VariantId(..), TestMap)
+import SweetSpot.Data.Domain (TestContext, VariantId(..))
 import SweetSpot.Intl (formatPrice) as Intl
-import SweetSpot.Log (LogLevel(..))
-import SweetSpot.Log (log) as Log
 import SweetSpot.Longvadon.Shared (StockStatus(..))
-import SweetSpot.Longvadon.Shared (readStock, setCheckoutOption) as Shared
+import SweetSpot.Longvadon.Shared (onElementsMutation, readStock, setCheckoutOption) as Shared
 import SweetSpot.SiteCapabilities (class BrowserAction)
 import SweetSpot.SiteCapabilities (getAttribute, queryDocument, setAttribute) as SiteC
 import Web.DOM (Element)
-import Web.DOM.Element (fromNode, toNode) as Element
-import Web.DOM.MutationObserver (MutationObserver)
-import Web.DOM.MutationObserver as MutationObserver
-import Web.DOM.MutationRecord (MutationRecord)
-import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.ParentNode (QuerySelector(..))
 
 -- Consider trying to improve this selector. It's pretty good but dives about five levels deep.
@@ -42,17 +37,18 @@ cartSlickCarouselAddToCartButtonSelector = QuerySelector "button.product__add-to
 --     <option value="16408520753195" data-pric=" Sold out" data-stock="deny">38/40 / XL / Black</option>
 --   </select>
 -- </div>
-setCheckoutSlickCheckout :: Map VariantId TestMap -> Element -> Effect Unit
-setCheckoutSlickCheckout testMaps el = do
+setCheckoutSlickCheckout :: forall m. MonadEffect m => MonadAsk TestContext m => BrowserAction m => Element -> m Unit
+setCheckoutSlickCheckout el = do
+  testContext <- Reader.ask
   mRawVariantId <- SiteC.getAttribute "value" el
   mRawStockStatus <- SiteC.getAttribute "data-stock" el
   let
     mVariantId = mRawVariantId <#> VariantId
 
-    mTestMap = mVariantId >>= flip Map.lookup testMaps
+    mTestMap = mVariantId >>= flip Map.lookup testContext.variantIdTestMap
 
     mStockStatus = Shared.readStock <$> mRawStockStatus
-  case mTestMap, dryRunMode of
+  liftEffect $ case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
     Just testMap, DryRun ->
       SiteC.setAttribute "data-ssdr__value" testMap.swapId el
@@ -83,28 +79,24 @@ setCheckoutSlickCheckout testMaps el = do
 -- <button class="btn product__add-to-cart-button my-additional-btn" data-cart-submit="" type="button" name="add" data-vrnt="20609192362027" tabindex="0">
 --  ADD TO CART
 -- </button>
-setSlickCheckoutOption :: forall m. BrowserAction m => Map VariantId TestMap -> Element -> m Unit
-setSlickCheckoutOption testMaps el = do
+setSlickCheckoutOption :: forall m. BrowserAction m => MonadAsk TestContext m => Element -> m Unit
+setSlickCheckoutOption el = do
+  { variantIdTestMap } <- Reader.ask
   mCurrentRawVariantId <- SiteC.getAttribute "data-vrnt" el
   let
     mCurrentVariantId = mCurrentRawVariantId <#> VariantId
 
-    mTestMap = mCurrentVariantId >>= flip Map.lookup testMaps
+    mTestMap = mCurrentVariantId >>= flip Map.lookup variantIdTestMap
   case mTestMap, dryRunMode of
     Nothing, _ -> pure unit
     Just testMap, DryRun -> SiteC.setAttribute "data-ssdr__vrnt" testMap.swapId el
     Just testMap, Live -> SiteC.setAttribute "data-vrnt" testMap.swapId el
 
-observeSlickButtons :: Map VariantId TestMap -> Effect Unit
-observeSlickButtons testMapsMap = do
+observeSlickButtons :: forall m. MonadEffect m => MonadAsk TestContext m => BrowserAction m => m Unit
+observeSlickButtons = do
+  testContext <- Reader.ask
   elements <- SiteC.queryDocument cartSlickCarouselAddToCartButtonSelector
-  mutationObserver <- MutationObserver.mutationObserver onMutation
-  for_ elements \el -> MutationObserver.observe (Element.toNode el) { attributes: true, attributeFilter: [ "data-vrnt" ] } mutationObserver
-  where
-  onMutation :: Array MutationRecord → MutationObserver → Effect Unit
-  onMutation mutationRecords _ = do
-    for_ mutationRecords \mutationRecord ->
-      MutationRecord.target mutationRecord
-        >>= \node -> case Element.fromNode node of
-            Nothing -> Log.log Error "Observed node was not an element."
-            Just element -> Shared.setCheckoutOption testMapsMap element
+  Shared.onElementsMutation
+    elements
+    { attributes: true, attributeFilter: [ "data-vrnt" ] }
+    $ traverse_ (Shared.setCheckoutOption testContext)

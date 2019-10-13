@@ -1,3 +1,7 @@
 */node_modules
 */.stack-work
 api/.hdevtools.sock
+terraform/
+injectable/.psci_modules/
+injectable/output/
+injectable/.spago/

@@ -70,23 +70,22 @@ createApp ctx = getMiddleware ctx $ serve rootAPI $ hoistServer
         (`runReaderT` ctx)
         server
 
+rightOrThrow :: Either Text a -> a
+rightOrThrow (Left  msg) = error . T.unpack $ msg
+rightOrThrow (Right a  ) = a
+
 runServer :: IO ()
 runServer = do
-        result    <- Env.getEnvConfig
-        envConfig <- case result of
-                Left  msg        -> error msg
-                Right envConfig' -> return envConfig'
+        mEnvConfig <- Env.getEnvConfig
+        let envConfig  = either error id mEnvConfig
+        let shop = rightOrThrow $ Shop.readShop (Env.targetShop envConfig)
+        let shopConfig = getShopConfig shop
         let dbConfig = DbConfig { host     = Env.dbHost envConfig
                                 , name     = Env.dbName envConfig
                                 , password = Env.dbPassword envConfig
                                 }
-        dbPool    <- getDbPool dbConfig
-        appLogger <- newStdoutLoggerSet defaultBufSize
-        shop      <- case Shop.readShop (Env.targetShop envConfig) of
-                Left  msg  -> error (T.unpack msg)
-                Right shop -> return shop
-        let     shopConfig = getShopConfig shop
-                config     = AppConfig
+        let
+                config = AppConfig
                         { environment = Env.environment envConfig
                         , shopifyApiRoot = Shop.shopApi shopConfig
                         , shopifyAccessTokenEndpoint = Shop.accessTokenEndpoint
@@ -99,10 +98,12 @@ runServer = do
                         , basicAuthUser = Env.basicAuthUser envConfig
                         , basicAuthPassword = Env.basicAuthPassword envConfig
                         }
-                ctx = AppCtx { _getConfig = config
-                             , _getLogger = appLogger
-                             , _getDbPool = dbPool
-                             }
+        dbPool    <- getDbPool dbConfig
+        appLogger <- newStdoutLoggerSet defaultBufSize
+        let ctx = AppCtx { _getConfig = config
+                         , _getLogger = appLogger
+                         , _getDbPool = dbPool
+                         }
 
         L.info' appLogger "Running migrations"
         res <- withResource dbPool $ \conn -> migrate conn
@@ -115,10 +116,19 @@ runServer = do
                         exitWith $ ExitFailure 1
 
                 Just _ -> do
-                        L.info' appLogger "Listening on port 8082..."
-                        withStdoutLogger $ \aplogger -> do
+                        L.info'
+                                appLogger
+                                (  "Listening on port "
+                                <> Env.port envConfig
+                                <> "..."
+                                )
+                        withStdoutLogger stdoutLogger
+                    where
+                        stdoutLogger aplogger = do
+                                let port = read (T.unpack $ Env.port envConfig)
+                                let app  = createApp ctx
                                 let
-                                        settings = setPort 8082 $ setLogger
+                                        settings = setPort port $ setLogger
                                                 aplogger
                                                 defaultSettings
-                                runSettings settings $ createApp ctx
+                                runSettings settings app

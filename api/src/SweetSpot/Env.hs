@@ -39,6 +39,7 @@ data EnvConfig = EnvConfig
   , targetShop :: !Text
   , basicAuthUser :: !Text
   , basicAuthPassword :: !Text
+  , port :: !Text
   } deriving (Show)
 
 instance FromEnv EnvConfig where
@@ -54,6 +55,7 @@ instance FromEnv EnvConfig where
       <*> env "TARGET_SHOP"
       <*> env "BASIC_AUTH_USER"
       <*> env "BASIC_AUTH_PASSWORD"
+      <*> envMaybe "PORT" .!= "8082"
 
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do

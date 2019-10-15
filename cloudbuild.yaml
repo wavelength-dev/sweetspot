@@ -11,8 +11,9 @@ steps:
         "build",
         "-t",
         "gcr.io/$PROJECT_ID/sweetspot:latest",
-        "--cache-from",
-        "gcr.io/$PROJECT_ID/sweetspot:latest",
+        "--cache-from=gcr.io/$PROJECT_ID/sweetspot:latest",
+        "--machine-type=n1-highcpu-8",
+        "--timeout=30m",
         ".",
       ]
 images: ["gcr.io/$PROJECT_ID/sweetspot:latest"]

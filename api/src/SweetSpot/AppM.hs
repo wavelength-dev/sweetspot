@@ -15,9 +15,10 @@ import           Servant                        ( Handler
                                                 )
 import           System.Log.FastLogger          ( LoggerSet )
 import           SweetSpot.Database             ( Pool )
+import           SweetSpot.Env                  ( Environment )
 
 data AppConfig = AppConfig
-  { environment :: !Text
+  { environment :: !Environment
   , shopifyApiRoot :: !Text
   , shopifyAccessTokenEndpoint :: !Text
   , shopifyClientId :: !Text

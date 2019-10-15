@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module SweetSpot.Env where
+module SweetSpot.Env
+  ( getEnvConfig
+  , EnvConfig(..)
+  , Environment(..)
+  )
+where
 
 import           Data.Text                      ( Text )
 import           LoadEnv                        ( loadEnv )
@@ -10,13 +15,25 @@ import           System.Envy                    ( FromEnv
                                                 , fromEnv
                                                 , envMaybe
                                                 , (.!=)
+                                                , Var(..)
                                                 )
+
+data Environment = Dev | Stag | Prod
+  deriving (Eq, Show)
+
+instance Var Environment where
+  fromVar env = case env of
+    "dev"  -> Just Dev
+    "stag" -> Just Stag
+    "prod" -> Just Prod
+    _      -> Nothing
+  toVar = show
 
 data EnvConfig = EnvConfig
   { dbHost :: !Text
   , dbName :: !Text
   , dbPassword :: !Text
-  , environment :: !Text
+  , environment :: !Environment
   , shopifyClientSecret :: !Text
   , shopifyOAuthAccessToken :: !Text
   , targetShop :: !Text
@@ -41,4 +58,4 @@ instance FromEnv EnvConfig where
 getEnvConfig :: IO (Either String EnvConfig)
 getEnvConfig = do
   loadEnv
-  decodeEnv :: IO (Either String EnvConfig)
+  decodeEnv

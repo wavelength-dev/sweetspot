@@ -8,11 +8,11 @@ RUN apt-get update --quiet && apt-get install --yes --quiet libpq-dev
 # Install deps first for improved caching
 COPY ./api/stack.yaml .
 COPY ./api/sweetspot.cabal .
-RUN stack install --only-dependencies
+RUN stack build --only-dependencies --verbosity warn
 
 # Copy code and build our binary
 COPY ./api /opt/build
-RUN stack install --verbosity warn
+RUN stack build --verbosity warn --copy-bins
 
 # Build the PureScript injectables
 FROM node:12-buster AS build-dist

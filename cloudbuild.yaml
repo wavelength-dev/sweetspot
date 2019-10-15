@@ -6,7 +6,6 @@ steps:
       - |
         docker pull gcr.io/$PROJECT_ID/sweetspot:latest || exit 0
   - name: "gcr.io/cloud-builders/docker"
-    timeout: 30m
     args:
       [
         "build",
@@ -16,6 +15,6 @@ steps:
         ".",
       ]
 images: ["gcr.io/$PROJECT_ID/sweetspot:latest"]
+timeout: 30m
 options:
   machineType: 'N1_HIGHCPU_8'
-timeout: 30m

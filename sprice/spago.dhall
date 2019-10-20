@@ -5,7 +5,15 @@ You can edit this file as you like.
 { name =
     "my-project"
 , dependencies =
-    [ "console", "effect", "either", "psci-support", "test-unit" ]
+    [ "aff"
+    , "argonaut"
+    , "console"
+    , "effect"
+    , "either"
+    , "milkis"
+    , "psci-support"
+    , "test-unit"
+    ]
 , packages =
     ./packages.dhall
 , sources =

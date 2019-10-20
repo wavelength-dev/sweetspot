@@ -10,9 +10,13 @@ You can edit this file as you like.
     , "console"
     , "effect"
     , "either"
+    , "identity"
     , "milkis"
     , "psci-support"
     , "test-unit"
+    , "web-dom"
+    , "web-html"
+    , "web-storage"
     ]
 , packages =
     ./packages.dhall

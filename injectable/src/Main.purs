@@ -2,7 +2,6 @@ module SweetSpot.Main where
 
 import Prelude
 import Control.Monad.Except (throwError)
-import Control.Monad.Reader (ReaderT)
 import Control.Monad.Reader (runReaderT) as Reader
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
@@ -12,15 +11,11 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throw)
 import SweetSpot.AppM (AppM, ShortCircuit(..), Site(..), applyFacadeUrl, ensureDeps, fixCartItemUrls, getSiteId, getTestMaps, getTestMapsBySku, getTestMapsByTargetId, getUserBucketProvisions, getUserId, readCampaignId, revealPrices, runAppM, setControlledPrices, setUserId)
-import SweetSpot.Data.Domain (TestContext)
 import SweetSpot.LibertyPrice (observePrices, setCheckout) as LP
 import SweetSpot.Log (LogLevel(..))
 import SweetSpot.Log (log) as Log
 import SweetSpot.Longvadon (attachObservers, setCheckout, setProductVariantSelectorSources, setProductAddToCartButtonControlledPrice) as Lv
 import SweetSpot.SiteCapabilities (awaitDomReady) as SiteC
-
-runWithTestContext :: forall a m. TestContext -> ReaderT TestContext m a -> m a
-runWithTestContext testContext reader = Reader.runReaderT reader testContext
 
 app :: AppM Unit
 app = do
@@ -48,7 +43,7 @@ app = do
     testContext = { variantIdTestMap: testMapsMap, skuTestMap: testMapsMap' }
   liftEffect $ setUserId (NonEmptyArray.head testMaps)
   liftEffect
-    $ runWithTestContext testContext
+    $ (flip Reader.runReaderT) testContext
     $ case site of
         LibertyPrice ->
           LP.setCheckout

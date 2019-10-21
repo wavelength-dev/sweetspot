@@ -8,7 +8,7 @@ import Data.Array ((!!))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Sprice.User (class LocalStorageAction, UserId(..), getUserId, setUserId, uidStorageKey)
-import Test.Unit (TestSuite, test)
+import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert (equal) as Assert
 
 newtype TestM a
@@ -34,7 +34,7 @@ instance mockStorageLocalStorageAction :: LocalStorageAction TestM where
   setItem key value = Writer.tell $ [Tuple key value]
 
 tests :: TestSuite
-tests = do
+tests = suite "user tracking" do
   test "reads uid from local storage" do
     let (Tuple mUid _) = runMocked $ getUserId
     Assert.equal (Just $ UserId "alex") mUid

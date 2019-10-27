@@ -22,7 +22,7 @@ type TestContext
 getTestContext :: ExceptT Error Effect TestContext
 getTestContext = do
   isRuntimeAdequate <- lift RuntimeDependency.getIsRuntimeAdequate
-  when (not isRuntimeAdequate) $ throwError (error inadequateRuntimeError)
+  when (not isRuntimeAdequate) (throwError $ error inadequateRuntimeError)
   mUserId <- lift User.getUserId
   pure { skuTestMaps: [], variantIdTestMaps: [] }
   where

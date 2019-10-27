@@ -1,12 +1,10 @@
 module Test.QueryString where
 
 import Prelude
-
-import Control.Monad.Free (Free)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Sprice.QueryString (QueryParam(..), parseQueryString)
-import Test.Unit (TestF, TestSuite, suite, test)
+import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert (equal) as Assert
 
 tests :: TestSuite

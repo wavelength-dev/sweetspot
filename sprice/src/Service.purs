@@ -3,7 +3,7 @@ module Sprice.Service where
 import Prelude
 import Control.Monad.Except (runExcept)
 import Data.Argonaut (class EncodeJson, Json)
-import Data.Argonaut (encodeJson, stringify) as Argonaut
+import Data.Argonaut (encodeJson, jsonParser, stringify) as Argonaut
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
@@ -11,9 +11,14 @@ import Effect.Aff (attempt) as Aff
 import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
 import Milkis (Response, Fetch)
-import Milkis (URL(..), fetch, json, makeHeaders, postMethod, statusCode) as Milkis
+import Milkis (URL(..), fetch, getMethod, json, makeHeaders, postMethod, statusCode, text) as Milkis
 import Milkis.Impl.Window (windowFetch) as MilkisImpl
 import Sprice.Config (apiUrl) as Config
+import Sprice.Data (CampaignId(..), TestMap, decodeTestMaps)
+import Sprice.User (UserId(..))
+
+testMapEndpoint :: String
+testMapEndpoint = Config.apiUrl <> "/bucket"
 
 eventEndpoint :: String
 eventEndpoint = Config.apiUrl <> "/event"
@@ -23,6 +28,33 @@ logEndpoint = Config.apiUrl <> "/log"
 
 fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch
+
+data TestMapProvisions
+  = OnlyCampaignId CampaignId
+  | OnlyUserId UserId
+  | UserAndCampaignId UserId CampaignId
+
+getTestMapQueryString :: TestMapProvisions -> String
+getTestMapQueryString = case _ of
+  UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&sscid=" <> cid
+  OnlyCampaignId (CampaignId cid) -> "?sscid=" <> cid
+  OnlyUserId (UserId uid) -> "?uid=" <> uid
+
+fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))
+fetchTestMaps provisions = do
+  res <- getJson (testMapEndpoint <> qs)
+  text <- Milkis.text res
+  pure (Argonaut.jsonParser text >>= decodeTestMaps)
+  where
+  qs = getTestMapQueryString provisions
+
+getJson :: String -> Aff Response
+getJson url =
+  fetch
+    (Milkis.URL url)
+    { method: Milkis.getMethod
+    , headers: Milkis.makeHeaders { "Content-Type": "application/json" }
+    }
 
 postJson :: String -> Json -> Aff Response
 postJson url json =

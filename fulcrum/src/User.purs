@@ -18,6 +18,8 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem) as Storage
 
+-- As we're making big changes to the schema we'll have users locally that are not in the database. We may have to handle that situation here or in the service. One approach could be always setting the userId that comes back on a getTestMaps request and having the service effectively execute the migration.
+
 uidStorageKey :: String
 uidStorageKey = "sweetspot__uid"
 

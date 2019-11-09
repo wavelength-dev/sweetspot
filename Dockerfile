@@ -1,4 +1,4 @@
-FROM haskell:8.6.5 AS build
+FROM gcr.io/sweetspot-255522/sweetspot-build AS build
 
 WORKDIR /opt/build
 
@@ -23,17 +23,17 @@ RUN apt-get --quiet update && apt-get --quiet install --yes libncurses5 git
 
 # Install build dependencies
 RUN yarn global add purescript spago uglify-js
-COPY ./injectable/spago.dhall ./injectable/packages.dhall ./
+COPY ./fulcrum/spago.dhall ./fulcrum/packages.dhall ./
 RUN spago install --global-cache skip
 
 # Compile, test, bundle and uglify our scripts
-COPY ./injectable/src ./src
-COPY ./injectable/test ./test
+COPY ./fulcrum/src ./src
+COPY ./fulcrum/test ./test
 RUN spago test
-RUN spago bundle-app --main SweetSpot.Main --to ./sweetspot-main.js
+RUN spago bundle-app --main Fulcrum.Main --to ./sweetspot-main.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
-RUN spago bundle-app --main SweetSpot.Checkout --to ./sweetspot-checkout.js
-RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
+# RUN spago bundle-app --main Fulcrum.Checkout --to ./sweetspot-checkout.js
+# RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
 
 # Leave only the executable in the second stage
 FROM debian:buster-slim

@@ -10,9 +10,10 @@ import Effect.Aff (Aff)
 import Effect.Aff (attempt) as Aff
 import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
-import Milkis (Response, Fetch)
+import Milkis (Fetch, Options, Response)
 import Milkis (URL(..), fetch, getMethod, json, makeHeaders, postMethod, statusCode, text) as Milkis
 import Milkis.Impl.Window (windowFetch) as MilkisImpl
+import Record.Unsafe.Union (unsafeUnion) as RecordUnsafe
 import Sprice.Config (apiUrl) as Config
 import Sprice.Data (CampaignId(..), TestMap, decodeTestMaps)
 import Sprice.User (UserId(..))
@@ -42,19 +43,22 @@ getTestMapQueryString = case _ of
 
 fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))
 fetchTestMaps provisions = do
-  res <- getJson (testMapEndpoint <> qs)
+  res <- getJson (testMapEndpoint <> qs) {}
   text <- Milkis.text res
   pure (Argonaut.jsonParser text >>= decodeTestMaps)
   where
   qs = getTestMapQueryString provisions
 
-getJson :: String -> Aff Response
-getJson url =
-  fetch
-    (Milkis.URL url)
+getJson :: forall options. String -> Record options -> Aff Response
+getJson url options = fetch (Milkis.URL url) combinedOptions
+  where
+  defaults =
     { method: Milkis.getMethod
     , headers: Milkis.makeHeaders { "Content-Type": "application/json" }
     }
+
+  combinedOptions :: Record Options
+  combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
 postJson :: String -> Json -> Aff Response
 postJson url json =

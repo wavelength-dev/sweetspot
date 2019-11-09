@@ -10,7 +10,7 @@ import Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import Data.Scientific (toRealFloat)
 import qualified Data.Vector.Unboxed as V
-import Statistics.Types (cl95, Estimate, ConfInt, cl90)
+import Statistics.Types (Estimate, ConfInt, cl90)
 import Statistics.Resampling (Estimator(..), resample)
 import Statistics.Resampling.Bootstrap (bootstrapBCA)
 import System.Random.MWC (createSystemRandom, GenIO)

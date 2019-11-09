@@ -1,7 +1,6 @@
 module Main where
 
 import Prelude
-
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Trans.Class (lift)
 import Data.Either (Either(..))
@@ -13,17 +12,13 @@ import Effect.Console (log) as Console
 import Effect.Exception (Error, error)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Fulcrum.Site (awaitDomReady) as Site
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
+import Fulcrum.Site (awaitDomReady, getDocument) as Site
 import Fulcrum.User (getUserId) as User
-import Web.DOM (Document)
 import Web.DOM.Document (getElementsByClassName) as Document
 import Web.DOM.HTMLCollection (length) as HTMLCollection
-import Web.HTML (window) as HTML
-import Web.HTML.HTMLDocument as HTMLDocument
-import Web.HTML.Window (document) as Window
 
 type TestContext
   = { skuTestMaps :: Array Unit
@@ -61,12 +56,9 @@ main = do
 newtype VariantId
   = VariantId String
 
-getDocument :: Effect Document
-getDocument = HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
-
 apply :: Effect Unit
 apply = do
-  document <- getDocument
+  document <- Site.getDocument
   priceElements <- Document.getElementsByClassName "sweetspot__price" document
   numElements <- HTMLCollection.length priceElements
   Console.log $ "Elements found: " <> show numElements

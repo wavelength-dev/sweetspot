@@ -52,4 +52,4 @@ type TestMap
     }
 
 decodeTestMaps :: Json -> Either String (Array TestMap)
-decodeTestMaps json = Argonaut.decodeJson json >>= traverse Argonaut.decodeJson
+decodeTestMaps = Argonaut.decodeJson >=> traverse Argonaut.decodeJson

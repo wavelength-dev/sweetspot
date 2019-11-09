@@ -30,7 +30,7 @@ RUN spago install --global-cache skip
 COPY ./fulcrum/src ./src
 COPY ./fulcrum/test ./test
 RUN spago test
-RUN spago bundle-app --main Fulcrum.Main --to ./sweetspot-main.js
+RUN spago bundle-app --to ./sweetspot-main.js
 RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
 # RUN spago bundle-app --main Fulcrum.Checkout --to ./sweetspot-checkout.js
 # RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js

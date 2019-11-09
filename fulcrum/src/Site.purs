@@ -1,32 +1,26 @@
-module Fulcrum.Site (getUrlParam) where
+module Fulcrum.Site where
 
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
-import Data.Traversable (oneOf)
-import Effect (Effect)
-import Fulcrum.QueryString (QueryParam(..))
-import Fulcrum.QueryString (parseQueryString) as QueryString
-import Web.HTML (window)
-import Web.HTML.Location (search) as Location
+import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
+import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener) as EventTarget
+import Web.HTML (window) as HTML
+import Web.HTML.Event.EventTypes (domcontentloaded) as EventTypes
+import Web.HTML.HTMLDocument (readyState) as HTMLDocument
+import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.Window as Window
 
-getUrlParam :: String -> Effect (Maybe String)
-getUrlParam targetKey = do
-  queryString <- window >>= Window.location >>= Location.search
-  queryString
-    # QueryString.parseQueryString
-    >>> map matchQueryParam
-    >>> oneOf
-    >>> pure
-  where
-  matchQueryParam :: Either String QueryParam -> Maybe String
-  matchQueryParam eQueryParam =
-    case eQueryParam of
-      Right (QueryParam key (Just value)) ->
-        if key == targetKey then
-          Just value
-        else
-          Nothing
-      _ -> Nothing
+awaitDomReady :: Aff Unit
+awaitDomReady =
+  makeAff \callback -> do
+    rs <- HTMLDocument.readyState =<< Window.document =<< HTML.window
+    case rs of
+      Loading -> do
+        et <- Window.toEventTarget <$> HTML.window
+        listener <- EventTarget.eventListener (\_ -> callback (Right unit))
+        EventTarget.addEventListener EventTypes.domcontentloaded listener false et
+        pure $ effectCanceler (EventTarget.removeEventListener EventTypes.domcontentloaded listener false et)
+      _ -> do
+        callback (Right unit)
+        pure nonCanceler

@@ -1,4 +1,4 @@
-module Sprice.RuntimeDependency (getIsRuntimeAdequate) where
+module Fulcrum.RuntimeDependency (getIsRuntimeAdequate) where
 
 import Prelude
 import Effect (Effect)

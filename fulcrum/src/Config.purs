@@ -1,4 +1,4 @@
-module Sprice.Config where
+module Fulcrum.Config where
 
 apiUrl :: String
 apiUrl = "/apps/sweetspot/api"

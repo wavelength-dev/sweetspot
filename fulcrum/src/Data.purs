@@ -1,4 +1,4 @@
-module Sprice.Data where
+module Fulcrum.Data where
 
 import Prelude
 

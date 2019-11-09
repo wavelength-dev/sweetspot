@@ -1,4 +1,4 @@
-module Sprice.User
+module Fulcrum.User
   ( class LocalStorageAction
   , getItem
   , setItem

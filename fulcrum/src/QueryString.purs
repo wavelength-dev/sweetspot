@@ -1,4 +1,4 @@
-module Sprice.QueryString where
+module Fulcrum.QueryString where
 
 import Prelude
 import Data.Either (Either(..))

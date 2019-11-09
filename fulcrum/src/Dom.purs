@@ -1,4 +1,4 @@
-module Sprice.Dom where
+module Fulcrum.Dom where
 
 import Prelude
 

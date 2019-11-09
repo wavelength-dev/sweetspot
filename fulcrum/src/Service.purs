@@ -1,4 +1,4 @@
-module Sprice.Service where
+module Fulcrum.Service where
 
 import Prelude
 import Control.Monad.Except (runExcept)
@@ -14,9 +14,9 @@ import Milkis (Fetch, Options, Response)
 import Milkis (URL(..), fetch, getMethod, json, makeHeaders, postMethod, statusCode, text) as Milkis
 import Milkis.Impl.Window (windowFetch) as MilkisImpl
 import Record.Unsafe.Union (unsafeUnion) as RecordUnsafe
-import Sprice.Config (apiUrl) as Config
-import Sprice.Data (CampaignId(..), TestMap, decodeTestMaps)
-import Sprice.User (UserId(..))
+import Fulcrum.Config (apiUrl) as Config
+import Fulcrum.Data (CampaignId(..), TestMap, decodeTestMaps)
+import Fulcrum.User (UserId(..))
 
 testMapEndpoint :: String
 testMapEndpoint = Config.apiUrl <> "/bucket"

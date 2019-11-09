@@ -3,7 +3,7 @@ module Test.QueryString where
 import Prelude
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Sprice.QueryString (QueryParam(..), parseQueryString)
+import Fulcrum.QueryString (QueryParam(..), parseQueryString)
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert (equal) as Assert
 

@@ -7,7 +7,7 @@ import Control.Monad.Writer (tell) as Writer
 import Data.Array ((!!))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Sprice.User (class LocalStorageAction, UserId(..), getUserId, setUserId, uidStorageKey)
+import Fulcrum.User (class LocalStorageAction, UserId(..), getUserId, setUserId, uidStorageKey)
 import Test.Unit (TestSuite, suite, test)
 import Test.Unit.Assert (equal) as Assert
 

@@ -8,11 +8,11 @@ import Effect (Effect)
 import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, error)
-import Sprice.Dom (awaitDomReady) as Dom
-import Sprice.Logging (LogLevel(..)) as LogLevel
-import Sprice.Logging (log) as Logging
-import Sprice.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
-import Sprice.User (getUserId) as User
+import Fulcrum.Dom (awaitDomReady) as Dom
+import Fulcrum.Logging (LogLevel(..)) as LogLevel
+import Fulcrum.Logging (log) as Logging
+import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
+import Fulcrum.User (getUserId) as User
 
 type TestContext
   = { skuTestMaps :: Array Unit
@@ -45,5 +45,5 @@ main =
 newtype VariantId
   = VariantId String
 
-getPrice :: VariantId -> Effect String
-getPrice = mempty
+apply :: Effect Unit
+apply = mempty

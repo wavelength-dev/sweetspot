@@ -1,4 +1,4 @@
-module Sprice.Logging (log, buildLog, LogLevel(..)) where
+module Fulcrum.Logging (log, buildLog, LogLevel(..)) where
 
 import Prelude
 import Data.Argonaut (class EncodeJson, Json, (:=), (~>))
@@ -9,8 +9,8 @@ import Effect (Effect)
 import Effect.Aff (launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Console (error, info, warn) as Console
-import Sprice.Service (sendLog) as Service
-import Sprice.Site (getUrlParam) as Site
+import Fulcrum.Service (sendLog) as Service
+import Fulcrum.Site (getUrlParam) as Site
 
 data LogLevel
   = Info

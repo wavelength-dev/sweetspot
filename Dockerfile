@@ -14,7 +14,7 @@ RUN stack build --only-dependencies --verbosity warn
 COPY ./api /opt/build
 RUN stack build --verbosity warn --copy-bins
 
-# Build the PureScript injectables
+# Build the fulcrum
 FROM node:12-buster AS build-dist
 WORKDIR /opt/build-dist
 

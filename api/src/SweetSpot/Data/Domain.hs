@@ -6,7 +6,7 @@ module SweetSpot.Data.Domain where
 
 import Control.Lens.TH (makeLenses)
 import Data.Aeson (ToJSON, FromJSON(..), withObject, (.:))
-import Data.Text (Text)
+import Data.Text (Text, pack)
 import Data.Time (LocalTime)
 import GHC.Generics (Generic)
 import SweetSpot.Data.Common
@@ -15,10 +15,10 @@ import SweetSpot.Data.Common
 -- | LineItem
 -- | ---------------------------------------------------------------------------
 data LineItem = LineItem
-  { _liProductId :: Pid
-  , _liVariantId :: Svid
-  , _liSku :: Sku
-  , _liQuantity :: Int
+  { _liProductId :: !Pid
+  , _liVariantId :: !Svid
+  , _liSku :: !Sku
+  , _liQuantity :: !Int
   } deriving (Eq, Generic, Show)
 
 makeLenses ''LineItem
@@ -32,8 +32,8 @@ instance FromJSON LineItem where
     sku <- o .: "sku"
     quantity <- o .: "quantity"
     return LineItem
-      { _liProductId = Pid pid
-      , _liVariantId = Svid svid
+      { _liProductId = Pid $ pack . show $ (pid :: Int)
+      , _liVariantId = Svid $ pack . show $ (svid :: Int)
       , _liSku = Sku sku
       , _liQuantity = quantity
       }

@@ -143,7 +143,7 @@ instance DashboardDB AppM where
                                 }
 
 
-getUserId evs = cast_ ((evs ^. evPayload) ->$ "userId") uidType
+getUserId evs = cast_ ((evs ^. evPayload) ->>$ "userId") uidType
 
 -- | ---------------------------------------------------------------------------
 -- | Stats

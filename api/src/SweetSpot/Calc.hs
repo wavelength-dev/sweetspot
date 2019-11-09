@@ -10,7 +10,7 @@ import Data.Map.Strict as M
 import Data.Maybe (fromJust)
 import Data.Scientific (toRealFloat)
 import qualified Data.Vector.Unboxed as V
-import Statistics.Types (cl95, Estimate, ConfInt)
+import Statistics.Types (cl95, Estimate, ConfInt, cl90)
 import Statistics.Resampling (Estimator(..), resample)
 import Statistics.Resampling.Bootstrap (bootstrapBCA)
 import System.Random.MWC (createSystemRandom, GenIO)
@@ -69,6 +69,7 @@ enhanceDBBucketStats stats =
         & fmap (\ev -> (ev ^. chkUserId, ev ^. chkLineItems))
         & groupByUser
         & calcRev testVariantId (toRealFloat p)
+        & L.filter ((> 0) . snd)
 
 enhanceDBExperimentStats :: DBExperimentStats -> ExperimentStats
 enhanceDBExperimentStats stats =
@@ -101,9 +102,19 @@ enhanceDBStats stats = do
         , _csMinProfitIncrease = stats ^. dcsMinProfitIncrease
         , _csStartDate = stats ^. dcsStartDate
         , _csEndDate = stats ^. dcsEndDate
-        , _csExperiments = enhancedExperiments
+        , _csExperiments = []
         , _csProfitPerUserControl = controlEstimate
         , _csProfitPerUserTest = testEstimate
+        , _csConvertersControl = convertersControl
+        , _csNonConvertersControl = nonConvertersCountControl
+        , _csConvertersTest = convertersTest
+        , _csNonConvertersTest = nonConvertersCountTest
+        , _csConvertersControlCount = convertersCountControl
+        , _csConvertersTestCount = convertersCountTest
+        , _csConversionRateControl =
+            conversionRate convertersCountControl (convertersCountControl + nonConvertersCountControl)
+        , _csConversionRateTest =
+            conversionRate convertersCountTest (convertersCountTest + nonConvertersCountTest)
         }
   where
     enhancedExperiments =
@@ -112,10 +123,16 @@ enhanceDBStats stats = do
       enhancedExperiments ^.. traverse . esBuckets & mconcat
 
     convertersControl = sampleForBucketType Control bucketStats
-    convertersTest = sampleForBucketType Control bucketStats
+    convertersTest = sampleForBucketType Test bucketStats
 
     nonConvertersControl = nonConvertersForBucketType Control bucketStats
     nonConvertersTest = nonConvertersForBucketType Test bucketStats
+
+    convertersCountControl = L.length convertersControl
+    convertersCountTest = L.length convertersTest
+
+    nonConvertersCountControl = L.length nonConvertersControl
+    nonConvertersCountTest = L.length nonConvertersTest
 
     controlSample = V.fromList $ convertersControl <> nonConvertersControl
     testSample = V.fromList $ convertersTest <> nonConvertersTest
@@ -124,8 +141,7 @@ enhanceDBStats stats = do
     nonConvertersForBucketType t bs =
       bs
         & L.filter ((== t) . (^. bsBucketType))
-        & fmap (^. bsUserCount)
-        & sum
+        & ((^. bsUserCount) . (!! 0))
         & flip (-) convs
         & flip L.take (repeat 0.0)
       where
@@ -135,8 +151,8 @@ enhanceDBStats stats = do
 
 bootstrap :: GenIO -> V.Vector Double -> IO (Estimate ConfInt Double)
 bootstrap gen sample = do
-  resampled <- resample gen [Mean] 10000 sample
-  return $ head $ bootstrapBCA cl95 sample resampled
+  resampled <- resample gen [Mean] 1000 sample
+  return $ head $ bootstrapBCA cl90 sample resampled
 
 
 

@@ -179,6 +179,14 @@ data CampaignStats = CampaignStats
   , _csExperiments :: ![ExperimentStats]
   , _csProfitPerUserControl :: !(Estimate ConfInt Double)
   , _csProfitPerUserTest :: !(Estimate ConfInt Double)
+  , _csConvertersControl :: ![Double]
+  , _csNonConvertersControl :: !Int
+  , _csConvertersTest :: ![Double]
+  , _csNonConvertersTest :: !Int
+  , _csConvertersControlCount :: !Int
+  , _csConvertersTestCount :: !Int
+  , _csConversionRateControl :: !Double
+  , _csConversionRateTest :: !Double
   } deriving (Eq, Generic, Show)
 
 makeLenses ''CampaignStats

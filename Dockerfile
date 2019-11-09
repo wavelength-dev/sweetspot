@@ -1,4 +1,4 @@
-FROM haskell:8.6.5 AS build
+FROM gcr.io/sweetspot-255522/sweetspot-build AS build
 
 WORKDIR /opt/build
 

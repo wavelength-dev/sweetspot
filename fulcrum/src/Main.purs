@@ -62,4 +62,3 @@ apply = do
   priceElements <- Document.getElementsByClassName "sweetspot__price" document
   numElements <- HTMLCollection.length priceElements
   Console.log $ "Elements found: " <> show numElements
-  mempty

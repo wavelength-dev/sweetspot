@@ -1,4 +1,4 @@
-FROM haskell:8.6.5 AS build
+FROM fpco/stack-build:lts-14.14 AS build
 
 WORKDIR /opt/build
 

@@ -9,3 +9,5 @@ steps:
 images:
   - gcr.io/$PROJECT_ID/sweetspot:latest
 timeout: 30m
+options:
+  machineType: N1_HIGHCPU_8

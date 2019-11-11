@@ -1,14 +1,11 @@
 steps:
   - name: gcr.io/cloud-builders/docker
     args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/sweetspot:latest",
-        "-t",
-        "sweetspot:$SHORT_SHA",
-        ".",
-      ]
+      - build
+      - --tag gcr.io/$PROJECT_ID/sweetspot:latest
+      - --tag sweetspot:$SHORT_SHA
+      - --cache-from gcr.io/$PROJECT_ID/sweetspot:latest
+      - .
 images:
   - gcr.io/$PROJECT_ID/sweetspot:latest
 timeout: 30m

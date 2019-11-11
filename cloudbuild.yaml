@@ -3,7 +3,7 @@ steps:
     args:
       - build
       - --tag=gcr.io/$PROJECT_ID/sweetspot:latest
-      - --tag=sweetspot:$SHORT_SHA
+      - --tag=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - --cache-from=gcr.io/$PROJECT_ID/sweetspot:latest
       - .
 images:

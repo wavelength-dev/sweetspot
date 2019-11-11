@@ -2,9 +2,9 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
-      - --tag gcr.io/$PROJECT_ID/sweetspot:latest
-      - --tag sweetspot:$SHORT_SHA
-      - --cache-from gcr.io/$PROJECT_ID/sweetspot:latest
+      - --tag=gcr.io/$PROJECT_ID/sweetspot:latest
+      - --tag=sweetspot:$SHORT_SHA
+      - --cache-from=gcr.io/$PROJECT_ID/sweetspot:latest
       - .
 images:
   - gcr.io/$PROJECT_ID/sweetspot:latest

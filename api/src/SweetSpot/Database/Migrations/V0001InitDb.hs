@@ -275,9 +275,6 @@ skuType = DataType pgTextType
 etType :: DataType Postgres EventType
 etType = DataType pgTextType
 
-btType :: DataType Postgres BucketType
-btType = DataType pgTextType
-
 priceType :: DataType Postgres Price
 priceType = DataType (numericType pricePrecision)
 

@@ -70,20 +70,20 @@ instance FromJSON Product
 -- | ---------------------------------------------------------------------------
 -- | Bucket
 -- | ---------------------------------------------------------------------------
-data Bucket = Bucket
-  { _bBucketId :: !BucketId
-  , _bBucketType :: !BucketType
-  , _bOriginalSvid :: !Svid
-  , _bTestSvid :: !Svid
-  , _bPrice :: !Price
-  , _bControlPrice :: !Price
-  } deriving (Eq, Generic, Show)
+-- data Bucket = Bucket
+--   { _bBucketId :: !BucketId
+--   , _bBucketType :: !BucketType
+--   , _bOriginalSvid :: !Svid
+--   , _bTestSvid :: !Svid
+--   , _bPrice :: !Price
+--   , _bControlPrice :: !Price
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''Bucket
+-- makeLenses ''Bucket
 
-instance ToJSON Bucket
+-- instance ToJSON Bucket
 
-instance FromJSON Bucket
+-- instance FromJSON Bucket
 
 -- | ---------------------------------------------------------------------------
 -- | Experiment
@@ -136,20 +136,20 @@ instance FromJSON Bucket
 -- | ---------------------------------------------------------------------------
 -- | BucketStats
 -- | ---------------------------------------------------------------------------
-data BucketStats = BucketStats
-  { _bsBucketId :: !BucketId
-  , _bsBucketType :: !BucketType
-  , _bsUserCount :: !Int
-  , _bsImpressionCount :: !Int
-  , _bsPrice :: !Price
-  , _bsUserRevenues :: ![(UserId, Double)]
-  } deriving (Eq, Generic, Show)
+-- data BucketStats = BucketStats
+--   { _bsBucketId :: !BucketId
+--   , _bsBucketType :: !BucketType
+--   , _bsUserCount :: !Int
+--   , _bsImpressionCount :: !Int
+--   , _bsPrice :: !Price
+--   , _bsUserRevenues :: ![(UserId, Double)]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''BucketStats
+-- makeLenses ''BucketStats
 
-instance ToJSON BucketStats
+-- instance ToJSON BucketStats
 
-instance FromJSON BucketStats
+-- instance FromJSON BucketStats
 
 -- | ---------------------------------------------------------------------------
 -- | ExperimentStats

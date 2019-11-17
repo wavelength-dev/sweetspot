@@ -70,18 +70,18 @@ makeLenses ''Campaign
 -- | ---------------------------------------------------------------------------
 -- | DBBucketStats
 -- | ---------------------------------------------------------------------------
-data DBBucketStats = DBBucketStats
-  { _dbsBucketId :: !BucketId
-  , _dbsBucketType :: !BucketType
-  , _dbsOriginalSvid :: !Svid
-  , _dbsTestSvid :: !Svid
-  , _dbsUserCount :: !Int
-  , _dbsImpressionCount :: !Int
-  , _dbsCheckoutEvents :: ![CheckoutEvent]
-  , _dbsPrice :: !Price
-  } deriving (Eq, Generic, Show)
+-- data DBBucketStats = DBBucketStats
+--   { _dbsBucketId :: !BucketId
+--   , _dbsBucketType :: !BucketType
+--   , _dbsOriginalSvid :: !Svid
+--   , _dbsTestSvid :: !Svid
+--   , _dbsUserCount :: !Int
+--   , _dbsImpressionCount :: !Int
+--   , _dbsCheckoutEvents :: ![CheckoutEvent]
+--   , _dbsPrice :: !Price
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''DBBucketStats
+-- makeLenses ''DBBucketStats
 
 -- | ---------------------------------------------------------------------------
 -- | DBExperimentStats

@@ -3,6 +3,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE LambdaCase #-}
 
 
 module SweetSpot.Data.Common where
@@ -219,7 +220,7 @@ data EventType
   | Log
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be EventType where
-        sqlValueSyntax = sqlValueSyntax . \evType -> case evType of
+        sqlValueSyntax = sqlValueSyntax . \case
                 View     -> "view" :: Text
                 Checkout -> "checkout" :: Text
                 Log      -> "log" :: Text
@@ -238,34 +239,3 @@ instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be EventT
                                         )
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be EventType
-
--- | ---------------------------------------------------------------------------
--- | BucketType
--- | ---------------------------------------------------------------------------
-data BucketType
-  = Control
-  | Test
-  deriving (Eq, Generic, Show)
-
-instance ToJSON BucketType
-
-instance FromJSON BucketType
-
-instance HasSqlValueSyntax be Text => HasSqlValueSyntax be BucketType where
-        sqlValueSyntax = sqlValueSyntax . \evType -> case evType of
-                Control -> "control" :: Text
-                Test    -> "test" :: Text
-
-instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be BucketType where
-        fromBackendRow = do
-                val <- fromBackendRow
-                case val :: Text of
-                        "control" -> pure Control
-                        "test"    -> pure Test
-                        _ ->
-                                fail
-                                        (  "Invalid value for EventType: "
-                                        ++ unpack val
-                                        )
-
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be BucketType

@@ -7,7 +7,8 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-#  LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module SweetSpot.Database.Migrations.V0001InitDb where
 
@@ -22,18 +23,51 @@ import           Database.Beam.Backend.SQL.SQL92
 import           Database.Beam.Postgres
 import           Database.Beam.Postgres.Syntax  ( pgTextType
                                                 , pgSerialType
+                                                , pgUuidType
                                                 )
+import           Database.Beam.Postgres.PgCrypto
+                                                ( PgCrypto )
 import           Database.Beam.Migrate
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
+import           Data.UUID.Types                ( UUID )
+import           Data.Vector                    ( Vector )
 import           SweetSpot.Data.Common
+
+-- | ---------------------------------------------------------------------------
+-- | Shop
+-- | ---------------------------------------------------------------------------
+data ShopT f
+  = Shop
+  { _shopId :: Columnar f ShopId
+  , _shopCreated :: Columnar f LocalTime
+  , _shopShopifyId :: Columnar f Text
+  , _shopName :: Columnar f Text
+  , _shopClientId :: Columnar f Text
+  , _shopOauthToken :: Columnar f Text
+  } deriving (Generic, Beamable)
+
+type Shop = ShopT Identity
+type ShopKey = PrimaryKey ShopT Identity
+
+deriving instance Show Shop
+deriving instance Show ShopKey
+
+instance Table ShopT where
+        data PrimaryKey ShopT f
+          = ShopKey (Columnar f ShopId) deriving (Generic, Beamable)
+        primaryKey = ShopKey . _shopId
+
+Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopifyId) (LensFor name) (LensFor clientId) (LensFor oauthToken)
+        = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | User
 -- | ---------------------------------------------------------------------------
-newtype UserT f
+data UserT f
   = User
-  { _usrId :: Columnar f (SqlSerial UserId)
+  { _usrId :: Columnar f UserId
+  , _usrCreated :: Columnar f LocalTime
   } deriving (Generic, Beamable)
 
 type User = UserT Identity
@@ -44,10 +78,10 @@ deriving instance Eq User
 
 instance Table UserT where
         data PrimaryKey UserT f
-          = UserKey (Columnar f (SqlSerial UserId)) deriving (Generic, Beamable)
+          = UserKey (Columnar f UserId) deriving (Generic, Beamable)
         primaryKey = UserKey . _usrId
 
-User (LensFor usrId) = tableLenses
+User (LensFor usrId) (LensFor usrCreated) = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Campaign
@@ -55,165 +89,134 @@ User (LensFor usrId) = tableLenses
 data CampaignT f
   = Campaign
   { _cmpId :: Columnar f CampaignId
+  , _cmpShopId :: PrimaryKey ShopT f
   , _cmpName :: Columnar f Text
-  , _cmpMinProfitIncrease :: Columnar f Int
-  , _cmpStartDate :: Columnar f LocalTime
-  , _cmpEndDate :: Columnar f LocalTime
+  , _cmpStart :: Columnar f LocalTime
+  , _cmpEnd :: Columnar f LocalTime
   } deriving (Generic, Beamable)
 
 type Campaign = CampaignT Identity
 type CampaignKey = PrimaryKey CampaignT Identity
 
 deriving instance Show Campaign
+deriving instance Show CampaignKey
 
 instance Table CampaignT where
         data PrimaryKey CampaignT f
           = CampaignKey (Columnar f CampaignId) deriving (Generic, Beamable)
         primaryKey = CampaignKey . _cmpId
 
-Campaign (LensFor cmpId) (LensFor cmpName) (LensFor cmpMinProfitIncrease) (LensFor cmpStartDate) (LensFor cmpEndDate)
+Campaign (LensFor cmpId) (ShopKey (LensFor cmpShopId)) (LensFor cmpName) (LensFor cmpStart) (LensFor cmpEnd)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | Experiment
+-- | ProductVariant
 -- | ---------------------------------------------------------------------------
-data ExperimentT f
-  = Experiment
-  { _expId :: Columnar f (SqlSerial ExpId)
-  , _expSku :: Columnar f Sku
-  , _expProductName :: Columnar f Text
+data ProductVariantT f
+  = ProductVariant
+  { _pvId :: Columnar f PVariantId
+  , _pvShopId :: PrimaryKey ShopT f
+  , _pvTitle :: Columnar f Text
+  , _pvSku :: Columnar f Sku
+  , _pvProductId :: Columnar f Pid
+  , _pvVariantId :: Columnar f Svid
+  , _pvPrice :: Columnar f Price
+  , _pvCurrency :: Columnar f Text
   } deriving (Generic, Beamable)
 
-type Experiment = ExperimentT Identity
-type ExperimentKey = PrimaryKey ExperimentT Identity
+type ProductVariant = ProductVariantT Identity
+type PVariantKey = PrimaryKey ProductVariantT Identity
 
-deriving instance Show Experiment
+deriving instance Show ProductVariant
+deriving instance Show PVariantKey
 
-instance Table ExperimentT where
-        data PrimaryKey ExperimentT f
-          = ExperimentKey (Columnar f (SqlSerial ExpId)) deriving (Generic, Beamable)
-        primaryKey = ExperimentKey . _expId
+instance Table ProductVariantT where
+        data PrimaryKey ProductVariantT f
+          = PVariantKey (Columnar f PVariantId) deriving (Generic, Beamable)
+        primaryKey = PVariantKey . _pvId
 
-Experiment (LensFor expId) (LensFor expSku) (LensFor expProductName) =
-        tableLenses
-
--- | ---------------------------------------------------------------------------
--- | Bucket
--- | ---------------------------------------------------------------------------
-data BucketT f
-  = Bucket
-  { _bktId :: Columnar f (SqlSerial BucketId)
-  , _bktType :: Columnar f BucketType
-  , _bktCtrlSvid :: Columnar f Svid
-  , _bktTestSvid :: Columnar f Svid
-  , _bktPrice :: Columnar f Price
-  , _bktCtrlPrice :: Columnar f Price
-  } deriving (Generic, Beamable)
-
-type Bucket = BucketT Identity
-type BucketKey = PrimaryKey BucketT Identity
-
-deriving instance Show Bucket
-deriving instance Eq Bucket
-
-instance Table BucketT where
-        data PrimaryKey BucketT f
-          = BucketKey (Columnar f (SqlSerial BucketId)) deriving (Generic, Beamable)
-        primaryKey = BucketKey . _bktId
-
-Bucket (LensFor bktId) (LensFor bktType) (LensFor bktCtrlSvid) (LensFor bktTestSvid) (LensFor bktPrice) (LensFor bktCtrlPrice)
+ProductVariant (LensFor pvId) (ShopKey (LensFor pvShopId)) (LensFor pvTitle) (LensFor pvSku) (LensFor pvProductId) (LensFor pvVariantId) (LensFor pvPrice) (LensFor pvCurrency)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | BucketUsers
+-- | PriceVariant
 -- | ---------------------------------------------------------------------------
-data BucketUserT f
-  = BucketUser
-  { _bktForUsr :: PrimaryKey BucketT f
-  , _usrForBkt :: PrimaryKey UserT f
+data PriceVariantT f
+  = PriceVariant
+  { _prvCmpId :: PrimaryKey CampaignT f
+  , _prvTreatment :: Columnar f Int
+  , _prvProductVariantId :: PrimaryKey ProductVariantT f
   } deriving (Generic, Beamable)
 
-type BucketUser = BucketUserT Identity
-type BucketUserKey = PrimaryKey BucketUserT Identity
+type PriceVariant = PriceVariantT Identity
+type PriceVariantKey = PrimaryKey PriceVariantT Identity
 
-instance Table BucketUserT where
-        data PrimaryKey BucketUserT f
-          = BucketUserKey (PrimaryKey BucketT f) (PrimaryKey UserT f)
+deriving instance Show PriceVariant
+deriving instance Show PriceVariantKey
+
+instance Table PriceVariantT where
+        data PrimaryKey PriceVariantT f
+          = PriceVariantKey (PrimaryKey CampaignT f) (PrimaryKey ProductVariantT f)
             deriving (Generic, Beamable)
-        primaryKey = BucketUserKey <$> _bktForUsr <*> _usrForBkt
+        primaryKey = PriceVariantKey <$> _prvCmpId <*> _prvProductVariantId
 
-BucketUser (BucketKey (LensFor bktForUsr)) (UserKey (LensFor usrForBkt)) =
-        tableLenses
+PriceVariant (CampaignKey (LensFor pvrCmpId)) (LensFor pvrTreatment) (PVariantKey (LensFor pvrProductVariantId))
+        = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | CampaignUsers
+-- | UserExperiment
 -- | ---------------------------------------------------------------------------
-data CampaignUserT f
-  = CampaignUser
-  { _cmpForUsr :: PrimaryKey CampaignT f
-  , _usrForCmp :: PrimaryKey UserT f
+data UserExperimentT f
+  = UserExperiment
+  { _ueUserId :: PrimaryKey UserT f
+  , _ueCmpId :: PrimaryKey CampaignT f
+  , _ueTreatment :: Columnar f Int
   } deriving (Generic, Beamable)
 
-type CampaignUser = CampaignUserT Identity
-type CampaignUserKey = PrimaryKey CampaignUserT Identity
+type UserExperiment = UserExperimentT Identity
+type UserExperimentKey = PrimaryKey UserExperimentT Identity
 
-instance Table CampaignUserT where
-        data PrimaryKey CampaignUserT f
-          = CampaignUserKey (PrimaryKey CampaignT f) (PrimaryKey UserT f)
+instance Table UserExperimentT where
+        data PrimaryKey UserExperimentT f
+          = UserExperimentKey (PrimaryKey UserT f) (PrimaryKey CampaignT f)
             deriving (Generic, Beamable)
-        primaryKey = CampaignUserKey <$> _cmpForUsr <*> _usrForCmp
+        primaryKey = UserExperimentKey <$> _ueUserId <*> _ueCmpId
 
-CampaignUser (CampaignKey (LensFor cmpForUsr)) (UserKey (LensFor usrForCmp)) =
-        tableLenses
+UserExperiment (UserKey (LensFor ueUserId)) (CampaignKey (LensFor ueCmpId)) (LensFor ueTreatment)
+        = tableLenses
+
 
 -- | ---------------------------------------------------------------------------
--- | CampaignExperiments
+-- | CheckoutEvent
 -- | ---------------------------------------------------------------------------
-data CampaignExperimentT f
-  = CampaignExperiment
-  { _cmpForExp :: PrimaryKey CampaignT f
-  , _expForCmp :: PrimaryKey ExperimentT f
+data CheckoutEventT f
+  = CheckoutEvent
+  { _cevId :: Columnar f EventId
+  , _cevCreated :: Columnar f LocalTime
+  , _cevCmpId :: PrimaryKey CampaignT f
+  , _cevOrderId :: Columnar f Text
+  , _cevShopId :: PrimaryKey ShopT f
+  , _cevUserId :: PrimaryKey UserT f
+  , _cevItems :: Columnar f (Vector Text)
   } deriving (Generic, Beamable)
 
-type CampaignExperiment = CampaignExperimentT Identity
-type CampaignExperimentKey = PrimaryKey CampaignExperimentT Identity
+type CheckoutEvent = CheckoutEventT Identity
+type CheckoutEventKey = PrimaryKey CheckoutEventT Identity
 
-instance Table CampaignExperimentT where
-        data PrimaryKey CampaignExperimentT f
-          = CampaignExperimentKey (PrimaryKey CampaignT f) (PrimaryKey ExperimentT f) deriving (Generic, Beamable)
-        primaryKey = CampaignExperimentKey <$> _cmpForExp <*> _expForCmp
+instance Table CheckoutEventT where
+        data PrimaryKey CheckoutEventT f
+          = CheckoutEventKey (Columnar f EventId) deriving (Generic, Beamable)
+        primaryKey = CheckoutEventKey . _cevId
 
-CampaignExperiment (CampaignKey (LensFor cmpForExp)) (ExperimentKey (LensFor expForCmp))
+CheckoutEvent (LensFor cevId) (LensFor cevCreated) (CampaignKey (LensFor cevCmpId)) (LensFor cevOrderId) (ShopKey (LensFor cevShopId)) (UserKey (LensFor cevUserId)) (LensFor cevItems)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | ExperimentBuckets
--- | ---------------------------------------------------------------------------
-data ExperimentBucketT f
-  = ExperimentBucket
-  { _expForBkt :: PrimaryKey ExperimentT f
-  , _bktForExp :: PrimaryKey BucketT f
-  } deriving (Generic, Beamable)
-
-type ExperimentBucket = ExperimentBucketT Identity
-type ExperimentBucketKey = PrimaryKey ExperimentBucketT Identity
-
-instance Table ExperimentBucketT where
-        data PrimaryKey ExperimentBucketT f
-          = ExperimentBucketKey (PrimaryKey ExperimentT f) (PrimaryKey BucketT f) deriving (Generic, Beamable)
-        primaryKey = ExperimentBucketKey <$> _expForBkt <*> _bktForExp
-
-ExperimentBucket (ExperimentKey (LensFor expForBkt)) (BucketKey (LensFor bktForExp))
-        = tableLenses
-
--- | ---------------------------------------------------------------------------
--- | Events
+-- | Event
 -- | ---------------------------------------------------------------------------
 data EventT f
   = Event
-  { _evId :: Columnar f (SqlSerial EventId)
-  , _evType :: Columnar f EventType
-  , _evTimestamp :: Columnar f LocalTime
+  { _evId :: Columnar f EventId
   , _evPayload :: Columnar f (PgJSONB Value)
   } deriving (Generic, Beamable)
 
@@ -222,30 +225,27 @@ type EventKey = PrimaryKey EventT Identity
 
 instance Table EventT where
         data PrimaryKey EventT f
-          = EventKey (Columnar f (SqlSerial EventId)) deriving (Generic, Beamable)
+          = EventKey (Columnar f EventId) deriving (Generic, Beamable)
         primaryKey = EventKey . _evId
-
-Event (LensFor evId) (LensFor evType) (LensFor evTimestamp) (LensFor evPayload)
-        = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f = SweetSpotDb
-  { _users :: f (TableEntity UserT)
+  { _shops :: f (TableEntity ShopT)
+  , _users :: f (TableEntity UserT)
   , _campaigns :: f (TableEntity CampaignT)
-  , _experiments :: f (TableEntity ExperimentT)
-  , _buckets :: f (TableEntity BucketT)
-  , _bucketUsers :: f (TableEntity BucketUserT)
-  , _campaignUsers :: f (TableEntity CampaignUserT)
-  , _campaignExperiments :: f (TableEntity CampaignExperimentT)
-  , _experimentBuckets :: f (TableEntity ExperimentBucketT)
+  , _productVariants :: f (TableEntity ProductVariantT)
+  , _priceVariants :: f (TableEntity PriceVariantT)
+  , _userExperiments :: f (TableEntity UserExperimentT)
+  , _checkoutEvents :: f (TableEntity CheckoutEventT)
   , _events :: f (TableEntity EventT)
+  , _cryptoExtension :: f (PgExtensionEntity PgCrypto)
   } deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens users) (TableLens campaigns) (TableLens experiments) (TableLens buckets) (TableLens bucketUsers) (TableLens campaignUsers) (TableLens campaignExperiments) (TableLens experimentBuckets) (TableLens events)
+SweetSpotDb (TableLens shops) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens priceVariants) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens events) (TableLens cryptoExtension)
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -256,6 +256,15 @@ pricePrecision = Just (12, Just 2)
 
 campaignIdType :: DataType Postgres CampaignId
 campaignIdType = DataType pgTextType
+
+shopIdType :: DataType Postgres ShopId
+shopIdType = DataType pgUuidType
+
+pVariantIdType :: DataType Postgres PVariantId
+pVariantIdType = DataType pgUuidType
+
+pidType :: DataType Postgres Pid
+pidType = DataType pgTextType
 
 svidType :: DataType Postgres Svid
 svidType = DataType pgTextType
@@ -272,20 +281,11 @@ btType = DataType pgTextType
 priceType :: DataType Postgres Price
 priceType = DataType (numericType pricePrecision)
 
-uidType :: DataType Postgres (SqlSerial UserId)
-uidType = DataType intType
+uidType :: DataType Postgres UserId
+uidType = DataType pgUuidType
 
-uidMigrType :: DataType Postgres (SqlSerial UserId)
-uidMigrType = DataType pgSerialType
-
-bidMigrType :: DataType Postgres (SqlSerial BucketId)
-bidMigrType = DataType pgSerialType
-
-eidMigrType :: DataType Postgres (SqlSerial EventId)
-eidMigrType = DataType pgSerialType
-
-expIdMigrType :: DataType Postgres (SqlSerial ExpId)
-expIdMigrType = DataType pgSerialType
+eidType :: DataType Postgres EventId
+eidType = DataType pgSerialType
 
 -- | ---------------------------------------------------------------------------
 -- | Migration
@@ -293,138 +293,163 @@ expIdMigrType = DataType pgSerialType
 migration () =
         SweetSpotDb
                 <$> createTable
-                            "users"
-                            User { _usrId = field "user_id" uidMigrType }
-                <*> createTable
-                            "campaigns"
-                            Campaign
-                                    { _cmpId = field "campaign_id"
-                                                     campaignIdType
-                                                     notNull
-                                    , _cmpName = field "name" text notNull
-                                    , _cmpMinProfitIncrease =
-                                            field "min_profit_increase"
-                                                  int
-                                                  notNull
-                                    , _cmpStartDate = field
-                                                              "start_date"
+                            "shops"
+                            Shop
+                                    { _shopId         = field "shop_id"
+                                                              shopIdType
+                                                              notNull
+                                    , _shopCreated    = field "created"
                                                               timestamptz
-                                    , _cmpEndDate = field "end_date" timestamptz
-                                    }
-
-                <*> createTable
-                            "experiments"
-                            Experiment
-                                    { _expId = field "exp_id"
-                                                     expIdMigrType
-                                                     notNull
-                                    , _expSku = field "sku" skuType notNull
-                                    , _expProductName = field
-                                                                "product_name"
+                                                              notNull
+                                    , _shopShopifyId  = field
+                                                                "shopify_id"
+                                                                text
+                                                                notNull
+                                    , _shopName = field "shop_name" text notNull
+                                    , _shopClientId   = field "client_id"
+                                                              text
+                                                              notNull
+                                    , _shopOauthToken = field
+                                                                "oauth_token"
                                                                 text
                                                                 notNull
                                     }
 
+
                 <*> createTable
-                            "buckets"
-                            Bucket
-                                    { _bktId        = field "bucket_id"
-                                                            bidMigrType
-                                                            notNull
-                                    , _bktType      = field "bucket_type"
-                                                            btType
-                                                            notNull
-                                    , _bktCtrlSvid  = field
-                                                              "original_svid"
-                                                              svidType
-                                                              notNull
-                                    , _bktTestSvid  = field "test_svid"
-                                                            svidType
-                                                            notNull
-                                    , _bktPrice     = field "price"
-                                                            priceType
-                                                            notNull
-                                    , _bktCtrlPrice = field
-                                                              "original_price"
-                                                              priceType
-                                                              notNull
+                            "users"
+                            User
+                                    { _usrId      = field "user_id" uidType
+                                    , _usrCreated = field "created"
+                                                          timestamptz
+                                                          notNull
                                     }
                 <*> createTable
-                            "bucket_users"
-                            BucketUser
-                                    { _bktForUsr =
-                                            BucketKey
-                                                    (field "bucket_id"
-                                                           bidMigrType
+                            "campaigns"
+                            Campaign
+                                    { _cmpId     = field "campaign_id"
+                                                         campaignIdType
+                                                         notNull
+                                    , _cmpShopId =
+                                            ShopKey
+                                                    (field "shop_id"
+                                                           shopIdType
                                                            notNull
                                                     )
-                                    , _usrForBkt =
-                                            UserKey
-                                                    (field "user_id"
-                                                           uidMigrType
-                                                           notNull
-                                                    )
+                                    , _cmpName   = field "name" text notNull
+                                    , _cmpStart  = field "start" timestamptz
+                                    , _cmpEnd    = field "end" timestamptz
                                     }
 
                 <*> createTable
-                            "campaign_users"
-                            CampaignUser
-                                    { _cmpForUsr =
+                            "product_variants"
+                            ProductVariant
+                                    { _pvId        = field "product_variant_id"
+                                                           pVariantIdType
+                                                           notNull
+                                    , _pvShopId    =
+                                            ShopKey
+                                                    (field "shop_id"
+                                                           shopIdType
+                                                           notNull
+                                                    )
+                                    , _pvTitle     = field "title" text notNull
+                                    , _pvSku       = field "sku" skuType notNull
+                                    , _pvProductId =
+                                            field "shopify_product_id"
+                                                  pidType
+                                                  notNull
+                                    , _pvVariantId =
+                                            field "shopify_variant_id"
+                                                  svidType
+                                                  notNull
+                                    , _pvPrice = field "price" priceType notNull
+                                    , _pvCurrency  = field "currency"
+                                                           text
+                                                           notNull
+                                    }
+
+                <*> createTable
+                            "price_variants"
+                            PriceVariant
+                                    { _prvCmpId            =
                                             CampaignKey
                                                     (field
                                                             "campaign_id"
                                                             campaignIdType
                                                             notNull
                                                     )
-                                    , _usrForCmp =
-                                            UserKey
-                                                    (field "user_id"
-                                                           uidMigrType
-                                                           notNull
+                                    , _prvTreatment        = field "treatment"
+                                                                   int
+                                                                   notNull
+                                    , _prvProductVariantId =
+                                            PVariantKey
+                                                    (field
+                                                            "product_variant_id"
+                                                            pVariantIdType
+                                                            notNull
                                                     )
                                     }
-
                 <*> createTable
-                            "campaign_experiments"
-                            CampaignExperiment
-                                    { _cmpForExp =
+                            "user_experiments"
+                            UserExperiment
+                                    { _ueUserId    =
+                                            UserKey
+                                                    (field "user_id"
+                                                           uidType
+                                                           notNull
+                                                    )
+                                    , _ueCmpId     =
                                             CampaignKey
                                                     (field
                                                             "campaign_id"
                                                             campaignIdType
                                                             notNull
                                                     )
-                                    , _expForCmp =
-                                            ExperimentKey
-                                                    (field "exp_id"
-                                                           expIdMigrType
+                                    , _ueTreatment = field "treatment"
+                                                           int
                                                            notNull
-                                                    )
                                     }
 
                 <*> createTable
-                            "experiment_buckets"
-                            ExperimentBucket
-                                    { _expForBkt =
-                                            ExperimentKey
-                                                    (field "exp_id"
-                                                           expIdMigrType
+                            "checkout_events"
+                            CheckoutEvent
+                                    { _cevId = field "event_id" eidType notNull
+                                    , _cevCreated = field "created"
+                                                          timestamptz
+                                                          notNull
+                                    , _cevCmpId   =
+                                            CampaignKey
+                                                    (field
+                                                            "campaign_id"
+                                                            campaignIdType
+                                                            notNull
+                                                    )
+                                    , _cevOrderId = field "order_id"
+                                                          text
+                                                          notNull
+                                    , _cevShopId  =
+                                            ShopKey
+                                                    (field "shop_id"
+                                                           shopIdType
                                                            notNull
                                                     )
-                                    , _bktForExp =
-                                            BucketKey
-                                                    (field "bucket_id"
-                                                           bidMigrType
+                                    , _cevUserId  =
+                                            UserKey
+                                                    (field "user_id"
+                                                           uidType
                                                            notNull
                                                     )
+                                    , _cevItems   = field
+                                                            "items"
+                                                            (unboundedArray text)
+                                                            notNull
                                     }
+
                 <*> createTable
                             "events"
-                            Event
-                                    { _evId = field "id" eidMigrType notNull
-                                    , _evType = field "type" etType notNull
-                                    , _evTimestamp = field "timestamp"
-                                                           timestamptz
-                                                           notNull
-                                    , _evPayload = field "payload" jsonb notNull
-                                    }
+                            Event { _evId = field "event_id" eidType notNull
+                                  , _evPayload = field "payload" jsonb notNull
+                                  }
+
+                <*> pgCreateExtension

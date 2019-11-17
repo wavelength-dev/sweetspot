@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e9b72ec334fa4fa8c4906612f5cae26cf0a28b311ccdaee9bd17cf5c3da88407
+-- hash: 375099f94d495ac3874ab97419c5cc3495b93da25ed892cc1c4ba6a30a48f1fa
 
 name:           sweetspot
 version:        0.1.0.0
@@ -82,6 +82,7 @@ library
     , time
     , transformers
     , utf8-string
+    , uuid-types
     , vector
     , wai
     , wai-app-static
@@ -132,6 +133,7 @@ executable sweetspot-exe
     , time
     , transformers
     , utf8-string
+    , uuid-types
     , vector
     , wai
     , wai-app-static
@@ -184,6 +186,7 @@ test-suite sweetspot-test
     , time
     , transformers
     , utf8-string
+    , uuid-types
     , vector
     , wai
     , wai-app-static

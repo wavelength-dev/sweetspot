@@ -88,50 +88,50 @@ instance FromJSON Bucket
 -- | ---------------------------------------------------------------------------
 -- | Experiment
 -- | ---------------------------------------------------------------------------
-data Experiment = Experiment
-  { _eExpId :: !ExpId
-  , _eSku :: !Sku
-  , _eProductName :: !Text
-  } deriving (Eq, Generic, Show)
+-- data Experiment = Experiment
+--   { _eExpId :: !ExpId
+--   , _eSku :: !Sku
+--   , _eProductName :: !Text
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''Experiment
+-- makeLenses ''Experiment
 
 -- | ---------------------------------------------------------------------------
 -- | ExperimentBuckets
 -- | ---------------------------------------------------------------------------
-data ExperimentBuckets = ExperimentBuckets
-  { _ebExpId :: !ExpId
-  , _ebSku :: !Sku
-  , _ebProductName :: !Text
-  , _ebBuckets :: ![Bucket]
-  } deriving (Eq, Generic, Show)
+-- data ExperimentBuckets = ExperimentBuckets
+--   { _ebExpId :: !ExpId
+--   , _ebSku :: !Sku
+--   , _ebProductName :: !Text
+--   , _ebBuckets :: ![Bucket]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''ExperimentBuckets
+-- makeLenses ''ExperimentBuckets
 
-instance ToJSON ExperimentBuckets
+-- instance ToJSON ExperimentBuckets
 
-instance FromJSON ExperimentBuckets
+-- instance FromJSON ExperimentBuckets
 
 -- | ---------------------------------------------------------------------------
 -- | UserBucket
 -- | ---------------------------------------------------------------------------
-data UserBucket = UserBucket
-  { _ubUserId :: !UserId
-  , _ubSku :: !Sku
-  , _ubOriginalSvid :: !Svid
-  , _ubTestSvid :: !Svid
-  , _ubPrice :: !Price
-  , _ubExpId :: !ExpId
-  , _ubBucketId :: !BucketId
-  , _ubBucketType :: !BucketType
-  , _ubControlPrice :: !Price
-  } deriving (Eq, Generic, Show)
+-- data UserBucket = UserBucket
+--   { _ubUserId :: !UserId
+--   , _ubSku :: !Sku
+--   , _ubOriginalSvid :: !Svid
+--   , _ubTestSvid :: !Svid
+--   , _ubPrice :: !Price
+--   , _ubExpId :: !ExpId
+--   , _ubBucketId :: !BucketId
+--   , _ubBucketType :: !BucketType
+--   , _ubControlPrice :: !Price
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''UserBucket
+-- makeLenses ''UserBucket
 
-instance ToJSON UserBucket
+-- instance ToJSON UserBucket
 
-instance FromJSON UserBucket
+-- instance FromJSON UserBucket
 
 -- | ---------------------------------------------------------------------------
 -- | BucketStats
@@ -154,46 +154,46 @@ instance FromJSON BucketStats
 -- | ---------------------------------------------------------------------------
 -- | ExperimentStats
 -- | ---------------------------------------------------------------------------
-data ExperimentStats = ExperimentStats
-  { _esExpId :: !ExpId
-  , _esUserCount :: !Int
-  , _esImpressionCount :: !Int
-  , _esBuckets :: ![BucketStats]
-  } deriving (Eq, Generic, Show)
+-- data ExperimentStats = ExperimentStats
+--   { _esExpId :: !ExpId
+--   , _esUserCount :: !Int
+--   , _esImpressionCount :: !Int
+--   , _esBuckets :: ![BucketStats]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''ExperimentStats
+-- makeLenses ''ExperimentStats
 
-instance ToJSON ExperimentStats
+-- instance ToJSON ExperimentStats
 
-instance FromJSON ExperimentStats
+-- instance FromJSON ExperimentStats
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignStats
 -- | ---------------------------------------------------------------------------
-data CampaignStats = CampaignStats
-  { _csCampaignId :: !CampaignId
-  , _csCampaignName :: !Text
-  , _csMinProfitIncrease :: !Int
-  , _csStartDate :: !LocalTime
-  , _csEndDate :: !LocalTime
-  , _csExperiments :: ![ExperimentStats]
-  , _csProfitPerUserControl :: !(Estimate ConfInt Double)
-  , _csProfitPerUserTest :: !(Estimate ConfInt Double)
-  , _csConvertersControl :: ![Double]
-  , _csNonConvertersControl :: !Int
-  , _csConvertersTest :: ![Double]
-  , _csNonConvertersTest :: !Int
-  , _csConvertersControlCount :: !Int
-  , _csConvertersTestCount :: !Int
-  , _csConversionRateControl :: !Double
-  , _csConversionRateTest :: !Double
-  } deriving (Eq, Generic, Show)
+-- data CampaignStats = CampaignStats
+--   { _csCampaignId :: !CampaignId
+--   , _csCampaignName :: !Text
+--   , _csMinProfitIncrease :: !Int
+--   , _csStartDate :: !LocalTime
+--   , _csEndDate :: !LocalTime
+--   , _csExperiments :: ![ExperimentStats]
+--   , _csProfitPerUserControl :: !(Estimate ConfInt Double)
+--   , _csProfitPerUserTest :: !(Estimate ConfInt Double)
+--   , _csConvertersControl :: ![Double]
+--   , _csNonConvertersControl :: !Int
+--   , _csConvertersTest :: ![Double]
+--   , _csNonConvertersTest :: !Int
+--   , _csConvertersControlCount :: !Int
+--   , _csConvertersTestCount :: !Int
+--   , _csConversionRateControl :: !Double
+--   , _csConversionRateTest :: !Double
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''CampaignStats
+-- makeLenses ''CampaignStats
 
-instance ToJSON CampaignStats
+-- instance ToJSON CampaignStats
 
-instance FromJSON CampaignStats
+-- instance FromJSON CampaignStats
 
 -- | ---------------------------------------------------------------------------
 -- | CreateExperiment

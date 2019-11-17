@@ -86,24 +86,24 @@ makeLenses ''DBBucketStats
 -- | ---------------------------------------------------------------------------
 -- | DBExperimentStats
 -- | ---------------------------------------------------------------------------
-data DBExperimentStats = DBExperimentStats
-  { _desExpId :: !ExpId
-  , _desProductName :: !Text
-  , _desBuckets :: ![DBBucketStats]
-  } deriving (Eq, Generic, Show)
+-- data DBExperimentStats = DBExperimentStats
+--   { _desExpId :: !ExpId
+--   , _desProductName :: !Text
+--   , _desBuckets :: ![DBBucketStats]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''DBExperimentStats
+-- makeLenses ''DBExperimentStats
 
 -- | ---------------------------------------------------------------------------
 -- | DBCampaignStats
 -- | ---------------------------------------------------------------------------
-data DBCampaignStats = DBCampaignStats
-  { _dcsCampaignId :: !CampaignId
-  , _dcsCampaignName :: !Text
-  , _dcsMinProfitIncrease :: !Int
-  , _dcsStartDate :: !LocalTime
-  , _dcsEndDate :: !LocalTime
-  , _dcsExperiments :: ![DBExperimentStats]
-  } deriving (Eq, Generic, Show)
+-- data DBCampaignStats = DBCampaignStats
+--   { _dcsCampaignId :: !CampaignId
+--   , _dcsCampaignName :: !Text
+--   , _dcsMinProfitIncrease :: !Int
+--   , _dcsStartDate :: !LocalTime
+--   , _dcsEndDate :: !LocalTime
+--   , _dcsExperiments :: ![DBExperimentStats]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''DBCampaignStats
+-- makeLenses ''DBCampaignStats

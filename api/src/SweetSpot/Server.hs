@@ -30,15 +30,15 @@ import           SweetSpot.Database             ( DbConfig(..)
 import qualified SweetSpot.Env                 as Env
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Middleware           ( getMiddleware )
-import           SweetSpot.Route.Dashboard      ( DashboardAPI
-                                                , dashboardHandler
-                                                )
+-- import           SweetSpot.Route.Dashboard      ( DashboardAPI
+--                                                 , dashboardHandler
+--                                                 )
 import           SweetSpot.Route.Health         ( HealthAPI
                                                 , healthHandler
                                                 )
-import           SweetSpot.Route.Injectable     ( InjectableAPI
-                                                , injectableHandler
-                                                )
+-- import           SweetSpot.Route.Injectable     ( InjectableAPI
+--                                                 , injectableHandler
+--                                                 )
 import           SweetSpot.Route.Static         ( StaticAPI
                                                 , staticHandler
                                                 )
@@ -54,14 +54,17 @@ import           System.Exit                    ( exitWith
                                                 )
 
 type RootAPI
-        = "api" :> (DashboardAPI :<|> InjectableAPI :<|> OAuthAPI) :<|> HealthAPI :<|> StaticAPI
+        = "api" :>
+        -- (DashboardAPI :<|> InjectableAPI :<|> OAuthAPI)
+        HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server =
-        (dashboardHandler :<|> injectableHandler :<|> oauthHandler)
-                :<|> healthHandler
+        --(dashboardHandler :<|> injectableHandler :<|> oauthHandler)
+                -- :<|>
+                healthHandler
                 :<|> staticHandler
 
 createApp :: AppCtx -> Application

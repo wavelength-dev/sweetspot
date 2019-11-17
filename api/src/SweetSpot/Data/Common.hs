@@ -17,7 +17,27 @@ import           Data.Text                      ( Text
                                                 , pack
                                                 , unpack
                                                 )
+import           Data.UUID.Types                ( UUID
+                                                , toText
+                                                )
 import           GHC.Generics                   ( Generic )
+
+-- | ---------------------------------------------------------------------------
+-- | ShopId
+-- | ---------------------------------------------------------------------------
+newtype ShopId =
+  ShopId UUID
+  deriving (Eq, Show, Generic)
+
+instance ToJSON ShopId
+
+instance FromJSON ShopId
+
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be ShopId where
+        sqlValueSyntax = sqlValueSyntax . \(ShopId uuid) -> uuid
+
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be ShopId where
+        fromBackendRow = ShopId <$> fromBackendRow
 
 -- | ---------------------------------------------------------------------------
 -- | Price
@@ -91,58 +111,55 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 -- | UserId
 -- | ---------------------------------------------------------------------------
 newtype UserId =
-  UserId Text
+  UserId UUID
   deriving (Eq, Show, Generic, Ord)
 
 instance ToJSON UserId
 
 instance FromJSON UserId
 
-instance HasSqlValueSyntax be Int => HasSqlValueSyntax be UserId where
-        sqlValueSyntax = sqlValueSyntax . \(UserId id) -> read $ unpack id :: Int
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be UserId where
+        sqlValueSyntax = sqlValueSyntax . \(UserId uuid) -> uuid
 
-usrIdFromRow :: Int -> UserId
-usrIdFromRow = UserId . pack . show
-
-instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be UserId where
-        fromBackendRow = usrIdFromRow <$> fromBackendRow
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be UserId where
+        fromBackendRow = UserId <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be UserId
 
 -- | ---------------------------------------------------------------------------
--- | ExpId
+-- | PVariantId
 -- | ---------------------------------------------------------------------------
-newtype ExpId =
-  ExpId Int
+newtype PVariantId =
+  PVariantId UUID
   deriving (Eq, Show, Generic)
 
-instance ToJSON ExpId
+instance ToJSON PVariantId
 
-instance FromJSON ExpId
+instance FromJSON PVariantId
 
-instance HasSqlValueSyntax be Int => HasSqlValueSyntax be ExpId where
-        sqlValueSyntax = sqlValueSyntax . \(ExpId id) -> id
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be PVariantId where
+        sqlValueSyntax = sqlValueSyntax . \(PVariantId id) -> id
 
-instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be ExpId where
-        fromBackendRow = ExpId <$> fromBackendRow
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be PVariantId where
+        fromBackendRow = PVariantId <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be ExpId
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be PVariantId
 
 -- | ---------------------------------------------------------------------------
 -- | BucketId
 -- | ---------------------------------------------------------------------------
 newtype BucketId =
-  BucketId Int
+  BucketId UUID
   deriving (Eq, Show, Generic)
 
 instance ToJSON BucketId
 
 instance FromJSON BucketId
 
-instance HasSqlValueSyntax be Int => HasSqlValueSyntax be BucketId where
-        sqlValueSyntax = sqlValueSyntax . \(BucketId id) -> id
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be BucketId where
+        sqlValueSyntax = sqlValueSyntax . \(BucketId uuid) -> uuid
 
-instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be BucketId where
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be BucketId where
         fromBackendRow = BucketId <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be BucketId
@@ -159,7 +176,7 @@ instance ToJSON CampaignId
 instance FromJSON CampaignId
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CampaignId where
-        sqlValueSyntax = sqlValueSyntax . \(CampaignId txt) -> txt
+        sqlValueSyntax = sqlValueSyntax . \(CampaignId id) -> id
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CampaignId where
         fromBackendRow = CampaignId <$> fromBackendRow
@@ -180,15 +197,15 @@ instance ToJSON OrderId
 -- | EventId
 -- | ---------------------------------------------------------------------------
 newtype EventId =
-  EventId Int
+  EventId UUID
   deriving (Eq, Show, Generic)
 
 instance ToJSON EventId
 
-instance HasSqlValueSyntax be Int => HasSqlValueSyntax be EventId where
-        sqlValueSyntax = sqlValueSyntax . \(EventId id) -> id
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be EventId where
+        sqlValueSyntax = sqlValueSyntax . \(EventId uuid) -> toText uuid
 
-instance (BeamSqlBackend be, FromBackendRow be Int) => FromBackendRow be EventId where
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be EventId where
         fromBackendRow = EventId <$> fromBackendRow
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be EventId

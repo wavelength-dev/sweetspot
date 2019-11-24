@@ -13,12 +13,8 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.=)
                                                 , (.:)
                                                 )
-import           Statistics.Types               ( Estimate(..)
-                                                , ConfInt(..)
-                                                )
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-import           Data.Time                      ( LocalTime )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 

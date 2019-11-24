@@ -85,8 +85,8 @@ data CampaignT f
   { _cmpId :: Columnar f CampaignId
   , _cmpShopId :: PrimaryKey ShopT f
   , _cmpName :: Columnar f Text
-  , _cmpStart :: Columnar f LocalTime
-  , _cmpEnd :: Columnar f LocalTime
+  , _cmpStart :: Columnar f (Maybe LocalTime)
+  , _cmpEnd :: Columnar f (Maybe LocalTime)
   } deriving (Generic, Beamable)
 
 type Campaign = CampaignT Identity
@@ -352,8 +352,13 @@ migration () =
                                                            notNull
                                                     )
                                     , _cmpName   = field "name" text notNull
-                                    , _cmpStart  = field "start" timestamptz
-                                    , _cmpEnd    = field "end" timestamptz
+                                    , _cmpStart  = field
+                                                           "start"
+                                                           (maybeType timestamptz
+                                                           )
+                                    , _cmpEnd    = field
+                                                           "end"
+                                                           (maybeType timestamptz)
                                     }
 
                 <*> createTable

@@ -13,17 +13,14 @@ module SweetSpot.Database.Queries.Injectable
 import           Control.Lens            hiding ( (<.)
                                                 , (>.)
                                                 )
-import           Control.Monad                  ( forM_ )
-import           Data.Aeson                     ( Value )
+
+
 import qualified Data.List                     as L
 import           Data.Maybe                     ( Maybe(..)
                                                 , fromJust
-                                                , maybe
                                                 )
-import qualified Data.Vector                   as V
+
 import           Database.Beam
-import           Database.Beam.Backend.SQL.Types
-                                                ( SqlSerial(..) )
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
 import           Database.Beam.Postgres
@@ -65,8 +62,7 @@ instance InjectableDB AppM where
                         $ do
                                   cmps <- all_ (db ^. campaigns)
                                   guard_ (_cmpId cmps ==. val_ cmpId)
-                                  guard_ (cmps ^. cmpStart <. now_)
-                                  guard_ (cmps ^. cmpEnd >. now_)
+                                  guard_ (isCampaignActive cmps)
 
                                   pure cmps
 
@@ -164,8 +160,7 @@ getUserTestMaps' conn uid = do
                 guard_ (_trProductVariantId treats `references_` prodVs)
 
                 guard_ (usrs ^. usrId ==. val_ uid)
-                guard_ (cmps ^. cmpStart <. now_)
-                guard_ (cmps ^. cmpEnd >. now_)
+                guard_ (isCampaignActive cmps)
 
                 pure (treats, prodVs)
 
@@ -182,6 +177,7 @@ getUserTestMaps' conn uid = do
                                   { userId    = uid
                                   , targetId  = v ^. pvVariantId
                                   , sku       = v ^. pvSku
+                                  , swapPrice = v ^. pvPrice
                                   , swapId    =
                                           (^. pvVariantId)
                                           . snd
@@ -192,7 +188,11 @@ getUserTestMaps' conn uid = do
                                                     . fst
                                                     )
                                                     treatmentVariants
-                                  , swapPrice = v ^. pvPrice
                                   }
                   in
                           L.map toTestMap nonTreatmentVariants
+
+
+isCampaignActive cmp = maybe_ false_ (<. now_) (cmp ^. cmpStart)
+        &&. maybe_ false_ (>. now_) (cmp ^. cmpEnd)
+        where false_ = val_ False

@@ -47,7 +47,7 @@ type TestMap
   = { sku :: Sku
     , swapId :: String
     , swapPrice :: Number
-    , targetId :: String
+    , variantId :: String
     , userId :: String
     }
 

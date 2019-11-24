@@ -8,182 +8,191 @@
 module SweetSpot.Database.Queries.Injectable
         -- ( InjectableDB(..)
         -- )
-where
+                                             where
 
--- import           Control.Lens            hiding ( (<.)
---                                                 , (>.)
---                                                 )
--- import           Control.Monad                  ( forM_ )
--- import           Data.Aeson                     ( Value )
--- import           Data.Maybe                     ( Maybe(..) )
--- import           Database.Beam
--- import           Database.Beam.Backend.SQL.Types
---                                                 ( SqlSerial(..) )
--- import           Database.Beam.Backend.SQL.BeamExtensions
---                                                as BeamExt
--- import           Database.Beam.Postgres
--- import           System.Random                  ( randomRIO )
+import           Control.Lens            hiding ( (<.)
+                                                , (>.)
+                                                )
+import           Control.Monad                  ( forM_ )
+import           Data.Aeson                     ( Value )
+import qualified Data.List                     as L
+import           Data.Maybe                     ( Maybe(..)
+                                                , fromJust
+                                                , maybe
+                                                )
+import qualified Data.Vector                   as V
+import           Database.Beam
+import           Database.Beam.Backend.SQL.Types
+                                                ( SqlSerial(..) )
+import           Database.Beam.Backend.SQL.BeamExtensions
+                                               as BeamExt
+import           Database.Beam.Postgres
+import           System.Random                  ( randomRIO )
 
--- import           SweetSpot.AppM                 ( AppM(..) )
--- import           SweetSpot.Database.Schema
---                                          hiding ( UserId )
--- import           SweetSpot.Database.Queries.Util
---                                                 ( withConn )
--- import           SweetSpot.Data.Api             ( UserBucket(..) )
--- import           SweetSpot.Data.Common
-
-
-
--- class Monad m => InjectableDB m where
---   getNewCampaignBuckets :: CampaignId -> Maybe UserId -> m [UserBucket]
---   getUserBuckets :: UserId -> m [UserBucket]
---   validateCampaign :: CampaignId -> m Bool
---   insertEvent :: (EventType, Value) -> m ()
-
--- instance InjectableDB AppM where
---         getNewCampaignBuckets cmpId mUid = do
---                 randIdx <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
---                 let bucketType = [Control, Test] !! randIdx
---                 uid <- case mUid of
---                         Just id -> pure id
---                         Nothing -> withConn insertUser
---                 cid <- withConn $ assignUserToCampaign (cmpId, uid)
---                 bs  <- withConn $ bucketByTypePerExpInCampaign (cid, bucketType)
---                 forM_ bs (\(_, bid) -> withConn $ assignUserToBucket (uid, bid))
---                 getUserBuckets uid
-
---         getUserBuckets uid = withConn $ \conn -> do
---                 tuples <-
---                         runBeamPostgres conn
---                         $ runSelectReturningList
---                         $ select
---                         $ do
-
---                                   usrs    <- all_ (db ^. users)
---                                   bktUsrs <- all_ (db ^. bucketUsers)
---                                   bkts    <- all_ (db ^. buckets)
---                                   expBkts <- all_ (db ^. experimentBuckets)
---                                   exps    <- all_ (db ^. experiments)
---                                   cmpUsrs <- all_ (db ^. campaignUsers)
---                                   cmps    <- all_ (db ^. campaigns)
+import           SweetSpot.AppM                 ( AppM(..) )
+import           SweetSpot.Database.Schema
+                                         hiding ( UserId )
+import           SweetSpot.Database.Queries.Util
+                                                ( withConn )
+import           SweetSpot.Data.Api
+import           SweetSpot.Data.Common
 
 
---                                   guard_ (_usrForBkt bktUsrs `references_` usrs)
---                                   guard_ (_bktForUsr bktUsrs `references_` bkts)
 
---                                   guard_ (_bktForExp expBkts `references_` bkts)
---                                   guard_ (_expForBkt expBkts `references_` exps)
+class Monad m => InjectableDB m where
+  getNewUserTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
+  getUserTestMaps :: UserId -> m [TestMap]
+  validateCampaign :: CampaignId -> m Bool
+  insertCheckoutEvent :: ApiCheckoutEvent -> m ()
 
---                                   guard_ (_usrForCmp cmpUsrs `references_` usrs)
---                                   guard_ (_cmpForUsr cmpUsrs `references_` cmps)
+instance InjectableDB AppM where
+        getNewUserTestMaps cmpId mUid = do
+                randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
+                withConn $ \conn -> do
+                        uid <- case mUid of
+                                Just id -> pure id
+                                Nothing -> insertUser conn
+                        assignUserToCampaign conn (uid, cmpId, randTreatment)
+                        getUserTestMaps' conn uid
 
---                                   guard_
---                                           (usrs ^. usrId ==. val_
---                                                   (SqlSerial uid)
---                                           )
---                                   guard_ (cmps ^. cmpStartDate <. now_)
---                                   guard_ (cmps ^. cmpEndDate >. now_)
+        getUserTestMaps uid = withConn $ \conn -> getUserTestMaps' conn uid
 
---                                   pure (exps, bkts)
+        validateCampaign cmpId = withConn $ \conn -> do
+                res <-
+                        runBeamPostgres conn
+                        $ runSelectReturningList
+                        $ select
+                        $ do
+                                  cmps <- all_ (db ^. campaigns)
+                                  guard_ (_cmpId cmps ==. val_ cmpId)
+                                  guard_ (cmps ^. cmpStart <. now_)
+                                  guard_ (cmps ^. cmpEnd >. now_)
 
---                 return $ fmap
---                         (\(exp, bkt) -> UserBucket
---                                 { _ubUserId       = uid
---                                 , _ubSku          = exp ^. expSku
---                                 , _ubOriginalSvid = bkt ^. bktCtrlSvid
---                                 , _ubTestSvid     = bkt ^. bktTestSvid
---                                 , _ubPrice        = bkt ^. bktPrice
---                                 , _ubExpId        = exp ^. expId & unSerial
---                                 , _ubBucketId     = bkt ^. bktId & unSerial
---                                 , _ubBucketType   = bkt ^. bktType
---                                 , _ubControlPrice = bkt ^. bktCtrlPrice
---                                 }
---                         )
---                         tuples
+                                  pure cmps
+
+                return $ not (null res)
+
+        insertCheckoutEvent apiEvent = withConn $ \conn -> do
+                [dbEvent] <-
+                        runBeamPostgres conn
+                        $ BeamExt.runInsertReturningList
+                        $ insert (db ^. checkoutEvents)
+                        $ insertExpressions
+                                  [ CheckoutEvent
+                                            { _cevId      = eventId_
+                                            , _cevCreated = now_
+                                            , _cevCmpId   = val_
+                                                            $  CampaignKey
+                                                            $  apiEvent
+                                                            ^. aceCampaignId
+                                            , _cevOrderId = val_
+                                                            $  apiEvent
+                                                            ^. aceOrderId
+                                            , _cevShopId  = val_
+                                                            $  ShopKey
+                                                            $  apiEvent
+                                                            ^. aceShopId
+                                            , _cevUserId  = val_
+                                                            $  UserKey
+                                                            $  apiEvent
+                                                            ^. aceUserId
+                                            }
+                                  ]
+
+                runBeamPostgres conn
+                        $ runInsert
+                        $ insert (db ^. checkoutItems)
+                        $ insertExpressions
+                        $ L.map
+                                  (\li -> CheckoutItem
+                                          { _ciId              = pgGenUUID_
+                                          , _ciCheckoutEventId =
+                                                  val_
+                                                  $  CheckoutEventKey
+                                                  $  dbEvent
+                                                  ^. cevId
+                                          , _ciQuantity        = val_
+                                                                 $  li
+                                                                 ^. liQuantity
+                                          , _ciSvid = val_ $ li ^. liVariantId
+                                          }
+                                  )
+                                  (apiEvent ^. aceItems)
+
+insertUser :: Connection -> IO UserId
+insertUser conn = do
+        [user] <-
+                runBeamPostgres conn
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. users)
+                $ insertExpressions [User userId_ now_]
+        return $ user ^. usrId
+
+assignUserToCampaign :: Connection -> (UserId, CampaignId, Int) -> IO CampaignId
+assignUserToCampaign conn (usrId, campaignId, treatment) = do
+        [cmpUsr] <-
+                runBeamPostgres conn
+                $ BeamExt.runInsertReturningList
+                $ insert (db ^. userExperiments)
+                $ insertValues
+                          [ UserExperiment (UserKey usrId)
+                                           (CampaignKey campaignId)
+                                           treatment
+                          ]
+        return $ cmpUsr ^. ueCmpId
 
 
---         validateCampaign cmpId = withConn $ \conn -> do
---                 res <-
---                         runBeamPostgres conn
---                         $ runSelectReturningList
---                         $ select
---                         $ do
---                                   cmps <- all_ (db ^. campaigns)
---                                   guard_ (_cmpId cmps ==. val_ cmpId)
---                                   guard_ (cmps ^. cmpStartDate <. now_)
---                                   guard_ (cmps ^. cmpEndDate >. now_)
 
---                                   pure cmps
+getUserTestMaps' :: Connection -> UserId -> IO [TestMap]
+getUserTestMaps' conn uid = do
+        [usrTreatment] <-
+                runBeamPostgres conn $ runSelectReturningList $ select $ filter_
+                        ((==. val_ uid) . (^. ueUserId))
+                        (all_ (db ^. userExperiments))
+        variants <- runBeamPostgres conn $ runSelectReturningList $ select $ do
 
---                 return $ not (null res)
+                usrs    <- all_ (db ^. users)
+                usrExps <- all_ (db ^. userExperiments)
+                treats  <- all_ (db ^. treatments)
+                prodVs  <- all_ (db ^. productVariants)
+                cmps    <- all_ (db ^. campaigns)
 
---         insertEvent (eventType, json) = withConn $ \conn ->
---                 runBeamPostgres conn
---                         $ runInsert
---                         $ insert (db ^. events)
---                         $ insertExpressions
---                                   [ Event { _evId        = default_
---                                           , _evType      = val_ eventType
---                                           , _evTimestamp = now_
---                                           , _evPayload   = val_ $ PgJSONB json
---                                           }
---                                   ]
+                guard_ (_ueUserId usrExps `references_` usrs)
+                guard_ (_ueCmpId usrExps `references_` cmps)
 
--- insertUser :: Connection -> IO UserId
--- insertUser conn = do
---         [user] <-
---                 runBeamPostgres conn
---                 $ BeamExt.runInsertReturningList
---                 $ insert (db ^. users)
---                 $ insertExpressions [User default_]
---         return $ user ^. usrId & unSerial
+                guard_ (_trCmpId treats `references_` cmps)
+                guard_ (_trProductVariantId treats `references_` prodVs)
 
--- assignUserToCampaign :: (CampaignId, UserId) -> Connection -> IO CampaignId
--- assignUserToCampaign (cmpId, usrId) conn = do
---         [cmpUsr] <-
---                 runBeamPostgres conn
---                 $ BeamExt.runInsertReturningList
---                 $ insert (db ^. campaignUsers)
---                 $ insertValues
---                           [ CampaignUser (CampaignKey cmpId)
---                                          (usrId & SqlSerial & UserKey)
---                           ]
---         return $ cmpUsr ^. cmpForUsr
+                guard_ (usrs ^. usrId ==. val_ uid)
+                guard_ (cmps ^. cmpStart <. now_)
+                guard_ (cmps ^. cmpEnd >. now_)
 
--- assignUserToBucket :: (UserId, BucketId) -> Connection -> IO ()
--- assignUserToBucket (usrId', bktId') conn =
---         runBeamPostgres conn
---                 $ runInsert
---                 $ insert (db ^. bucketUsers)
---                 $ insertValues
---                           [ BucketUser (bktId' & SqlSerial & BucketKey)
---                                        (usrId' & SqlSerial & UserKey)
---                           ]
+                pure (treats, prodVs)
 
-
--- bucketByTypePerExpInCampaign
---         :: (CampaignId, BucketType) -> Connection -> IO [(ExpId, BucketId)]
--- bucketByTypePerExpInCampaign (cid, btype) conn = do
---         res <- runBeamPostgres conn $ runSelectReturningList $ select $ do
---                 cmps    <- all_ (db ^. campaigns)
---                 cmpExps <- all_ (db ^. campaignExperiments)
---                 exps    <- all_ (db ^. experiments)
---                 expBkts <- all_ (db ^. experimentBuckets)
---                 bkts    <- all_ (db ^. buckets)
-
---                 guard_ (_cmpForExp cmpExps `references_` cmps)
---                 guard_ (_expForCmp cmpExps `references_` exps)
-
---                 guard_ (_expForBkt expBkts `references_` exps)
---                 guard_ (_bktForExp expBkts `references_` bkts)
-
---                 guard_ (bkts ^. bktType ==. val_ btype)
---                 guard_ (cmps ^. cmpId ==. val_ cid)
-
---                 pure (exps, bkts)
-
---         return $ fmap
---                 (\(exp, bkt) ->
---                         (exp ^. expId & unSerial, bkt ^. bktId & unSerial)
---                 )
---                 res
+        return
+                $ let
+                          treatment = usrTreatment ^. ueTreatment
+                          isTreatmentVariant =
+                                  (== treatment) . (^. trTreatment) . fst
+                          treatmentVariants =
+                                  filter isTreatmentVariant variants
+                          nonTreatmentVariants =
+                                  filter (not . isTreatmentVariant) variants
+                          toTestMap (_, v) = TestMap
+                                  { userId    = uid
+                                  , targetId  = v ^. pvVariantId
+                                  , sku       = v ^. pvSku
+                                  , swapId    =
+                                          (^. pvVariantId)
+                                          . snd
+                                          . fromJust
+                                          $ L.find
+                                                    ( (== (v ^. pvId))
+                                                    . (^. trProductVariantId)
+                                                    . fst
+                                                    )
+                                                    treatmentVariants
+                                  , swapPrice = v ^. pvPrice
+                                  }
+                  in
+                          L.map toTestMap nonTreatmentVariants

@@ -12,47 +12,20 @@ import GHC.Generics (Generic)
 import SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
--- | LineItem
--- | ---------------------------------------------------------------------------
-data LineItem = LineItem
-  { _liProductId :: !Pid
-  , _liVariantId :: !Svid
-  , _liSku :: !Sku
-  , _liQuantity :: !Int
-  } deriving (Eq, Generic, Show)
-
-makeLenses ''LineItem
-
-instance ToJSON LineItem
-
-instance FromJSON LineItem where
-  parseJSON = withObject "LineItem" $ \o -> do
-    pid <- o .: "productId"
-    svid <- o .: "variantId"
-    sku <- o .: "sku"
-    quantity <- o .: "quantity"
-    return LineItem
-      { _liProductId = Pid $ pack . show $ (pid :: Int)
-      , _liVariantId = Svid $ pack . show $ (svid :: Int)
-      , _liSku = Sku sku
-      , _liQuantity = quantity
-      }
-
--- | ---------------------------------------------------------------------------
 -- | CheckoutEvent
 -- | ---------------------------------------------------------------------------
-data CheckoutEvent = CheckoutEvent
-  { _chkId :: !EventId
-  , _chkUserId :: !UserId
-  , _chkBucketId :: !BucketId
-  , _chkOrderId :: !OrderId
-  , _chkTimestamp :: !LocalTime
-  , _chkLineItems :: ![LineItem]
-  } deriving (Eq, Generic, Show)
+-- data CheckoutEvent = CheckoutEvent
+--   { _chkId :: !EventId
+--   , _chkUserId :: !UserId
+--   , _chkBucketId :: !BucketId
+--   , _chkOrderId :: !OrderId
+--   , _chkTimestamp :: !LocalTime
+--   , _chkLineItems :: ![LineItem]
+--   } deriving (Eq, Generic, Show)
 
-makeLenses ''CheckoutEvent
+-- makeLenses ''CheckoutEvent
 
-instance ToJSON CheckoutEvent
+-- instance ToJSON CheckoutEvent
 
 -- | ---------------------------------------------------------------------------
 -- | Campaign

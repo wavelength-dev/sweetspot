@@ -14,15 +14,10 @@ module SweetSpot.Database.Migrations.V0001InitDb where
 
 import           Data.Aeson                     ( Value )
 import           Database.Beam
-import           Database.Beam.Backend.SQL.Types
-                                                ( SqlSerial )
 import           Database.Beam.Backend.SQL.SQL92
-                                                ( numericType
-                                                , intType
-                                                )
+                                                ( numericType )
 import           Database.Beam.Postgres
 import           Database.Beam.Postgres.Syntax  ( pgTextType
-                                                , pgSerialType
                                                 , pgUuidType
                                                 )
 import           Database.Beam.Postgres.PgCrypto
@@ -31,7 +26,6 @@ import           Database.Beam.Migrate
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
 import           Data.UUID.Types                ( UUID )
-import           Data.Vector                    ( Vector )
 import           SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------
@@ -139,28 +133,28 @@ ProductVariant (LensFor pvId) (ShopKey (LensFor pvShopId)) (LensFor pvTitle) (Le
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | PriceVariant
+-- | Treatment
 -- | ---------------------------------------------------------------------------
-data PriceVariantT f
-  = PriceVariant
-  { _prvCmpId :: PrimaryKey CampaignT f
-  , _prvTreatment :: Columnar f Int
-  , _prvProductVariantId :: PrimaryKey ProductVariantT f
+data TreatmentT f
+  = Treatment
+  { _trCmpId :: PrimaryKey CampaignT f
+  , _trTreatment :: Columnar f Int
+  , _trProductVariantId :: PrimaryKey ProductVariantT f
   } deriving (Generic, Beamable)
 
-type PriceVariant = PriceVariantT Identity
-type PriceVariantKey = PrimaryKey PriceVariantT Identity
+type Treatment = TreatmentT Identity
+type TreatmentKey = PrimaryKey TreatmentT Identity
 
-deriving instance Show PriceVariant
-deriving instance Show PriceVariantKey
+deriving instance Show Treatment
+deriving instance Show TreatmentKey
 
-instance Table PriceVariantT where
-        data PrimaryKey PriceVariantT f
+instance Table TreatmentT where
+        data PrimaryKey TreatmentT f
           = PriceVariantKey (PrimaryKey CampaignT f) (PrimaryKey ProductVariantT f)
             deriving (Generic, Beamable)
-        primaryKey = PriceVariantKey <$> _prvCmpId <*> _prvProductVariantId
+        primaryKey = PriceVariantKey <$> _trCmpId <*> _trProductVariantId
 
-PriceVariant (CampaignKey (LensFor pvrCmpId)) (LensFor pvrTreatment) (PVariantKey (LensFor pvrProductVariantId))
+Treatment (CampaignKey (LensFor trCmpId)) (LensFor trTreatment) (PVariantKey (LensFor trProductVariantId))
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -194,10 +188,9 @@ data CheckoutEventT f
   { _cevId :: Columnar f EventId
   , _cevCreated :: Columnar f LocalTime
   , _cevCmpId :: PrimaryKey CampaignT f
-  , _cevOrderId :: Columnar f Text
+  , _cevOrderId :: Columnar f OrderId
   , _cevShopId :: PrimaryKey ShopT f
   , _cevUserId :: PrimaryKey UserT f
-  , _cevItems :: Columnar f (Vector Text)
   } deriving (Generic, Beamable)
 
 type CheckoutEvent = CheckoutEventT Identity
@@ -208,7 +201,28 @@ instance Table CheckoutEventT where
           = CheckoutEventKey (Columnar f EventId) deriving (Generic, Beamable)
         primaryKey = CheckoutEventKey . _cevId
 
-CheckoutEvent (LensFor cevId) (LensFor cevCreated) (CampaignKey (LensFor cevCmpId)) (LensFor cevOrderId) (ShopKey (LensFor cevShopId)) (UserKey (LensFor cevUserId)) (LensFor cevItems)
+CheckoutEvent (LensFor cevId) (LensFor cevCreated) (CampaignKey (LensFor cevCmpId)) (LensFor cevOrderId) (ShopKey (LensFor cevShopId)) (UserKey (LensFor cevUserId))
+        = tableLenses
+
+-- | ---------------------------------------------------------------------------
+-- | CheckoutItem
+-- | ---------------------------------------------------------------------------
+data CheckoutItemT f = CheckoutItem
+  { _ciId :: Columnar f UUID
+  , _ciCheckoutEventId :: PrimaryKey CheckoutEventT f
+  , _ciQuantity :: Columnar f Int
+  , _ciSvid :: Columnar f Svid
+  } deriving (Generic, Beamable)
+
+type CheckoutItem = CheckoutItemT Identity
+type CheckoutItemKey = PrimaryKey CheckoutItemT Identity
+
+instance Table CheckoutItemT where
+        data PrimaryKey CheckoutItemT f
+          = CheckoutItemKey (Columnar f UUID) deriving (Generic, Beamable)
+        primaryKey = CheckoutItemKey . _ciId
+
+CheckoutItem (LensFor ciId) (CheckoutEventKey (LensFor ciCheckoutEventId)) (LensFor ciQuantity) (LensFor ciSvid)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -236,20 +250,21 @@ data SweetSpotDb f = SweetSpotDb
   , _users :: f (TableEntity UserT)
   , _campaigns :: f (TableEntity CampaignT)
   , _productVariants :: f (TableEntity ProductVariantT)
-  , _priceVariants :: f (TableEntity PriceVariantT)
+  , _treatments :: f (TableEntity TreatmentT)
   , _userExperiments :: f (TableEntity UserExperimentT)
   , _checkoutEvents :: f (TableEntity CheckoutEventT)
+  , _checkoutItems :: f (TableEntity CheckoutItemT)
   , _events :: f (TableEntity EventT)
   , _cryptoExtension :: f (PgExtensionEntity PgCrypto)
   } deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens priceVariants) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens events) (TableLens cryptoExtension)
+SweetSpotDb (TableLens shops) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens cryptoExtension)
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
--- | Types
+-- | Migration types
 -- | ---------------------------------------------------------------------------
 pricePrecision :: Maybe (Word, Maybe Word)
 pricePrecision = Just (12, Just 2)
@@ -272,17 +287,20 @@ svidType = DataType pgTextType
 skuType :: DataType Postgres Sku
 skuType = DataType pgTextType
 
-etType :: DataType Postgres EventType
-etType = DataType pgTextType
-
 priceType :: DataType Postgres Price
 priceType = DataType (numericType pricePrecision)
 
-uidType :: DataType Postgres UserId
-uidType = DataType pgUuidType
+userIdType :: DataType Postgres UserId
+userIdType = DataType pgUuidType
 
-eidType :: DataType Postgres EventId
-eidType = DataType pgSerialType
+eventIdType :: DataType Postgres EventId
+eventIdType = DataType pgUuidType
+
+orderIdType :: DataType Postgres OrderId
+orderIdType = DataType pgTextType
+
+uuidType :: DataType Postgres UUID
+uuidType = DataType pgUuidType
 
 -- | ---------------------------------------------------------------------------
 -- | Migration
@@ -316,7 +334,7 @@ migration () =
                 <*> createTable
                             "users"
                             User
-                                    { _usrId      = field "user_id" uidType
+                                    { _usrId      = field "user_id" userIdType
                                     , _usrCreated = field "created"
                                                           timestamptz
                                                           notNull
@@ -360,6 +378,7 @@ migration () =
                                             field "shopify_variant_id"
                                                   svidType
                                                   notNull
+                                                  unique
                                     , _pvPrice = field "price" priceType notNull
                                     , _pvCurrency  = field "currency"
                                                            text
@@ -367,19 +386,19 @@ migration () =
                                     }
 
                 <*> createTable
-                            "price_variants"
-                            PriceVariant
-                                    { _prvCmpId            =
+                            "treatments"
+                            Treatment
+                                    { _trCmpId            =
                                             CampaignKey
                                                     (field
                                                             "campaign_id"
                                                             campaignIdType
                                                             notNull
                                                     )
-                                    , _prvTreatment        = field "treatment"
-                                                                   int
-                                                                   notNull
-                                    , _prvProductVariantId =
+                                    , _trTreatment        = field "treatment"
+                                                                  int
+                                                                  notNull
+                                    , _trProductVariantId =
                                             PVariantKey
                                                     (field
                                                             "product_variant_id"
@@ -393,8 +412,9 @@ migration () =
                                     { _ueUserId    =
                                             UserKey
                                                     (field "user_id"
-                                                           uidType
+                                                           userIdType
                                                            notNull
+                                                           unique
                                                     )
                                     , _ueCmpId     =
                                             CampaignKey
@@ -411,7 +431,9 @@ migration () =
                 <*> createTable
                             "checkout_events"
                             CheckoutEvent
-                                    { _cevId = field "event_id" eidType notNull
+                                    { _cevId      = field "event_id"
+                                                          eventIdType
+                                                          notNull
                                     , _cevCreated = field "created"
                                                           timestamptz
                                                           notNull
@@ -423,7 +445,7 @@ migration () =
                                                             notNull
                                                     )
                                     , _cevOrderId = field "order_id"
-                                                          text
+                                                          orderIdType
                                                           notNull
                                     , _cevShopId  =
                                             ShopKey
@@ -434,18 +456,34 @@ migration () =
                                     , _cevUserId  =
                                             UserKey
                                                     (field "user_id"
-                                                           uidType
+                                                           userIdType
                                                            notNull
                                                     )
-                                    , _cevItems   = field
-                                                            "items"
-                                                            (unboundedArray text)
+                                    }
+
+                <*> createTable
+                            "checkout_items"
+                            CheckoutItem
+                                    { _ciId = field "checkout_item_id"
+                                                    uuidType
+                                                    notNull
+                                    , _ciCheckoutEventId =
+                                            CheckoutEventKey
+                                                    (field
+                                                            "checkout_event_id"
+                                                            eventIdType
                                                             notNull
+                                                    )
+                                    , _ciQuantity = field "quantity" int notNull
+                                    , _ciSvid = field
+                                                        "shopify_variant_id"
+                                                        svidType
+                                                        notNull
                                     }
 
                 <*> createTable
                             "events"
-                            Event { _evId = field "event_id" eidType notNull
+                            Event { _evId = field "event_id" eventIdType notNull
                                   , _evPayload = field "payload" jsonb notNull
                                   }
 

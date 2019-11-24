@@ -17,6 +17,7 @@ import           Statistics.Types               ( Estimate(..)
                                                 , ConfInt(..)
                                                 )
 import           Data.Text                      ( Text )
+import qualified Data.Text                     as T
 import           Data.Time                      ( LocalTime )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
@@ -233,27 +234,71 @@ data TestMap = TestMap
   } deriving (Eq, Generic)
 
 instance ToJSON TestMap where
-  toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price) =
-    object
-      [ "userId" .= userId
-      , "targetId" .= targetId
-      , "sku" .= sku
-      , "swapId" .= swapId
-      , "swapPrice" .= price
-      ]
+        toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price)
+                = object
+                        [ "userId" .= userId
+                        , "targetId" .= targetId
+                        , "sku" .= sku
+                        , "swapId" .= swapId
+                        , "swapPrice" .= price
+                        ]
 
 instance FromJSON TestMap where
-  parseJSON = withObject "TestMap" $ \v -> do
-    userId <- v .: "userId"
-    targetId <- v .: "targetId"
-    sku <- v .: "sku"
-    swapId <- v .: "swapId"
-    swapPrice <- v .: "swapPrice"
+        parseJSON = withObject "TestMap" $ \v -> do
+                userId    <- v .: "userId"
+                targetId  <- v .: "targetId"
+                sku       <- v .: "sku"
+                swapId    <- v .: "swapId"
+                swapPrice <- v .: "swapPrice"
 
-    return TestMap
-      { userId = UserId userId
-      , targetId = Svid targetId
-      , sku = Sku sku
-      , swapId = Svid swapId
-      , swapPrice = Price swapPrice
-      }
+                return TestMap { userId    = UserId userId
+                               , targetId  = Svid targetId
+                               , sku       = Sku sku
+                               , swapId    = Svid swapId
+                               , swapPrice = Price swapPrice
+                               }
+
+-- | ---------------------------------------------------------------------------
+-- | LineItem
+-- | ---------------------------------------------------------------------------
+data LineItem = LineItem
+  { _liProductId :: !Pid
+  , _liVariantId :: !Svid
+  , _liSku :: !Sku
+  , _liQuantity :: !Int
+  } deriving (Eq, Generic, Show)
+
+makeLenses ''LineItem
+
+instance ToJSON LineItem
+
+instance FromJSON LineItem where
+        parseJSON = withObject "LineItem" $ \o -> do
+                pid      <- o .: "productId"
+                svid     <- o .: "variantId"
+                sku      <- o .: "sku"
+                quantity <- o .: "quantity"
+                return LineItem
+                        { _liProductId = Pid $ T.pack . show $ (pid :: Int)
+                        , _liVariantId = Svid $ T.pack . show $ (svid :: Int)
+                        , _liSku       = Sku sku
+                        , _liQuantity  = quantity
+                        }
+
+
+-- | ---------------------------------------------------------------------------
+-- | ApiCheckoutEvent
+-- | ---------------------------------------------------------------------------
+data ApiCheckoutEvent = ApiCheckoutEvent
+  { _aceCampaignId :: CampaignId
+  , _aceOrderId :: OrderId
+  , _aceShopId :: ShopId
+  , _aceUserId :: UserId
+  , _aceItems :: [LineItem]
+  } deriving (Generic, Show)
+
+makeLenses ''ApiCheckoutEvent
+
+instance ToJSON ApiCheckoutEvent
+
+instance FromJSON ApiCheckoutEvent

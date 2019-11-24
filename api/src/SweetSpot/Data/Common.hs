@@ -89,6 +89,14 @@ instance ToJSON Pid
 
 instance FromJSON Pid
 
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Pid where
+        sqlValueSyntax = sqlValueSyntax . \(Pid txt) -> txt
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Pid where
+        fromBackendRow = Pid <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Pid
+
 -- | ---------------------------------------------------------------------------
 -- | Sku
 -- | ---------------------------------------------------------------------------
@@ -189,10 +197,20 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 -- | OrderId
 -- | ---------------------------------------------------------------------------
 newtype OrderId =
-  OrderId Int
+  OrderId Text
   deriving (Eq, Show, Generic)
 
+instance FromJSON OrderId
+
 instance ToJSON OrderId
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be OrderId where
+        sqlValueSyntax = sqlValueSyntax . \(OrderId id) -> id
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be OrderId where
+        fromBackendRow = OrderId <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be OrderId
 
 -- | ---------------------------------------------------------------------------
 -- | EventId

@@ -4,95 +4,77 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Route.Injectable
-  -- ( InjectableAPI
-  -- , injectableHandler
-  -- , UserBucketRoute
-  -- )
+  ( InjectableAPI
+  , injectableHandler
+  , UserTestRoute
+  )
 where
 
--- import Control.Lens ((^.), (^?))
--- import Data.Aeson (Value)
--- import Data.Aeson.Lens (_String, key)
--- import Data.Text (Text)
--- import qualified Data.Text as T
--- import Servant
--- import SweetSpot.AppM (AppM(..), ServerM)
--- import SweetSpot.Data.Api
--- import SweetSpot.Data.Common
--- import SweetSpot.Database.Queries.Injectable
---  ( InjectableDB(..)
---  )
+import Control.Lens ((^.), (^?))
+import Data.Aeson (Value)
+import Data.Aeson.Lens (_String, key)
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.UUID.Types (UUID)
+import Servant
+import SweetSpot.AppM (AppM(..), ServerM)
+import SweetSpot.Data.Api
+import SweetSpot.Data.Common
+import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
 
--- import qualified SweetSpot.Logger as L
--- import SweetSpot.Route.Util (badRequestErr, notFoundErr)
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 
--- type UserBucketRoute
---    = "bucket" :> QueryParam "sscid" Text :> QueryParam "uid" Text :> Get '[ JSON] [TestMap]
+type UserTestRoute
+   = "bucket" :> QueryParam "sscid" UUID :> QueryParam "uid" UUID :> Get '[ JSON] [TestMap]
 
 -- type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
--- type InjectableAPI = UserBucketRoute :<|> EventRoute :<|> LogEventRoute
+type InjectableAPI = UserTestRoute  -- :<|> EventRoute :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
 
--- showNumber :: Int -> Text
--- showNumber = T.pack . show
+showNumber :: Int -> Text
+showNumber = T.pack . show
 
--- createTestMap :: UserBucket -> TestMap
--- createTestMap ub =
---   case ub ^. ubBucketType of
---     Control -> TestMap
---       { userId = ub ^. ubUserId
---       , targetId = ub ^. ubTestSvid
---       , sku = ub ^. ubSku
---       , swapId = ub ^. ubOriginalSvid
---       , swapPrice = ub ^. ubControlPrice
---       }
---     Test -> TestMap
---       { userId = ub ^. ubUserId
---       , targetId = ub ^. ubOriginalSvid
---       , sku = ub ^. ubSku
---       , swapId = ub ^. ubTestSvid
---       , swapPrice = ub ^. ubPrice
---       }
+showUuid :: UUID -> Text
+showUuid = T.pack . show
 
--- getUserBucketsHandler :: Maybe Text -> Maybe Text -> ServerM [TestMap]
--- -- Existing user
--- getUserBucketsHandler mCmpId (Just uid) = runAppM $ do
---   res <- getUserBuckets (UserId uid)
---   case (mCmpId, res) of
---     (_, buckets@(b:bs)) -> do
---       L.info $ "Got " <> showNumber (length buckets) <> " bucket(s) for userId: " <> uid
---       return (map createTestMap buckets)
---     (Nothing, []) -> do
---       L.info $ "Could not find bucket(s) for userId: " <> uid
---       throwError notFoundErr
---     (Just newCmpId, []) -> do
---       let cId = CampaignId newCmpId
---       isValidCampaign <- validateCampaign cId
---       if isValidCampaign
---         then do
---             buckets <- getNewCampaignBuckets cId (Just (UserId uid))
---             return $ map createTestMap buckets
---         else do
---           L.info $ "Got invalid campaign id for existing user" <> newCmpId
---           throwError badRequestErr
--- -- New user
--- getUserBucketsHandler (Just cmpId) Nothing = runAppM $ do
---   isValidCampaign <- validateCampaign (CampaignId cmpId)
---   if isValidCampaign
---     then do
---       L.info $ "Got campaign " <> cmpId
---       buckets <- getNewCampaignBuckets (CampaignId cmpId) Nothing
---       return $ map createTestMap buckets
---     else do
---       L.info $ "Got invalid campaign id " <> cmpId
---       throwError badRequestErr
+getUserTestHandler :: Maybe UUID -> Maybe UUID -> ServerM [TestMap]
+-- Existing user
+getUserTestHandler mCmpId (Just uid) = runAppM $ do
+  res <- getUserTestMaps (UserId uid)
+  case (mCmpId, res) of
+    (_, testMaps@(m:ms)) -> do
+      L.info $ "Got " <> showNumber (length testMaps) <> " test maps(s) for userId: " <> showUuid uid
+      return testMaps
+    (Nothing, []) -> do
+      L.info $ "Could not find bucket(s) for userId: " <> showUuid uid
+      throwError notFoundErr
+    (Just newCmpId, []) -> do
+      let cId = CampaignId newCmpId
+      isValidCampaign <- validateCampaign cId
+      if isValidCampaign
+        then
+            getNewCampaignTestMaps cId (Just (UserId uid))
+        else do
+          L.info $ "Got invalid campaign id for existing user" <> showUuid newCmpId
+          throwError badRequestErr
+-- New user
+getUserTestHandler (Just cmpId) Nothing = runAppM $ do
+  isValidCampaign <- validateCampaign (CampaignId cmpId)
+  if isValidCampaign
+    then do
+      L.info $ "Got campaign " <> (T.pack . show $ cmpId)
+      getNewCampaignTestMaps (CampaignId cmpId) Nothing
+    else do
+      L.info $ "Got invalid campaign id " <> showUuid cmpId
+      throwError badRequestErr
 
--- getUserBucketsHandler Nothing Nothing = throwError badRequestErr
+getUserTestHandler Nothing Nothing = throwError badRequestErr
 
 -- trackEventHandler :: Value -> ServerM OkResponse
 -- trackEventHandler val = runAppM $ do
@@ -112,5 +94,5 @@ where
 --   insertEvent (Log, val)
 --   return OkResponse {message = "Event received"}
 
--- injectableHandler =
---   getUserBucketsHandler :<|> trackEventHandler :<|> trackLogMessageHandler
+injectableHandler =
+  getUserTestHandler -- :<|> trackEventHandler :<|> trackLogMessageHandler

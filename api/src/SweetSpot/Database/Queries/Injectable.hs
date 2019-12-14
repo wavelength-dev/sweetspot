@@ -6,8 +6,8 @@
 {-# LANGUAGE RankNTypes #-}
 
 module SweetSpot.Database.Queries.Injectable
-        -- ( InjectableDB(..)
-        -- )
+        ( InjectableDB(..)
+        )
                                              where
 
 import           Control.Lens            hiding ( (<.)
@@ -37,13 +37,13 @@ import           SweetSpot.Data.Common
 
 
 class Monad m => InjectableDB m where
-  getNewUserTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
+  getNewCampaignTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
   getUserTestMaps :: UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   insertCheckoutEvent :: ApiCheckoutEvent -> m ()
 
 instance InjectableDB AppM where
-        getNewUserTestMaps cmpId mUid = do
+        getNewCampaignTestMaps cmpId mUid = do
                 randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
                 withConn $ \conn -> do
                         uid <- case mUid of

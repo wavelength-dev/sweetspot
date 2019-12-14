@@ -36,9 +36,9 @@ import           SweetSpot.Middleware           ( getMiddleware )
 import           SweetSpot.Route.Health         ( HealthAPI
                                                 , healthHandler
                                                 )
--- import           SweetSpot.Route.Injectable     ( InjectableAPI
---                                                 , injectableHandler
---                                                 )
+import           SweetSpot.Route.Injectable     ( InjectableAPI
+                                                , injectableHandler
+                                                )
 import           SweetSpot.Route.Static         ( StaticAPI
                                                 , staticHandler
                                                 )
@@ -55,15 +55,15 @@ import           System.Exit                    ( exitWith
 
 type RootAPI
         = "api" :>
-        -- (DashboardAPI :<|> InjectableAPI :<|> OAuthAPI)
+        (InjectableAPI :<|> OAuthAPI) :<|>
         HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server =
-        --(dashboardHandler :<|> injectableHandler :<|> oauthHandler)
-                -- :<|>
+        (injectableHandler :<|> oauthHandler)
+                :<|>
                 healthHandler
                 :<|> staticHandler
 

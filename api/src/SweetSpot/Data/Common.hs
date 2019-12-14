@@ -157,40 +157,40 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck 
 -- | ---------------------------------------------------------------------------
 -- | BucketId
 -- | ---------------------------------------------------------------------------
-newtype BucketId =
-  BucketId UUID
-  deriving (Eq, Show, Generic)
+-- newtype BucketId =
+--   BucketId UUID
+--   deriving (Eq, Show, Generic)
 
-instance ToJSON BucketId
+-- instance ToJSON BucketId
 
-instance FromJSON BucketId
+-- instance FromJSON BucketId
 
-instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be BucketId where
-        sqlValueSyntax = sqlValueSyntax . \(BucketId uuid) -> uuid
+-- instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be BucketId where
+--         sqlValueSyntax = sqlValueSyntax . \(BucketId uuid) -> uuid
 
-instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be BucketId where
-        fromBackendRow = BucketId <$> fromBackendRow
+-- instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be BucketId where
+--         fromBackendRow = BucketId <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be BucketId
+-- instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be BucketId
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignId
 -- | ---------------------------------------------------------------------------
 newtype CampaignId =
-  CampaignId Text
+  CampaignId UUID
   deriving (Eq, Show, Generic)
 
 instance ToJSON CampaignId
 
 instance FromJSON CampaignId
 
-instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CampaignId where
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be CampaignId where
         sqlValueSyntax = sqlValueSyntax . \(CampaignId id) -> id
 
-instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CampaignId where
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be CampaignId where
         fromBackendRow = CampaignId <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be CampaignId
+instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be CampaignId
 
 
 -- | ---------------------------------------------------------------------------

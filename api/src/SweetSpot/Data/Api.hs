@@ -227,7 +227,7 @@ data TestMap = TestMap
   , sku :: !Sku
   , swapId :: !Svid
   , swapPrice :: !Price
-  } deriving (Eq, Generic)
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON TestMap where
         toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price)

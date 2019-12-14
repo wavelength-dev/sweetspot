@@ -270,7 +270,7 @@ pricePrecision :: Maybe (Word, Maybe Word)
 pricePrecision = Just (12, Just 2)
 
 campaignIdType :: DataType Postgres CampaignId
-campaignIdType = DataType pgTextType
+campaignIdType = DataType pgUuidType
 
 shopIdType :: DataType Postgres ShopId
 shopIdType = DataType pgUuidType
@@ -351,13 +351,15 @@ migration () =
                                                            shopIdType
                                                            notNull
                                                     )
-                                    , _cmpName   = field "name" text notNull
+                                    , _cmpName   = field "campaign_name"
+                                                         text
+                                                         notNull
                                     , _cmpStart  = field
-                                                           "start"
+                                                           "start_date"
                                                            (maybeType timestamptz
                                                            )
                                     , _cmpEnd    = field
-                                                           "end"
+                                                           "end_date"
                                                            (maybeType timestamptz)
                                     }
 

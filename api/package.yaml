@@ -50,6 +50,7 @@ dependencies:
 - text
 - time
 - transformers
+- uuid
 - uuid-types
 - utf8-string
 - vector

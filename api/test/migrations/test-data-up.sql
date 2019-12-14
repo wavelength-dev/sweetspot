@@ -1,62 +1,79 @@
-INSERT INTO users (user_id) VALUES (1000);
-INSERT INTO users (user_id) VALUES (1001);
-INSERT INTO users (user_id) VALUES (1002);
+-- shops
+INSERT INTO shops (shop_id, created, shopify_id, shop_name, oauth_token, client_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', now(), 'test-shop-123', 'Test Shop', 'oauthtokenlol', 'clienttokenbal');
 
-INSERT INTO campaigns (campaign_id, name, min_profit_increase, start_date, end_date) VALUES ('longv123', 'Longvadon initial test', 10, now()::date -1, now()::date + 7);
-INSERT INTO campaigns (campaign_id, name, min_profit_increase, start_date, end_date)
-VALUES ('expired_campaign', 'Some name', 10, now()::date -100, now()::date - 1);
+-- campaigns
+INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a991', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Test Campaign', now(), now()::date + 7);
 
-INSERT INTO campaigns (campaign_id, name, min_profit_increase, start_date, end_date)
-VALUES ('not_yet_active_campaign', 'Some other name', 10, now()::date +5, NULL);
+INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a992', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Expired Campaign', now()::date - 100, now()::date - 1);
 
-INSERT INTO campaign_users (campaign_id, user_id) VALUES ('longv123', 1000);
-INSERT INTO campaign_users (campaign_id, user_id) VALUES ('expired_campaign', 1001);
-INSERT INTO campaign_users (campaign_id, user_id) VALUES ('not_yet_active_campaign', 1002);
+INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Not Yet Active Campaign', now()::date + 5, now()::date + 100);
 
--- longv123
-INSERT INTO experiments (exp_id, sku, product_name) VALUES (1000, '714449933422', 'Black watchband');
-INSERT INTO experiments (exp_id, sku, product_name) VALUES (1001, '714449933423', 'Brown watchband');
--- expired_campaign
-INSERT INTO experiments (exp_id, sku, product_name) VALUES (1002, '714449933424', 'Yellow watchband');
--- not_yet_active_campaign
-INSERT INTO experiments (exp_id, sku, product_name) VALUES (1003, '714449933427', 'Blue iPad case');
+-- product_variants
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e761', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', 'shopify_pid_111_ctrl', 'shopify_svid_111_ctrl', 79.90, 'USD');
 
--- longv123
-INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1000);
-INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('longv123', 1001);
--- expired_campaign
-INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('expired_campaign', 1002);
--- not_yet_active_campaign
-INSERT INTO campaign_experiments (campaign_id, exp_id) VALUES ('not_yet_active_campaign', 1003);
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e762', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', 'shopify_pid_111_test', 'shopify_svid_111_test', 89.90, 'USD');
 
--- longv123
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1000, 'control', '12502066561095', '12502066561095', 197.90, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1001, 'test', '12502066561095', '12502066561096', 249.90, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1002, 'control', '12502066561095', '12502066561097', 249.90, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1003, 'test', '12502066561095', '12502066561098', 249.90, 197.90);
--- expired_campaign
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1004, 'control', '12502066561095', '12502066561099', 349.90, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1005, 'test', '12502066561095', '12502066561010', 399.90, 197.90);
--- not_yet_active_campaign
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1006, 'control', '12502066561095', '12502066561011', 549.90, 197.90);
-INSERT INTO buckets (bucket_id, bucket_type, original_svid, test_svid, price, original_price) VALUES (1007, 'test', '12502066561095', '12502066561012', 599.90, 197.90);
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e763', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', 'shopify_pid_222_ctrl', 'shopify_svid_222_ctrl', 79.90, 'USD');
 
--- longv123
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (1001, 1000);
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (1003, 1000);
--- expired_campaign
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (1004, 1001);
--- not_yet_active_campaign
-INSERT INTO bucket_users (bucket_id, user_id) VALUES (1006, 1002);
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e764', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', 'shopify_pid_222_test', 'shopify_svid_222_test', 89.90, 'USD');
 
--- longv123
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1000);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1000, 1001);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1001, 1002);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1001, 1003);
--- expired_campaign
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1002, 1004);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1002, 1005);
--- not_yet_active_campaign
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1003, 1006);
-INSERT INTO experiment_buckets (exp_id, bucket_id) VALUES (1003, 1007);
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e765', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', 'shopify_pid_333_ctrl', 'shopify_svid_333_ctrl', 79.90, 'USD');
+
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e766', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', 'shopify_pid_333_test', 'shopify_svid_333_test', 89.90, 'USD');
+
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e767', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', 'shopify_pid_444_ctrl', 'shopify_svid_444_ctrl', 100.90, 'USD');
+
+INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e768', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', 'shopify_pid_444_test', 'shopify_svid_test', 110.90, 'USD');
+
+-- treatments
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e761');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e762');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e763');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e764');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e765');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e766');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e767');
+
+INSERT INTO treatments (campaign_id, treatment, product_variant_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e768');
+
+-- users
+INSERT INTO users (user_id, created) VALUES ('2eb6a046-6609-4518-ab23-87f1ad56bbaa', now());
+INSERT INTO users (user_id, created) VALUES ('e3b937e7-ac65-4324-9d67-040cdc35b555', now());
+INSERT INTO users (user_id, created) VALUES ('85271f15-683b-4972-bd68-b7aaacdeb70d', now());
+
+-- user_experiments
+-- test campaign
+INSERT INTO user_experiments (user_id, campaign_id, treatment)
+VALUES ('2eb6a046-6609-4518-ab23-87f1ad56bbaa', '6072b6ea-7c37-4b26-80cd-f8f87d05a991', 0);
+-- expired campaign
+INSERT INTO user_experiments (user_id, campaign_id, treatment)
+VALUES ('e3b937e7-ac65-4324-9d67-040cdc35b555', '6072b6ea-7c37-4b26-80cd-f8f87d05a992', 1);
+-- not yet active campaign
+INSERT INTO user_experiments (user_id, campaign_id, treatment)
+VALUES ('85271f15-683b-4972-bd68-b7aaacdeb70d', '6072b6ea-7c37-4b26-80cd-f8f87d05a993', 1);

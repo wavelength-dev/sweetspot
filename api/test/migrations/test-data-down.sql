@@ -1,9 +1,9 @@
 TRUNCATE users CASCADE;
 TRUNCATE campaigns CASCADE;
-TRUNCATE experiments CASCADE;
-TRUNCATE buckets CASCADE;
-TRUNCATE bucket_users CASCADE;
-TRUNCATE campaign_users CASCADE;
-TRUNCATE campaign_experiments CASCADE;
-TRUNCATE experiment_buckets CASCADE;
+TRUNCATE user_experiments CASCADE;
+TRUNCATE treatments CASCADE;
+TRUNCATE product_variants CASCADE;
+TRUNCATE shops CASCADE;
+TRUNCATE checkout_events CASCADE;
+TRUNCATE checkout_items CASCADE;
 TRUNCATE events CASCADE;

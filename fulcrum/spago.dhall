@@ -10,7 +10,6 @@ You can edit this file as you like.
     , "console"
     , "effect"
     , "either"
-    , "identity"
     , "milkis"
     , "now"
     , "ordered-collections"

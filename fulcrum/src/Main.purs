@@ -5,10 +5,13 @@ import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (empty, fromFoldable) as Map
+import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
-import Effect.Aff (makeAff, nonCanceler, runAff_) as Aff
+import Effect.AVar as AVar
+import Effect.Aff (Aff, error)
+import Effect.Aff (runAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Console (logShow) as Console
 import Effect.Exception (error)
@@ -51,13 +54,67 @@ testContextFiber :: forall a. Effect (Ref (Aff a))
 testContextFiber = Ref.new (Aff.makeAff \_ -> pure Aff.nonCanceler)
 
 main :: Effect Unit
-main =
+main = do
+  RunState.initRunQueue
   Aff.runAff_ Console.logShow do
     eTestContext <- runExceptT getTestContext
     case eTestContext of
       Left msg -> throwError (error msg)
       Right testContext -> pure unit
 
--- Try using Concurrent.BoundedQueue
-apply :: Effect Unit
-apply = main
+insertPrice :: TestMapByVariant -> Element -> Effect Unit
+insertPrice testMap element = do
+  mVariantId <- Element.getAttribute "data-sweetspot-id" element
+  let
+    eTestMap =
+      rawVariantToEither mVariantId
+        >>= (lookupF testMap >>> note "No test for read variant id")
+  case eTestMap of
+    Left msg -> Console.error msg -- pure $ Left msg
+    Right test -> setNodePrice test
+  where
+  lookupF = flip Map.lookup
+
+  rawVariantToEither :: Maybe String -> Either String VariantId
+  rawVariantToEither rawVariantId = note "Missing variant id" rawVariantId <#> VariantId
+
+  setNodePrice :: TestMap -> Effect Unit
+  setNodePrice { swapPrice } = Node.setTextContent (show swapPrice) (Element.toNode element)
+
+applyTestMaps :: TestMapByVariant -> Effect Unit
+applyTestMaps testMap =
+  HTML.window
+    >>= Window.document
+    >>= HTMLDocument.toDocument
+    >>> pure
+    >>= Document.getElementsByClassName "sweetspot__price"
+    >>= HTMLCollection.toArray
+    >>= traverse_ (insertPrice testMap)
+
+applyDynamicPrice :: Aff Unit
+applyDynamicPrice = liftEffect $ Console.log "Applying price things!"
+
+consumeQueue :: Aff Unit -> Aff Unit
+consumeQueue fn = do
+  -- Run a queued function.
+  fn :: Aff Unit
+  -- If there is another function waiting to be consumed by the time we finish, then run it.
+  queue <- liftEffect $ RunState.getRunQueue
+  mNextFn <- liftEffect $ AVar.tryTake queue
+  case mNextFn of
+       Nothing -> mempty
+       (Just nextFn) -> nextFn
+
+queueNext :: Aff Unit -> Effect Unit
+queueNext fn = do
+  queue <- RunState.getRunQueue
+  queueStatus <- AVar.status queue
+  if not $ AVar.isFilled queueStatus then
+    -- Nothing queued, start running
+    Aff.runAff_ Console.logShow $ consumeQueue fn
+  else
+    -- Try to queue the next run, if we succeed great, if we fail, something is queued, and we queue at most one, so great too, we're done.
+    AVar.tryPut (consumeQueue fn) queue # void
+
+reapply :: Effect Unit
+reapply = queueNext applyDynamicPrice

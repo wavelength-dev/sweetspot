@@ -10,6 +10,8 @@ module Fulcrum.User
 
 import Prelude
 
+import Data.Argonaut (class EncodeJson)
+import Data.Argonaut (encodeJson) as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
@@ -23,6 +25,7 @@ import Web.Storage.Storage (getItem, setItem) as Storage
 uidStorageKey :: String
 uidStorageKey = "sweetspot__uid"
 
+-- | UserIds are id's assigned to users within the SweetSpot system.
 newtype UserId
   = UserId String
 
@@ -31,6 +34,9 @@ derive instance eqUserId :: Eq UserId
 derive instance genericUserId :: Generic UserId _
 
 derive instance newtypeUserId :: Newtype UserId _
+
+instance encodeJsonUserId :: EncodeJson UserId where
+  encodeJson = unwrap >>> Argonaut.encodeJson
 
 class
   Monad m <= LocalStorageAction m where

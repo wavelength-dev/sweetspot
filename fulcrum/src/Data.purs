@@ -2,10 +2,9 @@ module Fulcrum.Data where
 
 import Prelude
 
-import Data.Argonaut (caseJsonString, decodeJson, encodeJson) as Argonaut
-import Data.Argonaut (class DecodeJson, class EncodeJson, Json)
+import Data.Argonaut (caseJsonString, decodeJson) as Argonaut
+import Data.Argonaut (class DecodeJson, Json)
 import Data.Either (Either(..))
-import Data.Newtype (class Newtype, unwrap)
 import Data.Traversable (traverse)
 
 -- | Id which corresponds to a SweetSpot campaign. Campaigns are time bound events within which price tests take place.
@@ -19,15 +18,6 @@ newtype VariantId
 derive instance eqVariantId :: Eq VariantId
 
 derive instance ordVariantId :: Ord VariantId
-
--- | UserIds are id's assigned to users within the SweetSpot system.
-newtype UserId
-  = UserId String
-
-derive instance newtypeUserId :: Newtype UserId _
-
-instance encodeJsonUserId :: EncodeJson UserId where
-  encodeJson = unwrap >>> Argonaut.encodeJson
 
 newtype Sku
   = Sku String

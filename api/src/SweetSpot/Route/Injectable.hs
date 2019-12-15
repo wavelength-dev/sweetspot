@@ -68,7 +68,7 @@ getUserTestHandler (Just cmpId) Nothing = runAppM $ do
   isValidCampaign <- validateCampaign (CampaignId cmpId)
   if isValidCampaign
     then do
-      L.info $ "Got campaign " <> (T.pack . show $ cmpId)
+      L.info $ "Got campaign " <> showUuid cmpId
       getNewCampaignTestMaps (CampaignId cmpId) Nothing
     else do
       L.info $ "Got invalid campaign id " <> showUuid cmpId

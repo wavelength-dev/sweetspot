@@ -421,7 +421,6 @@ migration () =
                                                     (field "user_id"
                                                            userIdType
                                                            notNull
-                                                           unique
                                                     )
                                     , _ueCmpId     =
                                             CampaignKey

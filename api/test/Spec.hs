@@ -31,12 +31,12 @@ toUUID = fromJust . fromText
 user1 = toUUID "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
 user2 = toUUID "e3b937e7-ac65-4324-9d67-040cdc35b555"
 user3 = toUUID "85271f15-683b-4972-bd68-b7aaacdeb70d"
-unknownUser = toUUID "85271f15-683b-4972-bd68-b7aaacdeb70g"
+unknownUser = toUUID "8a2492c7-82f8-4845-844a-00589d270f66"
 
 campaign1 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
 campaign2 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a992"
 campaign3 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a993"
-unknownCampaign = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a998"
+unknownCampaign = toUUID "fec505ce-4100-4c3f-a55b-608b14688c52"
 
 beforeSetup :: IO ()
 beforeSetup = runInThread >> C.threadDelay magicWaitNumber
@@ -53,7 +53,7 @@ businessLogicSpec =
       clientEnv = mkClientEnv manager baseUrl
     describe "GET /api/bucket" $ do
       it "should get buckets for an existing user" $ do
-        result <- runClientM (getBucket Nothing (Just user1)) clientEnv
+        result <- runClientM (getBucket (Just campaign1) (Just user1)) clientEnv
         case result of
           Left err -> error (show err)
           Right tms -> (userId . head $ tms)  `shouldBe` UserId user1
@@ -110,13 +110,15 @@ businessLogicSpec =
         result <- runClientM (getBucket (Just campaign1) (Just user2)) clientEnv
         case result of
           Left err -> error (show err)
-          Right tms -> isJust (find ((== Sku "714449933423") . sku) tms) `shouldBe` True
+          Right tms -> do
+            print tms
+            isJust (find ((== Sku "black_wb_sku") . sku) tms) `shouldBe` True
 
       it "should not assign existing user to new campaign when old one is still running" $ do
         result <- runClientM (getBucket (Just unknownCampaign) (Just user1)) clientEnv
         case result of
           Left err -> error (show err)
-          Right tms -> (sku . head $ tms) `shouldBe` Sku "714449933422"
+          Right tms -> (sku . head $ tms) `shouldBe` Sku "black_wb_sku"
 
     -- describe "POST /api/event" $ do
     --   evStr <- runIO $ BS.readFile "./test/data/events.json"

@@ -4,7 +4,7 @@ VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', now(), 'test-shop-123', 'Test Sh
 
 -- campaigns
 INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)
-VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a991', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Test Campaign', now(), now()::date + 7);
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a991', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Test Campaign', now()::date - 1, now()::date + 7);
 
 INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)
 VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a992', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Expired Campaign', now()::date - 100, now()::date - 1);
@@ -39,28 +39,28 @@ VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e768', '61fbb484-59cf-45b2-b394-bbe830c
 
 -- treatments
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e761');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a991', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e761');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e762');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a991', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e762');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e763');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a992', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e763');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e764');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a992', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e764');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e765');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e765');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e766');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e766');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e767');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', 0, '01a972a9-b9c0-47b3-81af-4c6c8e68e767');
 
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e768');
+VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', 1, '01a972a9-b9c0-47b3-81af-4c6c8e68e768');
 
 -- users
 INSERT INTO users (user_id, created) VALUES ('2eb6a046-6609-4518-ab23-87f1ad56bbaa', now());

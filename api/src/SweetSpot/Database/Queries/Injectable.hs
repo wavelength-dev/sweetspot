@@ -8,7 +8,7 @@
 module SweetSpot.Database.Queries.Injectable
         ( InjectableDB(..)
         )
-                                             where
+where
 
 import           Control.Lens            hiding ( (<.)
                                                 , (>.)
@@ -137,60 +137,94 @@ assignUserToCampaign conn (usrId, campaignId, treatment) = do
                           ]
         return $ cmpUsr ^. ueCmpId
 
-
-
 getUserTestMaps' :: Connection -> UserId -> IO [TestMap]
 getUserTestMaps' conn uid = do
-        [usrTreatment] <-
-                runBeamPostgres conn $ runSelectReturningList $ select $ filter_
-                        ((==. val_ uid) . (^. ueUserId))
-                        (all_ (db ^. userExperiments))
-        variants <- runBeamPostgres conn $ runSelectReturningList $ select $ do
+        mUserTreatments <-
+                runBeamPostgres conn $ runSelectReturningList $ select $ do
+                        cmps    <- all_ (db ^. campaigns)
+                        usrExps <- all_ (db ^. userExperiments)
 
-                usrs    <- all_ (db ^. users)
-                usrExps <- all_ (db ^. userExperiments)
-                treats  <- all_ (db ^. treatments)
-                prodVs  <- all_ (db ^. productVariants)
-                cmps    <- all_ (db ^. campaigns)
+                        guard_ ((usrExps ^. ueUserId) ==. val_ uid)
+                        guard_ (isCampaignActive cmps)
+                        guard_ (_ueCmpId usrExps `references_` cmps)
 
-                guard_ (_ueUserId usrExps `references_` usrs)
-                guard_ (_ueCmpId usrExps `references_` cmps)
+                        pure usrExps
 
-                guard_ (_trCmpId treats `references_` cmps)
-                guard_ (_trProductVariantId treats `references_` prodVs)
+        case mUserTreatments of
+                [usrTreatment] -> do
+                        variants <-
+                                runBeamPostgres conn
+                                $ runSelectReturningList
+                                $ select
+                                $ do
 
-                guard_ (usrs ^. usrId ==. val_ uid)
-                guard_ (isCampaignActive cmps)
+                                          usrs    <- all_ (db ^. users)
+                                          usrExps <- all_
+                                                  (db ^. userExperiments)
+                                          treats <- all_ (db ^. treatments)
+                                          prodVs <- all_ (db ^. productVariants)
+                                          cmps   <- all_ (db ^. campaigns)
 
-                pure (treats, prodVs)
+                                          guard_
+                                                  (_ueUserId usrExps
+                                                  `references_` usrs
+                                                  )
+                                          guard_
+                                                  (             _ueCmpId usrExps
+                                                  `references_` cmps
+                                                  )
 
-        return
-                $ let
-                          treatment = usrTreatment ^. ueTreatment
-                          isTreatmentVariant =
-                                  (== treatment) . (^. trTreatment) . fst
-                          treatmentVariants =
-                                  filter isTreatmentVariant variants
-                          nonTreatmentVariants =
-                                  filter (not . isTreatmentVariant) variants
-                          toTestMap (_, v) = TestMap
-                                  { userId    = uid
-                                  , targetId  = v ^. pvVariantId
-                                  , sku       = v ^. pvSku
-                                  , swapPrice = v ^. pvPrice
-                                  , swapId    =
-                                          (^. pvVariantId)
-                                          . snd
-                                          . fromJust
-                                          $ L.find
-                                                    ( (== (v ^. pvId))
-                                                    . (^. trProductVariantId)
-                                                    . fst
-                                                    )
-                                                    treatmentVariants
-                                  }
-                  in
-                          L.map toTestMap nonTreatmentVariants
+                                          guard_
+                                                  (             _trCmpId treats
+                                                  `references_` cmps
+                                                  )
+                                          guard_
+                                                  (_trProductVariantId treats
+                                                  `references_` prodVs
+                                                  )
+
+                                          guard_ (usrs ^. usrId ==. val_ uid)
+                                          guard_ (isCampaignActive cmps)
+
+                                          pure (treats, prodVs)
+
+                        return
+                                $ let
+                                          treatment =
+                                                  usrTreatment ^. ueTreatment
+                                          isTreatmentVariant =
+                                                  (== treatment)
+                                                          . (^. trTreatment)
+                                                          . fst
+                                          treatmentVariants = filter
+                                                  isTreatmentVariant
+                                                  variants
+                                          nonTreatmentVariants = filter
+                                                  (not . isTreatmentVariant)
+                                                  variants
+                                          toTestMap (_, v) = TestMap
+                                                  { userId    = uid
+                                                  , targetId  = v ^. pvVariantId
+                                                  , sku       = v ^. pvSku
+                                                  , swapPrice = v ^. pvPrice
+                                                  , swapId    =
+                                                          (^. pvVariantId)
+                                                          . snd
+                                                          . fromJust
+                                                          $ L.find
+                                                                    ((== (v
+                                                                         ^. pvSku
+                                                                         )
+                                                                     )
+                                                                    . (^. pvSku
+                                                                      )
+                                                                    . snd
+                                                                    )
+                                                                    treatmentVariants
+                                                  }
+                                  in
+                                          L.map toTestMap nonTreatmentVariants
+                _ -> return []
 
 
 isCampaignActive cmp = maybe_ false_ (<. now_) (cmp ^. cmpStart)

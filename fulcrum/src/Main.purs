@@ -1,10 +1,12 @@
 module Main where
 
 import Prelude
+
+import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
-import Data.Either (Either(..))
+import Data.Either (Either(..), note)
 import Data.Map (Map)
-import Data.Map (empty, fromFoldable) as Map
+import Data.Map (fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
@@ -13,51 +15,57 @@ import Effect.AVar as AVar
 import Effect.Aff (Aff, error)
 import Effect.Aff (runAff_) as Aff
 import Effect.Class (liftEffect)
-import Effect.Console (logShow) as Console
-import Effect.Exception (error)
-import Effect.Ref (Ref)
-import Effect.Ref as Ref
+import Effect.Console (error, log, logShow) as Console
 import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
+import Fulcrum.RunState (getRunQueue, initRunQueue) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
+import Fulcrum.Service (TestMapProvisions(..))
+import Fulcrum.Service as Service
+import Fulcrum.User (UserId(..))
 import Fulcrum.User (getUserId) as User
+import Web.DOM (Element)
+import Web.DOM.Document as Document
+import Web.DOM.Element as Element
+import Web.DOM.HTMLCollection as HTMLCollection
+import Web.DOM.Node as Node
+import Web.HTML (window) as HTML
+import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
+import Web.HTML.Window (document) as Window
 
-type TestContext
-  = { variantTestMap :: Map VariantId TestMap }
+type TestMapByVariant
+  = Map VariantId TestMap
 
 hashMapFromTestMaps :: Array TestMap -> Map VariantId TestMap
 hashMapFromTestMaps = map toKeyValuePair >>> Map.fromFoldable
   where
   toKeyValuePair testMap = Tuple (VariantId testMap.variantId) testMap
 
-fetchTestContext :: ExceptT String Aff TestContext
-fetchTestContext = do
+getTestMap :: ExceptT String Aff TestMapByVariant
+getTestMap = do
   isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
   when (not isRuntimeAdequate) (throwError inadequateRuntimeError)
   mUserId <- liftEffect User.getUserId
   -- Fetch the list of TestMaps
-  -- Cache the list of TestMaps in memory and local storage
-  pure { variantTestMap: Map.empty }
+  eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId (UserId "9"))
+  -- TODO: Cache the list of TestMaps in memory and local storage
+  case eTestMaps of
+       Left msg -> throwError msg
+       Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
   where
   inadequateRuntimeError = "sweetspot can't run in current runtime"
-
-getTestContext :: ExceptT String Aff TestContext
-getTestContext = fetchTestContext
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
   Left message -> Logging.log LogLevel.Error $ show message
   Right _ -> pure unit
 
-testContextFiber :: forall a. Effect (Ref (Aff a))
-testContextFiber = Ref.new (Aff.makeAff \_ -> pure Aff.nonCanceler)
-
 main :: Effect Unit
 main = do
   RunState.initRunQueue
   Aff.runAff_ Console.logShow do
-    eTestContext <- runExceptT getTestContext
+    eTestContext <- runExceptT getTestMap
     case eTestContext of
       Left msg -> throwError (error msg)
       Right testContext -> pure unit

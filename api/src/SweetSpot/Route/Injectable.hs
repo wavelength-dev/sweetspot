@@ -86,8 +86,7 @@ trackCheckoutEventHandler (Just shopDomain) event = runAppM $ do
       insertCheckoutEvent shopId event
       return OkResponse {message = "Event received"}
     Nothing -> do
-      L.error $ "Got invalid shopDomain: " <> (T.pack . show $ shopDomain)
-        <> " cannot track checkout event"
+      L.error $ "Got invalid shopDomain: " <> showText shopDomain <> ", cannot track checkout event"
       throwError badRequestErr
 trackCheckoutEventHandler Nothing _ = runAppM $ do
   L.error "Missing shopDomain, cannot track checkout event"

@@ -75,6 +75,9 @@ instance FromHttpApiData ShopDomain where
 instance ToHttpApiData ShopDomain where
   toQueryParam (ShopDomain txt) = txt
 
+instance ShowText ShopDomain where
+  showText = pack . show
+
 -- | ---------------------------------------------------------------------------
 -- | Price
 -- | ---------------------------------------------------------------------------

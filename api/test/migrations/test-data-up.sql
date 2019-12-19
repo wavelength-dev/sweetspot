@@ -1,6 +1,6 @@
 -- shops
-INSERT INTO shops (shop_id, created, shopify_id, shop_name, oauth_token, client_id)
-VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', now(), 'test-shop-123', 'Test Shop', 'oauthtokenlol', 'clienttokenbal');
+INSERT INTO shops (shop_id, created, shop_domain, oauth_token, client_id)
+VALUES ('61fbb484-59cf-45b2-b394-bbe830c95f75', now(), 'test-shop.myshopify.com', 'oauthtokenlol', 'clienttokenbal');
 
 -- campaigns
 INSERT INTO campaigns (campaign_id, shop_id, campaign_name, start_date, end_date)

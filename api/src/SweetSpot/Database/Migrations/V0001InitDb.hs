@@ -35,8 +35,7 @@ data ShopT f
   = Shop
   { _shopId :: Columnar f ShopId
   , _shopCreated :: Columnar f LocalTime
-  , _shopShopifyId :: Columnar f Text
-  , _shopName :: Columnar f Text
+  , _shopDomain :: Columnar f ShopDomain
   , _shopClientId :: Columnar f Text
   , _shopOauthToken :: Columnar f Text
   } deriving (Generic, Beamable)
@@ -52,7 +51,7 @@ instance Table ShopT where
           = ShopKey (Columnar f ShopId) deriving (Generic, Beamable)
         primaryKey = ShopKey . _shopId
 
-Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopifyId) (LensFor name) (LensFor clientId) (LensFor oauthToken)
+Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopClientId) (LensFor shopOauthToken)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -275,6 +274,9 @@ campaignIdType = DataType pgUuidType
 shopIdType :: DataType Postgres ShopId
 shopIdType = DataType pgUuidType
 
+shopDomainType :: DataType Postgres ShopDomain
+shopDomainType = DataType pgTextType
+
 pVariantIdType :: DataType Postgres PVariantId
 pVariantIdType = DataType pgUuidType
 
@@ -316,18 +318,20 @@ migration () =
                                     , _shopCreated    = field "created"
                                                               timestamptz
                                                               notNull
-                                    , _shopShopifyId  = field
-                                                                "shopify_id"
-                                                                text
+                                    , _shopDomain     = field
+                                                                "shop_domain"
+                                                                shopDomainType
                                                                 notNull
-                                    , _shopName = field "shop_name" text notNull
+                                                                unique
                                     , _shopClientId   = field "client_id"
                                                               text
                                                               notNull
+                                                              unique
                                     , _shopOauthToken = field
                                                                 "oauth_token"
                                                                 text
                                                                 notNull
+                                                                unique
                                     }
 
 

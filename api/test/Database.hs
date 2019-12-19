@@ -13,7 +13,7 @@ connectInfo = ConnectInfo
   , connectPort = 5432
   , connectUser = "sweetspot"
   , connectPassword = ""
-  , connectDatabase = "sweetspot_test"
+  , connectDatabase = "sweetspot"
   }
 
 migrateUp :: IO ()

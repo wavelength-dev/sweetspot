@@ -22,6 +22,9 @@ import           Data.UUID.Types                ( UUID
                                                 , toText
                                                 )
 import           GHC.Generics                   ( Generic )
+import           Servant.API                    ( FromHttpApiData(..)
+                                                , ToHttpApiData(..)
+                                                )
 
 -- | ---------------------------------------------------------------------------
 -- | ShopId
@@ -39,6 +42,31 @@ instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be ShopId where
 
 instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be ShopId where
         fromBackendRow = ShopId <$> fromBackendRow
+
+-- | ---------------------------------------------------------------------------
+-- | ShopDomain
+-- | ---------------------------------------------------------------------------
+newtype ShopDomain =
+  ShopDomain Text
+  deriving (Eq, Show, Generic)
+
+instance ToJSON ShopDomain
+
+instance FromJSON ShopDomain
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be ShopDomain where
+        sqlValueSyntax = sqlValueSyntax . \(ShopDomain text) -> text
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be ShopDomain where
+        fromBackendRow = ShopDomain <$> fromBackendRow
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be ShopDomain
+
+instance FromHttpApiData ShopDomain where
+  parseQueryParam = Right . ShopDomain
+
+instance ToHttpApiData ShopDomain where
+  toQueryParam (ShopDomain txt) = txt
 
 -- | ---------------------------------------------------------------------------
 -- | Price

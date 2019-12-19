@@ -40,7 +40,8 @@ class Monad m => InjectableDB m where
   getNewCampaignTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
   getUserTestMaps :: UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
-  insertCheckoutEvent :: ApiCheckoutEvent -> m ()
+  validateShopDomain :: ShopDomain -> m (Maybe ShopId)
+  insertCheckoutEvent :: ShopId -> ApiCheckoutEvent -> m ()
 
 instance InjectableDB AppM where
         getNewCampaignTestMaps cmpId mUid = do
@@ -68,7 +69,13 @@ instance InjectableDB AppM where
 
                 return $ not (null res)
 
-        insertCheckoutEvent apiEvent = withConn $ \conn -> do
+        validateShopDomain shopDomain = withConn $ \conn ->
+                runBeamPostgres conn $ runSelectReturningOne $ select $ do
+                        shops <- all_ (db ^. shops)
+                        guard_ (_shopDomain shops ==. val_ shopDomain)
+                        pure $ shops ^. shopId
+
+        insertCheckoutEvent shopId apiEvent = withConn $ \conn -> do
                 [dbEvent] <-
                         runBeamPostgres conn
                         $ BeamExt.runInsertReturningList
@@ -84,10 +91,7 @@ instance InjectableDB AppM where
                                             , _cevOrderId = val_
                                                             $  apiEvent
                                                             ^. aceOrderId
-                                            , _cevShopId  = val_
-                                                            $  ShopKey
-                                                            $  apiEvent
-                                                            ^. aceShopId
+                                            , _cevShopId = val_ $ ShopKey shopId
                                             , _cevUserId  = val_
                                                             $  UserKey
                                                             $  apiEvent

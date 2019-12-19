@@ -277,7 +277,6 @@ instance FromJSON LineItem
 data ApiCheckoutEvent = ApiCheckoutEvent
   { _aceCampaignId :: CampaignId
   , _aceOrderId :: OrderId
-  , _aceShopId :: ShopId
   , _aceUserId :: UserId
   , _aceItems :: [LineItem]
   } deriving (Generic, Show)

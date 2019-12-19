@@ -29,15 +29,15 @@ toUUID = fromJust . fromText
 shopDomain = ShopDomain "test-shop.myshopify.com"
 invalidDomain = ShopDomain "lol-shop.myshopify.com"
 
-user1 = toUUID "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
-user2 = toUUID "e3b937e7-ac65-4324-9d67-040cdc35b555"
-user3 = toUUID "85271f15-683b-4972-bd68-b7aaacdeb70d"
-unknownUser = toUUID "8a2492c7-82f8-4845-844a-00589d270f66"
+user1 = UserId $ toUUID "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
+user2 = UserId $ toUUID "e3b937e7-ac65-4324-9d67-040cdc35b555"
+user3 = UserId $ toUUID "85271f15-683b-4972-bd68-b7aaacdeb70d"
+unknownUser = UserId $ toUUID "8a2492c7-82f8-4845-844a-00589d270f66"
 
-campaign1 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
-campaign2 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a992"
-campaign3 = toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a993"
-unknownCampaign = toUUID "fec505ce-4100-4c3f-a55b-608b14688c52"
+campaign1 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
+campaign2 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a992"
+campaign3 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a993"
+unknownCampaign = CampaignId $ toUUID "fec505ce-4100-4c3f-a55b-608b14688c52"
 
 beforeSetup :: IO ()
 beforeSetup = runInThread >> C.threadDelay magicWaitNumber
@@ -64,7 +64,7 @@ businessLogicSpec =
         result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
         case result of
           Left err -> error (show err)
-          Right tms -> (userId . head $ tms)  `shouldBe` UserId user1
+          Right tms -> (userId . head $ tms)  `shouldBe` user1
 
       it "should create a new user when given a valid campaign id" $ do
         result <- runClientM (getTest (Just shopDomain) (Just campaign1) Nothing) clientEnv
@@ -75,7 +75,7 @@ businessLogicSpec =
       it "should not return buckets for invalid campaign ids" $ do
         result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) Nothing) clientEnv
         case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status400
+          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
@@ -93,14 +93,14 @@ businessLogicSpec =
           Right _ -> expectationFailure "expected request to fail"
 
       it "should not return buckets for expired campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) Nothing (Just campaign2)) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just campaign2) Nothing) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
 
       it "should not return buckets for not yet active campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) Nothing (Just campaign3)) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just campaign3) Nothing) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
@@ -112,7 +112,7 @@ businessLogicSpec =
           Left err -> error (show err)
           Right tms -> uniqUserIds `shouldBe` 1
             where
-              uniqUserIds = length . nub $ filter (== UserId user1) $ fmap userId tms
+              uniqUserIds = length . nub $ filter (== user1) $ fmap userId tms
 
       it "should assign existing user to new campaign when old campaigns have expired" $ do
         result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user2)) clientEnv

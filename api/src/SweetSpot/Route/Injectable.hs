@@ -10,14 +10,7 @@ module SweetSpot.Route.Injectable
   )
 where
 
-import Control.Lens ((^.), (^?))
-import Control.Monad (when)
-import Data.Aeson (Value)
-import Data.Aeson.Lens (_String, key)
-import Data.Maybe (isNothing)
-import Data.Text (Text)
 import qualified Data.Text as T
-import Data.UUID.Types (UUID)
 import Servant
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Api
@@ -27,11 +20,11 @@ import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 
-type UserTestRoute
-   = "bucket" :> QueryParam "shop" ShopDomain
-              :> QueryParam "sscid" UUID
-              :> QueryParam "uid" UUID
-              :> Get '[ JSON] [TestMap]
+type UserTestRoute =
+  "bucket" :> QueryParam "shop" ShopDomain
+           :> QueryParam "sscid" CampaignId
+           :> QueryParam "uid" UserId
+           :> Get '[ JSON] [TestMap]
 
 type CheckoutEventRoute =
   "checkout" :> QueryParam "shop" ShopDomain
@@ -45,50 +38,43 @@ type InjectableAPI = UserTestRoute  :<|> CheckoutEventRoute -- :<|> LogEventRout
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
 
-showNumber :: Int -> Text
-showNumber = T.pack . show
-
-showUuid :: UUID -> Text
-showUuid = T.pack . show
-
-getUserTestHandler :: Maybe ShopDomain -> Maybe UUID -> Maybe UUID -> ServerM [TestMap]
+getUserTestHandler :: Maybe ShopDomain -> Maybe CampaignId -> Maybe UserId -> ServerM [TestMap]
 -- Existing user
 getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
   mShopId <- validateShopDomain shopDomain
   case mShopId of
     Nothing -> throwError badRequestErr
     (Just shopId) -> do
-      res <- getUserTestMaps (UserId uid)
+      res <- getUserTestMaps uid
       case (mCmpId, res) of
         (_, testMaps@(m:ms)) -> do
-          L.info $ "Got " <> showNumber (length testMaps) <> " test maps(s) for userId: " <> showUuid uid
+          L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
           return testMaps
         (Nothing, []) -> do
-          L.info $ "Could not find bucket(s) for userId: " <> showUuid uid
+          L.info $ "Could not find bucket(s) for userId: " <> showText uid
           throwError notFoundErr
         (Just newCmpId, []) -> do
-          let cId = CampaignId newCmpId
-          isValidCampaign <- validateCampaign cId
+          isValidCampaign <- validateCampaign newCmpId
           if isValidCampaign
             then
-              getNewCampaignTestMaps cId (Just (UserId uid))
+              getNewCampaignTestMaps newCmpId (Just uid)
             else do
-              L.info $ "Got invalid campaign id for existing user: " <> showUuid newCmpId
-              throwError badRequestErr
+              L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
+              throwError notFoundErr
 -- New user
 getUserTestHandler (Just shopDomain) (Just cmpId) Nothing = runAppM $ do
   mShopId <- validateShopDomain shopDomain
   case mShopId of
     Nothing -> throwError badRequestErr
     (Just shopId) -> do
-      isValidCampaign <- validateCampaign (CampaignId cmpId)
+      isValidCampaign <- validateCampaign cmpId
       if isValidCampaign
         then do
-          L.info $ "Got campaign " <> showUuid cmpId
-          getNewCampaignTestMaps (CampaignId cmpId) Nothing
+          L.info $ "Got campaign " <> showText cmpId
+          getNewCampaignTestMaps cmpId Nothing
         else do
-          L.info $ "Got invalid campaign id " <> showUuid cmpId
-          throwError badRequestErr
+          L.info $ "Got invalid campaign id for new user: " <> showText cmpId
+          throwError notFoundErr
 
 getUserTestHandler _ _ _ = throwError badRequestErr
 

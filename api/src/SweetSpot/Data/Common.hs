@@ -20,11 +20,18 @@ import           Data.Text                      ( Text
                                                 )
 import           Data.UUID.Types                ( UUID
                                                 , toText
+                                                , fromText
                                                 )
 import           GHC.Generics                   ( Generic )
 import           Servant.API                    ( FromHttpApiData(..)
                                                 , ToHttpApiData(..)
                                                 )
+
+class Show a => ShowText a where
+  showText :: a -> Text
+
+instance ShowText Int where
+  showText = pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | ShopId
@@ -161,7 +168,19 @@ instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be UserId where
 instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be UserId where
         fromBackendRow = UserId <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be UserId
+instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be UserId
+
+instance FromHttpApiData UserId where
+  parseQueryParam userId =
+    case fromText userId of
+      (Just uuid) -> Right $ UserId uuid
+      Nothing -> Left "Got invalid UUID for userId"
+
+instance ToHttpApiData UserId where
+  toQueryParam (UserId uuid) = toText uuid
+
+instance ShowText UserId where
+  showText = pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | PVariantId
@@ -220,6 +239,17 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be Campai
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be CampaignId
 
+instance FromHttpApiData CampaignId where
+  parseQueryParam campaignId =
+    case fromText campaignId of
+      (Just uuid) -> Right $ CampaignId uuid
+      Nothing -> Left "Got invalid UUID for campaignId"
+
+instance ToHttpApiData CampaignId where
+  toQueryParam (CampaignId uuid) = toText uuid
+
+instance ShowText CampaignId where
+  showText = pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | OrderId

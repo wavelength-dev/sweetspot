@@ -14,7 +14,7 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.:)
                                                 )
 import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
+
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 

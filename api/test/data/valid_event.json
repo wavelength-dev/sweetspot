@@ -1,0 +1,14 @@
+{
+  "_aceCampaignId": "6072b6ea-7c37-4b26-80cd-f8f87d05a991",
+  "_aceOrderId": "12345678",
+  "_aceShopId": "61fbb484-59cf-45b2-b394-bbe830c95f75",
+  "_aceUserId": "2eb6a046-6609-4518-ab23-87f1ad56bbaa",
+  "_aceItems": [
+    {
+      "_liProductId": "123",
+      "_liVariantId": "321",
+      "_liSku": "black_wb_sku",
+      "_liQuantity": 1
+    }
+  ]
+}

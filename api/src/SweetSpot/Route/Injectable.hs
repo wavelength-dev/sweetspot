@@ -28,11 +28,11 @@ import SweetSpot.Route.Util (badRequestErr, notFoundErr)
 type UserTestRoute
    = "bucket" :> QueryParam "sscid" UUID :> QueryParam "uid" UUID :> Get '[ JSON] [TestMap]
 
--- type EventRoute = "event" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
+type CheckoutEventRoute = "checkout" :> ReqBody '[ JSON] ApiCheckoutEvent :> Post '[ JSON] OkResponse
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type InjectableAPI = UserTestRoute  -- :<|> EventRoute :<|> LogEventRoute
+type InjectableAPI = UserTestRoute  :<|> CheckoutEventRoute -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
@@ -61,7 +61,7 @@ getUserTestHandler mCmpId (Just uid) = runAppM $ do
         then
             getNewCampaignTestMaps cId (Just (UserId uid))
         else do
-          L.info $ "Got invalid campaign id for existing user" <> showUuid newCmpId
+          L.info $ "Got invalid campaign id for existing user: " <> showUuid newCmpId
           throwError badRequestErr
 -- New user
 getUserTestHandler (Just cmpId) Nothing = runAppM $ do
@@ -76,18 +76,10 @@ getUserTestHandler (Just cmpId) Nothing = runAppM $ do
 
 getUserTestHandler Nothing Nothing = throwError badRequestErr
 
--- trackEventHandler :: Value -> ServerM OkResponse
--- trackEventHandler val = runAppM $ do
---   let pageType = val ^? key "page" . _String
---       step = val ^? key "step" . _String
---       -- Relies on show instance of page in injectable
---       input =
---         case (pageType, step) of
---           (Just "checkout", Just "thank_you") -> (Checkout, val)
---           _ -> (View, val)
---   insertEvent input
---   L.info "Tracked event"
---   return OkResponse {message = "Event received"}
+trackCheckoutEventHandler :: ApiCheckoutEvent -> ServerM OkResponse
+trackCheckoutEventHandler event = runAppM $ do
+  insertCheckoutEvent event
+  return OkResponse {message = "Event received"}
 
 -- trackLogMessageHandler :: Value -> ServerM OkResponse
 -- trackLogMessageHandler val = runAppM $ do
@@ -95,4 +87,4 @@ getUserTestHandler Nothing Nothing = throwError badRequestErr
 --   return OkResponse {message = "Event received"}
 
 injectableHandler =
-  getUserTestHandler -- :<|> trackEventHandler :<|> trackLogMessageHandler
+  getUserTestHandler :<|> trackCheckoutEventHandler -- :<|> trackLogMessageHandler

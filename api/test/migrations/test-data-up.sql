@@ -14,28 +14,28 @@ VALUES ('6072b6ea-7c37-4b26-80cd-f8f87d05a993', '61fbb484-59cf-45b2-b394-bbe830c
 
 -- product_variants
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e761', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', 'shopify_pid_111_ctrl', 'shopify_svid_111_ctrl', 79.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e761', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', '123', '321', 79.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e762', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', 'shopify_pid_111_test', 'shopify_svid_111_test', 89.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e762', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Black watchband', 'black_wb_sku', '234', '432', 89.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e763', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', 'shopify_pid_222_ctrl', 'shopify_svid_222_ctrl', 79.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e763', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', '345', '543', 79.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e764', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', 'shopify_pid_222_test', 'shopify_svid_222_test', 89.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e764', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Brown watchband', 'brown_wb_sku', '456', '654', 89.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e765', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', 'shopify_pid_333_ctrl', 'shopify_svid_333_ctrl', 79.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e765', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', '567', '765', 79.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e766', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', 'shopify_pid_333_test', 'shopify_svid_333_test', 89.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e766', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue watchband', 'blue_wb_sku', '678', '876', 89.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e767', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', 'shopify_pid_444_ctrl', 'shopify_svid_444_ctrl', 100.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e767', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', '789', '987', 100.90, 'USD');
 
 INSERT INTO product_variants (product_variant_id, shop_id, title, sku, shopify_product_id, shopify_variant_id, price, currency)
-VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e768', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', 'shopify_pid_444_test', 'shopify_svid_test', 110.90, 'USD');
+VALUES ('01a972a9-b9c0-47b3-81af-4c6c8e68e768', '61fbb484-59cf-45b2-b394-bbe830c95f75', 'Blue iPad Case', 'blue_ic_sku', '899', '998', 110.90, 'USD');
 
 -- treatments
 INSERT INTO treatments (campaign_id, treatment, product_variant_id)

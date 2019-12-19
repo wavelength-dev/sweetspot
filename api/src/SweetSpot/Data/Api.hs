@@ -268,18 +268,7 @@ makeLenses ''LineItem
 
 instance ToJSON LineItem
 
-instance FromJSON LineItem where
-        parseJSON = withObject "LineItem" $ \o -> do
-                pid      <- o .: "productId"
-                svid     <- o .: "variantId"
-                sku      <- o .: "sku"
-                quantity <- o .: "quantity"
-                return LineItem
-                        { _liProductId = Pid $ T.pack . show $ (pid :: Int)
-                        , _liVariantId = Svid $ T.pack . show $ (svid :: Int)
-                        , _liSku       = Sku sku
-                        , _liQuantity  = quantity
-                        }
+instance FromJSON LineItem
 
 
 -- | ---------------------------------------------------------------------------

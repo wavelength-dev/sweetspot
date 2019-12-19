@@ -144,7 +144,7 @@ getUserTestMaps' conn uid = do
                         cmps    <- all_ (db ^. campaigns)
                         usrExps <- all_ (db ^. userExperiments)
 
-                        guard_ ((usrExps ^. ueUserId) ==. val_ uid)
+                        guard_ (usrExps ^. ueUserId ==. val_ uid)
                         guard_ (isCampaignActive cmps)
                         guard_ (_ueCmpId usrExps `references_` cmps)
 
@@ -173,7 +173,6 @@ getUserTestMaps' conn uid = do
                                                   (             _ueCmpId usrExps
                                                   `references_` cmps
                                                   )
-
                                           guard_
                                                   (             _trCmpId treats
                                                   `references_` cmps
@@ -202,6 +201,14 @@ getUserTestMaps' conn uid = do
                                           nonTreatmentVariants = filter
                                                   (not . isTreatmentVariant)
                                                   variants
+
+                                          findSwap v = L.find
+                                                  ( (== v ^. pvSku)
+                                                  . (^. pvSku)
+                                                  . snd
+                                                  )
+                                                  treatmentVariants
+
                                           toTestMap (_, v) = TestMap
                                                   { userId    = uid
                                                   , targetId  = v ^. pvVariantId
@@ -211,16 +218,7 @@ getUserTestMaps' conn uid = do
                                                           (^. pvVariantId)
                                                           . snd
                                                           . fromJust
-                                                          $ L.find
-                                                                    ((== (v
-                                                                         ^. pvSku
-                                                                         )
-                                                                     )
-                                                                    . (^. pvSku
-                                                                      )
-                                                                    . snd
-                                                                    )
-                                                                    treatmentVariants
+                                                          $ findSwap v
                                                   }
                                   in
                                           L.map toTestMap nonTreatmentVariants

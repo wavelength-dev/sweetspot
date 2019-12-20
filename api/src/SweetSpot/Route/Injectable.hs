@@ -18,18 +18,18 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
 
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (badRequestErr, notFoundErr)
+import SweetSpot.Route.Util
 
 type UserTestRoute =
   "bucket" :> QueryParam "shop" ShopDomain
            :> QueryParam "sscid" CampaignId
            :> QueryParam "uid" UserId
-           :> Get '[ JSON] [TestMap]
+           :> Get '[JSON] [TestMap]
 
 type CheckoutEventRoute =
   "checkout" :> QueryParam "shop" ShopDomain
-             :> ReqBody '[ JSON] ApiCheckoutEvent
-             :> Post '[ JSON] OkResponse
+             :> ReqBody '[JSON] ApiCheckoutEvent
+             :> Post '[JSON] OkResponse
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 

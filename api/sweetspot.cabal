@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 140a291ef6c60b9b41e01964f9067085168a2523594512d50c82135fc382a3f4
+-- hash: ce3087be3e29deae52fc58a3824be3c75375850fa12d00f466e0d0fdf65f5a7b
 
 name:           sweetspot
 version:        0.1.0.0
@@ -58,6 +58,7 @@ library
     , beam-postgres
     , bytestring
     , containers
+    , cryptonite
     , envy
     , exceptions
     , fast-logger
@@ -109,6 +110,7 @@ executable sweetspot-exe
     , beam-postgres
     , bytestring
     , containers
+    , cryptonite
     , envy
     , exceptions
     , fast-logger
@@ -163,6 +165,7 @@ test-suite sweetspot-test
     , beam-postgres
     , bytestring
     , containers
+    , cryptonite
     , envy
     , exceptions
     , fast-logger

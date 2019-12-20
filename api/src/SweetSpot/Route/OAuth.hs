@@ -1,7 +1,10 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 module SweetSpot.Route.OAuth
   ( OAuthAPI
@@ -9,12 +12,26 @@ module SweetSpot.Route.OAuth
   )
 where
 
+import           Control.Monad.Reader.Class     ( asks )
+import           Crypto.Hash                    ( SHA256
+                                                , Digest
+                                                )
+import           Crypto.MAC.HMAC
+import qualified Data.ByteString               as BS
+import           Data.Maybe                     ( mapMaybe )
 import           Data.Text                      ( Text )
+import qualified Data.Text                     as T
+import           Data.Text.Encoding             ( encodeUtf8 )
 import           Servant
-import           SweetSpot.AppM                 ( AppM(..), ServerM )
+import           SweetSpot.AppM                 ( AppM(..)
+                                                , AppConfig(..)
+                                                , AppCtx(..)
+                                                , ServerM
+                                                )
+import           SweetSpot.Data.Common
 import           SweetSpot.Data.Api             ( OkResponse(..) )
 import qualified SweetSpot.Logger              as L
-import           SweetSpot.Route.Util           ( internalServerErr )
+import           SweetSpot.Route.Util
 import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
 
 -- See: https://help.shopify.com/en/api/getting-started/authentication/oauth
@@ -31,26 +48,67 @@ import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
 -- redirect_uri https://app.getsweetspot.com/api/oauth/redirect
 -- nonce 1123
 
+
+newtype Code = Code Text
+
+instance FromHttpApiData Code where
+  parseQueryParam = Right . Code
+
+newtype HMAC' = HMAC' Text
+
+instance FromHttpApiData HMAC' where
+  parseQueryParam = Right . HMAC'
+
+newtype Timestamp = Timestamp Text
+
+instance FromHttpApiData Timestamp where
+  parseQueryParam = Right . Timestamp
+
+newtype State = State Text
+
+instance FromHttpApiData State where
+  parseQueryParam = Right . State
+
 type OAuthAPI = "oauth" :> "redirect"
-  :> QueryParam "code" Text
-  :> QueryParam "hmac" Text
-  :> QueryParam "timestamp" Text
-  :> QueryParam "state" Text
-  :> QueryParam "shop" Text
+  :> AllQueryParams
+  :> QueryParam "code" Code
+  :> QueryParam "hmac" HMAC'
+  :> QueryParam "timestamp" Timestamp
+  :> QueryParam "state" State
+  :> QueryParam "shop" ShopDomain
   :> Get '[JSON] OkResponse
 
+checkHostname :: Text -> Bool
+checkHostname = undefined
+
+verifyRequest :: Text -> HMAC' -> QueryParamsList -> Bool
+verifyRequest secret (HMAC' hmac') params = digestTxt == hmac'
+  where
+    filtered = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) params
+    checkable = BS.intercalate "&" filtered
+    digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
+    digestTxt = T.pack . show $ digest
+
 redirectHandler
-  :: Maybe Text
-  -> Maybe Text
-  -> Maybe Text
-  -> Maybe Text
-  -> Maybe Text
+  :: QueryParamsList
+  -> Maybe Code
+  -> Maybe HMAC'
+  -> Maybe Timestamp
+  -> Maybe State
+  -> Maybe ShopDomain
   -> ServerM OkResponse
-redirectHandler code hmac timestamp state shop = runAppM $ case code of
-  Just c -> do
-    permCode <- exchangeAccessToken c
-    L.info $ "Got code: " <> permCode
-    return $ OkResponse { message = "Authenticated app" }
-  Nothing -> throwError internalServerErr
+redirectHandler params code hmac timestamp state shop = runAppM $
+  case (params, code, hmac, timestamp, state, shop) of
+    (params, Just (Code code), Just hmac, Just ts, Just state, Just shop) -> do
+      secret <- asks (shopifyClientSecret . _getConfig)
+      let isValid = verifyRequest secret hmac params
+      if isValid
+        then do
+          permCode <- exchangeAccessToken code
+          L.info $ "Got code: " <> permCode
+          return OkResponse { message = "Authenticated app" }
+        else throwError badRequestErr
+
+    _ -> throwError badRequestErr
 
 oauthHandler = redirectHandler

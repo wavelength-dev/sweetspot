@@ -7,6 +7,7 @@
 
 module SweetSpot.Database.Queries.Injectable
         ( InjectableDB(..)
+        , validateDomain
         )
 where
 
@@ -24,6 +25,7 @@ import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
 import           Database.Beam.Postgres
+import           Data.Text                      ( Text )
 import           System.Random                  ( randomRIO )
 
 import           SweetSpot.AppM                 ( AppM(..) )
@@ -42,6 +44,10 @@ class Monad m => InjectableDB m where
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
   insertCheckoutEvent :: ShopId -> ApiCheckoutEvent -> m ()
+  generateInstallNonce :: ShopDomain -> m Nonce
+  getInstallNonce :: ShopDomain -> m (Maybe Nonce)
+  deleteInstallNonce :: ShopDomain -> m ()
+  createShop :: ShopDomain -> Text -> m ()
 
 instance InjectableDB AppM where
         getNewCampaignTestMaps cmpId mUid = do
@@ -118,6 +124,44 @@ instance InjectableDB AppM where
                                           }
                                   )
                                   (apiEvent ^. aceItems)
+
+        generateInstallNonce shopDomain = withConn $ \conn -> do
+                [row] <-
+                        runBeamPostgres conn
+                        $ BeamExt.runInsertReturningList
+                        $ insert (db ^. installNonces)
+                        $ insertExpressions
+                                  [ InstallNonce
+                                            { _installNonce      = nonce_
+                                            , _installShopDomain =
+                                                    val_ shopDomain
+                                            }
+                                  ]
+                pure $ row ^. installNonce
+
+        getInstallNonce shopDomain = withConn $ \conn ->
+                runBeamPostgres conn $ runSelectReturningOne $ select $ do
+                        rows <- filter_
+                                ((==. val_ shopDomain) . (^. installShopDomain))
+                                (all_ (db ^. installNonces))
+                        pure $ rows ^. installNonce
+
+        deleteInstallNonce shopDomain = withConn $ \conn ->
+                runBeamPostgres conn $ runDelete $ delete
+                        (db ^. installNonces)
+                        ((==. val_ shopDomain) . (^. installShopDomain))
+
+        createShop shopDomain token = withConn $ \conn ->
+                runBeamPostgres conn
+                        $ runInsert
+                        $ insert (db ^. shops)
+                        $ insertExpressions
+                                  [ Shop { _shopId         = shopId_
+                                         , _shopCreated    = now_
+                                         , _shopDomain     = val_ shopDomain
+                                         , _shopOauthToken = val_ token
+                                         }
+                                  ]
 
 insertUser :: Connection -> IO UserId
 insertUser conn = do
@@ -232,3 +276,11 @@ getUserTestMaps' conn uid = do
 isCampaignActive cmp = maybe_ false_ (<. now_) (cmp ^. cmpStart)
         &&. maybe_ false_ (>. now_) (cmp ^. cmpEnd)
         where false_ = val_ False
+
+
+validateDomain :: Connection -> ShopDomain -> IO (Maybe ShopDomain)
+validateDomain conn domain =
+        runBeamPostgres conn $ runSelectReturningOne $ select $ do
+                row <- filter_ ((==. val_ domain) . (^. shopDomain))
+                               (all_ (db ^. shops))
+                pure $ row ^. shopDomain

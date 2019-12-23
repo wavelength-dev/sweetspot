@@ -10,7 +10,6 @@ module SweetSpot.Route.Injectable
   )
 where
 
-import qualified Data.Text as T
 import Servant
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Api
@@ -41,40 +40,32 @@ type InjectableAPI = UserTestRoute  :<|> CheckoutEventRoute -- :<|> LogEventRout
 getUserTestHandler :: Maybe ShopDomain -> Maybe CampaignId -> Maybe UserId -> ServerM [TestMap]
 -- Existing user
 getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
-  mShopId <- validateShopDomain shopDomain
-  case mShopId of
-    Nothing -> throwError badRequestErr
-    (Just shopId) -> do
-      res <- getUserTestMaps uid
-      case (mCmpId, res) of
-        (_, testMaps@(m:ms)) -> do
-          L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
-          return testMaps
-        (Nothing, []) -> do
-          L.info $ "Could not find bucket(s) for userId: " <> showText uid
+  res <- getUserTestMaps uid
+  case (mCmpId, res) of
+    (_, testMaps@(m:ms)) -> do
+      L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
+      return testMaps
+    (Nothing, []) -> do
+      L.info $ "Could not find bucket(s) for userId: " <> showText uid
+      throwError notFoundErr
+    (Just newCmpId, []) -> do
+      isValidCampaign <- validateCampaign newCmpId
+      if isValidCampaign
+        then
+          getNewCampaignTestMaps newCmpId (Just uid)
+        else do
+          L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
           throwError notFoundErr
-        (Just newCmpId, []) -> do
-          isValidCampaign <- validateCampaign newCmpId
-          if isValidCampaign
-            then
-              getNewCampaignTestMaps newCmpId (Just uid)
-            else do
-              L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
-              throwError notFoundErr
 -- New user
 getUserTestHandler (Just shopDomain) (Just cmpId) Nothing = runAppM $ do
-  mShopId <- validateShopDomain shopDomain
-  case mShopId of
-    Nothing -> throwError badRequestErr
-    (Just shopId) -> do
-      isValidCampaign <- validateCampaign cmpId
-      if isValidCampaign
-        then do
-          L.info $ "Got campaign " <> showText cmpId
-          getNewCampaignTestMaps cmpId Nothing
-        else do
-          L.info $ "Got invalid campaign id for new user: " <> showText cmpId
-          throwError notFoundErr
+  isValidCampaign <- validateCampaign cmpId
+  if isValidCampaign
+    then do
+      L.info $ "Got campaign " <> showText cmpId
+      getNewCampaignTestMaps cmpId Nothing
+    else do
+      L.info $ "Got invalid campaign id for new user: " <> showText cmpId
+      throwError notFoundErr
 
 getUserTestHandler _ _ _ = throwError badRequestErr
 
@@ -82,7 +73,7 @@ trackCheckoutEventHandler :: Maybe ShopDomain -> ApiCheckoutEvent -> ServerM OkR
 trackCheckoutEventHandler (Just shopDomain) event = runAppM $ do
   mShopId <- validateShopDomain shopDomain
   case mShopId of
-    (Just shopId) -> do
+    Just shopId -> do
       insertCheckoutEvent shopId event
       return OkResponse {message = "Event received"}
     Nothing -> do

@@ -36,6 +36,7 @@ data EnvConfig = EnvConfig
   , environment :: !Environment
   , shopifyClientSecret :: !Text
   , shopifyOAuthAccessToken :: !Text
+  , shopifyOAuthRedirectUri :: !Text
   , targetShop :: !Text
   , basicAuthUser :: !Text
   , basicAuthPassword :: !Text
@@ -52,6 +53,7 @@ instance FromEnv EnvConfig where
       <*> env "ENVIRONMENT"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_ACCESS_TOKEN"
+      <*> env "SHOPIFY_OAUTH_REDIRECT_URI"
       <*> env "TARGET_SHOP"
       <*> env "BASIC_AUTH_USER"
       <*> env "BASIC_AUTH_PASSWORD"

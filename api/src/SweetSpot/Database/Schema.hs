@@ -13,6 +13,8 @@ module SweetSpot.Database.Schema
         , pgGenUUID_
         , userId_
         , eventId_
+        , nonce_
+        , shopId_
         )
 where
 
@@ -35,9 +37,7 @@ import qualified SweetSpot.Database.Migrations.V0001InitDb
                                                as V1
 import           SweetSpot.Database.Migrations.V0001InitDb
                                          hiding ( migration )
-import           SweetSpot.Data.Common          ( UserId(..)
-                                                , EventId(..)
-                                                )
+import           SweetSpot.Data.Common
 
 checkedDb :: CheckedDatabaseSettings Postgres V1.SweetSpotDb
 checkedDb = evaluateDatabase migration
@@ -53,5 +53,11 @@ userId_ = unsafeRetype pgGenUUID_
 
 eventId_ :: QGenExpr ctxt Postgres s EventId
 eventId_ = unsafeRetype pgGenUUID_
+
+nonce_ :: QGenExpr ctxt Postgres s Nonce
+nonce_ = unsafeRetype pgGenUUID_
+
+shopId_ :: QGenExpr ctxt Postgres s ShopId
+shopId_ = unsafeRetype pgGenUUID_
 
 migration = migrationStep "Initial schema" V1.migration

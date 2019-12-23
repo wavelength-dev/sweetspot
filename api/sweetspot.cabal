@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ce3087be3e29deae52fc58a3824be3c75375850fa12d00f466e0d0fdf65f5a7b
+-- hash: 87e2761ca07d50c1ef3a63f43c22cb6800ccf5386097f6bc7a0237b3c63b95b3
 
 name:           sweetspot
 version:        0.1.0.0
@@ -62,6 +62,7 @@ library
     , envy
     , exceptions
     , fast-logger
+    , hostname-validate
     , hspec
     , hspec-wai
     , http-client
@@ -114,6 +115,7 @@ executable sweetspot-exe
     , envy
     , exceptions
     , fast-logger
+    , hostname-validate
     , hspec
     , hspec-wai
     , http-client
@@ -169,6 +171,7 @@ test-suite sweetspot-test
     , envy
     , exceptions
     , fast-logger
+    , hostname-validate
     , hspec
     , hspec-wai
     , http-client

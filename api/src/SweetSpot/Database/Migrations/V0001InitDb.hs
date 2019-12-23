@@ -36,7 +36,6 @@ data ShopT f
   { _shopId :: Columnar f ShopId
   , _shopCreated :: Columnar f LocalTime
   , _shopDomain :: Columnar f ShopDomain
-  , _shopClientId :: Columnar f Text
   , _shopOauthToken :: Columnar f Text
   } deriving (Generic, Beamable)
 
@@ -51,8 +50,27 @@ instance Table ShopT where
           = ShopKey (Columnar f ShopId) deriving (Generic, Beamable)
         primaryKey = ShopKey . _shopId
 
-Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopClientId) (LensFor shopOauthToken)
+Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopOauthToken)
         = tableLenses
+
+-- | ---------------------------------------------------------------------------
+-- | InstallNonce
+-- | ---------------------------------------------------------------------------
+data InstallNonceT f
+  = InstallNonce
+  { _installShopDomain :: Columnar f ShopDomain
+  , _installNonce :: Columnar f Nonce
+  } deriving (Generic, Beamable)
+
+type InstallNonce = InstallNonceT Identity
+type InstallNonceKey = PrimaryKey InstallNonceT Identity
+
+instance Table InstallNonceT where
+        data PrimaryKey InstallNonceT f
+          = InstallNonceKey (Columnar f ShopDomain) deriving (Generic, Beamable)
+        primaryKey = InstallNonceKey . _installShopDomain
+
+InstallNonce (LensFor installShopDomain) (LensFor installNonce) = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | User
@@ -246,6 +264,7 @@ instance Table EventT where
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f = SweetSpotDb
   { _shops :: f (TableEntity ShopT)
+  , _installNonces :: f (TableEntity InstallNonceT)
   , _users :: f (TableEntity UserT)
   , _campaigns :: f (TableEntity CampaignT)
   , _productVariants :: f (TableEntity ProductVariantT)
@@ -259,7 +278,7 @@ data SweetSpotDb f = SweetSpotDb
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens cryptoExtension)
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens cryptoExtension)
         = dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -304,6 +323,9 @@ orderIdType = DataType pgTextType
 uuidType :: DataType Postgres UUID
 uuidType = DataType pgUuidType
 
+nonceType :: DataType Postgres Nonce
+nonceType = DataType pgUuidType
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -323,10 +345,6 @@ migration () =
                                                                 shopDomainType
                                                                 notNull
                                                                 unique
-                                    , _shopClientId   = field "client_id"
-                                                              text
-                                                              notNull
-                                                              unique
                                     , _shopOauthToken = field
                                                                 "oauth_token"
                                                                 text
@@ -334,6 +352,19 @@ migration () =
                                                                 unique
                                     }
 
+                <*> createTable
+                            "install_nonces"
+                            InstallNonce
+                                    { _installShopDomain =
+                                            field "shop_domain"
+                                                  shopDomainType
+                                                  notNull
+                                                  unique
+                                    , _installNonce      = field "nonce"
+                                                                 nonceType
+                                                                 notNull
+                                                                 unique
+                                    }
 
                 <*> createTable
                             "users"

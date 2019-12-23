@@ -53,12 +53,12 @@ businessLogicSpec =
     let
       clientEnv = mkClientEnv manager baseUrl
     describe "GET /api/bucket" $ do
-      it "should not get tests for invalid shop domain" $ do
-        result <- runClientM (getTest (Just invalidDomain) (Just campaign1) (Just user1)) clientEnv
-        case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status400
-          Left err -> error (show err)
-          Right _ -> expectationFailure "expected request to fail"
+      -- it "should not get tests for invalid shop domain" $ do
+      --   result <- runClientM (getTest (Just invalidDomain) (Just campaign1) (Just user1)) clientEnv
+      --   case result of
+      --     Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status400
+      --     Left err -> error (show err)
+      --     Right _ -> expectationFailure "expected request to fail"
 
       it "should get buckets for an existing user" $ do
         result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv

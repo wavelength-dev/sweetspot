@@ -13,15 +13,7 @@ module SweetSpot.Route.OAuth
 where
 
 import           Control.Monad.Reader.Class     ( asks )
-import           Crypto.Hash                    ( SHA256
-                                                , Digest
-                                                )
-import           Crypto.MAC.HMAC
-import qualified Data.ByteString               as BS
-import           Data.Maybe                     ( mapMaybe )
 import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Data.Text.Encoding             ( encodeUtf8 )
 import           Servant
 import           SweetSpot.AppM                 ( AppM(..)
                                                 , AppConfig(..)
@@ -30,6 +22,7 @@ import           SweetSpot.AppM                 ( AppM(..)
                                                 )
 import           SweetSpot.Data.Common
 import           SweetSpot.Data.Api             ( OkResponse(..) )
+import           SweetSpot.Database.Queries.Injectable (InjectableDB(..))
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Route.Util
 import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
@@ -64,51 +57,78 @@ newtype Timestamp = Timestamp Text
 instance FromHttpApiData Timestamp where
   parseQueryParam = Right . Timestamp
 
-newtype State = State Text
+type InstallRoute = "oauth" :> "install"
+  :> AllQueryParams
+  :> QueryParam "shop" ShopDomain
+  :> QueryParam "timestamp" Timestamp
+  :> QueryParam "hmac" HMAC'
+  :> Get303 '[JSON] NoContent
 
-instance FromHttpApiData State where
-  parseQueryParam = Right . State
-
-type OAuthAPI = "oauth" :> "redirect"
+type RedirectRoute = "oauth" :> "redirect"
   :> AllQueryParams
   :> QueryParam "code" Code
   :> QueryParam "hmac" HMAC'
   :> QueryParam "timestamp" Timestamp
-  :> QueryParam "state" State
+  :> QueryParam "state" Nonce
   :> QueryParam "shop" ShopDomain
   :> Get '[JSON] OkResponse
 
-checkHostname :: Text -> Bool
-checkHostname = undefined
+type OAuthAPI = InstallRoute :<|> RedirectRoute
 
-verifyRequest :: Text -> HMAC' -> QueryParamsList -> Bool
-verifyRequest secret (HMAC' hmac') params = digestTxt == hmac'
+getAuthUri
+  :: ShopDomain
+  -> Text
+  -> Text
+  -> Nonce
+  -> Text
+getAuthUri shopDomain clientId redirectUri nonce =
+  "https://" <> showText shopDomain <> "/admin/oauth/authorize?"
+    <> "client_id=" <> clientId
+    <> "&scope=" <> scopes
+    <> "&redirect_uri=" <> redirectUri
+    <> "&state=" <> showText nonce
   where
-    filtered = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) params
-    checkable = BS.intercalate "&" filtered
-    digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
-    digestTxt = T.pack . show $ digest
+    scopes = "write_products,read_orders,read_analytics"
+
+installHandler
+  :: QueryParamsList
+  -> Maybe ShopDomain
+  -> Maybe Timestamp
+  -> Maybe HMAC'
+  -> ServerM (Headers '[Header "Location" Text] NoContent)
+installHandler params (Just shopDomain) (Just ts) (Just hmac) = runAppM $ do
+  config <- asks _getConfig
+  nonce <- generateInstallNonce shopDomain
+  let
+    clientId = shopifyClientId config
+    redirectUri = shopifyOAuthRedirectUri config
+    authUri =  getAuthUri shopDomain clientId redirectUri nonce
+  return $ addHeader authUri NoContent
+
+installHandler _ _ _ _ = throwError badRequestErr
 
 redirectHandler
   :: QueryParamsList
   -> Maybe Code
   -> Maybe HMAC'
   -> Maybe Timestamp
-  -> Maybe State
+  -> Maybe Nonce
   -> Maybe ShopDomain
   -> ServerM OkResponse
-redirectHandler params code hmac timestamp state shop = runAppM $
-  case (params, code, hmac, timestamp, state, shop) of
-    (params, Just (Code code), Just hmac, Just ts, Just state, Just shop) -> do
-      secret <- asks (shopifyClientSecret . _getConfig)
-      let isValid = verifyRequest secret hmac params
-      if isValid
-        then do
+redirectHandler params (Just (Code code)) (Just hmac) (Just timestamp) (Just nonce) (Just shopDomain) =
+  runAppM $ do
+      mDbNonce <- getInstallNonce shopDomain
+      case (== nonce) <$> mDbNonce of
+        Just True -> do
           permCode <- exchangeAccessToken code
-          L.info $ "Got code: " <> permCode
+          deleteInstallNonce shopDomain
+          createShop shopDomain permCode
+          L.info $ "Successfully installed app for " <> showText shopDomain
           return OkResponse { message = "Authenticated app" }
-        else throwError badRequestErr
+        _ -> do
+          L.error "OAuth redirect handler got invalid nonce"
+          throwError badRequestErr
 
-    _ -> throwError badRequestErr
+redirectHandler _ _ _ _ _ _ = throwError badRequestErr
 
-oauthHandler = redirectHandler
+oauthHandler = installHandler :<|> redirectHandler

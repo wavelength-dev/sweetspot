@@ -30,6 +30,7 @@ dependencies:
 - envy
 - exceptions
 - fast-logger
+- hostname-validate
 - hspec
 - hspec-wai
 - http-client

@@ -14,10 +14,9 @@ import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
 import           Data.Scientific                ( Scientific )
-import           Data.Text                      ( Text
-                                                , pack
-                                                , unpack
-                                                )
+import           Data.Text                      ( Text )
+import qualified Data.Text                     as T
+import           Data.Text.Encoding             ( encodeUtf8 )
 import           Data.UUID.Types                ( UUID
                                                 , toText
                                                 , fromText
@@ -26,12 +25,13 @@ import           GHC.Generics                   ( Generic )
 import           Servant.API                    ( FromHttpApiData(..)
                                                 , ToHttpApiData(..)
                                                 )
+import           Text.Hostname                  ( validHostname )
 
 class Show a => ShowText a where
   showText :: a -> Text
 
 instance ShowText Int where
-  showText = pack . show
+        showText = T.pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | ShopId
@@ -70,13 +70,19 @@ instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be ShopDo
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be ShopDomain
 
 instance FromHttpApiData ShopDomain where
-  parseQueryParam = Right . ShopDomain
+        parseQueryParam qp =
+          if isValidHostname && isShopifyDomain
+                then Right $ ShopDomain qp
+                else Left "invalid ShopDomain"
+          where
+            isValidHostname = validHostname (encodeUtf8 qp)
+            isShopifyDomain = T.takeEnd 14 qp == ".myshopify.com"
 
 instance ToHttpApiData ShopDomain where
-  toQueryParam (ShopDomain txt) = txt
+        toQueryParam (ShopDomain txt) = txt
 
 instance ShowText ShopDomain where
-  showText = pack . show
+        showText (ShopDomain txt) = txt
 
 -- | ---------------------------------------------------------------------------
 -- | Price
@@ -174,16 +180,15 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be UserId
 instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be UserId
 
 instance FromHttpApiData UserId where
-  parseQueryParam userId =
-    case fromText userId of
-      (Just uuid) -> Right $ UserId uuid
-      Nothing -> Left "Got invalid UUID for userId"
+        parseQueryParam userId = case fromText userId of
+                (Just uuid) -> Right $ UserId uuid
+                Nothing     -> Left "Got invalid UUID for userId"
 
 instance ToHttpApiData UserId where
-  toQueryParam (UserId uuid) = toText uuid
+        toQueryParam (UserId uuid) = toText uuid
 
 instance ShowText UserId where
-  showText = pack . show
+        showText = T.pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | PVariantId
@@ -205,25 +210,6 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be PVaria
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be PVariantId
 
 -- | ---------------------------------------------------------------------------
--- | BucketId
--- | ---------------------------------------------------------------------------
--- newtype BucketId =
---   BucketId UUID
---   deriving (Eq, Show, Generic)
-
--- instance ToJSON BucketId
-
--- instance FromJSON BucketId
-
--- instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be BucketId where
---         sqlValueSyntax = sqlValueSyntax . \(BucketId uuid) -> uuid
-
--- instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be BucketId where
---         fromBackendRow = BucketId <$> fromBackendRow
-
--- instance (BeamSqlBackend be, HasSqlEqualityCheck be Int) => HasSqlEqualityCheck be BucketId
-
--- | ---------------------------------------------------------------------------
 -- | CampaignId
 -- | ---------------------------------------------------------------------------
 newtype CampaignId =
@@ -243,16 +229,15 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be Campai
 instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be CampaignId
 
 instance FromHttpApiData CampaignId where
-  parseQueryParam campaignId =
-    case fromText campaignId of
-      (Just uuid) -> Right $ CampaignId uuid
-      Nothing -> Left "Got invalid UUID for campaignId"
+        parseQueryParam campaignId = case fromText campaignId of
+                (Just uuid) -> Right $ CampaignId uuid
+                Nothing     -> Left "Got invalid UUID for campaignId"
 
 instance ToHttpApiData CampaignId where
-  toQueryParam (CampaignId uuid) = toText uuid
+        toQueryParam (CampaignId uuid) = toText uuid
 
 instance ShowText CampaignId where
-  showText = pack . show
+        showText = T.pack . show
 
 -- | ---------------------------------------------------------------------------
 -- | OrderId
@@ -314,7 +299,28 @@ instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be EventT
                         _ ->
                                 fail
                                         (  "Invalid value for EventType: "
-                                        ++ unpack val
+                                        ++ T.unpack val
                                         )
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be EventType
+
+-- | ---------------------------------------------------------------------------
+-- | Nonce
+-- | ---------------------------------------------------------------------------
+newtype Nonce =
+  Nonce UUID
+  deriving (Eq, Show)
+
+instance FromHttpApiData Nonce where
+        parseQueryParam qp = case fromText qp of
+                Just uuid -> Right $ Nonce uuid
+                Nothing   -> Left "invalid nonce"
+
+instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be Nonce where
+        sqlValueSyntax = sqlValueSyntax . \(Nonce uuid) -> uuid
+
+instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be Nonce where
+        fromBackendRow = Nonce <$> fromBackendRow
+
+instance ShowText Nonce where
+        showText (Nonce uuid) = toText uuid

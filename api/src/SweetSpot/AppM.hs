@@ -24,6 +24,7 @@ data AppConfig = AppConfig
   , shopifyClientId :: !Text
   , shopifyClientSecret :: !Text
   , shopifyOAuthAccessToken :: !Text
+  , shopifyOAuthRedirectUri :: !Text
   , basicAuthUser :: !Text
   , basicAuthPassword :: !Text
   } deriving (Generic, Show)

@@ -6,6 +6,7 @@ module SweetSpot.Logger
   ( info
   , info'
   , warn
+  , warn'
   , error
   , error'
   ) where
@@ -77,6 +78,9 @@ log' lvl logset msg = do
 
 info' :: LoggerSet -> Text -> IO ()
 info' = log' Info
+
+warn' :: LoggerSet -> Text -> IO ()
+warn' = log' Warn
 
 error' :: LoggerSet -> Text -> IO ()
 error' = log' Error

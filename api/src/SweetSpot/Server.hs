@@ -98,6 +98,7 @@ runServer = do
                                                         envConfig
                         , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken
                                                             envConfig
+                        , shopifyOAuthRedirectUri = Env.shopifyOAuthRedirectUri envConfig
                         , basicAuthUser = Env.basicAuthUser envConfig
                         , basicAuthPassword = Env.basicAuthPassword envConfig
                         }

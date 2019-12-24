@@ -22,7 +22,8 @@ import           SweetSpot.AppM                 ( AppM(..)
                                                 )
 import           SweetSpot.Data.Common
 import           SweetSpot.Data.Api             ( OkResponse(..) )
-import           SweetSpot.Database.Queries.Injectable (InjectableDB(..))
+import           SweetSpot.Database.Queries.Install
+                                                ( InstallDB(..) )
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Route.Util
 import           SweetSpot.ShopifyClient        ( exchangeAccessToken )

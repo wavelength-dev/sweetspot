@@ -1,65 +1,34 @@
 {-# LANGUAGE OverloadedStrings, TypeFamilies, DataKinds,
   TypeOperators #-}
 
-import qualified Control.Concurrent as C
+module Spec.Business (businessLogicSpec) where
+
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.List (nub, find)
 import Data.Maybe (fromJust, isJust)
-import Data.UUID (fromText)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Types
 import Servant
 import Servant.Client
 import Test.Hspec
-import Test.Hspec.Wai hiding (pending)
 
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Route.Injectable (InjectableAPI)
--- import SweetSpot.Route.Dashboard (DashboardAPI)
-import SweetSpot.Server (runServer)
 
 import Database (reset)
-
-magicWaitNumber = 3 * 1000 * 1000
-
-toUUID = fromJust . fromText
-
-shopDomain = ShopDomain "test-shop.myshopify.com"
-invalidDomain = ShopDomain "lol-shop.myshopify.com"
-
-user1 = UserId $ toUUID "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
-user2 = UserId $ toUUID "e3b937e7-ac65-4324-9d67-040cdc35b555"
-user3 = UserId $ toUUID "85271f15-683b-4972-bd68-b7aaacdeb70d"
-unknownUser = UserId $ toUUID "8a2492c7-82f8-4845-844a-00589d270f66"
-
-campaign1 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
-campaign2 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a992"
-campaign3 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a993"
-unknownCampaign = CampaignId $ toUUID "fec505ce-4100-4c3f-a55b-608b14688c52"
-
-beforeSetup :: IO ()
-beforeSetup = runInThread >> C.threadDelay magicWaitNumber
-  where
-    runInThread = liftIO $ C.forkIO runServer
+import Util
 
 businessLogicSpec :: Spec
 businessLogicSpec =
-  beforeAll_ beforeSetup . before_ reset $ do
+  beforeAll_ (beforeSetup "test_business") . before_ reset $ do
     let getTest :<|> postCheckout = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
     manager <- runIO $ newManager defaultManagerSettings
     let
       clientEnv = mkClientEnv manager baseUrl
     describe "GET /api/bucket" $ do
-      -- it "should not get tests for invalid shop domain" $ do
-      --   result <- runClientM (getTest (Just invalidDomain) (Just campaign1) (Just user1)) clientEnv
-      --   case result of
-      --     Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status400
-      --     Left err -> error (show err)
-      --     Right _ -> expectationFailure "expected request to fail"
-
       it "should get buckets for an existing user" $ do
         result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
         case result of

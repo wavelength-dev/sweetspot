@@ -47,18 +47,6 @@ auth user pass = routedMiddleware ("dashboard" `elem`) mw
     check u p = return $ u == user && p == pass
     mw = basicAuth check "Dashboard realm"
 
-getMiddleware :: AppCtx -> Middleware
-getMiddleware ctx =
-  -- Disable auth in dev for ease of testing
-  if env == Dev
-    then gzipStatic
-    else gzipStatic . auth user pass . validateShopDomain ctx . verifyHmac ctx
-  where
-    config = _getConfig ctx
-    env = environment config
-    user = encodeUtf8 $ basicAuthUser config
-    pass = encodeUtf8 $ basicAuthPassword config
-
 send400 :: BSL.ByteString -> Application
 send400 msg _req sendResponse = sendResponse $ responseLBS
   status400 [(hContentType, "text/plain")] msg
@@ -100,3 +88,24 @@ validateShopDomain ctx app req sendResponse = do
     _ -> do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
+
+getMiddleware :: AppCtx -> Middleware
+getMiddleware ctx =
+  case env of
+    -- So we don't have to deal with hmac or auth during dev
+    Dev -> gzipStatic . validateShopDomainRouted
+    -- So we can focus on testing handlers themselves
+    TestBusiness -> gzipStatic
+    -- Else everything
+    _ -> gzipStatic . auth user pass . verifyHmacRouted . validateShopDomainRouted
+  where
+    config = _getConfig ctx
+    env = environment config
+    user = encodeUtf8 $ basicAuthUser config
+    pass = encodeUtf8 $ basicAuthPassword config
+    nonVerifiedRoutes =
+      \paths -> notElem "static" paths && notElem "health" paths
+    verifyHmacRouted =
+      routedMiddleware nonVerifiedRoutes (verifyHmac ctx)
+    validateShopDomainRouted =
+      routedMiddleware nonVerifiedRoutes (validateShopDomain ctx)

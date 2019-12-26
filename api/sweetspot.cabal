@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a040c85ff96ee1d5e3a1a8306270e0fd55e6bdfd0794ae7c5f30f47aac9b4070
+-- hash: e7ba7ef178a22318d930b5ca29069a4f1fb71f75bf23b33f3bb48850706bf274
 
 name:           sweetspot
 version:        0.1.0.0
@@ -153,9 +153,12 @@ executable sweetspot-exe
 
 test-suite sweetspot-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Main.hs
   other-modules:
       Database
+      Spec.Business
+      Spec.Http
+      Util
       Paths_sweetspot
   hs-source-dirs:
       test

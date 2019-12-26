@@ -18,7 +18,7 @@ import           System.Envy                    ( FromEnv
                                                 , Var(..)
                                                 )
 
-data Environment = Dev | Stag | Prod
+data Environment = Dev | Stag | Prod | TestBusiness | TestHttp
   deriving (Eq, Show)
 
 instance Var Environment where
@@ -26,6 +26,8 @@ instance Var Environment where
     "dev"  -> Just Dev
     "stag" -> Just Stag
     "prod" -> Just Prod
+    "test_business" -> Just TestBusiness
+    "test_http" -> Just TestHttp
     _      -> Nothing
   toVar = show
 

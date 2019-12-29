@@ -45,7 +45,6 @@ import           SweetSpot.Route.Static         ( StaticAPI
 import           SweetSpot.Route.OAuth          ( OAuthAPI
                                                 , oauthHandler
                                                 )
-import           SweetSpot.Shop                as Shop
 import           System.Log.FastLogger          ( defaultBufSize
                                                 , newStdoutLoggerSet
                                                 )
@@ -81,8 +80,6 @@ runServer :: IO ()
 runServer = do
         mEnvConfig <- Env.getEnvConfig
         let envConfig  = either error id mEnvConfig
-        let shop = rightOrThrow $ Shop.readShop (Env.targetShop envConfig)
-        let shopConfig = getShopConfig shop
         let dbConfig = DbConfig { host     = Env.dbHost envConfig
                                 , name     = Env.dbName envConfig
                                 , password = Env.dbPassword envConfig
@@ -90,14 +87,9 @@ runServer = do
         let
                 config = AppConfig
                         { environment = Env.environment envConfig
-                        , shopifyApiRoot = Shop.shopApi shopConfig
-                        , shopifyAccessTokenEndpoint = Shop.accessTokenEndpoint
-                                                               shopConfig
-                        , shopifyClientId = Shop.clientId shopConfig
+                        , shopifyClientId = Env.shopifyClientId envConfig
                         , shopifyClientSecret = Env.shopifyClientSecret
                                                         envConfig
-                        , shopifyOAuthAccessToken = Env.shopifyOAuthAccessToken
-                                                            envConfig
                         , shopifyOAuthRedirectUri = Env.shopifyOAuthRedirectUri envConfig
                         , basicAuthUser = Env.basicAuthUser envConfig
                         , basicAuthPassword = Env.basicAuthPassword envConfig

@@ -28,28 +28,13 @@ import           SweetSpot.Database.Queries.Install
                                                 ( InstallDB(..) )
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Route.Util
-import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
-
--- See: https://help.shopify.com/en/api/getting-started/authentication/oauth
--- The below handler handles Shopify redirecting the merchant to us, with an authorization_code is the URL. We use that authorization_code to then make a request to Shopify that gets us an access token for the given store.
--- TODO: Make the nonce a randomly selected value checked against the nonce in the oauth callback
-
--- LibertyPrice
--- scopes read_products,write_products,read_orders,read_analytics
--- redirect_uri https://app-staging.getsweetspot.com/api/oauth/redirect
--- nonce 1123
---
--- Longvadon
--- scopes read_products,write_products,read_orders,read_analytics
--- redirect_uri https://app.getsweetspot.com/api/oauth/redirect
--- nonce 1123
+import           SweetSpot.Shopify.Client       ( MonadShopify(..) )
 
 
 type InstallRoute = "oauth" :> "install"
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
-  -- :> Get '[JSON] OkResponse
   :> Get303 '[PlainText] NoContent
 
 type RedirectRoute = "oauth" :> "redirect"
@@ -105,11 +90,16 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
       mDbNonce <- getInstallNonce shopDomain
       case (== nonce) <$> mDbNonce of
         Just True -> do
-          permCode <- exchangeAccessToken code
-          deleteInstallNonce shopDomain
-          createShop shopDomain permCode
-          L.info $ "Successfully installed app for " <> showText shopDomain
-          return OkResponse { message = "Authenticated app" }
+          mPermCode <- exchangeAccessToken shopDomain code
+          case mPermCode of
+            Right permCode -> do
+              deleteInstallNonce shopDomain
+              createShop shopDomain permCode
+              L.info $ "Successfully installed app for " <> showText shopDomain
+              return OkResponse { message = "This should redirect to dashboard" }
+            Left err -> do
+              L.error err
+              throwError internalServerErr
         _ -> do
           L.error "OAuth redirect handler got invalid nonce"
           throwError badRequestErr

@@ -8,13 +8,9 @@
 
 module SweetSpot.Route.Util where
 
-import           Data.ByteString                ( ByteString )
+
 import           Data.Text                      ( Text )
-import           Network.Wai                    ( queryString )
 import           Servant
-import           Servant.Server.Internal        ( passToServer
-                                                , hoistServerWithContext
-                                                )
 
 
 internalServerErr = err500 { errBody = "Something went wrong" }

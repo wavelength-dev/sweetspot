@@ -36,7 +36,7 @@ data ShopT f
   { _shopId :: Columnar f ShopId
   , _shopCreated :: Columnar f LocalTime
   , _shopDomain :: Columnar f ShopDomain
-  , _shopOauthToken :: Columnar f Text
+  , _shopOAuthToken :: Columnar f Text
   } deriving (Generic, Beamable)
 
 type Shop = ShopT Identity
@@ -50,7 +50,7 @@ instance Table ShopT where
           = ShopKey (Columnar f ShopId) deriving (Generic, Beamable)
         primaryKey = ShopKey . _shopId
 
-Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopOauthToken)
+Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopOAuthToken)
         = tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -345,7 +345,7 @@ migration () =
                                                                 shopDomainType
                                                                 notNull
                                                                 unique
-                                    , _shopOauthToken = field
+                                    , _shopOAuthToken = field
                                                                 "oauth_token"
                                                                 text
                                                                 notNull

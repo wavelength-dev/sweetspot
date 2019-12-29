@@ -16,7 +16,7 @@ import           Data.Aeson                     ( FromJSON
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-import           Data.Text.Encoding             ( encodeUtf8 )
+
 import           Data.UUID.Types                ( UUID
                                                 , toText
                                                 , fromText
@@ -55,7 +55,10 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be ShopId
 -- | ---------------------------------------------------------------------------
 newtype ShopDomain =
   ShopDomain Text
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Generic)
+
+instance Show ShopDomain where
+  show (ShopDomain txt) = T.unpack txt
 
 instance ToJSON ShopDomain
 

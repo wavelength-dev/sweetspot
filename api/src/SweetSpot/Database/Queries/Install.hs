@@ -17,6 +17,7 @@ class Monad m => InstallDB m where
   getInstallNonce :: ShopDomain -> m (Maybe Nonce)
   deleteInstallNonce :: ShopDomain -> m ()
   createShop :: ShopDomain -> Text -> m ()
+  getOAuthToken :: ShopDomain -> m (Maybe Text)
 
 instance InstallDB AppM where
         generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -53,6 +54,13 @@ instance InstallDB AppM where
                                   [ Shop { _shopId         = shopId_
                                          , _shopCreated    = now_
                                          , _shopDomain     = val_ shopDomain
-                                         , _shopOauthToken = val_ token
+                                         , _shopOAuthToken = val_ token
                                          }
                                   ]
+
+        getOAuthToken domain = withConn $ \conn ->
+                runBeamPostgres conn $ runSelectReturningOne $ select $ do
+                        rows <- filter_
+                                ((==. val_ domain) . (^. shopDomain))
+                                (all_ (db ^. shops))
+                        pure $ rows ^. shopOAuthToken

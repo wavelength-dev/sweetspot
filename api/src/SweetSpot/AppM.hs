@@ -19,11 +19,8 @@ import           SweetSpot.Env                  ( Environment )
 
 data AppConfig = AppConfig
   { environment :: !Environment
-  , shopifyApiRoot :: !Text
-  , shopifyAccessTokenEndpoint :: !Text
   , shopifyClientId :: !Text
   , shopifyClientSecret :: !Text
-  , shopifyOAuthAccessToken :: !Text
   , shopifyOAuthRedirectUri :: !Text
   , basicAuthUser :: !Text
   , basicAuthPassword :: !Text

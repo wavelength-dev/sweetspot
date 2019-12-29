@@ -7,7 +7,6 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.List (nub, find)
 import Data.Maybe (fromJust, isJust)
-import Data.Text (Text)
 import Network.HTTP.Client hiding (Proxy, responseHeaders)
 import Network.HTTP.Types hiding (Header, responseHeaders)
 import Servant

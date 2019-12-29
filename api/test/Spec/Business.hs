@@ -7,8 +7,9 @@ import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
 import Data.List (nub, find)
 import Data.Maybe (fromJust, isJust)
-import Network.HTTP.Client hiding (Proxy)
-import Network.HTTP.Types
+import Data.Text (Text)
+import Network.HTTP.Client hiding (Proxy, responseHeaders)
+import Network.HTTP.Types hiding (Header, responseHeaders)
 import Servant
 import Servant.Client
 import Test.Hspec
@@ -16,13 +17,20 @@ import Test.Hspec
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Route.Injectable (InjectableAPI)
+import SweetSpot.Route.OAuth (OAuthAPI)
 
 import Database (reset)
+import Mock.Shopify
 import Util
+
+setup = do
+  withEnv [("ENVIRONMENT", "test_business")]
+  withApi
+  withShopify
 
 businessLogicSpec :: Spec
 businessLogicSpec =
-  beforeAll_ (beforeSetup "test_business") . before_ reset $ do
+  beforeAll_ setup . before_ reset $ do
     let getTest :<|> postCheckout = client (Proxy :: Proxy InjectableAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
     manager <- runIO $ newManager defaultManagerSettings
@@ -105,6 +113,19 @@ businessLogicSpec =
         case result of
           Left err -> error $ show err
           Right _ -> return ()
+
+    describe "POST /api/oauth/install" $ do
+      let installHandler :<|> redirectHandler = client (Proxy :: Proxy OAuthAPI)
+      it "should return empty response from install endpoint" $ do
+        result <- runClientM (installHandler
+                              (Just (ShopDomain "localhost:9999"))
+                              (Just (Timestamp "12345"))
+                              (Just (HMAC' "lolbal")))
+                             clientEnv
+        case result of
+          Left err -> error $ "Got error: " <> show err
+          Right (Headers NoContent hs) -> return ()
+
 
 
 main :: IO ()

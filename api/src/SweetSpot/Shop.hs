@@ -23,7 +23,7 @@ readShop unknownShop =
 
 getShopConfig :: Shop -> ShopConfig
 getShopConfig LibertyPrice = ShopConfig
-  { shopApi             = "https://libertyprice.myshopify.com"
+  { shopApi             = "http://localhost:9999"
   , accessTokenEndpoint =
     "/admin/oauth/access_token"
   , clientId            = "634b531a6568d6eb076c2ad5c7e0265a"

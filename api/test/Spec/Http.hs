@@ -18,13 +18,17 @@ opts = checkResponse ?~ checker $ defaults
 
 apiRoot = "http://localhost:8082"
 
+setup = do
+  withEnv [("ENVIRONMENT", "test_http")]
+  withApi
+
 httpSpec :: Spec
 httpSpec =
-  beforeAll_ (beforeSetup "test_http") . before_ reset $ do
-    describe "GET /health" $ do
+  beforeAll_ setup . before_ reset $ do
+    describe "GET /health" $
       it "should always return 200" $ do
         res <- getWith opts $ apiRoot <> "/health"
-        res ^. responseStatus ^. statusCode `shouldBe` 200
+        res ^. responseStatus . statusCode `shouldBe` 200
 
     describe "GET /api/bucket" $ do
       it "should return 400 with no hmac" $ do
@@ -50,4 +54,4 @@ httpSpec =
           <> "?shop=" <> shopId
           <> "&sscid=" <> cmpId
           <> "&hmac=" <> hmac
-        res ^. responseStatus ^. statusCode `shouldBe` 200
+        res ^. responseStatus . statusCode `shouldBe` 200

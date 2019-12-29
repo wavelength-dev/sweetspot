@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e7ba7ef178a22318d930b5ca29069a4f1fb71f75bf23b33f3bb48850706bf274
+-- hash: 777e8868b2377091799a383d5ca32cf06c5313dcbd5188f5059a55e063596677
 
 name:           sweetspot
 version:        0.1.0.0
@@ -156,6 +156,7 @@ test-suite sweetspot-test
   main-is: Main.hs
   other-modules:
       Database
+      Mock.Shopify
       Spec.Business
       Spec.Http
       Util

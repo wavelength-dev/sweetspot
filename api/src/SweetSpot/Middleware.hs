@@ -103,9 +103,12 @@ getMiddleware ctx =
     env = environment config
     user = encodeUtf8 $ basicAuthUser config
     pass = encodeUtf8 $ basicAuthPassword config
-    nonVerifiedRoutes =
-      \paths -> notElem "static" paths && notElem "health" paths
-    verifyHmacRouted =
-      routedMiddleware nonVerifiedRoutes (verifyHmac ctx)
+
+    hmacVerifiedRoutes paths = notElem "static" paths && notElem "health" paths
+    -- During install, shop is not yet in db
+    domainVerifiedRoutes paths = hmacVerifiedRoutes paths && notElem "oauth" paths
+
+    verifyHmacRouted=
+      routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
     validateShopDomainRouted =
-      routedMiddleware nonVerifiedRoutes (validateShopDomain ctx)
+      routedMiddleware domainVerifiedRoutes (validateShopDomain ctx)

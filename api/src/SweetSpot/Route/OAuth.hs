@@ -9,6 +9,8 @@
 module SweetSpot.Route.OAuth
   ( OAuthAPI
   , oauthHandler
+  , HMAC'
+  , Timestamp
   )
 where
 
@@ -43,30 +45,14 @@ import           SweetSpot.ShopifyClient        ( exchangeAccessToken )
 -- nonce 1123
 
 
-newtype Code = Code Text
-
-instance FromHttpApiData Code where
-  parseQueryParam = Right . Code
-
-newtype HMAC' = HMAC' Text
-
-instance FromHttpApiData HMAC' where
-  parseQueryParam = Right . HMAC'
-
-newtype Timestamp = Timestamp Text
-
-instance FromHttpApiData Timestamp where
-  parseQueryParam = Right . Timestamp
-
 type InstallRoute = "oauth" :> "install"
-  :> AllQueryParams
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
-  :> Get303 '[JSON] NoContent
+  -- :> Get '[JSON] OkResponse
+  :> Get303 '[PlainText] NoContent
 
 type RedirectRoute = "oauth" :> "redirect"
-  :> AllQueryParams
   :> QueryParam "code" Code
   :> QueryParam "hmac" HMAC'
   :> QueryParam "timestamp" Timestamp
@@ -83,7 +69,7 @@ getAuthUri
   -> Nonce
   -> Text
 getAuthUri shopDomain clientId redirectUri nonce =
-  "https://" <> showText shopDomain <> "/admin/oauth/authorize?"
+  "http://" <> showText shopDomain <> "/admin/oauth/authorize?"
     <> "client_id=" <> clientId
     <> "&scope=" <> scopes
     <> "&redirect_uri=" <> redirectUri
@@ -92,12 +78,11 @@ getAuthUri shopDomain clientId redirectUri nonce =
     scopes = "write_products,read_orders,read_analytics"
 
 installHandler
-  :: QueryParamsList
-  -> Maybe ShopDomain
+  :: Maybe ShopDomain
   -> Maybe Timestamp
   -> Maybe HMAC'
   -> ServerM (Headers '[Header "Location" Text] NoContent)
-installHandler params (Just shopDomain) (Just ts) (Just hmac) = runAppM $ do
+installHandler (Just shopDomain) (Just _) (Just hmac) = runAppM $ do
   config <- asks _getConfig
   nonce <- generateInstallNonce shopDomain
   let
@@ -106,17 +91,16 @@ installHandler params (Just shopDomain) (Just ts) (Just hmac) = runAppM $ do
     authUri =  getAuthUri shopDomain clientId redirectUri nonce
   return $ addHeader authUri NoContent
 
-installHandler _ _ _ _ = throwError badRequestErr
+installHandler _ _ _ = throwError badRequestErr
 
 redirectHandler
-  :: QueryParamsList
-  -> Maybe Code
+  :: Maybe Code
   -> Maybe HMAC'
   -> Maybe Timestamp
   -> Maybe Nonce
   -> Maybe ShopDomain
   -> ServerM OkResponse
-redirectHandler params (Just (Code code)) (Just hmac) (Just timestamp) (Just nonce) (Just shopDomain) =
+redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopDomain) =
   runAppM $ do
       mDbNonce <- getInstallNonce shopDomain
       case (== nonce) <$> mDbNonce of
@@ -130,6 +114,6 @@ redirectHandler params (Just (Code code)) (Just hmac) (Just timestamp) (Just non
           L.error "OAuth redirect handler got invalid nonce"
           throwError badRequestErr
 
-redirectHandler _ _ _ _ _ _ = throwError badRequestErr
+redirectHandler _ _ _ _ _ = throwError badRequestErr
 
 oauthHandler = installHandler :<|> redirectHandler

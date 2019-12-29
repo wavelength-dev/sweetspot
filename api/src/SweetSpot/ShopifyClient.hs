@@ -81,6 +81,8 @@ data ExchangeBody = ExchangeBody
 
 instance ToJSON ExchangeBody
 
+instance FromJSON ExchangeBody
+
 toVariant :: StoreVariant -> Variant
 toVariant v = Variant
         { _vId        = Svid . pack . show $ id (v :: StoreVariant)

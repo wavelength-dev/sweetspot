@@ -70,13 +70,14 @@ instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be ShopDo
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be ShopDomain
 
 instance FromHttpApiData ShopDomain where
-        parseQueryParam qp =
-          if isValidHostname && isShopifyDomain
-                then Right $ ShopDomain qp
-                else Left "invalid ShopDomain"
-          where
-            isValidHostname = validHostname (encodeUtf8 qp)
-            isShopifyDomain = T.takeEnd 14 qp == ".myshopify.com"
+        parseQueryParam = Right . ShopDomain
+        -- TODO: figure out how to validate domain while using localhost:9999 for mock
+          -- if isValidHostname -- && isShopifyDomain
+          --       then Right $ ShopDomain qp
+          --       else Left "invalid ShopDomain"
+          -- where
+          --   isValidHostname = validHostname (encodeUtf8 qp)
+            -- isShopifyDomain = T.takeEnd 14 qp == ".myshopify.com"
 
 instance ToHttpApiData ShopDomain where
         toQueryParam (ShopDomain txt) = txt
@@ -316,6 +317,9 @@ instance FromHttpApiData Nonce where
                 Just uuid -> Right $ Nonce uuid
                 Nothing   -> Left "invalid nonce"
 
+instance ToHttpApiData Nonce where
+        toQueryParam (Nonce uuid) = toText uuid
+
 instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be Nonce where
         sqlValueSyntax = sqlValueSyntax . \(Nonce uuid) -> uuid
 
@@ -324,3 +328,31 @@ instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be Nonce 
 
 instance ShowText Nonce where
         showText (Nonce uuid) = toText uuid
+
+
+-- | ---------------------------------------------------------------------------
+-- | OAuth stuff
+-- | ---------------------------------------------------------------------------
+newtype Code = Code Text
+
+instance FromHttpApiData Code where
+  parseQueryParam = Right . Code
+
+instance ToHttpApiData Code where
+  toQueryParam (Code code) = code
+
+newtype HMAC' = HMAC' Text
+
+instance FromHttpApiData HMAC' where
+  parseQueryParam = Right . HMAC'
+
+instance ToHttpApiData HMAC' where
+  toQueryParam (HMAC' hmac) = hmac
+
+newtype Timestamp = Timestamp Text
+
+instance FromHttpApiData Timestamp where
+  parseQueryParam = Right . Timestamp
+
+instance ToHttpApiData Timestamp where
+  toQueryParam (Timestamp ts) = ts

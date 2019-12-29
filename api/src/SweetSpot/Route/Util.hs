@@ -25,19 +25,3 @@ notFoundErr = err404 { errBody = "Not found" }
 
 type Get303 (cts :: [*]) a
         = Verb 'GET 303 cts (Headers '[(Header "Location" Text)] a)
-
-type QueryParamsList = [(ByteString, Maybe ByteString)]
-
-data AllQueryParams
-
-instance HasServer api context => HasServer (AllQueryParams :> api) context where
-        type ServerT (AllQueryParams :> api) m
-                = QueryParamsList -> ServerT api m
-
-        hoistServerWithContext _ pc nt s =
-                hoistServerWithContext (Proxy :: Proxy api) pc nt . s
-
-        route Proxy context subserver = route
-                (Proxy :: Proxy api)
-                context
-                (passToServer subserver queryString)

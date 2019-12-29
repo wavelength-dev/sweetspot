@@ -7,3 +7,4 @@ TRUNCATE shops CASCADE;
 TRUNCATE checkout_events CASCADE;
 TRUNCATE checkout_items CASCADE;
 TRUNCATE events CASCADE;
+TRUNCATE install_nonces CASCADE;

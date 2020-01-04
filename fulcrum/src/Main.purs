@@ -1,7 +1,6 @@
 module Main where
 
 import Prelude
-
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..), note)
@@ -19,7 +18,7 @@ import Effect.Console (error, log, logShow) as Console
 import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
-import Fulcrum.RunState (getRunQueue, initRunQueue) as RunState
+import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
@@ -105,23 +104,25 @@ applyDynamicPrice = liftEffect $ Console.log "Applying price things!"
 consumeQueue :: Aff Unit -> Aff Unit
 consumeQueue fn = do
   -- Run a queued function.
-  fn :: Aff Unit
+  liftEffect $ RunState.setIsRunning true
+  fn
   -- If there is another function waiting to be consumed by the time we finish, then run it.
   queue <- liftEffect $ RunState.getRunQueue
   mNextFn <- liftEffect $ AVar.tryTake queue
   case mNextFn of
-       Nothing -> mempty
-       (Just nextFn) -> nextFn
+    Nothing -> mempty
+    (Just nextFn) -> nextFn
 
 queueNext :: Aff Unit -> Effect Unit
 queueNext fn = do
   queue <- RunState.getRunQueue
   queueStatus <- AVar.status queue
-  if not $ AVar.isFilled queueStatus then
+  isRunning <- RunState.getIsRunning
+  if not isRunning then
     -- Nothing queued, start running
     Aff.runAff_ Console.logShow $ consumeQueue fn
   else
-    -- Try to queue the next run, if we succeed great, if we fail, something is queued, and we queue at most one, so great too, we're done.
+    -- When there is space on the queue, queue. If not, that's fine too, there is no point in queueing more than one run.
     AVar.tryPut (consumeQueue fn) queue # void
 
 reapply :: Effect Unit

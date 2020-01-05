@@ -1,4 +1,4 @@
-let runQueue = null;
+var runQueue = null;
 
 exports.getRunQueue = function() {
   return runQueue;
@@ -10,7 +10,7 @@ exports.setRunQueue = function(initialRunQueue) {
   };
 };
 
-let isRunning = false;
+var isRunning = false;
 
 exports.getIsRunning = function() {
   return isRunning;

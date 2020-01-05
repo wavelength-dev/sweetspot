@@ -10,9 +10,10 @@
     "dev": "spago build --watch & parcel index.html"
   },
   "devDependencies": {
-    "parcel": "^1.12.4"
+    "parcel-bundler": "^1.12.4"
   },
   "dependencies": {
+    "@shopify/polaris": "^4.10.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
   }

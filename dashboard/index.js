@@ -1,4 +1,5 @@
-var Main = require('./output/Main');
+import '@shopify/polaris/styles.css';
+import Main from './output/Main';
 
 function main () {
     /*

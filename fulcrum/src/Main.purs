@@ -50,8 +50,8 @@ getTestMap = do
   eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId (UserId "9"))
   -- TODO: Cache the list of TestMaps in memory and local storage
   case eTestMaps of
-       Left msg -> throwError msg
-       Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
+    Left msg -> throwError msg
+    Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
   where
   inadequateRuntimeError = "sweetspot can't run in current runtime"
 

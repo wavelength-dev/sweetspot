@@ -48,6 +48,5 @@ main = do
   case mAppElement of
     Nothing -> throw "app element not found."
     Just appElement -> do
-      counter <- mkCounter
       app <- mkApp
       render (element app {}) appElement

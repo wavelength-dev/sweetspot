@@ -31,7 +31,7 @@ import           SweetSpot.Database.Schema
                                          hiding ( UserId )
 import           SweetSpot.Database.Queries.Util
                                                 ( withConn )
-import           SweetSpot.Data.Api
+import           SweetSpot.Data.Api      hiding ( productVariants )
 import           SweetSpot.Data.Common
 
 

@@ -32,7 +32,7 @@ type CheckoutEventRoute =
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type InjectableAPI = UserTestRoute  :<|> CheckoutEventRoute -- :<|> LogEventRoute
+type InjectableAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute) -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]

@@ -18,7 +18,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import Servant
 
 import SweetSpot.Route.Util
-import SweetSpot.Shopify.Client (TokenExchangeAPI)
+import SweetSpot.Shopify.Client (TokenExchangeRoute)
 import SweetSpot.Shopify.Types
 
 type AuthorizeAPI =
@@ -29,7 +29,7 @@ type AuthorizeAPI =
   :> QueryParam "state" Text
   :> Get303 '[PlainText] NoContent
 
-type ShopifyAPI = AuthorizeAPI :<|> TokenExchangeAPI
+type ShopifyAPI = AuthorizeAPI :<|> TokenExchangeRoute
 
 authorizationHandler
   :: Maybe Text

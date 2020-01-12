@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4dca0e193d4e3ce39573a08b43f32c90569111ba4dfbf1716d839546538fd3a9
+-- hash: 6f6ded9807f96d51e7363c63579b219ed59560e62fea95572fcbed210897ca13
 
 name:           sweetspot
 version:        0.1.0.0
@@ -67,6 +67,7 @@ library
     , hspec
     , hspec-wai
     , http-client
+    , http-client-tls
     , http-types
     , lens
     , lens-aeson
@@ -120,6 +121,7 @@ executable sweetspot-exe
     , hspec
     , hspec-wai
     , http-client
+    , http-client-tls
     , http-types
     , lens
     , lens-aeson
@@ -180,6 +182,7 @@ test-suite sweetspot-test
     , hspec
     , hspec-wai
     , http-client
+    , http-client-tls
     , http-types
     , lens
     , lens-aeson

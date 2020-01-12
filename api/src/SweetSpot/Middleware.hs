@@ -77,6 +77,7 @@ validateShopDomain ctx app req sendResponse = do
     params = queryString req
     mSuppliedDomain =
       ShopDomain . decodeUtf8 <$> (snd =<< L.find ((== "shop") . fst) params)
+  L.info' appLogger $ T.pack . show $ params
   case mSuppliedDomain of
     Just domain -> do
       mShopDomain <- withConnIO pool $ \conn -> validateDomain conn domain
@@ -85,7 +86,7 @@ validateShopDomain ctx app req sendResponse = do
         Nothing -> do
           L.warn' appLogger $ "Got invalid shop query parameter: " <> showText domain
           send400 "Got invalid shop query parameter" req sendResponse
-    _ -> do
+    Nothing -> do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
 

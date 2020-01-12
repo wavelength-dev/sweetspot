@@ -34,6 +34,7 @@ dependencies:
 - hspec
 - hspec-wai
 - http-client
+- http-client-tls
 - http-types
 - lens
 - lens-aeson

@@ -30,9 +30,9 @@ import           SweetSpot.Database             ( DbConfig(..)
 import qualified SweetSpot.Env                 as Env
 import qualified SweetSpot.Logger              as L
 import           SweetSpot.Middleware           ( getMiddleware )
--- import           SweetSpot.Route.Dashboard      ( DashboardAPI
---                                                 , dashboardHandler
---                                                 )
+import           SweetSpot.Route.Dashboard      ( DashboardAPI
+                                                , dashboardHandler
+                                                )
 import           SweetSpot.Route.Health         ( HealthAPI
                                                 , healthHandler
                                                 )
@@ -54,17 +54,14 @@ import           System.Exit                    ( exitWith
 
 type RootAPI
         = "api" :>
-        (InjectableAPI :<|> OAuthAPI) :<|>
-        HealthAPI :<|> StaticAPI
+        (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI)
+        :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
-server =
-        (injectableHandler :<|> oauthHandler)
-                :<|>
-                healthHandler
-                :<|> staticHandler
+server = (injectableHandler :<|> dashboardHandler :<|> oauthHandler)
+          :<|> healthHandler :<|> staticHandler
 
 createApp :: AppCtx -> Application
 createApp ctx = getMiddleware ctx $ serve rootAPI $ hoistServer

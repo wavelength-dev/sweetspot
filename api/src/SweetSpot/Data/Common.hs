@@ -145,6 +145,9 @@ instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Pid wh
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be Pid
 
+instance ToHttpApiData Pid where
+  toQueryParam (Pid pid) = pid
+
 -- | ---------------------------------------------------------------------------
 -- | Sku
 -- | ---------------------------------------------------------------------------

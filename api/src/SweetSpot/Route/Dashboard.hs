@@ -4,32 +4,34 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Route.Dashboard
-  -- ( DashboardAPI
-  -- , dashboardHandler
-  -- )
+  ( DashboardAPI
+  , dashboardHandler
+  )
 where
 
--- import Control.Lens
--- import Control.Monad (unless)
--- import Data.Aeson (Result(..), parseJSON, Value(..))
--- import Data.Aeson.Lens (_String, key, values)
--- import Data.Aeson.Types (parse)
--- import qualified Data.List as L
--- import Data.Maybe (fromJust)
--- import qualified Data.Text as T
+import Control.Lens
+import Control.Monad (unless)
+import Data.Aeson (Result(..), parseJSON, Value(..))
+import Data.Aeson.Lens (_String, key, values)
+import Data.Aeson.Types (parse)
+import qualified Data.List as L
+import Data.Maybe (fromJust)
+import qualified Data.Text as T
 -- import Prelude hiding (id)
--- import Servant
--- import SweetSpot.AppM (ServerM, AppM(..))
+import Servant
+import SweetSpot.AppM (ServerM, AppM(..))
 -- import SweetSpot.Calc (enhanceDBStats)
--- import SweetSpot.Data.Api
--- import SweetSpot.Data.Common
--- import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
+import SweetSpot.Data.Api
+import SweetSpot.Data.Common
+import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
 -- import SweetSpot.Database.Queries.Dashboard (DashboardDB(..))
--- import qualified SweetSpot.Logger as L
--- import SweetSpot.Route.Util (internalServerErr, badRequestErr)
--- import SweetSpot.ShopifyClient (MonadShopify(..), toProduct)
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (internalServerErr, badRequestErr)
+import SweetSpot.Shopify.Client (MonadShopify(..))
 
--- type ProductsRoute = "products" :> Get '[ JSON] [Product]
+type ProductsRoute = "products"
+  :> QueryParam "shop" ShopDomain
+  :> Get '[JSON] [Product]
 
 -- type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
 
@@ -39,15 +41,18 @@ where
 -- type CampaignStatsRoute
 --    = "campaigns" :> Capture "campaignId" T.Text :> "stats" :> Get '[ JSON] CampaignStats
 
--- type DashboardAPI
---    = "dashboard" :> (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
+type DashboardAPI
+   = "dashboard" :> ProductsRoute-- (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
 
--- getProductsHandler :: ServerM [Product]
--- getProductsHandler = runAppM $ do
---   maybeProducts <- fetchProducts
---   case maybeProducts of
---     Just ps -> return ps
---     Nothing -> throwError internalServerErr
+getProductsHandler :: Maybe ShopDomain -> ServerM [Product]
+getProductsHandler (Just domain) = runAppM $ do
+  mProducts <- fetchProducts domain
+  case mProducts of
+    Right ps -> return ps
+    Left err -> do
+      L.error err
+      throwError internalServerErr
+getProductsHandler Nothing = throwError badRequestErr
 
 -- getExperimentsHandler :: ServerM [ExperimentBuckets]
 -- getExperimentsHandler = runAppM getDashboardExperiments
@@ -117,5 +122,5 @@ where
 --     else
 --       throwError err404
 
--- dashboardHandler =
---   getProductsHandler :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler
+dashboardHandler =
+  getProductsHandler -- :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler

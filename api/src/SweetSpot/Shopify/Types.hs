@@ -3,8 +3,15 @@
 module SweetSpot.Shopify.Types where
 
 import Data.Aeson
+import Data.Aeson.Types (Parser)
 import Data.Text (Text)
 import GHC.Generics (Generic)
+
+class FromShopJSON a where
+  parseShopJSON :: Value -> Parser a
+
+class ToShopJSON a where
+  toShopJSON :: a -> Value
 
 -- | ---------------------------------------------------------------------------
 -- | TokenExchangeReq

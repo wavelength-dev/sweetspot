@@ -2,6 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module SweetSpot.Data.Api where
 
@@ -13,16 +14,21 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.=)
                                                 , (.:)
                                                 )
+import           Data.Aeson.Types               ( parse )
+import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
+import           SweetSpot.Shopify.Types        ( FromShopJSON(..)
+                                                , ToShopJSON(..)
+                                                )
 
 -- | ---------------------------------------------------------------------------
 -- | Image
 -- | ---------------------------------------------------------------------------
 data Image = Image
-  { _iSrc :: !Text
+  { _imageSrc :: !Text
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Image
@@ -31,15 +37,19 @@ instance FromJSON Image
 
 instance ToJSON Image
 
+instance FromShopJSON Image where
+  parseShopJSON = withObject "Image" $ \v -> Image
+    <$> v .: "src"
+
 -- | ---------------------------------------------------------------------------
 -- | Variant
 -- | ---------------------------------------------------------------------------
 data Variant = Variant
-  { _vId :: !Svid
-  , _vProductId :: !Pid
-  , _vTitle :: !Text
-  , _vSku :: !Sku
-  , _vPrice :: !Price
+  { _variantId :: !Svid
+  , _variantProductId :: !Pid
+  , _variantTitle :: !Text
+  , _variantSku :: !Sku
+  , _variantPrice :: !Price
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Variant
@@ -48,14 +58,29 @@ instance ToJSON Variant
 
 instance FromJSON Variant
 
+instance FromShopJSON Variant where
+  parseShopJSON = withObject "Variant" $ \v -> do
+    id <- v .: "id"
+    productId <- v .: "product_id"
+    title <- v .: "title"
+    sku <- v .: "sku"
+    price <- v .: "price"
+    return Variant
+      { _variantId = Svid .  showText @Int $ id
+      , _variantProductId = Pid . showText @Int $ productId
+      , _variantTitle = title
+      , _variantSku = sku
+      , _variantPrice = Price . read @Scientific $ price
+      }
+
 -- | ---------------------------------------------------------------------------
 -- | Product
 -- | ---------------------------------------------------------------------------
 data Product = Product
-  { _pId :: !Pid
-  , _pTitle :: !Text
-  , _pVariants :: ![Variant]
-  , _pImage :: !Image
+  { _productId :: !Pid
+  , _productTitle :: !Text
+  , _productVariants :: ![Variant]
+  , _productImage :: !Image
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Product
@@ -64,23 +89,18 @@ instance ToJSON Product
 
 instance FromJSON Product
 
--- | ---------------------------------------------------------------------------
--- | Bucket
--- | ---------------------------------------------------------------------------
--- data Bucket = Bucket
---   { _bBucketId :: !BucketId
---   , _bBucketType :: !BucketType
---   , _bOriginalSvid :: !Svid
---   , _bTestSvid :: !Svid
---   , _bPrice :: !Price
---   , _bControlPrice :: !Price
---   } deriving (Eq, Generic, Show)
-
--- makeLenses ''Bucket
-
--- instance ToJSON Bucket
-
--- instance FromJSON Bucket
+instance FromShopJSON Product where
+  parseShopJSON = withObject "Product" $ \v -> do
+    id <- v .: "id"
+    title <- v .: "title"
+    variants <- v .: "variants" >>= traverse parseShopJSON
+    image <- v .: "image" >>= parseShopJSON
+    return Product
+      { _productId = Pid . showText @Int $ id
+      , _productTitle = title
+      , _productVariants = variants
+      , _productImage = image
+      }
 
 -- | ---------------------------------------------------------------------------
 -- | Experiment
@@ -108,27 +128,6 @@ instance FromJSON Product
 -- instance ToJSON ExperimentBuckets
 
 -- instance FromJSON ExperimentBuckets
-
--- | ---------------------------------------------------------------------------
--- | UserBucket
--- | ---------------------------------------------------------------------------
--- data UserBucket = UserBucket
---   { _ubUserId :: !UserId
---   , _ubSku :: !Sku
---   , _ubOriginalSvid :: !Svid
---   , _ubTestSvid :: !Svid
---   , _ubPrice :: !Price
---   , _ubExpId :: !ExpId
---   , _ubBucketId :: !BucketId
---   , _ubBucketType :: !BucketType
---   , _ubControlPrice :: !Price
---   } deriving (Eq, Generic, Show)
-
--- makeLenses ''UserBucket
-
--- instance ToJSON UserBucket
-
--- instance FromJSON UserBucket
 
 -- | ---------------------------------------------------------------------------
 -- | BucketStats

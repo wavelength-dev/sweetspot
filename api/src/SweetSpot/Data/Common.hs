@@ -16,7 +16,6 @@ import           Data.Aeson                     ( FromJSON
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-
 import           Data.UUID.Types                ( UUID
                                                 , toText
                                                 , fromText
@@ -25,7 +24,7 @@ import           GHC.Generics                   ( Generic )
 import           Servant.API                    ( FromHttpApiData(..)
                                                 , ToHttpApiData(..)
                                                 )
-import           Text.Hostname                  ( validHostname )
+
 
 class Show a => ShowText a where
   showText :: a -> Text

@@ -13,23 +13,16 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import           Control.Lens
-import           Data.Aeson                     ( fromJSON
-                                                , Result(..)
-                                                )
-import           Data.Aeson.Lens
-import           Data.Maybe                     ( fromMaybe )
-import           Data.Text                      ( Text
-                                                , pack
-                                                )
+import           Data.Text                      ( Text )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
 import           Database.Beam.Postgres
 
 import           SweetSpot.AppM                 ( AppM )
-import qualified SweetSpot.Data.Api            as Api
+
 import           SweetSpot.Data.Common
-import           SweetSpot.Data.Domain   hiding ( Campaign )
+
 import           SweetSpot.Database.Schema
 import           SweetSpot.Database.Queries.Util
                                                 ( withConn )
@@ -41,7 +34,7 @@ data InsertExperiment = InsertExperiment
   , _insertExperimentPrice :: !Price
   , _insertExperimentShopDomain :: !ShopDomain
   , _insertExperimentCampaignId :: !CampaignId
-  , _insertExperimentName :: !Text
+  , _insertExperimentProductName :: !Text
   , _insertExperimentTreatment :: !Int
   }
 
@@ -71,7 +64,7 @@ instance DashboardDB AppM where
           [ ProductVariant
               { _pvId = productVariant_
               , _pvShopId = val_ $ ShopKey shopId
-              , _pvTitle = val_ $ args ^. insertExperimentName
+              , _pvTitle = val_ $ args ^. insertExperimentProductName
               , _pvSku = val_ $ args ^. insertExperimentSku
               , _pvProductId = val_ $ args ^. insertExperimentProductId
               , _pvVariantId = val_ $ args ^. insertExperimentSvid

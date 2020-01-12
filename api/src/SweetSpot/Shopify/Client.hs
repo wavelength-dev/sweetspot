@@ -78,6 +78,7 @@ getClientEnv domain = do
 
     return $ mkClientEnv manager baseUrl
 
+
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
     config <- asks _getConfig

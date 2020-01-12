@@ -11,16 +11,12 @@ where
 
 import Control.Lens
 import Control.Monad (unless)
-import Data.Aeson (Result(..), parseJSON, Value(..))
+import Data.Aeson (Result(..), Value(..))
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
-import qualified Data.List as L
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
--- import Prelude hiding (id)
 import Servant
 import SweetSpot.AppM (ServerM, AppM(..))
--- import SweetSpot.Calc (enhanceDBStats)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
@@ -100,7 +96,7 @@ createExperimentHandler ce = runAppM $ do
                   , _insertExperimentPrice = price
                   , _insertExperimentShopDomain = ce ^. ceShopDomain
                   , _insertExperimentCampaignId = ce ^. ceCampaignId
-                  , _insertExperimentName = "Lol experiment"
+                  , _insertExperimentProductName = controlProduct ^. productTitle
                   , _insertExperimentTreatment = treatment
                   }
 

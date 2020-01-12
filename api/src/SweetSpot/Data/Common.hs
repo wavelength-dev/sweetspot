@@ -107,6 +107,9 @@ instance (BeamSqlBackend be, FromBackendRow be Scientific) => FromBackendRow be 
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Scientific) => HasSqlEqualityCheck be Price
 
+instance ShowText Price where
+  showText (Price n) = T.pack $ show n
+
 -- | ---------------------------------------------------------------------------
 -- | Svid
 -- | ---------------------------------------------------------------------------

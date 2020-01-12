@@ -4,102 +4,92 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module SweetSpot.Database.Queries.Dashboard
-        -- ( DashboardDB(..)
-        -- )
+        ( DashboardDB(..)
+        , InsertExperiment(..)
+        )
 where
 
--- import           Control.Lens
--- import           Data.Aeson                     ( fromJSON
---                                                 , Result(..)
---                                                 )
--- import           Data.Aeson.Lens
--- import           Data.Maybe                     ( fromMaybe )
--- import           Data.Text                      ( Text
---                                                 , pack
---                                                 )
--- import           Database.Beam
--- import           Database.Beam.Backend.SQL.BeamExtensions
---                                                as BeamExt
--- import           Database.Beam.Postgres
+import           Control.Lens
+import           Data.Aeson                     ( fromJSON
+                                                , Result(..)
+                                                )
+import           Data.Aeson.Lens
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Text                      ( Text
+                                                , pack
+                                                )
+import           Database.Beam
+import           Database.Beam.Backend.SQL.BeamExtensions
+                                               as BeamExt
+import           Database.Beam.Postgres
 
--- import           SweetSpot.AppM                 ( AppM )
--- import qualified SweetSpot.Data.Api            as Api
--- import           SweetSpot.Data.Common
--- import           SweetSpot.Data.Domain   hiding ( Campaign )
--- import           SweetSpot.Database.Schema
--- import           SweetSpot.Database.Queries.Util
---                                                 ( withConn )
+import           SweetSpot.AppM                 ( AppM )
+import qualified SweetSpot.Data.Api            as Api
+import           SweetSpot.Data.Common
+import           SweetSpot.Data.Domain   hiding ( Campaign )
+import           SweetSpot.Database.Schema
+import           SweetSpot.Database.Queries.Util
+                                                ( withConn )
 
--- class Monad m => DashboardDB m where
---   createExperiment :: (Sku, Svid, Svid, Price, Price, CampaignId, Text) -> m ()
+data InsertExperiment = InsertExperiment
+  { _insertExperimentSku :: !Sku
+  , _insertExperimentSvid :: !Svid
+  , _insertExperimentProductId :: !Pid
+  , _insertExperimentPrice :: !Price
+  , _insertExperimentShopDomain :: !ShopDomain
+  , _insertExperimentCampaignId :: !CampaignId
+  , _insertExperimentName :: !Text
+  , _insertExperimentTreatment :: !Int
+  }
+
+makeLenses ''InsertExperiment
+
+class Monad m => DashboardDB m where
+  createExperiment :: InsertExperiment -> m ()
 --   getCampaignStats :: CampaignId -> m DBCampaignStats
 --   getDashboardExperiments :: m [Api.ExperimentBuckets]
 
 
--- instance DashboardDB AppM where
---         createExperiment (s, ctrl, test, ctrlP, testP, c, name) =
---                 withConn $ \conn -> do
---                         [exp] <-
---                                 runBeamPostgres conn
---                                 $ BeamExt.runInsertReturningList
---                                 $ insert (db ^. experiments)
---                                 $ insertExpressions
---                                           [ Experiment
---                                                     { _expId          = default_
---                                                     , _expSku         = val_ s
---                                                     , _expProductName =
---                                                             val_ name
---                                                     }
---                                           ]
+instance DashboardDB AppM where
+  createExperiment args = withConn $ \conn -> do
+    let
+      domain = args ^. insertExperimentShopDomain
 
---                         runBeamPostgres conn
---                                 $ runInsert
---                                 $ insert (db ^. campaignExperiments)
---                                 $ insertValues
---                                           [ CampaignExperiment
---                                                     { _cmpForExp = CampaignKey c
---                                                     , _expForCmp = toExpKey exp
---                                                     }
---                                           ]
---                         [cb, tb] <-
---                                 runBeamPostgres conn
---                                 $ BeamExt.runInsertReturningList
---                                 $ insert (db ^. buckets)
---                                 $ insertExpressions
---                                           [ Bucket { _bktId        = default_
---                                                    , _bktType = val_ Control
---                                                    , _bktCtrlSvid  = val_ ctrl
---                                                    , _bktTestSvid  = val_ ctrl
---                                                    , _bktCtrlPrice = val_ ctrlP
---                                                    , _bktPrice     = val_ ctrlP
---                                                    }
---                                           , Bucket { _bktId        = default_
---                                                    , _bktType      = val_ Test
---                                                    , _bktCtrlSvid  = val_ ctrl
---                                                    , _bktTestSvid  = val_ test
---                                                    , _bktCtrlPrice = val_ ctrlP
---                                                    , _bktPrice     = val_ testP
---                                                    }
---                                           ]
+    Just shopId <- runBeamPostgres conn
+      $ runSelectReturningOne
+      $ select $ do
+        row <- filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))
+        pure $ row ^. shopId
 
---                         runBeamPostgres conn
---                                 $ runInsert
---                                 $ insert (db ^. experimentBuckets)
---                                 $ insertValues
---                                           [ ExperimentBucket
---                                                   { _expForBkt = toExpKey exp
---                                                   , _bktForExp = toBktKey cb
---                                                   }
---                                           , ExperimentBucket
---                                                   { _expForBkt = toExpKey exp
---                                                   , _bktForExp = toBktKey tb
---                                                   }
---                                           ]
---             where
---                 toExpKey exp = exp ^. expId & ExperimentKey
---                 toBktKey bkt = bkt ^. bktId & BucketKey
+    [dbVariant] <- runBeamPostgres conn
+      $ runInsertReturningList
+      $ insert (db ^. productVariants)
+      $ insertExpressions
+          [ ProductVariant
+              { _pvId = productVariant_
+              , _pvShopId = val_ $ ShopKey shopId
+              , _pvTitle = val_ $ args ^. insertExperimentName
+              , _pvSku = val_ $ args ^. insertExperimentSku
+              , _pvProductId = val_ $ args ^. insertExperimentProductId
+              , _pvVariantId = val_ $ args ^. insertExperimentSvid
+              , _pvPrice = val_ $ args ^. insertExperimentPrice
+              , _pvCurrency = val_ "USD"
+              }
+          ]
+
+    runBeamPostgres conn
+      $ runInsert
+      $ insert (db ^. treatments)
+      $ insertExpressions
+            [ Treatment
+                { _trCmpId = val_ $ CampaignKey $ args ^. insertExperimentCampaignId
+                , _trTreatment = val_ $ args ^. insertExperimentTreatment
+                , _trProductVariantId = val_ $ PVariantKey $ dbVariant ^. pvId
+                }
+            ]
 
 
 --         getCampaignStats cmpId = withConn $ \conn -> do

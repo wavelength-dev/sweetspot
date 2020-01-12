@@ -24,10 +24,11 @@ import SweetSpot.AppM (ServerM, AppM(..))
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
--- import SweetSpot.Database.Queries.Dashboard (DashboardDB(..))
+import SweetSpot.Database.Queries.Dashboard (DashboardDB(..), InsertExperiment(..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)
 import SweetSpot.Shopify.Client (MonadShopify(..))
+import SweetSpot.Shopify.Types (FromShopJSON(..))
 
 type ProductsRoute = "products"
   :> QueryParam "shop" ShopDomain
@@ -35,14 +36,15 @@ type ProductsRoute = "products"
 
 -- type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
 
--- type CreateExperimentRoute
---    = "experiments" :> ReqBody '[ JSON] CreateExperiment :> Post '[ JSON] OkResponse
+type CreateExperimentRoute = "experiments"
+  :> ReqBody '[JSON] CreateExperiment
+  :> Post '[JSON] OkResponse
 
 -- type CampaignStatsRoute
 --    = "campaigns" :> Capture "campaignId" T.Text :> "stats" :> Get '[ JSON] CampaignStats
 
 type DashboardAPI
-   = "dashboard" :> ProductsRoute-- (ProductsRoute :<|> ExperimentsRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
+   = "dashboard" :> (ProductsRoute :<|> CreateExperimentRoute)
 
 getProductsHandler :: Maybe ShopDomain -> ServerM [Product]
 getProductsHandler (Just domain) = runAppM $ do
@@ -57,57 +59,64 @@ getProductsHandler Nothing = throwError badRequestErr
 -- getExperimentsHandler :: ServerM [ExperimentBuckets]
 -- getExperimentsHandler = runAppM getDashboardExperiments
 
--- createExperimentHandler :: CreateExperiment -> ServerM OkResponse
--- createExperimentHandler ce = runAppM $ do
---   isValidCampaign <- validateCampaign (ce ^. ceCampaignId)
---   unless isValidCampaign (throwError badRequestErr)
---   json <- fetchProductJson $ ce ^. ceProductId
---   let
---     contProduct = parse parseJSON $ json ^?! key "product"
---     textPrice = T.pack . show $ ce ^. cePrice
---     -- Assumes all variants have the same price
---     withNewPrice =
---       json
---         & key "product" . key "variants" . values . key "price" . _String .~ textPrice
---         & key "product" . key "handle" . _String <>~ "-ssv"
---         & key "product" . key "product_type" . _String .~ "sweetspot-variant"
---         & key "product" . key "images" . values . key "variant_ids" .~ Null
---         & key "product" . key "variants" . values . key "image_id" .~ Null
---         & key "product" . key "tags"  . _String %~ filterTags
+createExperimentHandler :: CreateExperiment -> ServerM OkResponse
+createExperimentHandler ce = runAppM $ do
+  isValidCampaign <- validateCampaign (ce ^. ceCampaignId)
+  unless isValidCampaign (throwError badRequestErr)
+  mJson <- fetchProductJson (ce ^. ceShopDomain) (ce ^. ceProductId)
+  case mJson of
+    Left err -> do
+      L.error err
+      throwError internalServerErr
+    Right json -> do
+      let
+        mControlProduct = parse parseShopJSON $ json ^?! key "product"
+        textPrice = showText $ ce ^. cePrice
+        -- Assumes all variants have the same price
+        withNewPrice =
+          json
+            & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+            & key "product" . key "handle" . _String <>~ "-ssv"
+            & key "product" . key "product_type" . _String .~ "sweetspot-variant"
+            & key "product" . key "images" . values . key "variant_ids" .~ Null
+            & key "product" . key "variants" . values . key "image_id" .~ Null
 
---   maybeNewProduct <- createProduct withNewPrice
---   case (contProduct, maybeNewProduct) of
---     (Success contProduct', Success newProduct) -> do
---       let contProduct = toProduct contProduct'
---           variant = newProduct ^?! pVariants . element 0
---           testPrice = ce ^. cePrice
---           title = contProduct ^. pTitle
---           cmpId = ce ^. ceCampaignId
---       res <- newProduct ^. pVariants
---         & traverse (\v -> do
---           let
---             sku = v ^. vSku
---             controlVariant = contProduct ^. pVariants ^.. traverse
---               & L.find ((== sku) . (^. vSku))
---               & fromJust
---             contSvid = controlVariant ^. vId
---             contPrice = controlVariant ^. vPrice
---             testSvid = v ^. vId
+      mNewProduct <- createProduct (ce ^. ceShopDomain) withNewPrice
+      case (mControlProduct, mNewProduct) of
+        (Success controlProduct, Right newProduct) -> do
+          let
+            controlVariant = controlProduct ^?! productVariants . ix 0
+            testVariant = newProduct ^?! productVariants . ix 0
+            controlPrice = controlVariant ^. variantPrice
+            testPrice = testVariant ^. variantPrice
 
---           createExperiment (sku, contSvid, testSvid, contPrice, testPrice, cmpId, title))
+            createDbExperiment :: Int -> Price -> Variant -> AppM ()
+            createDbExperiment treatment price variant = createExperiment args
+              where
+                args = InsertExperiment
+                  { _insertExperimentSku = variant ^. variantSku
+                  , _insertExperimentSvid = variant ^. variantId
+                  , _insertExperimentProductId = variant ^. variantProductId
+                  , _insertExperimentPrice = price
+                  , _insertExperimentShopDomain = ce ^. ceShopDomain
+                  , _insertExperimentCampaignId = ce ^. ceCampaignId
+                  , _insertExperimentName = "Lol experiment"
+                  , _insertExperimentTreatment = treatment
+                  }
 
---       L.info "Created experiment(s)"
---       return OkResponse { message = "Created experiment(s)"}
+          traverseOf_ (productVariants . traversed) (createDbExperiment 0 testPrice) controlProduct
+          traverseOf_ (productVariants . traversed) (createDbExperiment 1 controlPrice) newProduct
 
---     (Error err, _) -> do
---       L.error $ "Failed to parse control product " <> T.pack err
---       throwError internalServerErr
---     (_, Error err) -> do
---       L.error $ "Failed to create new product" <> T.pack err
---       throwError internalServerErr
+          L.info "Created experiment(s)"
+          return OkResponse { message = "Created experiment(s)"}
 
---   where
---     filterTags = T.intercalate "," . filter (T.isInfixOf "_sold-") . fmap T.strip . T.splitOn ","
+        (Error err, _) -> do
+          L.error $ "Failed to parse control product " <> T.pack err
+          throwError internalServerErr
+
+        (_, Left err) -> do
+          L.error $ "Failed to create test product " <> err
+          throwError internalServerErr
 
 
 -- getCampaignStatsHandler :: T.Text -> ServerM CampaignStats
@@ -123,4 +132,4 @@ getProductsHandler Nothing = throwError badRequestErr
 --       throwError err404
 
 dashboardHandler =
-  getProductsHandler -- :<|> getExperimentsHandler :<|> createExperimentHandler :<|> getCampaignStatsHandler
+  getProductsHandler :<|> createExperimentHandler

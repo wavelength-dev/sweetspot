@@ -198,6 +198,7 @@ data CreateExperiment = CreateExperiment
   { _ceProductId :: !Pid
   , _cePrice :: !Price
   , _ceCampaignId :: !CampaignId
+  , _ceShopDomain :: !ShopDomain
   } deriving (Eq, Generic, Show)
 
 makeLenses ''CreateExperiment

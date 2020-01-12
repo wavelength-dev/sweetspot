@@ -15,6 +15,7 @@ module SweetSpot.Database.Schema
         , eventId_
         , nonce_
         , shopId_
+        , productVariant_
         )
 where
 
@@ -59,5 +60,8 @@ nonce_ = unsafeRetype pgGenUUID_
 
 shopId_ :: QGenExpr ctxt Postgres s ShopId
 shopId_ = unsafeRetype pgGenUUID_
+
+productVariant_ :: QGenExpr ctxt Postgres s PVariantId
+productVariant_ = unsafeRetype pgGenUUID_
 
 migration = migrationStep "Initial schema" V1.migration

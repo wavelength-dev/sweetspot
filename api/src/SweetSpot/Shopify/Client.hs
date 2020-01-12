@@ -44,10 +44,17 @@ type GetProductJsonRoute =
   :> Header "X-Shopify-Access-Token" Text
   :> Get '[JSON] Value
 
+type CreateProductRoute =
+  "admin" :> "api" :> "2019-07" :> "products.json"
+  :> ReqBody '[JSON] Value
+  :> Header "X-Shopify-Access-Token" Text
+  :> Post '[JSON] Value
+
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [Product])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
+  createProduct :: ShopDomain -> Value -> m (Either Text Product)
 
 testBaseUrl :: BaseUrl
 testBaseUrl = BaseUrl { baseUrlScheme = Http
@@ -119,4 +126,20 @@ instance MonadShopify AppM where
         return $ case res of
           Left err -> Left $ "Error fetching product json: " <> (T.pack . show $ err)
           Right body -> Right body
+      Nothing -> return $ Left "Could not find OAuth token for shop domain"
+
+  createProduct domain json = do
+    let
+      createProductClient = client (Proxy :: Proxy CreateProductRoute)
+    clientEnv <- getClientEnv domain
+    mToken <- getOAuthToken domain
+    case mToken of
+      Just token -> do
+        res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
+        return $ case res of
+          Left err -> Left $ "Error creating product: " <> (T.pack . show $ err)
+          Right body -> case parse parseShopJSON (body ^?! key "product") of
+            Success product -> Right product
+            Error err -> Left $ T.pack . show $ err
+
       Nothing -> return $ Left "Could not find OAuth token for shop domain"

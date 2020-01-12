@@ -100,7 +100,7 @@ instance MonadShopify AppM where
           Right body -> do
             let
               result = body ^? key "products"
-                & fmap (sequence . map (parse parseShopJSON) . toListOf values)
+                & fmap (traverse (parse parseShopJSON) . toListOf values)
             case result of
               (Just (Success products)) -> Right products
               (Just (Error err)) -> Left $ T.pack err

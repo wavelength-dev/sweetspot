@@ -1,7 +1,6 @@
 module Main where
 
 import Prelude
-import Counter (mkCounter)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Exception (throw)

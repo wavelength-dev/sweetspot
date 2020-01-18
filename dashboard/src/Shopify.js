@@ -1,8 +1,19 @@
-const enTranslations = require('@shopify/polaris/locales/en.json');
-const {AppProvider, Page, Card, Button} = require('@shopify/polaris');
+const enTranslations = require("@shopify/polaris/locales/en.json");
+const {
+  AppProvider,
+  Button,
+  Card,
+  EmptyState,
+  Heading,
+  Page,
+  ResourceList
+} = require("@shopify/polaris");
 
-exports.enTranslations = enTranslations;
-exports.appProvider = AppProvider
-exports.page = Page;
+exports.appProvider = AppProvider;
+exports.button = Button;
 exports.card = Card;
-exports.button = Button
+exports.emptyState = EmptyState;
+exports.enTranslations = enTranslations;
+exports.heading = Heading
+exports.page = Page;
+exports.resourceList = ResourceList;

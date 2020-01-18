@@ -20,7 +20,9 @@ import           Database.Beam.Backend.SQL.BeamExtensions
 import           Database.Beam.Postgres
 
 import           SweetSpot.AppM                 ( AppM )
-import           SweetSpot.Data.Api             ( UICampaign(..) )
+import           SweetSpot.Data.Api             ( UICampaign(..)
+                                                , UITreatment(..)
+                                                )
 import           SweetSpot.Data.Common
 
 import           SweetSpot.Database.Schema
@@ -110,7 +112,19 @@ instance DashboardDB AppM where
               pure (t, v)
 
         return UICampaign
-          { _uiCampaign = cmp
-          , _uiCampaignTreatments = map fst tuples
-          , _uiCampaignProductVariants = map snd tuples
+          { _uiCampaignId = cmp ^. cmpId
+          , _uiCampaignStart = cmp ^. cmpStart
+          , _uiCampaignEnd = cmp ^. cmpEnd
+          , _uiCampaignTreatments = map mkUiTreatment tuples
+          }
+
+      mkUiTreatment (t, v) =
+        UITreatment
+          { _uiTreatmentSvid = v ^. pvVariantId
+          , _uiTreatmentTitle = v ^. pvTitle
+          , _uiTreatmentSku = v ^. pvSku
+          , _uiTreatmentProductId = v ^. pvProductId
+          , _uiTreatmentPrice = v ^. pvPrice
+          , _uiTreatmentCurrency = v ^. pvCurrency
+          , _uiTreatment = t ^. trTreatment
           }

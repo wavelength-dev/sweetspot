@@ -14,19 +14,12 @@ import           Data.Aeson                     ( FromJSON(..)
                                                 , (.=)
                                                 , (.:)
                                                 )
-import           Data.Aeson.Types               ( parse )
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
-
+import           Data.Time                      ( LocalTime )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
-import           SweetSpot.Database.Schema      ( Campaign
-                                                , Treatment
-                                                , ProductVariant
-                                                )
-import           SweetSpot.Shopify.Types        ( FromShopJSON(..)
-                                                , ToShopJSON(..)
-                                                )
+import           SweetSpot.Shopify.Types        ( FromShopJSON(..) )
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -107,13 +100,33 @@ instance FromShopJSON Product where
       }
 
 -- | ---------------------------------------------------------------------------
+-- | UITreatment
+-- | ---------------------------------------------------------------------------
+data UITreatment = UITreatment
+  { _uiTreatmentSvid :: !Svid
+  , _uiTreatmentTitle :: !Text
+  , _uiTreatmentSku :: !Sku
+  , _uiTreatmentProductId :: !Pid
+  , _uiTreatmentPrice :: !Price
+  , _uiTreatmentCurrency :: !Text
+  , _uiTreatment :: !Int
+  } deriving (Generic, Eq, Show)
+
+makeLenses ''UITreatment
+
+instance ToJSON UITreatment
+
+instance FromJSON UITreatment
+
+-- | ---------------------------------------------------------------------------
 -- | UICampaign
 -- | ---------------------------------------------------------------------------
 data UICampaign = UICampaign
-  { _uiCampaign :: Campaign
-  , _uiCampaignTreatments :: [Treatment]
-  , _uiCampaignProductVariants :: [ProductVariant]
-  } deriving (Generic, Show)
+  { _uiCampaignId :: !CampaignId
+  , _uiCampaignStart :: !(Maybe LocalTime)
+  , _uiCampaignEnd :: !(Maybe LocalTime)
+  , _uiCampaignTreatments :: ![UITreatment]
+  } deriving (Generic, Eq, Show)
 
 makeLenses ''UICampaign
 

@@ -6,6 +6,8 @@ You can edit this file as you like.
 , dependencies =
     [ "console"
     , "effect"
+    , "generics-rep"
+    , "profunctor-lenses"
     , "psci-support"
     , "react-basic-hooks"
     , "routing"

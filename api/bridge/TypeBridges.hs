@@ -10,10 +10,8 @@ sweetspotBridge :: BridgePart
 sweetspotBridge = defaultBridge
   <|> (typeName ^== "Price" >> return psNumber)
   <|> (typeName ^== "Sku" >> return psString)
-  <|> (typeName ^== "ExpId" >> return psNumber)
-  <|> (typeName ^== "BucketId" >> return psNumber)
-  <|> (typeName ^== "Svid" >> return psNumber)
-  <|> (typeName ^== "Pid" >> return psNumber)
+  <|> (typeName ^== "Svid" >> return psString)
+  <|> (typeName ^== "Pid" >> return psString)
   <|> (typeName ^== "Image" >> return psString)
   <|> (typeName ^== "CampaignId" >> return psString)
-  <|> (typeName ^== "UserId" >> return psNumber)
+  <|> (typeName ^== "LocalTime" >> return psString)

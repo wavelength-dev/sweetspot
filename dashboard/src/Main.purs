@@ -6,8 +6,9 @@ import Effect (Effect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM (text) as R
-import React.Basic.Hooks (ReactComponent, component, element, useState, (/\))
+import React.Basic.Hooks (ReactComponent, component, element, useEffect, useState, (/\))
 import React.Basic.Hooks as React
+import Route (Route(..), hoistRouter)
 import Shopify as Shopify
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -18,6 +19,8 @@ mkApp :: Effect (ReactComponent {})
 mkApp = do
   component "App" \props -> React.do
     counter /\ setCounter <- useState 0
+    route /\ setRoute <- useState Home
+    useEffect unit (hoistRouter setRoute)
     let
       handleOnClick = setCounter $ add 1
     pure
@@ -25,7 +28,7 @@ mkApp = do
           { i18n: Shopify.enTranslations
           , children:
             [ element Shopify.page
-                { title: "SweetSpot Dashboard"
+                { title: show route
                 , children:
                   [ element Shopify.card
                       { sectioned: true

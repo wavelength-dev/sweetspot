@@ -12,7 +12,10 @@
 
 module SweetSpot.Database.Migrations.V0001InitDb where
 
-import           Data.Aeson                     ( Value )
+import           Data.Aeson                     ( Value
+                                                , ToJSON
+                                                , FromJSON
+                                                )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.SQL92
                                                 ( numericType )
@@ -41,6 +44,9 @@ data ShopT f
 
 type Shop = ShopT Identity
 type ShopKey = PrimaryKey ShopT Identity
+
+deriving instance ToJSON ShopKey
+deriving instance FromJSON ShopKey
 
 deriving instance Show Shop
 deriving instance Show ShopKey
@@ -112,6 +118,11 @@ type CampaignKey = PrimaryKey CampaignT Identity
 deriving instance Show Campaign
 deriving instance Show CampaignKey
 
+deriving instance ToJSON CampaignKey
+deriving instance FromJSON CampaignKey
+deriving instance ToJSON Campaign
+deriving instance FromJSON Campaign
+
 instance Table CampaignT where
         data PrimaryKey CampaignT f
           = CampaignKey (Columnar f CampaignId) deriving (Generic, Beamable)
@@ -141,6 +152,11 @@ type PVariantKey = PrimaryKey ProductVariantT Identity
 deriving instance Show ProductVariant
 deriving instance Show PVariantKey
 
+deriving instance ToJSON PVariantKey
+deriving instance FromJSON PVariantKey
+deriving instance ToJSON ProductVariant
+deriving instance FromJSON ProductVariant
+
 instance Table ProductVariantT where
         data PrimaryKey ProductVariantT f
           = PVariantKey (Columnar f PVariantId) deriving (Generic, Beamable)
@@ -164,6 +180,11 @@ type TreatmentKey = PrimaryKey TreatmentT Identity
 
 deriving instance Show Treatment
 deriving instance Show TreatmentKey
+
+deriving instance ToJSON TreatmentKey
+deriving instance FromJSON TreatmentKey
+deriving instance ToJSON Treatment
+deriving instance FromJSON Treatment
 
 instance Table TreatmentT where
         data PrimaryKey TreatmentT f

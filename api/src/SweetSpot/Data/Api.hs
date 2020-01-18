@@ -20,6 +20,10 @@ import           Data.Text                      ( Text )
 
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
+import           SweetSpot.Database.Schema      ( Campaign
+                                                , Treatment
+                                                , ProductVariant
+                                                )
 import           SweetSpot.Shopify.Types        ( FromShopJSON(..)
                                                 , ToShopJSON(..)
                                                 )
@@ -103,15 +107,19 @@ instance FromShopJSON Product where
       }
 
 -- | ---------------------------------------------------------------------------
--- | Experiment
+-- | UICampaign
 -- | ---------------------------------------------------------------------------
--- data Experiment = Experiment
---   { _eExpId :: !ExpId
---   , _eSku :: !Sku
---   , _eProductName :: !Text
---   } deriving (Eq, Generic, Show)
+data UICampaign = UICampaign
+  { _uiCampaign :: Campaign
+  , _uiCampaignTreatments :: [Treatment]
+  , _uiCampaignProductVariants :: [ProductVariant]
+  } deriving (Generic, Show)
 
--- makeLenses ''Experiment
+makeLenses ''UICampaign
+
+instance ToJSON UICampaign
+
+instance FromJSON UICampaign
 
 -- | ---------------------------------------------------------------------------
 -- | ExperimentBuckets

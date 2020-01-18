@@ -30,17 +30,16 @@ type ProductsRoute = "products"
   :> QueryParam "shop" ShopDomain
   :> Get '[JSON] [Product]
 
--- type ExperimentsRoute = "experiments" :> Get '[ JSON] [ExperimentBuckets]
+type CampaignRoute = "campaigns"
+  :> QueryParam "shop" ShopDomain
+  :> Get '[JSON] [UICampaign]
 
 type CreateExperimentRoute = "experiments"
   :> ReqBody '[JSON] CreateExperiment
   :> Post '[JSON] OkResponse
 
--- type CampaignStatsRoute
---    = "campaigns" :> Capture "campaignId" T.Text :> "stats" :> Get '[ JSON] CampaignStats
-
-type DashboardAPI
-   = "dashboard" :> (ProductsRoute :<|> CreateExperimentRoute)
+type DashboardAPI = "dashboard"
+  :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute)
 
 getProductsHandler :: Maybe ShopDomain -> ServerM [Product]
 getProductsHandler (Just domain) = runAppM $ do
@@ -52,8 +51,9 @@ getProductsHandler (Just domain) = runAppM $ do
       throwError internalServerErr
 getProductsHandler Nothing = throwError badRequestErr
 
--- getExperimentsHandler :: ServerM [ExperimentBuckets]
--- getExperimentsHandler = runAppM getDashboardExperiments
+getCampaignsHandler :: Maybe ShopDomain -> ServerM [UICampaign]
+getCampaignsHandler (Just domain) = runAppM $ getCampaigns domain
+getCampaignsHandler Nothing = throwError badRequestErr
 
 createExperimentHandler :: CreateExperiment -> ServerM OkResponse
 createExperimentHandler ce = runAppM $ do
@@ -114,18 +114,5 @@ createExperimentHandler ce = runAppM $ do
           L.error $ "Failed to create test product " <> err
           throwError internalServerErr
 
-
--- getCampaignStatsHandler :: T.Text -> ServerM CampaignStats
--- getCampaignStatsHandler cmpId = runAppM $ do
---   let cid = CampaignId cmpId
---   isValid <- validateCampaign cid
---   if isValid
---     then do
---       L.info ("Got experiment stats for campaignId: " <> cmpId)
---       dbStats <- getCampaignStats cid
---       enhanceDBStats dbStats
---     else
---       throwError err404
-
 dashboardHandler =
-  getProductsHandler :<|> createExperimentHandler
+  getProductsHandler :<|> getCampaignsHandler :<|> createExperimentHandler

@@ -49,6 +49,8 @@ instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be ShopId where
 instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be ShopId where
         fromBackendRow = ShopId <$> fromBackendRow
 
+instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be ShopId
+
 -- | ---------------------------------------------------------------------------
 -- | ShopDomain
 -- | ---------------------------------------------------------------------------

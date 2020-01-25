@@ -1,26 +1,21 @@
 module SweetSpot.Main where
 
 import Prelude
-import SweetSpot.Data.Api
+import SweetSpot.Data.Api (Product, productTitle)
 
-import Data.Either (Either(..), either)
-import Data.Foldable (fold)
-import Data.Lens (folded, (^.), (^..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Either (Either(..))
+import Data.Lens ((^.))
+import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Effect (Effect)
-import Effect.Aff (Aff, message)
-import Effect.Class.Console (log)
 import Effect.Exception (throw)
 import React.Basic.DOM (div, text) as R
 import React.Basic.DOM (render)
-import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, useState, (/\))
+import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Route (Route(..), hoistRouter)
-import SweetSpot.Service (fetchProducts)
 import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState(..), initialState, populateAppState, reducer)
+import SweetSpot.State (Action(..), AppState, fetchAppState, initialState, reducer)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
@@ -66,7 +61,7 @@ toPriceTest product =
   , status: "Running"}
 
 experimentsPage :: AppState -> JSX
-experimentsPage (AppState state) =
+experimentsPage state =
   element Shopify.page
     { title: "Price Tests"
     , subtitle: notNull "All tests currently running or finished."
@@ -93,7 +88,14 @@ mkApp =
     let
       isExperimentsEmpty = false
 
-    mState <- useAff "appState" populateAppState
+    mState <- useAff "appState" fetchAppState
+
+    useEffect (React.UnsafeReference mState) do
+      case mState of
+        Just (Right st) -> do
+          dispatch $ Populate st
+          mempty
+        _ -> mempty
 
     pure $
         element Shopify.appProvider
@@ -102,9 +104,7 @@ mkApp =
             if isExperimentsEmpty then
               gettingStartedPage
             else
-              case mState of
-                Just (Right state') -> experimentsPage state'
-                _ -> experimentsPage state
+              experimentsPage state
           }
 
 

@@ -1,10 +1,10 @@
 module SweetSpot.Service (fetchCampaigns, fetchProducts) where
 
 import Prelude
-import SweetSpot.Data.Api
+import SweetSpot.Data.Api (Product, UICampaign)
 
 import Data.Argonaut (class DecodeJson, decodeJson, jsonParser)
-import Data.Either (Either, hush)
+import Data.Either (Either)
 import Effect.Aff (Aff)
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis

@@ -1,40 +1,46 @@
 module SweetSpot.Main where
 
 import Prelude
-import SweetSpot.Data.Api (Product, productTitle)
 
 import Data.Either (Either(..))
 import Data.Lens ((^.))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Effect (Effect)
+import Effect.Class.Console (log)
 import Effect.Exception (throw)
-import React.Basic.DOM (div, text) as R
 import React.Basic.DOM (render)
+import React.Basic.DOM as R
 import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
+import SweetSpot.Data.Api (Product, productTitle)
+import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState, fetchAppState, initialState, reducer)
+import SweetSpot.State (Action(..), AppState, fetchRemoteState, initialState, reducer)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.Window (document)
 
 
-gettingStartedPage :: JSX
-gettingStartedPage =
+gettingStartedPage :: String ->  JSX
+gettingStartedPage name =
   element Shopify.page
     { title: "Getting started"
     , subtitle: null
     , primaryAction: null
     , children:
       [ element Shopify.emptyState
-          { heading: "Discover more profitable prices for your products"
+          { heading: "Hi " <> name <> ", Discover more profitable prices for your products"
           , action: { content: "Create Price Test", onAction: mempty }
           , image: "lol.jpg"
           , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
           }
+      , R.a
+            { href: "/#/"
+            , children: [ R.button { children: [ R.text "Click here" ] } ]
+            }
      ]
     }
 
@@ -85,10 +91,9 @@ mkApp =
   component "App" \props -> React.do
     state /\ dispatch <- useReducer initialState reducer
 
-    let
-      isExperimentsEmpty = false
+    mState <- useAff "appState" fetchRemoteState
 
-    mState <- useAff "appState" fetchAppState
+    useEffect "router" $ hoistRouter (dispatch <<< Navigate)
 
     useEffect (React.UnsafeReference mState) do
       case mState of
@@ -101,10 +106,9 @@ mkApp =
         element Shopify.appProvider
           { i18n: Shopify.enTranslations
           , children:
-            if isExperimentsEmpty then
-              gettingStartedPage
-            else
-              experimentsPage state
+            case state.route of
+              Home -> experimentsPage state
+              Profile name -> gettingStartedPage name
           }
 
 

@@ -1,4 +1,7 @@
-module Route where
+module SweetSpot.Route
+  ( Route(..)
+  , hoistRouter
+  ) where
 
 import Prelude
 

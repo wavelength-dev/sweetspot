@@ -1,4 +1,4 @@
-module Shopify where
+module SweetSpot.Shopify where
 
 import Prelude
 import Data.Nullable (Nullable)

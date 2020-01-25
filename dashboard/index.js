@@ -1,5 +1,5 @@
 import '@shopify/polaris/styles.css';
-import Main from './output/Main';
+import Main from './output/SweetSpot.Main';
 
 function main () {
     /*

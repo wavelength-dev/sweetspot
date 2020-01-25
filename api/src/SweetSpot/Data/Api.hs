@@ -32,7 +32,13 @@ makeLenses ''Image
 
 instance FromJSON Image
 
-instance ToJSON Image
+instance ToJSON Image where
+  toJSON img = object
+    [ "tag" .=  ("Image" :: Text)
+    , "values" .= [
+        object [ "_imageSrc" .= _imageSrc img ]
+      ]
+    ]
 
 instance FromShopJSON Image where
   parseShopJSON = withObject "Image" $ \v -> Image
@@ -51,7 +57,18 @@ data Variant = Variant
 
 makeLenses ''Variant
 
-instance ToJSON Variant
+instance ToJSON Variant where
+  toJSON var = object
+    [ "tag" .=  ("Variant" :: Text)
+    , "values" .= [
+        object [ "_variantId" .= _variantId var
+               , "_variantProductId" .= _variantProductId var
+               , "_variantTitle" .= _variantTitle var
+               , "_variantSku" .= _variantSku var
+               , "_variantPrice" .= _variantPrice var
+               ]
+      ]
+    ]
 
 instance FromJSON Variant
 
@@ -82,7 +99,17 @@ data Product = Product
 
 makeLenses ''Product
 
-instance ToJSON Product
+instance ToJSON Product where
+  toJSON p = object
+    [ "tag" .=  ("Product" :: Text)
+    , "values" .= [
+        object [ "_productId" .= _productId p
+               , "_productTitle" .= _productTitle p
+               , "_productVariants" .= _productVariants p
+               , "_productImage" .= _productImage p
+               ]
+      ]
+    ]
 
 instance FromJSON Product
 
@@ -114,7 +141,21 @@ data UITreatment = UITreatment
 
 makeLenses ''UITreatment
 
-instance ToJSON UITreatment
+instance ToJSON UITreatment where
+  toJSON treat = object
+    [ "tag" .= ("UITreatment" :: Text)
+    , "values" .= [
+        object
+          [ "_uiTreatmentSvid" .= _uiTreatmentSvid treat
+          , "_uiTreatmentTitle" .= _uiTreatmentTitle treat
+          , "_uiTreatmentSku" .= _uiTreatmentSku treat
+          , "_uiTreatmentProductId" .= _uiTreatmentProductId treat
+          , "_uiTreatmentPrice" .= _uiTreatmentPrice treat
+          , "_uiTreatmentCurrency" .= _uiTreatmentCurrency treat
+          , "_uiTreatment" .= _uiTreatment treat
+          ]
+      ]
+    ]
 
 instance FromJSON UITreatment
 
@@ -130,7 +171,20 @@ data UICampaign = UICampaign
 
 makeLenses ''UICampaign
 
-instance ToJSON UICampaign
+instance ToJSON UICampaign where
+  toJSON uiCmp = object
+    [ "tag" .=  ("UICampaign" :: Text)
+    , "values" .= [
+        object
+          [ "_uiCampaignId" .= _uiCampaignId uiCmp
+          , "_uiCampaignStart" .= _uiCampaignStart uiCmp
+          , "_uiCampaignEnd" .= _uiCampaignEnd uiCmp
+          , "_uiCampaignTreatments" .= _uiCampaignTreatments uiCmp
+          ]
+      ]
+    ]
+
+
 
 instance FromJSON UICampaign
 

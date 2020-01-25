@@ -9,6 +9,7 @@ You can edit this file as you like.
     , "console"
     , "effect"
     , "generics-rep"
+    , "milkis"
     , "profunctor-lenses"
     , "psci-support"
     , "react-basic-hooks"

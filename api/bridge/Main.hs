@@ -19,6 +19,12 @@ writeDashboardTypes =
          in equal p (mkSumType p)
       , let p = (Proxy :: Proxy Api.UITreatment)
          in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Image)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Variant)
+         in equal p (mkSumType p)
+      , let p = (Proxy :: Proxy Api.Product)
+         in equal p (mkSumType p)
       ]
 
 main :: IO ()

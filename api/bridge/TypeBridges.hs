@@ -12,6 +12,5 @@ sweetspotBridge = defaultBridge
   <|> (typeName ^== "Sku" >> return psString)
   <|> (typeName ^== "Svid" >> return psString)
   <|> (typeName ^== "Pid" >> return psString)
-  <|> (typeName ^== "Image" >> return psString)
   <|> (typeName ^== "CampaignId" >> return psString)
   <|> (typeName ^== "LocalTime" >> return psString)

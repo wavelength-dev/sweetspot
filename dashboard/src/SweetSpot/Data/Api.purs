@@ -94,3 +94,94 @@ uiTreatment :: Lens' UITreatment Int
 uiTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiTreatment")
 
 --------------------------------------------------------------------------------
+newtype Image =
+    Image {
+      _imageSrc :: String
+    }
+
+derive instance eqImage :: Eq Image
+derive instance genericImage :: Generic Image _
+derive instance newtypeImage :: Newtype Image _
+instance encodeJsonImage :: EncodeJson Image where
+  encodeJson = genericEncodeJson
+instance decodeJsonImage :: DecodeJson Image where
+  decodeJson = genericDecodeJson
+
+--------------------------------------------------------------------------------
+_Image :: Iso' Image { _imageSrc :: String}
+_Image = _Newtype
+
+imageSrc :: Lens' Image String
+imageSrc = _Newtype <<< prop (SProxy :: SProxy "_imageSrc")
+
+--------------------------------------------------------------------------------
+newtype Variant =
+    Variant {
+      _variantId :: String
+    , _variantProductId :: String
+    , _variantTitle :: String
+    , _variantSku :: String
+    , _variantPrice :: Number
+    }
+
+derive instance eqVariant :: Eq Variant
+derive instance genericVariant :: Generic Variant _
+derive instance newtypeVariant :: Newtype Variant _
+instance encodeJsonVariant :: EncodeJson Variant where
+  encodeJson = genericEncodeJson
+instance decodeJsonVariant :: DecodeJson Variant where
+  decodeJson = genericDecodeJson
+
+--------------------------------------------------------------------------------
+_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantSku :: String, _variantPrice :: Number}
+_Variant = _Newtype
+
+variantId :: Lens' Variant String
+variantId = _Newtype <<< prop (SProxy :: SProxy "_variantId")
+
+variantProductId :: Lens' Variant String
+variantProductId = _Newtype <<< prop (SProxy :: SProxy "_variantProductId")
+
+variantTitle :: Lens' Variant String
+variantTitle = _Newtype <<< prop (SProxy :: SProxy "_variantTitle")
+
+variantSku :: Lens' Variant String
+variantSku = _Newtype <<< prop (SProxy :: SProxy "_variantSku")
+
+variantPrice :: Lens' Variant Number
+variantPrice = _Newtype <<< prop (SProxy :: SProxy "_variantPrice")
+
+--------------------------------------------------------------------------------
+newtype Product =
+    Product {
+      _productId :: String
+    , _productTitle :: String
+    , _productVariants :: Array Variant
+    , _productImage :: Image
+    }
+
+derive instance eqProduct :: Eq Product
+derive instance genericProduct :: Generic Product _
+derive instance newtypeProduct :: Newtype Product _
+instance encodeJsonProduct :: EncodeJson Product where
+  encodeJson = genericEncodeJson
+instance decodeJsonProduct :: DecodeJson Product where
+  decodeJson = genericDecodeJson
+
+--------------------------------------------------------------------------------
+_Product :: Iso' Product { _productId :: String, _productTitle :: String, _productVariants :: Array Variant, _productImage :: Image}
+_Product = _Newtype
+
+productId :: Lens' Product String
+productId = _Newtype <<< prop (SProxy :: SProxy "_productId")
+
+productTitle :: Lens' Product String
+productTitle = _Newtype <<< prop (SProxy :: SProxy "_productTitle")
+
+productVariants :: Lens' Product (Array Variant)
+productVariants = _Newtype <<< prop (SProxy :: SProxy "_productVariants")
+
+productImage :: Lens' Product Image
+productImage = _Newtype <<< prop (SProxy :: SProxy "_productImage")
+
+--------------------------------------------------------------------------------

@@ -20,6 +20,15 @@ import Network.Wai ( Middleware
                    , Application
                    , responseLBS
                    )
+import Network.Wai.Middleware.Cors ( cors
+                                   , corsExposedHeaders
+                                   , corsMethods
+                                   , corsOrigins
+                                   , corsRequestHeaders
+                                   , simpleCorsResourcePolicy
+                                   , simpleHeaders
+                                   , simpleMethods
+                                   )
 import Network.Wai.Middleware.Gzip ( GzipFiles(GzipCacheFolder)
                                    , def
                                    , gzip
@@ -90,11 +99,24 @@ validateShopDomain ctx app req sendResponse = do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
 
+enableCors :: Middleware
+enableCors =
+  cors $ \_ ->
+    Just $
+    simpleCorsResourcePolicy
+      { corsOrigins =
+          Just (["http://localhost:1234"] , True)
+      , corsRequestHeaders = "Content-Type" : simpleHeaders
+      , corsMethods = simpleMethods
+      , corsExposedHeaders =
+          Just ["Set-Cookie", "Access-Control-Allow-Origin", "Content-Type"]
+      }
+
 getMiddleware :: AppCtx -> Middleware
 getMiddleware ctx =
   case env of
     -- So we don't have to deal with hmac or auth during dev
-    Dev -> gzipStatic . validateShopDomainRouted
+    Dev -> gzipStatic . validateShopDomainRouted . enableCors
     -- So we can focus on testing handlers themselves
     TestBusiness -> gzipStatic
     -- Else everything

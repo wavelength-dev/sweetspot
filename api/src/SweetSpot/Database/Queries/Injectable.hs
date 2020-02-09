@@ -30,7 +30,9 @@ import           SweetSpot.AppM                 ( AppM(..) )
 import           SweetSpot.Database.Schema
                                          hiding ( UserId )
 import           SweetSpot.Database.Queries.Util
-                                                ( withConn )
+                                                ( withConn
+                                                , matchShop
+                                                )
 import           SweetSpot.Data.Api      hiding ( productVariants )
 import           SweetSpot.Data.Common
 
@@ -71,9 +73,8 @@ instance InjectableDB AppM where
 
         validateShopDomain shopDomain = withConn $ \conn ->
                 runBeamPostgres conn $ runSelectReturningOne $ select $ do
-                        shops <- all_ (db ^. shops)
-                        guard_ (_shopDomain shops ==. val_ shopDomain)
-                        pure $ shops ^. shopId
+                        shop <- matchShop shopDomain
+                        pure $ shop ^. shopId
 
         insertCheckoutEvent shopId apiEvent = withConn $ \conn -> do
                 [dbEvent] <-
@@ -237,6 +238,5 @@ isCampaignActive cmp = maybe_ false_ (<. now_) (cmp ^. cmpStart)
 validateDomain :: Connection -> ShopDomain -> IO (Maybe ShopDomain)
 validateDomain conn domain =
         runBeamPostgres conn $ runSelectReturningOne $ select $ do
-                row <- filter_ ((==. val_ domain) . (^. shopDomain))
-                               (all_ (db ^. shops))
+                row <- matchShop domain
                 pure $ row ^. shopDomain

@@ -157,7 +157,7 @@ instance ToHttpApiData Pid where
 -- | ---------------------------------------------------------------------------
 newtype Sku =
   Sku Text
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Ord)
 
 instance ToJSON Sku
 

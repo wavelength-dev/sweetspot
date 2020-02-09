@@ -38,8 +38,14 @@ type CreateExperimentRoute = "experiments"
   :> ReqBody '[JSON] CreateExperiment
   :> Post '[JSON] OkResponse
 
+type CampaignStatsRoute = "campaigns"
+  :> Capture "campaignId" CampaignId
+  :> QueryParam "shop" ShopDomain
+  :> "stats"
+  :> Get '[JSON] CampaignStats
+
 type DashboardAPI = "dashboard"
-  :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute)
+  :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute :<|> CampaignStatsRoute)
 
 getProductsHandler :: Maybe ShopDomain -> ServerM [Product]
 getProductsHandler (Just domain) = runAppM $ do
@@ -114,5 +120,12 @@ createExperimentHandler ce = runAppM $ do
           L.error $ "Failed to create test product " <> err
           throwError internalServerErr
 
+getCampaignStatsHandler :: CampaignId -> Maybe ShopDomain -> ServerM CampaignStats
+getCampaignStatsHandler cmpId (Just shopDomain) = runAppM $ getCampaignStats shopDomain cmpId
+getCampaignStatsHandler _ _ = throwError badRequestErr
+
 dashboardHandler =
-  getProductsHandler :<|> getCampaignsHandler :<|> createExperimentHandler
+       getProductsHandler
+  :<|> getCampaignsHandler
+  :<|> createExperimentHandler
+  :<|> getCampaignStatsHandler

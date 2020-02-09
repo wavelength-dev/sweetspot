@@ -189,82 +189,63 @@ instance ToJSON UICampaign where
 instance FromJSON UICampaign
 
 -- | ---------------------------------------------------------------------------
--- | ExperimentBuckets
+-- | VariantStats
 -- | ---------------------------------------------------------------------------
--- data ExperimentBuckets = ExperimentBuckets
---   { _ebExpId :: !ExpId
---   , _ebSku :: !Sku
---   , _ebProductName :: !Text
---   , _ebBuckets :: ![Bucket]
---   } deriving (Eq, Generic, Show)
+data VariantStats = VariantStats
+  { _varStatsSvid :: !Svid
+  , _varStatsTreatment :: !Int
+  , _varStatsUserCount :: !Int
+  , _varStatsPrice :: !Price
+  -- , _bsUserRevenues :: ![(UserId, Double)]
+  } deriving (Eq, Generic, Show)
 
--- makeLenses ''ExperimentBuckets
+makeLenses ''VariantStats
 
--- instance ToJSON ExperimentBuckets
+instance ToJSON VariantStats
 
--- instance FromJSON ExperimentBuckets
-
--- | ---------------------------------------------------------------------------
--- | BucketStats
--- | ---------------------------------------------------------------------------
--- data BucketStats = BucketStats
---   { _bsBucketId :: !BucketId
---   , _bsBucketType :: !BucketType
---   , _bsUserCount :: !Int
---   , _bsImpressionCount :: !Int
---   , _bsPrice :: !Price
---   , _bsUserRevenues :: ![(UserId, Double)]
---   } deriving (Eq, Generic, Show)
-
--- makeLenses ''BucketStats
-
--- instance ToJSON BucketStats
-
--- instance FromJSON BucketStats
+instance FromJSON VariantStats
 
 -- | ---------------------------------------------------------------------------
 -- | ExperimentStats
 -- | ---------------------------------------------------------------------------
--- data ExperimentStats = ExperimentStats
---   { _esExpId :: !ExpId
---   , _esUserCount :: !Int
---   , _esImpressionCount :: !Int
---   , _esBuckets :: ![BucketStats]
---   } deriving (Eq, Generic, Show)
+data ExperimentStats = ExperimentStats
+  { _expStatsSku :: !Sku
+  , _expStatsUserCount :: !Int
+  , _expStatsVariants :: ![VariantStats]
+  } deriving (Eq, Generic, Show)
 
--- makeLenses ''ExperimentStats
+makeLenses ''ExperimentStats
 
--- instance ToJSON ExperimentStats
+instance ToJSON ExperimentStats
 
--- instance FromJSON ExperimentStats
+instance FromJSON ExperimentStats
 
 -- | ---------------------------------------------------------------------------
 -- | CampaignStats
 -- | ---------------------------------------------------------------------------
--- data CampaignStats = CampaignStats
---   { _csCampaignId :: !CampaignId
---   , _csCampaignName :: !Text
---   , _csMinProfitIncrease :: !Int
---   , _csStartDate :: !LocalTime
---   , _csEndDate :: !LocalTime
---   , _csExperiments :: ![ExperimentStats]
---   , _csProfitPerUserControl :: !(Estimate ConfInt Double)
---   , _csProfitPerUserTest :: !(Estimate ConfInt Double)
---   , _csConvertersControl :: ![Double]
---   , _csNonConvertersControl :: !Int
---   , _csConvertersTest :: ![Double]
---   , _csNonConvertersTest :: !Int
---   , _csConvertersControlCount :: !Int
---   , _csConvertersTestCount :: !Int
---   , _csConversionRateControl :: !Double
---   , _csConversionRateTest :: !Double
---   } deriving (Eq, Generic, Show)
+data CampaignStats = CampaignStats
+  { _cmpStatsCampaignId :: !CampaignId
+  , _cmpStatsCampaignName :: !Text
+  , _cmpStatsStartDate :: !(Maybe LocalTime)
+  , _cmpStatsEndDate :: !(Maybe LocalTime)
+  , _cmpStatsExperiments :: ![ExperimentStats]
+  -- , _cmpStatsProfitPerUserControl :: !(Estimate ConfInt Double)
+  -- , _cmpStatsProfitPerUserTest :: !(Estimate ConfInt Double)
+  -- , _cmpStatsConvertersControl :: ![Double]
+  -- , _cmpStatsNonConvertersControl :: !Int
+  -- , _cmpStatsConvertersTest :: ![Double]
+  -- , _cmpStatsNonConvertersTest :: !Int
+  -- , _cmpStatsConvertersControlCount :: !Int
+  -- , _cmpStatsConvertersTestCount :: !Int
+  -- , _cmpStatsConversionRateControl :: !Double
+  -- , _cmpStatsConversionRateTest :: !Double
+  } deriving (Eq, Generic, Show)
 
--- makeLenses ''CampaignStats
+makeLenses ''CampaignStats
 
--- instance ToJSON CampaignStats
+instance ToJSON CampaignStats
 
--- instance FromJSON CampaignStats
+instance FromJSON CampaignStats
 
 -- | ---------------------------------------------------------------------------
 -- | CreateExperiment

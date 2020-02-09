@@ -128,7 +128,7 @@ instance DashboardDB AppM where
           , _uiTreatment = t ^. trTreatment
           }
 
-  getCampaignStats domain cmpId = withConn $ \conn -> do
+  getCampaignStats domain campaignId = withConn $ \conn -> do
     mCmp <- runBeamPostgres conn
       $ runSelectReturningOne
       $ select
@@ -136,68 +136,64 @@ instance DashboardDB AppM where
         shop <- matchShop domain
         cmp <- all_ (db ^. campaigns)
         guard_ (_cmpShopId cmp `references_` shop)
-        guard_ (_cmpId cmp ==. val_ cmpId)
+        guard_ (_cmpId cmp ==. val_ campaignId)
         pure cmp
 
     case mCmp of
       Just cmp -> do
-        tuples <- runBeamPostgres conn
+        rows <- runBeamPostgres conn
           $ runSelectReturningList
           $ select
           $ do
 
-            let filtered =
-                  filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId)) $ all_ (db ^. treatments)
+            let usPerVar = usersPerVariantInCampaign cmp
 
-            treatment <- filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId))
-              $ all_ (db ^. treatments)
+            variant <- all_ (db ^. productVariants)
+            treatment <- all_ (db ^. treatments)
+            campaign <- all_ (db ^. campaigns)
 
-            variant <- filter_ ((==. (treatment ^. trProductVariantId)) . (^. pvId))
-              $ all_ (db ^. productVariants)
+            userCount <- fromMaybe_ 0 . snd <$> leftJoin_ usPerVar (\(varId, count) -> varId ==. variant ^. pvId)
 
-            userCount <- aggregate_ (const countAll_)
-                  $ filter_
-                      (\(userExp, treatment) ->
-                        userExp ^. ueCmpId ==. val_ (_cmpId cmp) &&.
-                        userExp ^. ueTreatment ==. treatment ^. trTreatment
-                      )
-                  $ (,) <$> all_ (db ^. userExperiments) <*> filtered
+            guard_ (_trProductVariantId treatment `references_` variant)
+            guard_ (_trCmpId treatment `references_` campaign)
+            guard_ (campaign ^. cmpId ==. val_ (_cmpId cmp))
 
             pure (treatment, variant, userCount)
 
-        return $ groupResults tuples
+        return $ mkCampaignStats rows
 
         where
-          groupResults tuples =
+          groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
+          groupBySku =  M.toList . M.fromListWith combineVariants
+            where
+              combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
+
+          mkCampaignStats rows =
             CampaignStats
               { _cmpStatsCampaignId = _cmpId cmp
               , _cmpStatsCampaignName = _cmpName cmp
               , _cmpStatsStartDate = _cmpStart cmp
               , _cmpStatsEndDate = _cmpEnd cmp
-              , _cmpStatsExperiments = map mkExpStats tuples & groupBySku & map snd
+              , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
               }
-
-          groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
-          groupBySku =  M.toList . M.fromListWith combineVariants
-            where
-              combineVariants e1 e2 = e1 & expStatsVariants %~ (<> (e2 ^. expStatsVariants))
 
           mkExpStats (treatment, variant, userCount) =
-            (variant ^. pvSku,
-            ExperimentStats
-              { _expStatsSku = variant ^. pvSku
-              , _expStatsUserCount = 0
-              , _expStatsVariants =
-                [
-                  VariantStats
-                  { _varStatsSvid = variant ^. pvVariantId
-                  , _varStatsTreatment = treatment ^. trTreatment
-                  , _varStatsUserCount = userCount
-                  , _varStatsPrice = variant ^. pvPrice
-                  }
-                ]
-              }
-              )
+            ( variant ^. pvSku,
+
+              ExperimentStats
+                { _expStatsSku = variant ^. pvSku
+                , _expStatsUserCount = 0
+                , _expStatsVariants =
+                  [
+                    VariantStats
+                    { _varStatsSvid = variant ^. pvVariantId
+                    , _varStatsTreatment = treatment ^. trTreatment
+                    , _varStatsUserCount = userCount
+                    , _varStatsPrice = variant ^. pvPrice
+                    }
+                  ]
+                }
+            )
 
 
       Nothing -> do
@@ -205,12 +201,17 @@ instance DashboardDB AppM where
         error "lol"
 
 
+usersPerVariantInCampaign cmp =
+  aggregate_ (\(var, ue) -> (group_ (var ^. pvId), count_ (ue ^. ueUserId))) $ do
+      userExp <- all_ (db ^. userExperiments)
+      treatment <- all_ (db ^. treatments)
+      variant <- all_ (db ^. productVariants)
 
--- countUsers cmpId treatment = aggregate_
---   $ const countAll_
---   $ filter_
---     (\userExp ->
---       userExp ^. ueCmpId ==. val_ cmpId &&.
---       userExp ^. ueTreatment ==. val_ treatment
---     )
---     (all_ (db ^. userExperiments))
+      let cmpId = val_ (_cmpId cmp)
+
+      guard_ (userExp ^. ueCmpId ==. cmpId)
+      guard_ (userExp ^. ueTreatment ==. treatment ^. trTreatment)
+      guard_ (treatment ^. trCmpId ==. cmpId)
+      guard_ (_trProductVariantId treatment `references_` variant)
+
+      pure (variant, userExp)

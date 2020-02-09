@@ -145,13 +145,25 @@ instance DashboardDB AppM where
           $ runSelectReturningList
           $ select
           $ do
-            treatments <- filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId))
+
+            let filtered =
+                  filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId)) $ all_ (db ^. treatments)
+
+            treatment <- filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId))
               $ all_ (db ^. treatments)
 
-            variants <- filter_ ((==. (treatments ^. trProductVariantId)) . (^. pvId))
+            variant <- filter_ ((==. (treatment ^. trProductVariantId)) . (^. pvId))
               $ all_ (db ^. productVariants)
 
-            pure (treatments, variants)
+            userCount <- aggregate_ (const countAll_)
+                  $ filter_
+                      (\(userExp, treatment) ->
+                        userExp ^. ueCmpId ==. val_ (_cmpId cmp) &&.
+                        userExp ^. ueTreatment ==. treatment ^. trTreatment
+                      )
+                  $ (,) <$> all_ (db ^. userExperiments) <*> filtered
+
+            pure (treatment, variant, userCount)
 
         return $ groupResults tuples
 
@@ -170,7 +182,7 @@ instance DashboardDB AppM where
             where
               combineVariants e1 e2 = e1 & expStatsVariants %~ (<> (e2 ^. expStatsVariants))
 
-          mkExpStats (treatment, variant) =
+          mkExpStats (treatment, variant, userCount) =
             (variant ^. pvSku,
             ExperimentStats
               { _expStatsSku = variant ^. pvSku
@@ -180,7 +192,7 @@ instance DashboardDB AppM where
                   VariantStats
                   { _varStatsSvid = variant ^. pvVariantId
                   , _varStatsTreatment = treatment ^. trTreatment
-                  , _varStatsUserCount = 0
+                  , _varStatsUserCount = userCount
                   , _varStatsPrice = variant ^. pvPrice
                   }
                 ]
@@ -191,3 +203,14 @@ instance DashboardDB AppM where
       Nothing -> do
         print "error ******"
         error "lol"
+
+
+
+-- countUsers cmpId treatment = aggregate_
+--   $ const countAll_
+--   $ filter_
+--     (\userExp ->
+--       userExp ^. ueCmpId ==. val_ cmpId &&.
+--       userExp ^. ueTreatment ==. val_ treatment
+--     )
+--     (all_ (db ^. userExperiments))

@@ -233,9 +233,9 @@ data CampaignStats = CampaignStats
   -- , _cmpStatsProfitPerUserControl :: !(Estimate ConfInt Double)
   -- , _cmpStatsProfitPerUserTest :: !(Estimate ConfInt Double)
   , _cmpStatsConvertersControl :: !(V.Vector Double)
-  -- , _cmpStatsNonConvertersControl :: !Int
+  , _cmpStatsNonConvertersControl :: !Int
   , _cmpStatsConvertersTest :: !(V.Vector Double)
-  -- , _cmpStatsNonConvertersTest :: !Int
+  , _cmpStatsNonConvertersTest :: !Int
   -- , _cmpStatsConvertersControlCount :: !Int
   -- , _cmpStatsConvertersTestCount :: !Int
   -- , _cmpStatsConversionRateControl :: !Double

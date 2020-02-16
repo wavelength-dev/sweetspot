@@ -141,15 +141,17 @@ instance DashboardDB AppM where
 
     case mCmp of
       Just cmp -> do
-        [ctrlRevs] <- runBeamPostgres conn
+        [ctrlConversion] <- runBeamPostgres conn
           $ runSelectReturningList
           $ select
-          $ userRevenueArrForTreatment (cmp ^. cmpId) 0
+          $ (,) <$> userRevenueArrForTreatment (cmp ^. cmpId) 0
+                <*> nonConvertersForTreatment (cmp ^. cmpId) 0
 
-        [testRevs] <- runBeamPostgres conn
+        [testConversion] <- runBeamPostgres conn
           $ runSelectReturningList
           $ select
-          $ userRevenueArrForTreatment (cmp ^. cmpId) 1
+          $ (,) <$> userRevenueArrForTreatment (cmp ^. cmpId) 1
+                <*> nonConvertersForTreatment (cmp ^. cmpId) 1
 
         rows <- runBeamPostgres conn
           $ runSelectReturningList
@@ -171,7 +173,7 @@ instance DashboardDB AppM where
 
             pure (treatment, variant, userCount)
 
-        return $ mkCampaignStats rows ctrlRevs testRevs
+        return $ mkCampaignStats rows ctrlConversion testConversion
 
         where
           groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
@@ -179,7 +181,7 @@ instance DashboardDB AppM where
             where
               combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
 
-          mkCampaignStats rows ctrlRevs testRevs =
+          mkCampaignStats rows (ctrlRevs, nonConvCtrl) (testRevs, nonConvTest) =
             CampaignStats
               { _cmpStatsCampaignId = _cmpId cmp
               , _cmpStatsCampaignName = _cmpName cmp
@@ -187,7 +189,9 @@ instance DashboardDB AppM where
               , _cmpStatsEndDate = _cmpEnd cmp
               , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
               , _cmpStatsConvertersControl = ctrlRevs
+              , _cmpStatsNonConvertersControl = nonConvCtrl
               , _cmpStatsConvertersTest = testRevs
+              , _cmpStatsNonConvertersTest = nonConvTest
               }
 
           mkExpStats (treatment, variant, userCount) =
@@ -252,3 +256,21 @@ userRevenueArrForTreatment cmpId' treatment' =
           revenue = quantity * price
 
         pure (user ^. usrId, revenue)
+
+nonConvertersForTreatment cmpId' treatment' = do
+  userEvents <- aggregate_ (\(userId, eventId) -> (group_ userId, as_ @Int (count_ eventId))) $ do
+      user <- all_ (db ^. users)
+      experiment <- all_ (db ^. userExperiments)
+
+      guard_ (_ueUserId experiment `references_` user)
+      guard_ (experiment ^. ueTreatment ==. val_ treatment')
+      guard_ (experiment ^. ueCmpId ==. val_ cmpId')
+
+      event <- leftJoin_ (all_ (db ^. checkoutEvents))
+        (\ce -> _cevUserId ce `references_` user)
+
+      pure (user ^. usrId, event ^. cevId)
+
+  guard_ (snd userEvents ==. 0)
+
+  aggregate_ (const countAll_) (pure userEvents)

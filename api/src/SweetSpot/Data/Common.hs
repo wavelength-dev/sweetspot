@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 
 module SweetSpot.Data.Common where
@@ -94,7 +95,7 @@ instance ShowText ShopDomain where
 -- | ---------------------------------------------------------------------------
 newtype Price =
   Price Scientific
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Num)
 
 instance ToJSON Price
 

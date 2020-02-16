@@ -5,6 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module SweetSpot.Database.Queries.Dashboard
         ( DashboardDB(..)
@@ -103,9 +104,8 @@ instance DashboardDB AppM where
           $ runSelectReturningList
           $ select
           $ do
-              t <- filter_
-                ((==. val_ (_cmpId cmp)) . (^. trCmpId))
-                $ all_ (db ^. treatments)
+              t <- filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId))
+                  $ all_ (db ^. treatments)
               v <- all_ (db ^. productVariants)
               guard_ (_trProductVariantId t `references_` v)
               pure (t, v)
@@ -128,7 +128,7 @@ instance DashboardDB AppM where
           , _uiTreatment = t ^. trTreatment
           }
 
-  getCampaignStats domain campaignId = withConn $ \conn -> do
+  getCampaignStats domain cmpId' = withConn $ \conn -> do
     mCmp <- runBeamPostgres conn
       $ runSelectReturningOne
       $ select
@@ -136,11 +136,21 @@ instance DashboardDB AppM where
         shop <- matchShop domain
         cmp <- all_ (db ^. campaigns)
         guard_ (_cmpShopId cmp `references_` shop)
-        guard_ (_cmpId cmp ==. val_ campaignId)
+        guard_ (_cmpId cmp ==. val_ cmpId')
         pure cmp
 
     case mCmp of
       Just cmp -> do
+        [ctrlRevs] <- runBeamPostgres conn
+          $ runSelectReturningList
+          $ select
+          $ userRevenueArrForTreatment (cmp ^. cmpId) 0
+
+        [testRevs] <- runBeamPostgres conn
+          $ runSelectReturningList
+          $ select
+          $ userRevenueArrForTreatment (cmp ^. cmpId) 1
+
         rows <- runBeamPostgres conn
           $ runSelectReturningList
           $ select
@@ -152,7 +162,8 @@ instance DashboardDB AppM where
             treatment <- all_ (db ^. treatments)
             campaign <- all_ (db ^. campaigns)
 
-            userCount <- fromMaybe_ 0 . snd <$> leftJoin_ usPerVar (\(varId, count) -> varId ==. variant ^. pvId)
+            userCount <- fromMaybe_ 0 . snd <$>
+                leftJoin_ usPerVar (\(varId, count) -> varId ==. variant ^. pvId)
 
             guard_ (_trProductVariantId treatment `references_` variant)
             guard_ (_trCmpId treatment `references_` campaign)
@@ -160,7 +171,7 @@ instance DashboardDB AppM where
 
             pure (treatment, variant, userCount)
 
-        return $ mkCampaignStats rows
+        return $ mkCampaignStats rows ctrlRevs testRevs
 
         where
           groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
@@ -168,13 +179,15 @@ instance DashboardDB AppM where
             where
               combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
 
-          mkCampaignStats rows =
+          mkCampaignStats rows ctrlRevs testRevs =
             CampaignStats
               { _cmpStatsCampaignId = _cmpId cmp
               , _cmpStatsCampaignName = _cmpName cmp
               , _cmpStatsStartDate = _cmpStart cmp
               , _cmpStatsEndDate = _cmpEnd cmp
               , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
+              , _cmpStatsConvertersControl = ctrlRevs
+              , _cmpStatsConvertersTest = testRevs
               }
 
           mkExpStats (treatment, variant, userCount) =
@@ -215,3 +228,27 @@ usersPerVariantInCampaign cmp =
       guard_ (_trProductVariantId treatment `references_` variant)
 
       pure (variant, userExp)
+
+
+userRevenueArrForTreatment cmpId' treatment' =
+  aggregate_ (\(_, rev) -> pgArrayAgg (fromMaybe_ 0 rev)) $ do
+    aggregate_ (\(userId, revenue) -> (group_ userId, sum_ revenue)) $ do
+        user <- all_ (db ^. users)
+        event <- all_ (db ^. checkoutEvents)
+        item <- all_ (db ^. checkoutItems)
+        variant <- all_ (db ^. productVariants)
+        treatment <- all_ (db ^. treatments)
+
+        guard_ (_cevUserId event `references_` user)
+        guard_ (event ^. cevCmpId ==. val_ cmpId')
+        guard_ (_ciCheckoutEventId item `references_` event)
+        guard_ (item ^. ciSvid ==. variant ^. pvVariantId)
+        guard_ (_trProductVariantId treatment `references_` variant)
+        guard_ (treatment ^. trTreatment ==. treatment')
+
+        let
+          quantity = cast_ (item ^. ciQuantity) double
+          price = cast_ (variant ^. pvPrice) double
+          revenue = quantity * price
+
+        pure (user ^. usrId, revenue)

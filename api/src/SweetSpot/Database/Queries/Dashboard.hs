@@ -15,6 +15,7 @@ where
 
 import           Control.Lens
 import           Data.Text                      ( Text )
+import           Data.Maybe                     ( fromMaybe )
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
@@ -141,17 +142,25 @@ instance DashboardDB AppM where
 
     case mCmp of
       Just cmp -> do
-        [ctrlConversion] <- runBeamPostgres conn
-          $ runSelectReturningList
+        nonConvCtrl <- runBeamPostgres conn
+          $ runSelectReturningOne
           $ select
-          $ (,) <$> userRevenueArrForTreatment (cmp ^. cmpId) 0
-                <*> nonConvertersForTreatment (cmp ^. cmpId) 0
+          $ nonConvertersForTreatment (cmp ^. cmpId) 0
 
-        [testConversion] <- runBeamPostgres conn
-          $ runSelectReturningList
+        nonConvTest <- runBeamPostgres conn
+          $ runSelectReturningOne
           $ select
-          $ (,) <$> userRevenueArrForTreatment (cmp ^. cmpId) 1
-                <*> nonConvertersForTreatment (cmp ^. cmpId) 1
+          $ nonConvertersForTreatment (cmp ^. cmpId) 1
+
+        ctrlConversions <- runBeamPostgres conn
+          $ runSelectReturningOne
+          $ select
+          $ userRevenueArrForTreatment (cmp ^. cmpId) 0
+
+        testConversions <- runBeamPostgres conn
+          $ runSelectReturningOne
+          $ select
+          $ userRevenueArrForTreatment (cmp ^. cmpId) 1
 
         rows <- runBeamPostgres conn
           $ runSelectReturningList
@@ -173,7 +182,7 @@ instance DashboardDB AppM where
 
             pure (treatment, variant, userCount)
 
-        return $ mkCampaignStats rows ctrlConversion testConversion
+        return $ mkCampaignStats rows (ctrlConversions, nonConvCtrl) (testConversions, nonConvTest)
 
         where
           groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
@@ -181,17 +190,17 @@ instance DashboardDB AppM where
             where
               combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
 
-          mkCampaignStats rows (ctrlRevs, nonConvCtrl) (testRevs, nonConvTest) =
+          mkCampaignStats rows (cConvs, cNonConvs) (tConvs, tNonConvs) =
             CampaignStats
               { _cmpStatsCampaignId = _cmpId cmp
               , _cmpStatsCampaignName = _cmpName cmp
               , _cmpStatsStartDate = _cmpStart cmp
               , _cmpStatsEndDate = _cmpEnd cmp
               , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
-              , _cmpStatsConvertersControl = ctrlRevs
-              , _cmpStatsNonConvertersControl = nonConvCtrl
-              , _cmpStatsConvertersTest = testRevs
-              , _cmpStatsNonConvertersTest = nonConvTest
+              , _cmpStatsConvertersControl = fromMaybe mempty cConvs
+              , _cmpStatsNonConvertersControl = fromMaybe 0 cNonConvs
+              , _cmpStatsConvertersTest = fromMaybe mempty tConvs
+              , _cmpStatsNonConvertersTest = fromMaybe 0 tNonConvs
               }
 
           mkExpStats (treatment, variant, userCount) =
@@ -257,8 +266,9 @@ userRevenueArrForTreatment cmpId' treatment' =
 
         pure (user ^. usrId, revenue)
 
-nonConvertersForTreatment cmpId' treatment' = do
-  userEvents <- aggregate_ (\(userId, eventId) -> (group_ userId, as_ @Int (count_ eventId))) $ do
+nonConvertersForTreatment cmpId' treatment' = aggregate_ (const countAll_)
+  $ filter_ (\(_, evCount) -> evCount ==. 0)
+  $ aggregate_ (\(userId, eventId) -> (group_ userId, as_ @Int (count_ eventId))) $ do
       user <- all_ (db ^. users)
       experiment <- all_ (db ^. userExperiments)
 
@@ -270,7 +280,3 @@ nonConvertersForTreatment cmpId' treatment' = do
         (\ce -> _cevUserId ce `references_` user)
 
       pure (user ^. usrId, event ^. cevId)
-
-  guard_ (snd userEvents ==. 0)
-
-  aggregate_ (const countAll_) (pure userEvents)

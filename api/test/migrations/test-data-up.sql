@@ -77,3 +77,11 @@ VALUES ('e3b937e7-ac65-4324-9d67-040cdc35b555', '6072b6ea-7c37-4b26-80cd-f8f87d0
 -- not yet active campaign
 INSERT INTO user_experiments (user_id, campaign_id, treatment)
 VALUES ('85271f15-683b-4972-bd68-b7aaacdeb70d', '6072b6ea-7c37-4b26-80cd-f8f87d05a993', 1);
+
+
+INSERT INTO checkout_events (event_id, created, campaign_id, order_id, shop_id, user_id)
+VALUES ('365b9947-a296-4d01-909c-63d9846b7aa1', now(), '6072b6ea-7c37-4b26-80cd-f8f87d05a991', '12345678',
+        '61fbb484-59cf-45b2-b394-bbe830c95f75', '2eb6a046-6609-4518-ab23-87f1ad56bbaa');
+
+INSERT INTO checkout_items (checkout_item_id, checkout_event_id, quantity, shopify_variant_id)
+VALUES ('46e1cb23-e68b-4af6-8709-1034ebe43e73', '365b9947-a296-4d01-909c-63d9846b7aa1', 1, '321');

@@ -5,6 +5,7 @@ module Spec.Business (businessLogicSpec) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
+import qualified Data.Vector as V
 import Data.List (nub, find)
 import Data.Maybe (fromJust, isJust)
 import Network.HTTP.Client hiding (Proxy, responseHeaders)
@@ -17,6 +18,7 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Route.Injectable (InjectableAPI)
 import SweetSpot.Route.OAuth (OAuthAPI)
+import SweetSpot.Route.Dashboard (DashboardAPI)
 
 import Database (reset)
 import Mock.Shopify
@@ -31,6 +33,8 @@ businessLogicSpec :: Spec
 businessLogicSpec =
   beforeAll_ setup . before_ reset $ do
     let getTest :<|> postCheckout = client (Proxy :: Proxy InjectableAPI)
+    let _ :<|> _ :<|> _ :<|> getCampaignStats = client (Proxy :: Proxy DashboardAPI)
+
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
     manager <- runIO $ newManager defaultManagerSettings
     let
@@ -125,6 +129,17 @@ businessLogicSpec =
           Left err -> error $ "Got error: " <> show err
           Right (Headers NoContent hs) -> return ()
 
+    describe "GET /api/dashboard/campaigns/:campaignId/stats" $ do
+      it "should return correct stats" $ do
+        result <- runClientM (getCampaignStats campaign1 (Just shopDomain)) clientEnv
+        case result of
+          Left err -> error $ "Got error: " <> show err
+          Right stats -> do
+            V.length convC `shouldBe` 1
+            V.length convT `shouldBe` 0
+            where
+              convC = _cmpStatsConvertersControl stats
+              convT = _cmpStatsConvertersTest stats
 
 
 main :: IO ()

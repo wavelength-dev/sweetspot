@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   postgres-db:
@@ -17,7 +17,7 @@ services:
     links:
       - postgres-db
     build:
-      context: '.'
+      context: "."
     ports:
       - "8082:8082"
     depends_on:
@@ -25,6 +25,6 @@ services:
     env_file: api/.env
     environment:
       - DB_HOST=postgres-db
-      - DB_PORT=5432
-      - DB_PASSWORD=
       - DB_NAME=sweetspot
+      - DB_PASSWORD=
+      - DB_PORT=5432

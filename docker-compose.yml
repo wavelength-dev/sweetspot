@@ -10,6 +10,7 @@ services:
     environment:
       - POSTGRES_DB=sweetspot
       - POSTGRES_USER=sweetspot
+      - POSTGRES_PASSWORD=password
 
   sweetspot-api:
     container_name: sweetspot-api
@@ -25,6 +26,6 @@ services:
     env_file: api/.env
     environment:
       - DB_HOST=postgres-db
-      - DB_NAME=sweetspot
-      - DB_PASSWORD=
       - DB_PORT=5432
+      - DB_PASSWORD=password
+      - DB_NAME=sweetspot

@@ -1,11 +1,16 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module SweetSpot.Calc
-  ( InfParams
+  ( InfParams(..)
+  , InfResult
   , runInference
   )
 where
 
+import Data.Aeson (ToJSON, FromJSON)
 import qualified Data.Vector.Unboxed as V
 import Data.Vector.Unboxed (Vector, (!))
+import GHC.Generics (Generic)
 import qualified Data.List as L
 import Statistics.Resampling
 import Statistics.Sample (mean)
@@ -20,7 +25,10 @@ data InfResult = InfResult
   { _lowerBound :: Double
   , _upperBound :: Double
   , _mean :: Double
-  } deriving (Show)
+  } deriving (Eq, Show, Generic)
+
+instance ToJSON InfResult
+instance FromJSON InfResult
 
 nBoot = 1000
 

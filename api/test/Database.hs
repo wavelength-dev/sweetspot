@@ -12,7 +12,7 @@ connectInfo = ConnectInfo
   { connectHost = "localhost"
   , connectPort = 5432
   , connectUser = "sweetspot"
-  , connectPassword = ""
+  , connectPassword = "password"
   , connectDatabase = "sweetspot"
   }
 

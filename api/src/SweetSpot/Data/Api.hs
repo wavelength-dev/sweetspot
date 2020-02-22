@@ -17,10 +17,11 @@ import           Data.Aeson                     ( FromJSON(..)
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
-import qualified Data.Vector                 as V
+import           Data.Vector                    ( Vector )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 import           SweetSpot.Shopify.Types        ( FromShopJSON(..) )
+import           SweetSpot.Calc                 ( InfResult )
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -232,10 +233,11 @@ data CampaignStats = CampaignStats
   , _cmpStatsExperiments :: ![ExperimentStats]
   -- , _cmpStatsProfitPerUserControl :: !(Estimate ConfInt Double)
   -- , _cmpStatsProfitPerUserTest :: !(Estimate ConfInt Double)
-  , _cmpStatsConvertersControl :: !(V.Vector Double)
+  , _cmpStatsConvertersControl :: !(Vector Double)
   , _cmpStatsNonConvertersControl :: !Int
-  , _cmpStatsConvertersTest :: !(V.Vector Double)
+  , _cmpStatsConvertersTest :: !(Vector Double)
   , _cmpStatsNonConvertersTest :: !Int
+  , _cmpStatsInferenceResult :: !InfResult
   -- , _cmpStatsConvertersControlCount :: !Int
   -- , _cmpStatsConvertersTestCount :: !Int
   -- , _cmpStatsConversionRateControl :: !Double

@@ -16,6 +16,7 @@ where
 import           Control.Lens
 import           Data.Text                      ( Text )
 import           Data.Maybe                     ( fromMaybe )
+import qualified Data.Vector                   as V
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
@@ -23,6 +24,7 @@ import           Database.Beam.Postgres
 
 import qualified Data.Map.Strict               as M
 import           SweetSpot.AppM                 ( AppM )
+import           SweetSpot.Calc                 ( runInference, InfParams(..) )
 import           SweetSpot.Data.Api hiding (productVariants)
 import           SweetSpot.Data.Common
 
@@ -182,7 +184,7 @@ instance DashboardDB AppM where
 
             pure (treatment, variant, userCount)
 
-        return $ mkCampaignStats rows (ctrlConversions, nonConvCtrl) (testConversions, nonConvTest)
+        mkCampaignStats rows (ctrlConversions, nonConvCtrl) (testConversions, nonConvTest)
 
         where
           groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
@@ -190,17 +192,28 @@ instance DashboardDB AppM where
             where
               combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
 
-          mkCampaignStats rows (cConvs, cNonConvs) (tConvs, tNonConvs) =
-            CampaignStats
+          mkCampaignStats rows (cConvs, cNonConvs) (tConvs, tNonConvs) = do
+            let
+              ctrlRevs = fromMaybe mempty cConvs
+              ctrlNils = fromMaybe 0 cNonConvs
+              testRevs = fromMaybe mempty tConvs
+              testNils = fromMaybe 0 tNonConvs
+
+            infRes <- runInference
+                (InfParams (V.convert ctrlRevs) ctrlNils)
+                (InfParams (V.convert testRevs) testNils)
+
+            return CampaignStats
               { _cmpStatsCampaignId = _cmpId cmp
               , _cmpStatsCampaignName = _cmpName cmp
               , _cmpStatsStartDate = _cmpStart cmp
               , _cmpStatsEndDate = _cmpEnd cmp
               , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
-              , _cmpStatsConvertersControl = fromMaybe mempty cConvs
-              , _cmpStatsNonConvertersControl = fromMaybe 0 cNonConvs
-              , _cmpStatsConvertersTest = fromMaybe mempty tConvs
-              , _cmpStatsNonConvertersTest = fromMaybe 0 tNonConvs
+              , _cmpStatsConvertersControl = ctrlRevs
+              , _cmpStatsNonConvertersControl = ctrlNils
+              , _cmpStatsConvertersTest = testRevs
+              , _cmpStatsNonConvertersTest = testNils
+              , _cmpStatsInferenceResult = infRes
               }
 
           mkExpStats (treatment, variant, userCount) =

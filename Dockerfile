@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-14.14 AS build
+FROM gcr.io/sweetspot-255522/sweetspot-build:latest AS build
 
 WORKDIR /opt/build
 

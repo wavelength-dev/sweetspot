@@ -15,24 +15,20 @@ where
 
 import           Control.Lens
 import           Data.Text                      ( Text )
-import           Data.Maybe                     ( fromMaybe )
 import qualified Data.Vector                   as V
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
                                                as BeamExt
 import           Database.Beam.Postgres
 
-import qualified Data.Map.Strict               as M
+import           Statistics.Sample              ( mean )
 import           SweetSpot.AppM                 ( AppM )
 import           SweetSpot.Calc                 ( runInference, InfParams(..) )
 import           SweetSpot.Data.Api hiding (productVariants)
 import           SweetSpot.Data.Common
 
 import           SweetSpot.Database.Schema
-import           SweetSpot.Database.Queries.Util
-                                                ( withConn
-                                                , matchShop
-                                                )
+import           SweetSpot.Database.Queries.Util (withConn, matchShop)
 
 data InsertExperiment = InsertExperiment
   { _insertExperimentSku :: !Sku
@@ -50,7 +46,7 @@ makeLenses ''InsertExperiment
 class Monad m => DashboardDB m where
   createExperiment :: InsertExperiment -> m ()
   getCampaigns :: ShopDomain -> m [UICampaign]
-  getCampaignStats :: ShopDomain -> CampaignId -> m CampaignStats
+  -- getCampaignStats :: ShopDomain -> CampaignId -> m CampaignStats
 
 instance DashboardDB AppM where
   createExperiment args = withConn $ \conn -> do
@@ -95,167 +91,93 @@ instance DashboardDB AppM where
     cmps <- runBeamPostgres conn
       $ runSelectReturningList
       $ select
-      $ do
-        shop <- matchShop domain
-        filter_ ((==. (shop ^. shopId)) . (^. cmpShopId)) $ all_ (db ^. campaigns)
+      $ selectShopCampaigns domain
 
-    traverse (getTreatments conn) cmps
+    traverse (enhanceCampaign conn) cmps
 
-    where
-      getTreatments conn cmp = do
-        tuples <- runBeamPostgres conn
-          $ runSelectReturningList
-          $ select
-          $ do
-              t <- filter_ ((==. val_ (_cmpId cmp)) . (^. trCmpId))
-                  $ all_ (db ^. treatments)
-              v <- all_ (db ^. productVariants)
-              guard_ (_trProductVariantId t `references_` v)
-              pure (t, v)
+enhanceCampaign :: Connection -> Campaign -> IO UICampaign
+enhanceCampaign conn cmp = do
 
-        return UICampaign
-          { _uiCampaignId = cmp ^. cmpId
-          , _uiCampaignName = cmp ^. cmpName
-          , _uiCampaignStart = cmp ^. cmpStart
-          , _uiCampaignEnd = cmp ^. cmpEnd
-          , _uiCampaignTreatments = map mkUiTreatment tuples
-          }
+  let cmpId' = cmp ^. cmpId
 
-      mkUiTreatment (t, v) =
-        UITreatment
-          { _uiTreatmentSvid = v ^. pvVariantId
-          , _uiTreatmentTitle = v ^. pvTitle
-          , _uiTreatmentSku = v ^. pvSku
-          , _uiTreatmentProductId = v ^. pvProductId
-          , _uiTreatmentPrice = v ^. pvPrice
-          , _uiTreatmentCurrency = v ^. pvCurrency
-          , _uiTreatment = t ^. trTreatment
-          }
+  [(ctrlRevs, ctrlNils, testRevs, testNils)] <- runBeamPostgres conn
+    $ runSelectReturningList
+    $ select
+    $ selectCampaignInfParams cmpId'
 
-  getCampaignStats domain cmpId' = withConn $ \conn -> do
-    mCmp <- runBeamPostgres conn
-      $ runSelectReturningOne
-      $ select
-      $ do
-        shop <- matchShop domain
-        cmp <- all_ (db ^. campaigns)
-        guard_ (_cmpShopId cmp `references_` shop)
-        guard_ (_cmpId cmp ==. val_ cmpId')
-        pure cmp
+  let
+    ctrlConvLen = V.length ctrlRevs
+    ctrlCR = fromIntegral ctrlConvLen / fromIntegral (ctrlConvLen + ctrlNils)
+    ctrlAOV = mean ctrlRevs
+    testConvLen = V.length testRevs
+    testCR = fromIntegral testConvLen / fromIntegral (testConvLen + testNils)
+    testAOV = mean testRevs
 
-    case mCmp of
-      Just cmp -> do
-        nonConvCtrl <- runBeamPostgres conn
-          $ runSelectReturningOne
-          $ select
-          $ nonConvertersForTreatment (cmp ^. cmpId) 0
+    toUITreatmentVariant (title, sku, price) =
+      UITreatmentVariant
+        { _uiTreatmentVariantTitle = title
+        , _uiTreatmentSku = sku
+        , _uiTreatmentVariantPrice = price
+        , _uiTreatmentVariantCurrency = "USD"
+        }
 
-        nonConvTest <- runBeamPostgres conn
-          $ runSelectReturningOne
-          $ select
-          $ nonConvertersForTreatment (cmp ^. cmpId) 1
+  infResult <- runInference
+    (InfParams (V.convert ctrlRevs) ctrlNils)
+    (InfParams (V.convert testRevs) testNils)
 
-        ctrlConversions <- runBeamPostgres conn
-          $ runSelectReturningOne
-          $ select
-          $ userRevenueArrForTreatment (cmp ^. cmpId) 0
+  ctrlTreatmentVariants <- runBeamPostgres conn
+    $ runSelectReturningList
+    $ select
+    $ selectUITreatmentVariants cmpId' 0
 
-        testConversions <- runBeamPostgres conn
-          $ runSelectReturningOne
-          $ select
-          $ userRevenueArrForTreatment (cmp ^. cmpId) 1
+  testTreatmentVariants <- runBeamPostgres conn
+    $ runSelectReturningList
+    $ select
+    $ selectUITreatmentVariants cmpId' 1
 
-        rows <- runBeamPostgres conn
-          $ runSelectReturningList
-          $ select
-          $ do
+  return UICampaign
+    { _uiCampaignId = cmp ^. cmpId
+    , _uiCampaignName = cmp ^. cmpName
+    , _uiCampaignStart = cmp ^. cmpStart
+    , _uiCampaignEnd = cmp ^. cmpEnd
+    , _uiCampaignLift = infResult
+    , _uiCampaignCtrlTreatment =
+      UITreatment { _uiTreatmentCR = ctrlCR
+                  , _uiTreatmentAOV = ctrlAOV
+                  , _uiTreatmentVariants =
+                    map toUITreatmentVariant ctrlTreatmentVariants
+                  }
+    , _uiCampaignTestTreatment =
+      UITreatment { _uiTreatmentCR = testCR
+                  , _uiTreatmentAOV = testAOV
+                  , _uiTreatmentVariants =
+                    map toUITreatmentVariant testTreatmentVariants
+                  }
+    }
 
-            let usPerVar = usersPerVariantInCampaign cmp
+selectUITreatmentVariants cmpId' treat' = do
+  treatment <- all_ (db ^. treatments)
+  variant <- all_ (db ^. productVariants)
 
-            variant <- all_ (db ^. productVariants)
-            treatment <- all_ (db ^. treatments)
-            campaign <- all_ (db ^. campaigns)
+  guard_ (_trProductVariantId treatment `references_` variant)
+  guard_ (treatment ^. trCmpId ==. val_ cmpId')
+  guard_ (treatment ^. trTreatment ==. val_ treat')
 
-            userCount <- fromMaybe_ 0 . snd <$>
-                leftJoin_ usPerVar (\(varId, count) -> varId ==. variant ^. pvId)
+  pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
 
-            guard_ (_trProductVariantId treatment `references_` variant)
-            guard_ (_trCmpId treatment `references_` campaign)
-            guard_ (campaign ^. cmpId ==. val_ (_cmpId cmp))
+selectShopCampaigns domain = do
+  shop <- matchShop domain
+  filter_ ((==. (shop ^. shopId)) . (^. cmpShopId))
+    $ all_ (db ^. campaigns)
 
-            pure (treatment, variant, userCount)
+selectCampaignInfParams cmpId' = do
+  ctrlRevs <- userRevenueArrForTreatment cmpId' 0
+  ctrlNils <- nonConvertersForTreatment cmpId' 0
 
-        mkCampaignStats rows (ctrlConversions, nonConvCtrl) (testConversions, nonConvTest)
+  testRevs <- userRevenueArrForTreatment cmpId' 1
+  testNils <- nonConvertersForTreatment cmpId' 1
 
-        where
-          groupBySku :: [(Sku, ExperimentStats)] -> [(Sku, ExperimentStats)]
-          groupBySku =  M.toList . M.fromListWith combineVariants
-            where
-              combineVariants e1 e2 = e1 & expStatsVariants %~ mappend (e2 ^. expStatsVariants)
-
-          mkCampaignStats rows (cConvs, cNonConvs) (tConvs, tNonConvs) = do
-            let
-              ctrlRevs = fromMaybe mempty cConvs
-              ctrlNils = fromMaybe 0 cNonConvs
-              testRevs = fromMaybe mempty tConvs
-              testNils = fromMaybe 0 tNonConvs
-
-            infRes <- runInference
-                (InfParams (V.convert ctrlRevs) ctrlNils)
-                (InfParams (V.convert testRevs) testNils)
-
-            return CampaignStats
-              { _cmpStatsCampaignId = _cmpId cmp
-              , _cmpStatsCampaignName = _cmpName cmp
-              , _cmpStatsStartDate = _cmpStart cmp
-              , _cmpStatsEndDate = _cmpEnd cmp
-              , _cmpStatsExperiments = map mkExpStats rows & groupBySku & map snd
-              , _cmpStatsConvertersControl = ctrlRevs
-              , _cmpStatsNonConvertersControl = ctrlNils
-              , _cmpStatsConvertersTest = testRevs
-              , _cmpStatsNonConvertersTest = testNils
-              , _cmpStatsInferenceResult = infRes
-              }
-
-          mkExpStats (treatment, variant, userCount) =
-            ( variant ^. pvSku,
-
-              ExperimentStats
-                { _expStatsSku = variant ^. pvSku
-                , _expStatsUserCount = 0
-                , _expStatsVariants =
-                  [
-                    VariantStats
-                    { _varStatsSvid = variant ^. pvVariantId
-                    , _varStatsTreatment = treatment ^. trTreatment
-                    , _varStatsUserCount = userCount
-                    , _varStatsPrice = variant ^. pvPrice
-                    }
-                  ]
-                }
-            )
-
-
-      Nothing -> do
-        print "error ******"
-        error "lol"
-
-
-usersPerVariantInCampaign cmp =
-  aggregate_ (\(var, ue) -> (group_ (var ^. pvId), count_ (ue ^. ueUserId))) $ do
-      userExp <- all_ (db ^. userExperiments)
-      treatment <- all_ (db ^. treatments)
-      variant <- all_ (db ^. productVariants)
-
-      let cmpId = val_ (_cmpId cmp)
-
-      guard_ (userExp ^. ueCmpId ==. cmpId)
-      guard_ (userExp ^. ueTreatment ==. treatment ^. trTreatment)
-      guard_ (treatment ^. trCmpId ==. cmpId)
-      guard_ (_trProductVariantId treatment `references_` variant)
-
-      pure (variant, userExp)
-
+  pure (ctrlRevs, ctrlNils, testRevs, testNils)
 
 userRevenueArrForTreatment cmpId' treatment' =
   aggregate_ (\(_, rev) -> pgArrayAgg (fromMaybe_ 0 rev)) $ do

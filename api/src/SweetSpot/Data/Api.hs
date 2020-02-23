@@ -17,7 +17,6 @@ import           Data.Aeson                     ( FromJSON(..)
 import           Data.Scientific                ( Scientific )
 import           Data.Text                      ( Text )
 import           Data.Time                      ( LocalTime )
-import           Data.Vector                    ( Vector )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 import           SweetSpot.Shopify.Types        ( FromShopJSON(..) )
@@ -129,35 +128,33 @@ instance FromShopJSON Product where
       }
 
 -- | ---------------------------------------------------------------------------
+-- | UITreatmentVariant
+-- | ---------------------------------------------------------------------------
+data UITreatmentVariant = UITreatmentVariant
+  { _uiTreatmentVariantTitle :: !Text
+  , _uiTreatmentSku :: !Sku
+  , _uiTreatmentVariantPrice :: !Price
+  , _uiTreatmentVariantCurrency :: !Text
+  } deriving (Generic, Eq, Show)
+
+makeLenses ''UITreatmentVariant
+
+instance ToJSON UITreatmentVariant
+
+instance FromJSON UITreatmentVariant
+
+-- | ---------------------------------------------------------------------------
 -- | UITreatment
 -- | ---------------------------------------------------------------------------
 data UITreatment = UITreatment
-  { _uiTreatmentSvid :: !Svid
-  , _uiTreatmentTitle :: !Text
-  , _uiTreatmentSku :: !Sku
-  , _uiTreatmentProductId :: !Pid
-  , _uiTreatmentPrice :: !Price
-  , _uiTreatmentCurrency :: !Text
-  , _uiTreatment :: !Int
+  { _uiTreatmentCR :: !Double
+  , _uiTreatmentAOV :: !Double
+  , _uiTreatmentVariants :: [UITreatmentVariant]
   } deriving (Generic, Eq, Show)
 
 makeLenses ''UITreatment
 
-instance ToJSON UITreatment where
-  toJSON treat = object
-    [ "tag" .= ("UITreatment" :: Text)
-    , "values" .= [
-        object
-          [ "_uiTreatmentSvid" .= _uiTreatmentSvid treat
-          , "_uiTreatmentTitle" .= _uiTreatmentTitle treat
-          , "_uiTreatmentSku" .= _uiTreatmentSku treat
-          , "_uiTreatmentProductId" .= _uiTreatmentProductId treat
-          , "_uiTreatmentPrice" .= _uiTreatmentPrice treat
-          , "_uiTreatmentCurrency" .= _uiTreatmentCurrency treat
-          , "_uiTreatment" .= _uiTreatment treat
-          ]
-      ]
-    ]
+instance ToJSON UITreatment
 
 instance FromJSON UITreatment
 
@@ -169,87 +166,16 @@ data UICampaign = UICampaign
   , _uiCampaignName :: !Text
   , _uiCampaignStart :: !(Maybe LocalTime)
   , _uiCampaignEnd :: !(Maybe LocalTime)
-  , _uiCampaignTreatments :: ![UITreatment]
+  , _uiCampaignLift :: !InfResult
+  , _uiCampaignCtrlTreatment :: !UITreatment
+  , _uiCampaignTestTreatment :: !UITreatment
   } deriving (Generic, Eq, Show)
 
 makeLenses ''UICampaign
 
-instance ToJSON UICampaign where
-  toJSON uiCmp = object
-    [ "tag" .=  ("UICampaign" :: Text)
-    , "values" .= [
-        object
-          [ "_uiCampaignId" .= _uiCampaignId uiCmp
-          , "_uiCampaignStart" .= _uiCampaignStart uiCmp
-          , "_uiCampaignEnd" .= _uiCampaignEnd uiCmp
-          , "_uiCampaignTreatments" .= _uiCampaignTreatments uiCmp
-          ]
-      ]
-    ]
-
-
+instance ToJSON UICampaign
 
 instance FromJSON UICampaign
-
--- | ---------------------------------------------------------------------------
--- | VariantStats
--- | ---------------------------------------------------------------------------
-data VariantStats = VariantStats
-  { _varStatsSvid :: !Svid
-  , _varStatsTreatment :: !Int
-  , _varStatsUserCount :: !Int
-  , _varStatsPrice :: !Price
-  -- , _bsUserRevenues :: ![(UserId, Double)]
-  } deriving (Eq, Generic, Show)
-
-makeLenses ''VariantStats
-
-instance ToJSON VariantStats
-
-instance FromJSON VariantStats
-
--- | ---------------------------------------------------------------------------
--- | ExperimentStats
--- | ---------------------------------------------------------------------------
-data ExperimentStats = ExperimentStats
-  { _expStatsSku :: !Sku
-  , _expStatsUserCount :: !Int
-  , _expStatsVariants :: ![VariantStats]
-  } deriving (Eq, Generic, Show)
-
-makeLenses ''ExperimentStats
-
-instance ToJSON ExperimentStats
-
-instance FromJSON ExperimentStats
-
--- | ---------------------------------------------------------------------------
--- | CampaignStats
--- | ---------------------------------------------------------------------------
-data CampaignStats = CampaignStats
-  { _cmpStatsCampaignId :: !CampaignId
-  , _cmpStatsCampaignName :: !Text
-  , _cmpStatsStartDate :: !(Maybe LocalTime)
-  , _cmpStatsEndDate :: !(Maybe LocalTime)
-  , _cmpStatsExperiments :: ![ExperimentStats]
-  -- , _cmpStatsProfitPerUserControl :: !(Estimate ConfInt Double)
-  -- , _cmpStatsProfitPerUserTest :: !(Estimate ConfInt Double)
-  , _cmpStatsConvertersControl :: !(Vector Double)
-  , _cmpStatsNonConvertersControl :: !Int
-  , _cmpStatsConvertersTest :: !(Vector Double)
-  , _cmpStatsNonConvertersTest :: !Int
-  , _cmpStatsInferenceResult :: !InfResult
-  -- , _cmpStatsConvertersControlCount :: !Int
-  -- , _cmpStatsConvertersTestCount :: !Int
-  -- , _cmpStatsConversionRateControl :: !Double
-  -- , _cmpStatsConversionRateTest :: !Double
-  } deriving (Eq, Generic, Show)
-
-makeLenses ''CampaignStats
-
-instance ToJSON CampaignStats
-
-instance FromJSON CampaignStats
 
 -- | ---------------------------------------------------------------------------
 -- | CreateExperiment

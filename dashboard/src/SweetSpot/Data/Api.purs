@@ -19,6 +19,7 @@ import Prelude
 newtype UICampaign =
     UICampaign {
       _uiCampaignId :: String
+    , _uiCampaignName :: String
     , _uiCampaignStart :: Maybe String
     , _uiCampaignEnd :: Maybe String
     , _uiCampaignTreatments :: Array UITreatment
@@ -33,11 +34,14 @@ instance decodeJsonUICampaign :: DecodeJson UICampaign where
   decodeJson = genericDecodeJson
 
 --------------------------------------------------------------------------------
-_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignStart :: Maybe String, _uiCampaignEnd :: Maybe String, _uiCampaignTreatments :: Array UITreatment}
+_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe String, _uiCampaignEnd :: Maybe String, _uiCampaignTreatments :: Array UITreatment}
 _UICampaign = _Newtype
 
 uiCampaignId :: Lens' UICampaign String
 uiCampaignId = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignId")
+
+uiCampaignName :: Lens' UICampaign String
+uiCampaignName = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignName")
 
 uiCampaignStart :: Lens' UICampaign (Maybe String)
 uiCampaignStart = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignStart")

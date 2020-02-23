@@ -115,6 +115,7 @@ instance DashboardDB AppM where
 
         return UICampaign
           { _uiCampaignId = cmp ^. cmpId
+          , _uiCampaignName = cmp ^. cmpName
           , _uiCampaignStart = cmp ^. cmpStart
           , _uiCampaignEnd = cmp ^. cmpEnd
           , _uiCampaignTreatments = map mkUiTreatment tuples

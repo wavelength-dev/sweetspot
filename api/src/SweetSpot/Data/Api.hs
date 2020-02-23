@@ -166,6 +166,7 @@ instance FromJSON UITreatment
 -- | ---------------------------------------------------------------------------
 data UICampaign = UICampaign
   { _uiCampaignId :: !CampaignId
+  , _uiCampaignName :: !Text
   , _uiCampaignStart :: !(Maybe LocalTime)
   , _uiCampaignEnd :: !(Maybe LocalTime)
   , _uiCampaignTreatments :: ![UITreatment]

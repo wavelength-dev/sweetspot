@@ -20,7 +20,6 @@ import           Data.Time                      ( LocalTime )
 import           GHC.Generics                   ( Generic )
 import           SweetSpot.Data.Common
 import           SweetSpot.Shopify.Types        ( FromShopJSON(..) )
-import           SweetSpot.Calc                 ( InfResult )
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -126,6 +125,19 @@ instance FromShopJSON Product where
       , _productVariants = variants
       , _productImage = image
       }
+
+-- | ---------------------------------------------------------------------------
+-- | InfResult
+-- | ---------------------------------------------------------------------------
+data InfResult = InfResult
+  { _lowerBound :: Double
+  , _upperBound :: Double
+  , _mean :: Double
+  } deriving (Eq, Show, Generic)
+
+instance ToJSON InfResult
+
+instance FromJSON InfResult
 
 -- | ---------------------------------------------------------------------------
 -- | UITreatmentVariant

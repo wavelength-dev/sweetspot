@@ -7,28 +7,18 @@ module SweetSpot.Calc
   )
 where
 
-import Data.Aeson (ToJSON, FromJSON)
 import qualified Data.Vector.Unboxed as V
 import Data.Vector.Unboxed (Vector, (!))
-import GHC.Generics (Generic)
 import qualified Data.List as L
 import Statistics.Resampling
 import Statistics.Sample (mean)
 import System.Random.MWC (createSystemRandom, GenIO, uniformR)
+import SweetSpot.Data.Api (InfResult(..))
 
 data InfParams = InfParams
   { _conversions :: Vector Double
   , _nilCount :: Int
   } deriving (Show)
-
-data InfResult = InfResult
-  { _lowerBound :: Double
-  , _upperBound :: Double
-  , _mean :: Double
-  } deriving (Eq, Show, Generic)
-
-instance ToJSON InfResult
-instance FromJSON InfResult
 
 nBoot = 1000
 

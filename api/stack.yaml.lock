@@ -7,17 +7,17 @@ packages:
 - completed:
     cabal-file:
       size: 3219
-      sha256: 8cbd798266ec37b0385c32ef1988a3e03864d7b6e8f33ae967493a5460574ecc
+      sha256: c2d455a64f2fad7e42866e254528d89bd85ebf99ce85c8e871b6e508b8c7d76d
     name: purescript-bridge
-    version: 0.13.1.0
-    git: https://github.com/blombern/purescript-bridge.git
+    version: 0.13.0.0
+    git: https://github.com/eskimor/purescript-bridge.git
     pantry-tree:
       size: 1562
-      sha256: a0c8f11bca64bb6cdde0a159cdbbab4e935509cbb8a3dbfb489198ea30072f90
-    commit: f6064abf1adb2cc6881240e10ef870d67f713e48
+      sha256: 7b83f3587ddb147d80a775f10c01052db6fda5ddfd73be08960719ed6c345f12
+    commit: cb00f5e746a05d06eb32001e4579af64c29d567b
   original:
-    git: https://github.com/blombern/purescript-bridge.git
-    commit: f6064abf1adb2cc6881240e10ef870d67f713e48
+    git: https://github.com/eskimor/purescript-bridge.git
+    commit: cb00f5e746a05d06eb32001e4579af64c29d567b
 - completed:
     hackage: beam-postgres-0.4.0.0@sha256:a01443ce503cfc58cbe28f476252672282347579444b65f2925a12ba6a2c13f5,4173
     pantry-tree:

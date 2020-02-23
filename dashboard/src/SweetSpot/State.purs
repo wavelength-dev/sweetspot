@@ -15,7 +15,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import SweetSpot.Data.Api (Product, UICampaign)
 import SweetSpot.Route (Route(..))
-import SweetSpot.Service (fetchCampaigns, fetchProducts)
+import SweetSpot.Service (fetchCampaigns)
 
 type AppState =
   { products :: Array Product
@@ -38,7 +38,7 @@ initialState :: AppState
 initialState = { products: [], campaigns: [], route: Home }
 
 fetchRemoteState :: Aff RemoteState
-fetchRemoteState = combine <$> fetchProducts <*> fetchCampaigns
+fetchRemoteState = combine <$> pure (Right []) <*> fetchCampaigns
   where
     combine =
       case _, _ of

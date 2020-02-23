@@ -1,15 +1,18 @@
-module SweetSpot.Service (fetchCampaigns, fetchProducts) where
+module SweetSpot.Service where
 
 import Prelude
-import SweetSpot.Data.Api (Product, UICampaign)
 
-import Data.Argonaut (class DecodeJson, decodeJson, jsonParser)
+import Data.Argonaut (decodeJson, jsonParser, Json)
+import Data.Argonaut.Decode ((.:))
 import Data.Either (Either)
+import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
+import SweetSpot.Data.Api (Product, UICampaign(..))
+import SweetSpot.Data.Codec as Codec
 
 fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch
@@ -28,14 +31,16 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
 shopParam :: String
 shopParam = "?shop=libertyprice.myshopify.com"
 
-fetchThing :: forall t. (DecodeJson t) => String -> Aff (Either String (Array t))
-fetchThing route = do
+fetchThing
+  :: forall t.
+     String
+  -> (Json -> Either String t)
+  -> Aff (Either String t)
+fetchThing route decoder = do
   res <- getJson (route <> shopParam) {}
   text <- Milkis.text res
-  pure (jsonParser text >>= decodeJson)
+  pure (jsonParser text >>= decodeJson >>= decoder)
 
 fetchCampaigns :: Aff (Either String (Array UICampaign))
-fetchCampaigns = fetchThing "http://localhost:8082/api/dashboard/campaigns"
-
-fetchProducts :: Aff (Either String (Array Product))
-fetchProducts = fetchThing "http://localhost:8082/api/dashboard/products"
+fetchCampaigns =
+  fetchThing "http://localhost:8082/api/dashboard/campaigns" Codec.decodeUICampaigns

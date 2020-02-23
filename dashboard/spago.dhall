@@ -5,7 +5,6 @@ You can edit this file as you like.
 { name = "my-project"
 , dependencies =
     [ "argonaut"
-    , "argonaut-generic"
     , "console"
     , "effect"
     , "generics-rep"

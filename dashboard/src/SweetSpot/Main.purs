@@ -7,7 +7,6 @@ import Data.Lens ((^.))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Effect (Effect)
-import Effect.Class.Console (log)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM as R

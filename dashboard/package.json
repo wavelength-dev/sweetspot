@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "build": "spago build && parcel build index.html",
-    "dev": "spago build --watch & parcel index.html"
+    "dev": "spago build --watch & parcel serve index.html"
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4"

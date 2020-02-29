@@ -3,9 +3,7 @@ module SweetSpot.Service where
 import Prelude
 
 import Data.Argonaut (decodeJson, jsonParser, Json)
-import Data.Argonaut.Decode ((.:))
 import Data.Either (Either)
-import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
@@ -44,3 +42,7 @@ fetchThing route decoder = do
 fetchCampaigns :: Aff (Either String (Array UICampaign))
 fetchCampaigns =
   fetchThing "http://localhost:8082/api/dashboard/campaigns" Codec.decodeUICampaigns
+
+fetchProducts :: Aff (Either String (Array Product))
+fetchProducts =
+  fetchThing "http://localhost:8082/api/dashboard/products" Codec.decodeProducts

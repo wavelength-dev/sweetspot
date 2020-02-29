@@ -29,7 +29,7 @@ decodeUITreatmentVariant json = do
   o <- decodeJson json
   construct
     <$> o .: "_uiTreatmentVariantTitle"
-    <*> o .: "_uiTreatmentVariantSku"
+    <*> o .: "_uiTreatmentSku"
     <*> o .: "_uiTreatmentVariantPrice"
     <*> o .: "_uiTreatmentVariantCurrency"
 
@@ -87,3 +87,53 @@ decodeUICampaigns :: Json -> Either String (Array UICampaign)
 decodeUICampaigns json = do
   arr <- decodeJson json
   traverse decodeUICampaign arr
+
+decodeImage :: Json -> Either String Image
+decodeImage json = do
+  o <- decodeJson json
+  construct <$> o .: "_imageSrc"
+  where
+    construct src = Image { _imageSrc: src }
+
+decodeVariant :: Json -> Either String Variant
+decodeVariant json = do
+  o <- decodeJson json
+  construct
+    <$> o .: "_variantId"
+    <*> o .: "_variantProductId"
+    <*> o .: "_variantTitle"
+    <*> o .: "_variantSku"
+    <*> o .: "_variantPrice"
+
+  where
+    construct vid pid title sku price =
+      Variant
+        { _variantId: vid
+        , _variantProductId: pid
+        , _variantTitle: title
+        , _variantSku: sku
+        , _variantPrice: price
+        }
+
+decodeProduct :: Json -> Either String Product
+decodeProduct json = do
+  o <- decodeJson json
+  construct
+    <$> o .: "_productId"
+    <*> o .: "_productTitle"
+    <*> (o .: "_productVariants" >>= traverse decodeVariant)
+    <*> (o .: "_productImage" >>= decodeImage)
+
+  where
+    construct pid title variants image =
+      Product
+        { _productId: pid
+        , _productTitle: title
+        , _productVariants: variants
+        , _productImage: image
+        }
+
+decodeProducts :: Json -> Either String (Array Product)
+decodeProducts json = do
+  arr <- decodeJson json
+  traverse decodeProduct arr

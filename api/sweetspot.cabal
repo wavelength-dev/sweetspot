@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2d31f63429ba4a6a660cfe479deceb72b86e9424935902fe836aa9afdd056194
+-- hash: 906df4ff9b1fb21c3f44cb0b9bb75ddab9c10f6785e348ac9f634cbd0a9c776b
 
 name:           sweetspot
 version:        0.1.0.0
@@ -46,6 +46,7 @@ library
       SweetSpot.Server
       SweetSpot.Shopify.Client
       SweetSpot.Shopify.Types
+      SweetSpot.Util
   other-modules:
       Paths_sweetspot
   hs-source-dirs:

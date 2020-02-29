@@ -148,8 +148,8 @@ enhanceCampaign conn cmp = do
                     map toUITreatmentVariant ctrlTreatmentVariants
                   }
     , _uiCampaignTestTreatment =
-      UITreatment { _uiTreatmentCR = testCR
-                  , _uiTreatmentAOV = testAOV
+      UITreatment { _uiTreatmentCR = nanToZero testCR
+                  , _uiTreatmentAOV = nanToZero testAOV
                   , _uiTreatmentVariants =
                     map toUITreatmentVariant testTreatmentVariants
                   }

@@ -33,12 +33,6 @@ makeLenses ''Image
 instance FromJSON Image
 
 instance ToJSON Image where
-  toJSON img = object
-    [ "tag" .=  ("Image" :: Text)
-    , "values" .= [
-        object [ "_imageSrc" .= _imageSrc img ]
-      ]
-    ]
 
 instance FromShopJSON Image where
   parseShopJSON = withObject "Image" $ \v -> Image
@@ -57,18 +51,7 @@ data Variant = Variant
 
 makeLenses ''Variant
 
-instance ToJSON Variant where
-  toJSON var = object
-    [ "tag" .=  ("Variant" :: Text)
-    , "values" .= [
-        object [ "_variantId" .= _variantId var
-               , "_variantProductId" .= _variantProductId var
-               , "_variantTitle" .= _variantTitle var
-               , "_variantSku" .= _variantSku var
-               , "_variantPrice" .= _variantPrice var
-               ]
-      ]
-    ]
+instance ToJSON Variant
 
 instance FromJSON Variant
 
@@ -80,7 +63,7 @@ instance FromShopJSON Variant where
     sku <- v .: "sku"
     price <- v .: "price"
     return Variant
-      { _variantId = Svid .  showText @Int $ id
+      { _variantId = Svid . showText @Int $ id
       , _variantProductId = Pid . showText @Int $ productId
       , _variantTitle = title
       , _variantSku = sku
@@ -99,17 +82,7 @@ data Product = Product
 
 makeLenses ''Product
 
-instance ToJSON Product where
-  toJSON p = object
-    [ "tag" .=  ("Product" :: Text)
-    , "values" .= [
-        object [ "_productId" .= _productId p
-               , "_productTitle" .= _productTitle p
-               , "_productVariants" .= _productVariants p
-               , "_productImage" .= _productImage p
-               ]
-      ]
-    ]
+instance ToJSON Product
 
 instance FromJSON Product
 

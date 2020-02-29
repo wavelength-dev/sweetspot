@@ -7,9 +7,12 @@
   "private": true,
   "scripts": {
     "build": "spago build && parcel build index.html",
-    "dev": "spago build --watch & parcel serve index.html"
+    "dev": "run-p watch:*",
+    "watch:bundle": "parcel serve index.html",
+    "watch:purescript": "spago build --watch"
   },
   "devDependencies": {
+    "npm-run-all": "^4.1.5",
     "parcel-bundler": "^1.12.4"
   },
   "dependencies": {

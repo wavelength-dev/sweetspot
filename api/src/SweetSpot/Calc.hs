@@ -14,6 +14,7 @@ import Statistics.Resampling
 import Statistics.Sample (mean)
 import System.Random.MWC (createSystemRandom, GenIO, uniformR)
 import SweetSpot.Data.Api (InfResult(..))
+import SweetSpot.Util (nanToZero)
 
 data InfParams = InfParams
   { _conversions :: Vector Double
@@ -49,9 +50,9 @@ runInference cParams tParams = do
     middle90 = V.slice nTails (len - nTails) sorted
 
   return InfResult
-    { _mean = mean sorted
-    , _lowerBound = V.head middle90
-    , _upperBound = V.last middle90
+    { _mean = nanToZero $ mean sorted
+    , _lowerBound = nanToZero $ V.head middle90
+    , _upperBound = nanToZero $ V.last middle90
     }
 
   where

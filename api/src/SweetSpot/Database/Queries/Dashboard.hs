@@ -26,7 +26,7 @@ import           SweetSpot.AppM                 ( AppM )
 import           SweetSpot.Calc                 ( runInference, InfParams(..) )
 import           SweetSpot.Data.Api hiding (productVariants)
 import           SweetSpot.Data.Common
-
+import           SweetSpot.Util                  (nanToZero)
 import           SweetSpot.Database.Schema
 import           SweetSpot.Database.Queries.Util (withConn, matchShop)
 
@@ -142,8 +142,8 @@ enhanceCampaign conn cmp = do
     , _uiCampaignEnd = cmp ^. cmpEnd
     , _uiCampaignLift = infResult
     , _uiCampaignCtrlTreatment =
-      UITreatment { _uiTreatmentCR = ctrlCR
-                  , _uiTreatmentAOV = ctrlAOV
+      UITreatment { _uiTreatmentCR = nanToZero ctrlCR
+                  , _uiTreatmentAOV = nanToZero ctrlAOV
                   , _uiTreatmentVariants =
                     map toUITreatmentVariant ctrlTreatmentVariants
                   }

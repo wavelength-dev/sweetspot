@@ -58,13 +58,13 @@ import           System.Exit                    ( exitWith
 type RootAPI
         = "api" :>
         (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI)
-        :<|> HealthAPI :<|> StaticAPI :<|> IndexRoute
+        :<|> IndexRoute :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server = (injectableHandler :<|> dashboardHandler :<|> oauthHandler)
-          :<|> healthHandler :<|> staticHandler :<|> indexHandler
+          :<|> indexHandler :<|> healthHandler :<|> staticHandler
 
 createApp :: AppCtx -> Application
 createApp ctx = getMiddleware ctx $ serve rootAPI $ hoistServer

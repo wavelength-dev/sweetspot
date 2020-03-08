@@ -19,6 +19,7 @@ import Servant
 import Web.Cookie (defaultSetCookie, SetCookie(..))
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Common
+import SweetSpot.Database.Queries.Install (InstallDB(..))
 import SweetSpot.Route.Util (badRequestErr)
 
 data HTML
@@ -33,17 +34,32 @@ instance Accept HTML where
 
 type HTMLWithCookie = Headers '[Header "Set-Cookie" SetCookie] RawHTML
 
-type IndexRoute = "dashboard"
+type IndexRoute = "dashboard" :> "index.html"
   :> QueryParam "shop" ShopDomain
+  :> QueryParam "timestamp" Timestamp
+  :> QueryParam "hmac" HMAC'
   :> Get '[HTML] HTMLWithCookie
 
-indexHandler :: Maybe ShopDomain -> ServerM HTMLWithCookie
-indexHandler (Just (ShopDomain domain)) = runAppM $
-  addHeader cookie . RawHTML <$> liftIO (BS.readFile "../dist/index.html")
-  where
-    cookie = defaultSetCookie
-      { setCookieName = "sweetspotShopOrigin"
-      , setCookieValue = TE.encodeUtf8 domain
-      }
+indexHandler
+  :: Maybe ShopDomain
+  -> Maybe Timestamp
+  -> Maybe HMAC'
+  -> ServerM HTMLWithCookie
+indexHandler (Just domain) (Just (Timestamp ts)) (Just (HMAC' hmac)) =
+  runAppM $ do
+    mToken <- getOAuthToken domain
+    let ShopDomain txtDomain = domain
+    case mToken of
+      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "../dist/index.html")
+        where
+          cookie = defaultSetCookie
+            { setCookieName = "sweetspotShopOrigin"
+            , setCookieValue = TE.encodeUtf8 txtDomain
+            }
+      Nothing -> throwError $ err302 { errHeaders = [("Location", redirectPath)] }
+        where
+          redirectPath = TE.encodeUtf8 $ "/api/oauth/install?shop=" <> txtDomain
+            <> "&timestamp=" <> ts
+            <> "&hmac=" <> hmac
 
-indexHandler _ = throwError badRequestErr
+indexHandler _ _ _ = throwError badRequestErr

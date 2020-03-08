@@ -1,8 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module SweetSpot.AppM where
 
+import           Control.Lens
 import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.Except           ( MonadError(..) )
 import           Control.Monad.Reader           ( ReaderT )
@@ -18,19 +20,21 @@ import           SweetSpot.Database             ( Pool )
 import           SweetSpot.Env                  ( Environment )
 
 data AppConfig = AppConfig
-  { environment :: !Environment
-  , shopifyClientId :: !Text
-  , shopifyClientSecret :: !Text
-  , shopifyOAuthRedirectUri :: !Text
-  , basicAuthUser :: !Text
-  , basicAuthPassword :: !Text
+  { _configEnvironment :: !Environment
+  , _configShopifyClientId :: !Text
+  , _configShopifyClientSecret :: !Text
+  , _configShopifyOAuthRedirectUri :: !Text
   } deriving (Generic, Show)
 
+makeLenses ''AppConfig
+
 data AppCtx = AppCtx
-  { _getConfig :: !AppConfig
-  , _getLogger :: !LoggerSet
-  , _getDbPool :: !Pool
+  { _ctxConfig :: !AppConfig
+  , _ctxLogger :: !LoggerSet
+  , _ctxDbPool :: !Pool
   }
+
+makeLenses ''AppCtx
 
 type ServerM = ReaderT AppCtx Handler
 

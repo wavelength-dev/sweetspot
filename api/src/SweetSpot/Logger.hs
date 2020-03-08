@@ -11,6 +11,7 @@ module SweetSpot.Logger
   , error'
   ) where
 
+import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO, MonadIO(..))
 import Control.Monad.Reader (asks)
 import Control.Monad.Reader.Class     ( MonadReader(..) )
@@ -25,7 +26,7 @@ import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
 import Prelude hiding (error, log)
-import SweetSpot.AppM (AppCtx(..))
+import SweetSpot.AppM
 import System.Log.FastLogger (LoggerSet, ToLogStr(..), pushLogStrLn)
 
 data LogLevel
@@ -55,7 +56,7 @@ instance ToLogStr LogMessage where
 
 log :: (MonadReader AppCtx m, MonadIO m) => LogLevel -> Text -> m ()
 log lvl msg = do
-  logset <- asks _getLogger
+  logset <- asks (^. ctxLogger)
   ts <- liftIO getCurrentTime
   liftIO $
     pushLogStrLn logset $

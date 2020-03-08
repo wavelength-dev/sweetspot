@@ -4,127 +4,99 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Server
-        ( runServer
-        , rootAPI
-        )
-where
+    ( runServer
+    , rootAPI
+    ) where
 
-import           Control.Concurrent             ( threadDelay )
-import           Control.Monad.Reader           ( runReaderT )
-import           Data.Pool                      ( withResource )
-import           Data.Text                     as T
-import           Network.Wai.Logger             ( withStdoutLogger )
-import           Network.Wai.Handler.Warp       ( defaultSettings
-                                                , setPort
-                                                , runSettings
-                                                , setLogger
-                                                )
-import           Servant                 hiding ( basicAuthPassword )
-import           SweetSpot.AppM                 ( AppConfig(..)
-                                                , AppCtx(..)
-                                                )
-import           SweetSpot.Database             ( DbConfig(..)
-                                                , getDbPool
-                                                , migrate
-                                                )
-import qualified SweetSpot.Env                 as Env
-import qualified SweetSpot.Logger              as L
-import           SweetSpot.Middleware           ( getMiddleware )
-import           SweetSpot.Route.Dashboard      ( DashboardAPI
-                                                , dashboardHandler
-                                                )
-import           SweetSpot.Route.Health         ( HealthAPI
-                                                , healthHandler
-                                                )
-import           SweetSpot.Route.Injectable     ( InjectableAPI
-                                                , injectableHandler
-                                                )
-import           SweetSpot.Route.Static         ( StaticAPI
-                                                , staticHandler
-                                                )
-import           SweetSpot.Route.OAuth          ( OAuthAPI
-                                                , oauthHandler
-                                                )
-import           SweetSpot.Route.Index          ( IndexRoute
-                                                , indexHandler
-                                                )
-import           System.Log.FastLogger          ( defaultBufSize
-                                                , newStdoutLoggerSet
-                                                )
-import           System.Exit                    ( exitWith
-                                                , ExitCode(..)
-                                                )
+import Control.Concurrent (threadDelay)
+import Control.Monad.Reader (runReaderT)
+import Data.Pool (withResource)
+import Data.Text as T
+import Network.Wai.Handler.Warp
+    ( defaultSettings
+    , runSettings
+    , setLogger
+    , setPort
+    )
+import Network.Wai.Logger (withStdoutLogger)
+import Servant hiding (basicAuthPassword)
+import SweetSpot.AppM
+import SweetSpot.Database (DbConfig(..), getDbPool, migrate)
+import qualified SweetSpot.Env as Env
+import qualified SweetSpot.Logger as L
+import SweetSpot.Middleware (getMiddleware)
+import SweetSpot.Route.Dashboard (DashboardAPI, dashboardHandler)
+import SweetSpot.Route.Health (HealthAPI, healthHandler)
+import SweetSpot.Route.Index (IndexRoute, indexHandler)
+import SweetSpot.Route.Injectable (InjectableAPI, injectableHandler)
+import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
+import SweetSpot.Route.Static (StaticAPI, staticHandler)
+import System.Exit (ExitCode(..), exitWith)
+import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
 type RootAPI
-        = "api" :>
-        (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI)
-        :<|> IndexRoute :<|> HealthAPI :<|> StaticAPI
+     = "api" :> (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI) :<|> IndexRoute :<|> HealthAPI :<|> StaticAPI
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
-server = (injectableHandler :<|> dashboardHandler :<|> oauthHandler)
-          :<|> indexHandler :<|> healthHandler :<|> staticHandler
+server =
+    (injectableHandler :<|> dashboardHandler :<|> oauthHandler) :<|>
+    indexHandler :<|>
+    healthHandler :<|>
+    staticHandler
 
 createApp :: AppCtx -> Application
-createApp ctx = getMiddleware ctx $ serve rootAPI $ hoistServer
-        rootAPI
-        (`runReaderT` ctx)
-        server
+createApp ctx =
+    getMiddleware ctx $
+    serve rootAPI $ hoistServer rootAPI (`runReaderT` ctx) server
 
 rightOrThrow :: Either Text a -> a
-rightOrThrow (Left  msg) = error . T.unpack $ msg
-rightOrThrow (Right a  ) = a
+rightOrThrow (Left msg) = error . T.unpack $ msg
+rightOrThrow (Right a) = a
 
 runServer :: IO ()
 runServer = do
-        mEnvConfig <- Env.getEnvConfig
-        let envConfig  = either error id mEnvConfig
-        let dbConfig = DbConfig { host     = Env.dbHost envConfig
-                                , name     = Env.dbName envConfig
-                                , password = Env.dbPassword envConfig
-                                }
-        let
-                config = AppConfig
-                        { environment = Env.environment envConfig
-                        , shopifyClientId = Env.shopifyClientId envConfig
-                        , shopifyClientSecret = Env.shopifyClientSecret
-                                                        envConfig
-                        , shopifyOAuthRedirectUri = Env.shopifyOAuthRedirectUri envConfig
-                        , basicAuthUser = Env.basicAuthUser envConfig
-                        , basicAuthPassword = Env.basicAuthPassword envConfig
-                        }
-        dbPool    <- getDbPool dbConfig
-        appLogger <- newStdoutLoggerSet defaultBufSize
-        let ctx = AppCtx { _getConfig = config
-                         , _getLogger = appLogger
-                         , _getDbPool = dbPool
-                         }
-
-        L.info' appLogger "Running migrations"
-        res <- withResource dbPool $ \conn -> migrate conn
-
-        case res of
-                Nothing -> do
-                        L.error' appLogger "Error while trying to migrate"
-                        -- Make sure error gets logged
-                        threadDelay 1000000
-                        exitWith $ ExitFailure 1
-
-                Just _ -> do
-                        L.info'
-                                appLogger
-                                (  "Listening on port "
-                                <> Env.port envConfig
-                                <> "..."
-                                )
-                        withStdoutLogger stdoutLogger
-                    where
-                        stdoutLogger aplogger = do
-                                let port = read (T.unpack $ Env.port envConfig)
-                                let app  = createApp ctx
-                                let
-                                        settings = setPort port $ setLogger
-                                                aplogger
-                                                defaultSettings
-                                runSettings settings app
+    mEnvConfig <- Env.getEnvConfig
+    let envConfig = either error id mEnvConfig
+    let dbConfig =
+            DbConfig
+                { host = Env.dbHost envConfig
+                , name = Env.dbName envConfig
+                , password = Env.dbPassword envConfig
+                }
+    let config =
+            AppConfig
+                { _configEnvironment = Env.environment envConfig
+                , _configShopifyClientId = Env.shopifyClientId envConfig
+                , _configShopifyClientSecret = Env.shopifyClientSecret envConfig
+                , _configShopifyOAuthRedirectUri =
+                      Env.shopifyOAuthRedirectUri envConfig
+                }
+    dbPool <- getDbPool dbConfig
+    appLogger <- newStdoutLoggerSet defaultBufSize
+    let ctx =
+            AppCtx
+                { _ctxConfig = config
+                , _ctxLogger = appLogger
+                , _ctxDbPool = dbPool
+                }
+    L.info' appLogger "Running migrations"
+    res <- withResource dbPool $ \conn -> migrate conn
+    case res of
+        Nothing -> do
+            L.error' appLogger "Error while trying to migrate"
+            -- Make sure error gets logged
+            threadDelay 1000000
+            exitWith $ ExitFailure 1
+        Just _ -> do
+            L.info'
+                appLogger
+                ("Listening on port " <> Env.port envConfig <> "...")
+            withStdoutLogger stdoutLogger
+            where stdoutLogger aplogger = do
+                      let port = read (T.unpack $ Env.port envConfig)
+                      let app = createApp ctx
+                      let settings =
+                              setPort port $ setLogger aplogger defaultSettings
+                      runSettings settings app

@@ -104,8 +104,8 @@ validateShopDomain ctx app req sendResponse = do
       case mShopDomain of
         Just _ -> app req sendResponse
         Nothing -> do
-          L.info' appLogger $ "Unrecognized shop, redirect to install: " <> showText domain
-          send302 "Redirecting to install" req sendResponse
+          L.warn' appLogger $ "Got invalid shop query parameter: " <> showText domain
+          send400 "Got invalid shop query parameter" req sendResponse
     Nothing -> do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
@@ -138,9 +138,11 @@ getMiddleware ctx =
     user = encodeUtf8 $ basicAuthUser config
     pass = encodeUtf8 $ basicAuthPassword config
 
-    hmacVerifiedRoutes paths = notElem "static" paths && notElem "health" paths
+    hmacVerifiedRoutes paths =
+      notElem "static" paths && notElem "health" paths
     -- During install, shop is not yet in db
-    domainVerifiedRoutes paths = hmacVerifiedRoutes paths && notElem "oauth" paths
+    domainVerifiedRoutes paths =
+      hmacVerifiedRoutes paths && notElem "oauth" paths && notElem "index.html" paths
 
     verifyHmacRouted =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)

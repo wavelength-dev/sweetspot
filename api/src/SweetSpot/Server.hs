@@ -45,6 +45,9 @@ import           SweetSpot.Route.Static         ( StaticAPI
 import           SweetSpot.Route.OAuth          ( OAuthAPI
                                                 , oauthHandler
                                                 )
+import           SweetSpot.Route.Index          ( IndexRoute
+                                                , indexHandler
+                                                )
 import           System.Log.FastLogger          ( defaultBufSize
                                                 , newStdoutLoggerSet
                                                 )
@@ -55,13 +58,13 @@ import           System.Exit                    ( exitWith
 type RootAPI
         = "api" :>
         (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI)
-        :<|> HealthAPI :<|> StaticAPI
+        :<|> HealthAPI :<|> StaticAPI :<|> IndexRoute
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server = (injectableHandler :<|> dashboardHandler :<|> oauthHandler)
-          :<|> healthHandler :<|> staticHandler
+          :<|> healthHandler :<|> staticHandler :<|> indexHandler
 
 createApp :: AppCtx -> Application
 createApp ctx = getMiddleware ctx $ serve rootAPI $ hoistServer

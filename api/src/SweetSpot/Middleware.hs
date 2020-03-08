@@ -14,9 +14,14 @@ import qualified Data.List as L
 import Data.Maybe (mapMaybe)
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
-import Network.HTTP.Types (status400, hContentType)
+import Network.HTTP.Types ( status302
+                          , status400
+                          , hContentType
+                          , hLocation
+                          )
 import Network.Wai ( Middleware
                    , queryString
+                   , rawQueryString
                    , Application
                    , responseLBS
                    )
@@ -60,6 +65,12 @@ send400 :: BSL.ByteString -> Application
 send400 msg _req sendResponse = sendResponse $ responseLBS
   status400 [(hContentType, "text/plain")] msg
 
+send302 :: BSL.ByteString -> Application
+send302 msg req sendResponse = sendResponse $ responseLBS
+  status302 [(hLocation, "/api/oauth/install" <> qs)] msg
+  where
+    qs = rawQueryString req
+
 verifyHmac :: AppCtx -> Middleware
 verifyHmac ctx app req sendResponse =
   case (== digestTxt) <$> mSupplied of
@@ -93,8 +104,8 @@ validateShopDomain ctx app req sendResponse = do
       case mShopDomain of
         Just _ -> app req sendResponse
         Nothing -> do
-          L.warn' appLogger $ "Got invalid shop query parameter: " <> showText domain
-          send400 "Got invalid shop query parameter" req sendResponse
+          L.info' appLogger $ "Unrecognized shop, redirect to install: " <> showText domain
+          send302 "Redirecting to install" req sendResponse
     Nothing -> do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
@@ -131,7 +142,7 @@ getMiddleware ctx =
     -- During install, shop is not yet in db
     domainVerifiedRoutes paths = hmacVerifiedRoutes paths && notElem "oauth" paths
 
-    verifyHmacRouted=
+    verifyHmacRouted =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
     validateShopDomainRouted =
       routedMiddleware domainVerifiedRoutes (validateShopDomain ctx)

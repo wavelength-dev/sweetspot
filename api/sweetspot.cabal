@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 906df4ff9b1fb21c3f44cb0b9bb75ddab9c10f6785e348ac9f634cbd0a9c776b
+-- hash: 4e8812d4817a06a30ecff489da5bd629b29baedf35a6f40e9d4462759a6763af
 
 name:           sweetspot
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       SweetSpot.Middleware
       SweetSpot.Route.Dashboard
       SweetSpot.Route.Health
+      SweetSpot.Route.Index
       SweetSpot.Route.Injectable
       SweetSpot.Route.OAuth
       SweetSpot.Route.Static
@@ -59,6 +60,7 @@ library
     , beam-postgres
     , bytestring
     , containers
+    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -68,6 +70,7 @@ library
     , hspec-wai
     , http-client
     , http-client-tls
+    , http-media
     , http-types
     , lens
     , lens-aeson
@@ -115,6 +118,7 @@ executable bridge-exe
     , beam-postgres
     , bytestring
     , containers
+    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -124,6 +128,7 @@ executable bridge-exe
     , hspec-wai
     , http-client
     , http-client-tls
+    , http-media
     , http-types
     , lens
     , lens-aeson
@@ -171,6 +176,7 @@ executable sweetspot-exe
     , beam-postgres
     , bytestring
     , containers
+    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -180,6 +186,7 @@ executable sweetspot-exe
     , hspec-wai
     , http-client
     , http-client-tls
+    , http-media
     , http-types
     , lens
     , lens-aeson
@@ -233,6 +240,7 @@ test-suite sweetspot-test
     , beam-postgres
     , bytestring
     , containers
+    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -242,6 +250,7 @@ test-suite sweetspot-test
     , hspec-wai
     , http-client
     , http-client-tls
+    , http-media
     , http-types
     , lens
     , lens-aeson

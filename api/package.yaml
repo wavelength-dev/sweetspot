@@ -26,6 +26,7 @@ dependencies:
 - beam-postgres
 - bytestring
 - containers
+- cookie
 - cryptonite
 - envy
 - exceptions
@@ -35,6 +36,7 @@ dependencies:
 - hspec-wai
 - http-client
 - http-client-tls
+- http-media
 - http-types
 - lens
 - lens-aeson

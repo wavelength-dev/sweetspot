@@ -7,7 +7,6 @@ module SweetSpot.Middleware
 
 import Crypto.Hash (SHA256, Digest)
 import Crypto.MAC.HMAC
-import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString as BS
 import qualified Data.List as L
@@ -39,7 +38,6 @@ import Network.Wai.Middleware.Gzip ( GzipFiles(GzipCacheFolder)
                                    , gzip
                                    , gzipFiles
                                    )
-import Network.Wai.Middleware.HttpAuth (basicAuth)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import SweetSpot.AppM (AppConfig(..), AppCtx(..))
 import SweetSpot.Data.Common
@@ -54,12 +52,6 @@ gzipStatic :: Middleware
 gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
   where
     settings = def {gzipFiles = GzipCacheFolder "../dist/"}
-
-auth :: ByteString -> ByteString -> Middleware
-auth user pass = routedMiddleware ("dashboard" `elem`) mw
-  where
-    check u p = return $ u == user && p == pass
-    mw = basicAuth check "Dashboard realm"
 
 send400 :: BSL.ByteString -> Application
 send400 msg _req sendResponse = sendResponse $ responseLBS
@@ -126,17 +118,15 @@ enableCors =
 getMiddleware :: AppCtx -> Middleware
 getMiddleware ctx =
   case env of
-    -- So we don't have to deal with hmac or auth during dev
+    -- So we don't have to deal with hmac during dev
     Dev -> gzipStatic . validateShopDomainRouted . enableCors
     -- So we can focus on testing handlers themselves
     TestBusiness -> gzipStatic
     -- Else everything
-    _ -> gzipStatic . auth user pass . verifyHmacRouted . validateShopDomainRouted
+    _ -> gzipStatic . verifyHmacRouted . validateShopDomainRouted
   where
     config = _getConfig ctx
     env = environment config
-    user = encodeUtf8 $ basicAuthUser config
-    pass = encodeUtf8 $ basicAuthPassword config
 
     hmacVerifiedRoutes paths =
       notElem "static" paths && notElem "health" paths

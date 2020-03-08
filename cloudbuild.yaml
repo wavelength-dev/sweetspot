@@ -20,7 +20,7 @@ steps:
       - --image
       - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - --region
-      - europe-west-1
+      - europe-west1
       - --platform
       - managed
 images:

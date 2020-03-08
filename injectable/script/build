@@ -1,7 +1,7 @@
 #!/bin/bash
 
 print_filesize() {
-  FILE_SIZE=$(du -k ../dist/$1 | cut -f1)
+  FILE_SIZE=$(du -k ./dist/$1 | cut -f1)
   echo "${FILE_SIZE}K -- $2"
 }
 
@@ -35,7 +35,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-mv ./output/sweetspot-main* ../dist/
+mv ./output/sweetspot-main* ./dist/
 
 END=$(date +%s)
 BUILD_TIME=$(( $END - $START ))
@@ -44,7 +44,7 @@ echo "=> Build size main:"
 print_filesize "sweetspot-main.js" "Raw Output"
 print_filesize "sweetspot-main.min.js" "Minified"
 print_filesize "sweetspot-main.min.js.gz" "Minified and Compressed"
-rm ../dist/sweetspot-main.min.js.gz
+rm ./dist/sweetspot-main.min.js.gz
 
 spago bundle-app --main SweetSpot.Checkout --to ./output/sweetspot-checkout.js
 if [ $? -ne 0 ]; then
@@ -64,13 +64,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-mv ./output/sweetspot-checkout* ../dist/
+mv ./output/sweetspot-checkout* ./dist/
 
 echo "=> Build size checkout:"
 print_filesize "sweetspot-checkout.js" "Raw Output"
 print_filesize "sweetspot-checkout.min.js" "Minified"
 print_filesize "sweetspot-checkout.min.js.gz" "Minified and Compressed"
-rm ../dist/sweetspot-checkout.min.js.gz
+rm ./dist/sweetspot-checkout.min.js.gz
 
 echo "=> Cleaning up cached gziped files"
-rm ../dist/___dist_* | true
+rm ./dist/___dist_* | true

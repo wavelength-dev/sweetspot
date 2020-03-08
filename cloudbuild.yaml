@@ -1,14 +1,30 @@
 steps:
+  # build the container image
   - name: gcr.io/cloud-builders/docker
     args:
       - build
-      - --tag=gcr.io/$PROJECT_ID/sweetspot:latest
-      - --tag=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
-      - --cache-from=gcr.io/$PROJECT_ID/sweetspot:latest
+      - --tag
+      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - .
+  # push the container image to Container Registry
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+  # Deploy container image to Cloud Run
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - deploy
+      - sweetspot
+      - --image
+      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+      - --region
+      - europe-west-1
+      - --platform
+      - managed
 images:
   - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
-  - gcr.io/$PROJECT_ID/sweetspot:latest
-timeout: 30m
+timeout: 1800s
 options:
   machineType: N1_HIGHCPU_8

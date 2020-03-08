@@ -8,6 +8,7 @@
 
 module SweetSpot.Route.OAuth
   ( OAuthAPI
+  , InstallRoute
   , oauthHandler
   , HMAC'
   , Timestamp

@@ -16,10 +16,13 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Text.Encoding as TE
 import Network.HTTP.Media ((//), (/:))
 import Servant
+import Servant.API (toUrlPiece)
+import Servant.Links (safeLink)
 import Web.Cookie (defaultSetCookie, SetCookie(..))
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB(..))
+import SweetSpot.Route.OAuth (OAuthAPI, InstallRoute)
 import SweetSpot.Route.Util (badRequestErr)
 
 data HTML
@@ -34,7 +37,7 @@ instance Accept HTML where
 
 type HTMLWithCookie = Headers '[Header "Set-Cookie" SetCookie] RawHTML
 
-type IndexRoute = "dashboard" :> "index.html"
+type IndexRoute = "index.html"
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
@@ -45,7 +48,7 @@ indexHandler
   -> Maybe Timestamp
   -> Maybe HMAC'
   -> ServerM HTMLWithCookie
-indexHandler (Just domain) (Just (Timestamp ts)) (Just (HMAC' hmac)) =
+indexHandler (Just domain) (Just ts) (Just hmac) =
   runAppM $ do
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
@@ -58,8 +61,10 @@ indexHandler (Just domain) (Just (Timestamp ts)) (Just (HMAC' hmac)) =
             }
       Nothing -> throwError $ err302 { errHeaders = [("Location", redirectPath)] }
         where
-          redirectPath = TE.encodeUtf8 $ "/api/oauth/install?shop=" <> txtDomain
-            <> "&timestamp=" <> ts
-            <> "&hmac=" <> hmac
+          redirectApi = Proxy :: Proxy OAuthAPI
+          redirectHandler = Proxy :: Proxy InstallRoute
+          redirectPath = TE.encodeUtf8
+            $ toUrlPiece
+            $ safeLink redirectApi redirectHandler (Just domain) (Just ts) (Just hmac)
 
 indexHandler _ _ _ = throwError badRequestErr

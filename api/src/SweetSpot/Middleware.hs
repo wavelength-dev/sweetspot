@@ -5,6 +5,7 @@ module SweetSpot.Middleware
   ) where
 
 
+import Control.Lens
 import Crypto.Hash (SHA256, Digest)
 import Crypto.MAC.HMAC
 import qualified Data.ByteString.Lazy as BSL
@@ -39,7 +40,7 @@ import Network.Wai.Middleware.Gzip ( GzipFiles(GzipCacheFolder)
                                    , gzipFiles
                                    )
 import Network.Wai.Middleware.Routed (routedMiddleware)
-import SweetSpot.AppM (AppConfig(..), AppCtx(..))
+import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (validateDomain)
 import SweetSpot.Database.Queries.Util (withConnIO)
@@ -68,11 +69,11 @@ verifyHmac ctx app req sendResponse =
   case (== digestTxt) <$> mSupplied of
     Just True -> app req sendResponse
     _ -> do
-      let appLogger = _getLogger ctx
+      let appLogger = ctx ^. ctxLogger
       L.warn' appLogger "Got invalid hmac digest"
       send400 "Invalid HMAC digest" req sendResponse
   where
-    secret = shopifyClientSecret . _getConfig $ ctx
+    secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
     mSupplied = decodeUtf8 <$> (L.find ((== "hmac") . fst) params >>= snd)
     sansHMAC = filter ((/= "hmac") . fst) params
@@ -84,8 +85,8 @@ verifyHmac ctx app req sendResponse =
 validateShopDomain :: AppCtx -> Middleware
 validateShopDomain ctx app req sendResponse = do
   let
-    pool = _getDbPool ctx
-    appLogger = _getLogger ctx
+    pool = ctx ^. ctxDbPool
+    appLogger = ctx ^. ctxLogger
     params = queryString req
     mSuppliedDomain =
       ShopDomain . decodeUtf8 <$> (snd =<< L.find ((== "shop") . fst) params)
@@ -125,8 +126,7 @@ getMiddleware ctx =
     -- Else everything
     _ -> gzipStatic . verifyHmacRouted . validateShopDomainRouted
   where
-    config = _getConfig ctx
-    env = environment config
+    env = ctx ^. ctxConfig . configEnvironment
 
     hmacVerifiedRoutes paths =
       notElem "static" paths && notElem "health" paths

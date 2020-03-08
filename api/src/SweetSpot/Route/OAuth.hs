@@ -14,14 +14,11 @@ module SweetSpot.Route.OAuth
   )
 where
 
+import           Control.Lens
 import           Control.Monad.Reader.Class     ( asks )
 import           Data.Text                      ( Text )
 import           Servant
-import           SweetSpot.AppM                 ( AppM(..)
-                                                , AppConfig(..)
-                                                , AppCtx(..)
-                                                , ServerM
-                                                )
+import           SweetSpot.AppM
 import           SweetSpot.Data.Common
 import           SweetSpot.Data.Api             ( OkResponse(..) )
 import           SweetSpot.Database.Queries.Install
@@ -68,11 +65,11 @@ installHandler
   -> Maybe HMAC'
   -> ServerM (Headers '[Header "Location" Text] NoContent)
 installHandler (Just shopDomain) (Just _) (Just hmac) = runAppM $ do
-  config <- asks _getConfig
+  config <- asks (^. ctxConfig)
   nonce <- generateInstallNonce shopDomain
   let
-    clientId = shopifyClientId config
-    redirectUri = shopifyOAuthRedirectUri config
+    clientId = config ^. configShopifyClientId
+    redirectUri = config ^. configShopifyOAuthRedirectUri
     authUri =  getAuthUri shopDomain clientId redirectUri nonce
   return $ addHeader authUri NoContent
 

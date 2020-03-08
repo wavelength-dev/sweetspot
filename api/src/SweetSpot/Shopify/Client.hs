@@ -66,9 +66,9 @@ testBaseUrl = BaseUrl { baseUrlScheme = Http
 getClientEnv :: ShopDomain -> AppM ClientEnv
 getClientEnv domain = do
     manager <- liftIO $ newManager tlsManagerSettings
-    config <- asks _getConfig
+    config <- asks (^. ctxConfig)
     let
-      baseUrl = case environment config of
+      baseUrl = case config ^. configEnvironment of
         TestBusiness -> testBaseUrl
         _ -> BaseUrl { baseUrlScheme = Https
                      , baseUrlHost = show domain
@@ -81,12 +81,12 @@ getClientEnv domain = do
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
-    config <- asks _getConfig
+    config <- asks (^. ctxConfig)
     let
       exchangeTokenClient = client (Proxy :: Proxy TokenExchangeRoute)
       reqBody = TokenExchangeReq
-        { client_id = shopifyClientId config
-        , client_secret = shopifyClientSecret config
+        { client_id = config ^. configShopifyClientId
+        , client_secret = config ^. configShopifyClientSecret
         , code = code
         }
     clientEnv <- getClientEnv domain

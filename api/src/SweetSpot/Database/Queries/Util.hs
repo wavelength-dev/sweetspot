@@ -9,14 +9,12 @@ import           Control.Monad.Reader.Class     ( asks )
 import           Database.Beam
 import           Database.Beam.Postgres
 import           Data.Pool                      ( Pool, withResource )
-import           SweetSpot.AppM                 ( AppM
-                                                , AppCtx(..)
-                                                )
+import           SweetSpot.AppM
 import           SweetSpot.Database.Schema
 
 withConn :: (Connection -> IO a) -> AppM a
 withConn f = do
-        pool <- asks _getDbPool
+        pool <- asks (^. ctxDbPool)
         liftIO . withResource pool $ \conn -> f conn
 
 

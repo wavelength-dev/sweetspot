@@ -6,8 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "spago build && parcel build index.html",
-    "dev": "run-p watch:*",
+    "start": "run-p watch:*",
     "watch:bundle": "parcel serve index.html",
     "watch:purescript": "spago build --watch"
   },

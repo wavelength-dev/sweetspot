@@ -29,10 +29,10 @@ RUN spago install
 COPY ./fulcrum/src ./src
 COPY ./fulcrum/test ./test
 RUN spago test
-RUN spago bundle-app --to ./dist/sweetspot-main.js
-RUN uglifyjs --compress --mangle --output ./dist/sweetspot-main.min.js ./dist/sweetspot-main.js
-# RUN spago bundle-app --main Fulcrum.Checkout --to ./sweetspot-checkout.js
-# RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
+RUN spago bundle-app --to ./dist/fulcrum.js
+RUN uglifyjs --compress --mangle --output ./dist/fulcrum.min.js ./dist/fulcrum.js
+# RUN spago bundle-app --main Fulcrum.Checkout --to ./fulcrum-checkout.js
+# RUN uglifyjs --compress --mangle --output ./fulcrum-checkout.min.js ./fulcrum-checkout.js
 
 # Build Dashboard
 FROM node:13 AS build-dashboard
@@ -72,7 +72,7 @@ RUN apt-get --quiet update \
   ca-certificates
 COPY --from=build /root/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
-COPY --from=build-fulcrum /opt/build/sweetspot*.js /opt/sweetspot/dist/fulcrum/
+COPY --from=build-fulcrum /opt/build/dist/* /opt/sweetspot/dist/fulcrum/
 COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
 
 EXPOSE 8082/tcp

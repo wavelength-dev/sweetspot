@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4e8812d4817a06a30ecff489da5bd629b29baedf35a6f40e9d4462759a6763af
+-- hash: a92d5784f36c44f854e4f8b094209691e38ee56d4ec84cee210ddc358f49593f
 
 name:           sweetspot
 version:        0.1.0.0
@@ -38,11 +38,11 @@ library
       SweetSpot.Logger
       SweetSpot.Middleware
       SweetSpot.Route.Dashboard
+      SweetSpot.Route.DashboardApp
+      SweetSpot.Route.FulcrumApp
       SweetSpot.Route.Health
-      SweetSpot.Route.Index
       SweetSpot.Route.Injectable
       SweetSpot.Route.OAuth
-      SweetSpot.Route.Static
       SweetSpot.Route.Util
       SweetSpot.Server
       SweetSpot.Shopify.Client

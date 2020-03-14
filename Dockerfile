@@ -1,5 +1,4 @@
 FROM gcr.io/sweetspot-255522/sweetspot-build:latest AS build
-
 WORKDIR /opt/build
 
 # We depend on postgres
@@ -15,27 +14,55 @@ COPY ./api /opt/build
 RUN stack build --verbosity warn --copy-bins
 
 # Build Fulcrum
-FROM node:12-buster AS build-dist
-WORKDIR /opt/build-dist
+FROM node:13 AS build-fulcrum
+WORKDIR /opt/build
 
-# See: https://github.com/spacchetti/spago/issues/104
-RUN apt-get --quiet update && apt-get --quiet install --yes libncurses5 git
+# PureScript installer depends on libtinfo.so.5
+RUN apt update && apt install --yes libncurses5
 
 # Install build dependencies
 RUN yarn global add purescript spago uglify-js
 COPY ./fulcrum/spago.dhall ./fulcrum/packages.dhall ./
-RUN spago install --global-cache skip
+RUN spago install
 
 # Compile, test, bundle and uglify our scripts
 COPY ./fulcrum/src ./src
 COPY ./fulcrum/test ./test
 RUN spago test
-RUN spago bundle-app --to ./sweetspot-main.js
-RUN uglifyjs --compress --mangle --output ./sweetspot-main.min.js ./sweetspot-main.js
+RUN spago bundle-app --to ./dist/sweetspot-main.js
+RUN uglifyjs --compress --mangle --output ./dist/sweetspot-main.min.js ./dist/sweetspot-main.js
 # RUN spago bundle-app --main Fulcrum.Checkout --to ./sweetspot-checkout.js
 # RUN uglifyjs --compress --mangle --output ./sweetspot-checkout.min.js ./sweetspot-checkout.js
 
-# Leave only the executable in the second stage
+# Build Dashboard
+FROM node:13 AS build-dashboard
+WORKDIR /opt/build
+
+# PureScript installer depends on libtinfo.so.5
+RUN apt update && apt install --yes libncurses5
+
+# Install build dependencies
+RUN yarn global add purescript spago parcel-bundler
+COPY ./dashboard/spago.dhall ./
+COPY ./dashboard/packages.dhall ./
+COPY ./dashboard/package.json ./
+COPY ./dashboard/yarn.lock ./
+# TODO: TEST IF BUILD IS FASTER WITHOUT COPYING CACHES
+COPY --from=build-fulcrum /root/.cache/spago /root/.cache/
+COPY --from=build-fulcrum /usr/local/share/.config/yarn/global /usr/local/share/.config/yarn/global
+RUN spago install
+RUN yarn install
+
+# Compile, test, bundle and uglify our scripts
+COPY ./dashboard/index.html ./
+COPY ./dashboard/index.js ./
+COPY ./dashboard/src ./src
+COPY ./dashboard/test ./test
+RUN spago test
+RUN spago build
+RUN parcel build index.html --out-file dashboard
+
+# Leave only the build artifacts in the final image
 FROM debian:buster-slim
 WORKDIR /opt/sweetspot
 RUN apt-get --quiet update \
@@ -45,7 +72,8 @@ RUN apt-get --quiet update \
   ca-certificates
 COPY --from=build /root/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
-COPY --from=build-dist /opt/build-dist/sweetspot*.js /opt/dist/
+COPY --from=build-fulcrum /opt/build/sweetspot*.js /opt/sweetspot/dist/fulcrum/
+COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
 
 EXPOSE 8082/tcp
 CMD ["/opt/sweetspot/sweetspot-exe"]

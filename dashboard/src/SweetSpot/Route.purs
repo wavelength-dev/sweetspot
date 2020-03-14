@@ -11,18 +11,18 @@ import Routing.Duplex (RouteDuplex', path, root, segment, string, parse)
 import Routing.Duplex.Generic as G
 import Routing.Hash (matchesWith)
 
-data Route = Home | Profile String
+data Route = Home | Campaign String
 
 instance showRoute :: Show Route where
   show Home = "Home"
-  show (Profile name) = "Profile " <> name
+  show (Campaign cmpId) = "Campaign" <> cmpId
 
 derive instance genericRoute :: Generic Route _
 
 route :: RouteDuplex' Route
 route = root $ G.sum
   { "Home": G.noArgs
-  , "Profile": path "profile" (string segment)
+  , "Campaign": path "campaign" (string segment)
   }
 
 hoistRouter ::  (Route -> Effect Unit) -> Effect (Effect Unit)
@@ -30,4 +30,4 @@ hoistRouter navigateTo =
   matchesWith (parse route) \_ new ->
     case new of
       Home -> navigateTo Home
-      (Profile s) -> navigateTo (Profile s)
+      (Campaign s) -> navigateTo (Campaign s)

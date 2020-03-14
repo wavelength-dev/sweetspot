@@ -41,3 +41,5 @@ data Item a = Item a
 foreign import resourceList :: forall a.  ReactComponent { items :: Array a, renderItem :: a -> JSX }
 
 foreign import heading :: ReactComponent { element :: String, children :: String}
+
+foreign import ensureEmbedded :: String -> Effect Unit

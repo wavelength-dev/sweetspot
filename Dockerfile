@@ -60,7 +60,7 @@ COPY ./dashboard/src ./src
 COPY ./dashboard/test ./test
 RUN spago test
 RUN spago build
-RUN parcel build index.html --out-file dashboard
+RUN parcel build index.html
 
 # Leave only the build artifacts in the final image
 FROM debian:buster-slim

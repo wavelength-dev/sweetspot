@@ -1,6 +1,8 @@
 module SweetSpot.Main where
 
 import Prelude
+import Browser.Cookie (getCookie)
+import Browser.Cookies.Data (Cookie(..))
 import Data.Either (Either(..))
 import Data.Lens ((^.))
 import Data.Maybe (Maybe(..))
@@ -12,10 +14,11 @@ import React.Basic.DOM as R
 import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
+import SweetSpot.Campaign (campaignPage)
 import SweetSpot.Data.Api (Product, productTitle)
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState, fetchRemoteState, initialState, reducer)
+import SweetSpot.State (Action(..), AppState, fetchRemoteState, initialState, reducer, Dispatch)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
@@ -64,12 +67,12 @@ toPriceTest product =
   , status: "Running"
   }
 
-experimentsPage :: AppState -> JSX
-experimentsPage state =
+experimentsPage :: AppState -> Dispatch -> JSX
+experimentsPage state dispatch =
   element Shopify.page
     { title: "Price Tests"
     , subtitle: notNull "All tests currently running or finished."
-    , primaryAction: notNull { content: "Create new price test", onAction: mempty }
+    , primaryAction: notNull { content: "Create new price test", onAction: dispatch (Navigate (Campaign "lol")) }
     , children:
         [ element Shopify.card
             { sectioned: true
@@ -84,7 +87,12 @@ experimentsPage state =
     }
 
 mkApp :: Effect (ReactComponent {})
-mkApp =
+mkApp = do
+  mShopDomain <- getCookie "sweetspotShopOrigin"
+  case mShopDomain of
+    Just (Cookie { value }) -> Shopify.ensureEmbedded value
+    Nothing -> throw "Missing shop origin"
+
   component "App" \props -> React.do
     state /\ dispatch <- useReducer initialState reducer
     mState <- useAff "appState" fetchRemoteState
@@ -100,8 +108,8 @@ mkApp =
           { i18n: Shopify.enTranslations
           , children:
               case state.route of
-                Home -> experimentsPage state
-                Profile name -> gettingStartedPage name
+                Home -> experimentsPage state dispatch
+                Campaign cmpId -> campaignPage cmpId
           }
 
 main :: Effect Unit

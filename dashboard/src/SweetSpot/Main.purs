@@ -14,7 +14,6 @@ import React.Basic.DOM as R
 import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Campaign (campaignPage)
 import SweetSpot.Data.Api (Product, productTitle)
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
@@ -109,7 +108,7 @@ mkApp = do
           , children:
               case state.route of
                 Home -> experimentsPage state dispatch
-                Campaign cmpId -> campaignPage cmpId
+                _ -> experimentsPage state dispatch
           }
 
 main :: Effect Unit

@@ -60,7 +60,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) =
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
     case mToken of
-      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
+      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "./dist/dashboard/dashboard.html")
         where
           cookie = defaultSetCookie
             { setCookieName = "sweetspotShopOrigin"

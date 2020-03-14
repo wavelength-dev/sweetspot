@@ -59,7 +59,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) =
             { setCookieName = "sweetspotShopOrigin"
             , setCookieValue = TE.encodeUtf8 txtDomain
             }
-      Nothing -> throwError $ err302 { errHeaders = [("Location", redirectPath)] }
+      Nothing -> throwError $ err302 { errHeaders = [("Location", "/api/" <> redirectPath)] }
         where
           redirectApi = Proxy :: Proxy OAuthAPI
           redirectHandler = Proxy :: Proxy InstallRoute

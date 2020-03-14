@@ -1,0 +1,35 @@
+#!/bin/bash
+
+print_filesize() {
+  FILE_SIZE=$(du -k ./dist/$1 | cut -f1)
+  echo "${FILE_SIZE}K -- $2"
+}
+
+exit_on_fail() {
+  if [ $? -ne 0 ]; then
+    echo $1
+    exit 1
+  fi
+}
+
+echo "=> Building fulcrum"
+START=$(date +%s)
+
+spago bundle-app --to ./dist/fulcrum.js
+exit_on_fail "=> Failed to build fulcrum"
+echo "=> Finished building fulcrum"
+
+npx uglifyjs --compress --mangle --output ./dist/fulcrum.min.js ./dist/fulcrum.js
+exit_on_fail "=> Failed to minify fulcrum"
+
+gzip --keep --force ./dist/fulcrum.min.js
+exit_on_fail "=> Failed to gzip fulcrum"
+
+END=$(date +%s)
+BUILD_TIME=$(( $END - $START ))
+echo "=> Finished build in ${BUILD_TIME}s"
+echo "=> Build size fulcrum:"
+print_filesize "fulcrum.js" "Raw Output"
+print_filesize "fulcrum.min.js" "Minified"
+print_filesize "fulcrum.min.js.gz" "Minified and Compressed"
+rm ./dist/fulcrum.min.js.gz

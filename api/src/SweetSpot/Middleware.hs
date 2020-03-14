@@ -52,7 +52,7 @@ import qualified SweetSpot.Logger as L
 gzipStatic :: Middleware
 gzipStatic = routedMiddleware ("static" `elem`) (gzip settings)
   where
-    settings = def {gzipFiles = GzipCacheFolder "../dist/"}
+    settings = def {gzipFiles = GzipCacheFolder "./dist/"}
 
 send400 :: BSL.ByteString -> Application
 send400 msg _req sendResponse = sendResponse $ responseLBS
@@ -129,7 +129,8 @@ getMiddleware ctx =
     env = ctx ^. ctxConfig . configEnvironment
 
     hmacVerifiedRoutes paths =
-      notElem "static" paths && notElem "health" paths
+      elem "api" paths
+      || (elem "dashboard" paths && elem "index.html" paths)
     -- During install, shop is not yet in db
     domainVerifiedRoutes paths =
       hmacVerifiedRoutes paths && notElem "oauth" paths && notElem "index.html" paths

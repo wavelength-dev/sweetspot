@@ -6,9 +6,9 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module SweetSpot.Route.Index
-  ( IndexRoute
-  , indexHandler
+module SweetSpot.Route.DashboardApp
+  ( DashboardApp
+  , dashboardAppHandler
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -24,6 +24,9 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB(..))
 import SweetSpot.Route.OAuth (OAuthAPI, InstallRoute)
 import SweetSpot.Route.Util (badRequestErr)
+import Servant ((:>), Raw, serveDirectoryWith)
+import WaiAppStatic.Types (MaxAge(..), ssMaxAge)
+import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 
 data HTML
 
@@ -37,11 +40,15 @@ instance Accept HTML where
 
 type HTMLWithCookie = Headers '[Header "Set-Cookie" SetCookie] RawHTML
 
-type IndexRoute = "index.html"
+type IndexRoute = "dashboard" :> "index.html"
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
   :> Get '[HTML] HTMLWithCookie
+
+type DashboardStatic = "dashboard" :> Raw
+
+type DashboardApp = IndexRoute :<|> DashboardStatic
 
 indexHandler
   :: Maybe ShopDomain
@@ -53,7 +60,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) =
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
     case mToken of
-      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "../dist/index.html")
+      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
         where
           cookie = defaultSetCookie
             { setCookieName = "sweetspotShopOrigin"
@@ -68,3 +75,10 @@ indexHandler (Just domain) (Just ts) (Just hmac) =
             $ safeLink redirectApi redirectHandler (Just domain) (Just ts) (Just hmac)
 
 indexHandler _ _ _ = throwError badRequestErr
+
+dashboardStaticHandler = serveDirectoryWith defaultOptions
+  { ssMaxAge = MaxAgeSeconds 600
+  }
+  where defaultOptions = defaultWebAppSettings "./dist/dashboard"
+
+dashboardAppHandler = indexHandler :<|> dashboardStaticHandler

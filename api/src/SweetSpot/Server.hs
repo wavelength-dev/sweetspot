@@ -27,24 +27,31 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Middleware (getMiddleware)
 import SweetSpot.Route.Dashboard (DashboardAPI, dashboardHandler)
 import SweetSpot.Route.Health (HealthAPI, healthHandler)
-import SweetSpot.Route.Index (IndexRoute, indexHandler)
+import SweetSpot.Route.DashboardApp (DashboardApp, dashboardAppHandler)
 import SweetSpot.Route.Injectable (InjectableAPI, injectableHandler)
 import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
-import SweetSpot.Route.Static (StaticAPI, staticHandler)
+import SweetSpot.Route.FulcrumApp (FulcrumApp, fulcrumAppHandler)
 import System.Exit (ExitCode(..), exitWith)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
-type RootAPI
-     = "api" :> (InjectableAPI :<|> DashboardAPI :<|> OAuthAPI) :<|> IndexRoute :<|> HealthAPI :<|> StaticAPI
+type RootAPI =
+    "api" :>
+        (InjectableAPI
+        :<|> DashboardAPI
+        :<|> OAuthAPI
+        )
+    :<|> DashboardApp
+    :<|> HealthAPI
+    :<|> FulcrumApp
 
 rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server =
     (injectableHandler :<|> dashboardHandler :<|> oauthHandler) :<|>
-    indexHandler :<|>
+    dashboardAppHandler :<|>
     healthHandler :<|>
-    staticHandler
+    fulcrumAppHandler
 
 createApp :: AppCtx -> Application
 createApp ctx =

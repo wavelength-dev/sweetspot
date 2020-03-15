@@ -23,7 +23,7 @@ exports.resourceList = ResourceList
 exports.createApp = function(apiKey) {
   return function(shopOrigin) {
     return function() {
-      return createApp({ apiKey, shopOrigin })
+      return createApp.default({ apiKey, shopOrigin })
     }
   }
 }

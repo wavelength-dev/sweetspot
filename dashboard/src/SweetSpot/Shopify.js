@@ -8,8 +8,6 @@ const {
   Page,
   ResourceList,
 } = require('@shopify/polaris')
-const createApp = require('@shopify/app-bridge')
-const { Redirect } = require('@shopify/app-bridge/actions')
 
 exports.appProvider = AppProvider
 exports.button = Button
@@ -19,11 +17,3 @@ exports.enTranslations = enTranslations
 exports.heading = Heading
 exports.page = Page
 exports.resourceList = ResourceList
-
-exports.createApp = function(apiKey) {
-  return function(shopOrigin) {
-    return function() {
-      return createApp.default({ apiKey, shopOrigin })
-    }
-  }
-}

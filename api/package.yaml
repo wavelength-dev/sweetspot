@@ -26,7 +26,6 @@ dependencies:
 - beam-postgres
 - bytestring
 - containers
-- cookie
 - cryptonite
 - envy
 - exceptions

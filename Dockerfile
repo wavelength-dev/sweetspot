@@ -54,13 +54,11 @@ RUN spago install
 RUN yarn install
 
 # Compile, test, bundle and uglify our scripts
-COPY ./dashboard/index.html ./
-COPY ./dashboard/index.js ./
 COPY ./dashboard/src ./src
 COPY ./dashboard/test ./test
 RUN spago test
 RUN spago build
-RUN parcel build index.html
+RUN parcel build --public-url /dashboard src/index.html
 
 # Leave only the build artifacts in the final image
 FROM debian:buster-slim

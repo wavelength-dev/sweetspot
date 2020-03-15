@@ -1,7 +1,9 @@
 module SweetSpot.QueryString where
 
 import Prelude
+
 import Data.Either (Either(..))
+import Data.Lens (_Just, _Right, filtered, firstOf, folded, to)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split, stripPrefix) as String
 import Global (decodeURIComponent)
@@ -42,3 +44,12 @@ parseQueryString =
     [ key, "" ] -> Right $ QueryParam key Nothing
     [ key, value ] -> Right $ QueryParam key (decodeURIComponent value)
     _ -> Left "More than one '=' in single parameter"
+
+findParam :: Key -> Array (Either String QueryParam) -> Maybe String
+findParam key =
+  firstOf $
+    folded
+    <<< _Right
+    <<< filtered (\(QueryParam k _) -> k == key)
+    <<< to (\(QueryParam _ v) -> v)
+    <<< _Just

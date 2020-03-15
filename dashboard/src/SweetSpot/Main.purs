@@ -3,7 +3,7 @@ module SweetSpot.Main where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Lens (_Right, findOf, folded, (^.))
+import Data.Lens ((^.))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Effect (Effect)
@@ -14,11 +14,10 @@ import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, us
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.Data.Api (Product, productTitle)
-import SweetSpot.QueryString (QueryParam(..))
 import SweetSpot.QueryString as QS
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState, fetchRemoteState, initialState, reducer, Dispatch)
+import SweetSpot.State (Action(..), AppState, Dispatch, fetchRemoteState, mkInitialState, reducer)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
@@ -89,26 +88,24 @@ experimentsPage state dispatch =
 
 mkApp :: Effect (ReactComponent {})
 mkApp = do
-  qs <- window >>= location >>= search <#> QS.parseQueryString
+  qs <- window >>= location >>= search
 
   let
-    apiKey = "634b531a6568d6eb076c2ad5c7e0265a"
-    mShopDomain = findOf (folded <<< _Right) (\(QueryParam k _) -> k == "shop") qs
-      >>= (\(QueryParam _ v) -> v)
+    params = QS.parseQueryString qs
+    mSessionId = QS.findParam "session" params
 
-  app <- case mShopDomain of
-    Just domain -> Shopify.createApp apiKey domain
-    Nothing -> throw "Failed to parse shop domain"
+  sessionId <- case mSessionId of
+    Just session -> pure session
+    -- TODO: Figure out a better way to handle this case
+    Nothing -> throw "Unable to parse sessionId"
 
   component "App" \props -> React.do
-    state /\ dispatch <- useReducer initialState reducer
-    mState <- useAff "appState" fetchRemoteState
+    state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
+    mState <- useAff "appState" (fetchRemoteState sessionId)
     useEffect "router" $ hoistRouter (dispatch <<< Navigate)
     useEffect (React.UnsafeReference mState) do
       case mState of
-        Just (Right st) -> do
-          dispatch $ Populate st
-          mempty
+        Just (Right st) -> pure $ dispatch $ Populate st
         _ -> mempty
     pure
       $ element Shopify.appProvider

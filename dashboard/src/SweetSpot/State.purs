@@ -3,7 +3,7 @@ module SweetSpot.State
   , Action(..)
   , Dispatch
   , RemoteState
-  , initialState
+  , mkInitialState
   , fetchRemoteState
   , reducer
   ) where
@@ -21,6 +21,7 @@ type AppState =
   { products :: Array Product
   , campaigns :: Array UICampaign
   , route :: Route
+  , sessionId :: String
   }
 
 type RemoteState =
@@ -34,11 +35,17 @@ data Action
 
 type Dispatch = Action -> Effect Unit
 
-initialState :: AppState
-initialState = { products: [], campaigns: [], route: Home }
+mkInitialState :: String -> AppState
+mkInitialState sessionId =
+  { products: []
+  , campaigns: []
+  , route: Home
+  , sessionId: sessionId
+  }
 
-fetchRemoteState :: Aff RemoteState
-fetchRemoteState = combine <$> pure (Right []) <*> fetchCampaigns
+fetchRemoteState :: String -> Aff RemoteState
+fetchRemoteState session =
+  combine <$> pure (Right []) <*> fetchCampaigns session
   where
     combine =
       case _, _ of

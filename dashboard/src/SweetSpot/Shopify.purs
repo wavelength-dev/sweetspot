@@ -41,11 +41,3 @@ data Item a = Item a
 foreign import resourceList :: forall a.  ReactComponent { items :: Array a, renderItem :: a -> JSX }
 
 foreign import heading :: ReactComponent { element :: String, children :: String}
-
-data ClientAction = Navigate String
-
-type ClientApplication =
-  { dispatch :: ClientAction -> Effect Unit
-  }
-
-foreign import createApp :: String -> String -> Effect ClientApplication

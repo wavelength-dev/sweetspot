@@ -39,10 +39,10 @@ fetchThing route decoder = do
   text <- Milkis.text res
   pure (jsonParser text >>= decodeJson >>= decoder)
 
-fetchCampaigns :: Aff (Either String (Array UICampaign))
-fetchCampaigns =
-  fetchThing "http://localhost:8082/api/dashboard/campaigns" Codec.decodeUICampaigns
+fetchCampaigns :: String -> Aff (Either String (Array UICampaign))
+fetchCampaigns session =
+  fetchThing ("/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns
 
-fetchProducts :: Aff (Either String (Array Product))
-fetchProducts =
-  fetchThing "http://localhost:8082/api/dashboard/products" Codec.decodeProducts
+fetchProducts :: String -> Aff (Either String (Array Product))
+fetchProducts session =
+  fetchThing ("/api/dashboard/products?session=" <> session) Codec.decodeProducts

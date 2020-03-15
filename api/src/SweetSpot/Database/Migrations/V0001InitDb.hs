@@ -329,6 +329,9 @@ nonceType = DataType pgUuidType
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
+migration
+  :: ()
+  -> Migration Postgres (CheckedDatabaseSettings Postgres SweetSpotDb)
 migration () =
         SweetSpotDb
                 <$> createTable

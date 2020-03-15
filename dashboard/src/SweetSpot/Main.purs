@@ -1,10 +1,9 @@
 module SweetSpot.Main where
 
 import Prelude
-import Browser.Cookie (getCookie)
-import Browser.Cookies.Data (Cookie(..))
+
 import Data.Either (Either(..))
-import Data.Lens ((^.))
+import Data.Lens (_Right, findOf, folded, (^.))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Effect (Effect)
@@ -15,13 +14,16 @@ import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, us
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.Data.Api (Product, productTitle)
+import SweetSpot.QueryString (QueryParam(..))
+import SweetSpot.QueryString as QS
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
 import SweetSpot.State (Action(..), AppState, fetchRemoteState, initialState, reducer, Dispatch)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
-import Web.HTML.Window (document)
+import Web.HTML.Location (search)
+import Web.HTML.Window (document, location)
 
 gettingStartedPage :: String -> JSX
 gettingStartedPage name =
@@ -87,12 +89,16 @@ experimentsPage state dispatch =
 
 mkApp :: Effect (ReactComponent {})
 mkApp = do
-  let apiKey = "634b531a6568d6eb076c2ad5c7e0265a"
-  mShopDomain <- getCookie "sweetspotShopOrigin"
+  qs <- window >>= location >>= search <#> QS.parseQueryString
+
+  let
+    apiKey = "634b531a6568d6eb076c2ad5c7e0265a"
+    mShopDomain = findOf (folded <<< _Right) (\(QueryParam k _) -> k == "shop") qs
+      >>= (\(QueryParam _ v) -> v)
 
   app <- case mShopDomain of
-    Just (Cookie { value }) -> Shopify.createApp apiKey value
-    Nothing -> throw "Missing shop origin"
+    Just domain -> Shopify.createApp apiKey domain
+    Nothing -> throw "Failed to parse shop domain"
 
   component "App" \props -> React.do
     state /\ dispatch <- useReducer initialState reducer

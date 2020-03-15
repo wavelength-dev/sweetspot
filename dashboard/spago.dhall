@@ -5,7 +5,6 @@ You can edit this file as you like.
 { name = "my-project"
 , dependencies =
     [ "argonaut"
-    , "browser-cookies"
     , "console"
     , "effect"
     , "generics-rep"

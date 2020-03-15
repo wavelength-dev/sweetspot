@@ -367,3 +367,16 @@ instance FromHttpApiData Timestamp where
 
 instance ToHttpApiData Timestamp where
   toQueryParam (Timestamp ts) = ts
+
+-- | ---------------------------------------------------------------------------
+-- | SessionId
+-- | ---------------------------------------------------------------------------
+newtype SessionId =
+  SessionId Text
+  deriving (Eq, Show)
+
+instance FromHttpApiData SessionId where
+  parseQueryParam = Right . SessionId
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be SessionId where
+  sqlValueSyntax = sqlValueSyntax . \(SessionId s) -> s

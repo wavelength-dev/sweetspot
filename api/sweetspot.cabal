@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a92d5784f36c44f854e4f8b094209691e38ee56d4ec84cee210ddc358f49593f
+-- hash: 382fe0d00bab1b3836d98734452633d1ec4c966f4c392b9a1366ce2fca8a263c
 
 name:           sweetspot
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
       SweetSpot.Data.Common
       SweetSpot.Database
       SweetSpot.Database.Migrations.V0001InitDb
+      SweetSpot.Database.Migrations.V0002AddSessions
       SweetSpot.Database.Queries.Dashboard
       SweetSpot.Database.Queries.Injectable
       SweetSpot.Database.Queries.Install
@@ -60,7 +61,6 @@ library
     , beam-postgres
     , bytestring
     , containers
-    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -118,7 +118,6 @@ executable bridge-exe
     , beam-postgres
     , bytestring
     , containers
-    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -176,7 +175,6 @@ executable sweetspot-exe
     , beam-postgres
     , bytestring
     , containers
-    , cookie
     , cryptonite
     , envy
     , exceptions
@@ -240,7 +238,6 @@ test-suite sweetspot-test
     , beam-postgres
     , bytestring
     , containers
-    , cookie
     , cryptonite
     , envy
     , exceptions

@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SweetSpot.Database.Schema
-        ( module SweetSpot.Database.Migrations.V0001InitDb
+        ( module SweetSpot.Database.Migrations.V0002AddSessions
         , migration
         , checkedDb
         , db
@@ -19,6 +19,7 @@ module SweetSpot.Database.Schema
         )
 where
 
+import           Control.Arrow                  ( (>>>) )
 import           Data.UUID.Types                ( UUID )
 import           Database.Beam                  ( DatabaseSettings )
 import           Database.Beam.Query.Types      ( QGenExpr )
@@ -34,16 +35,16 @@ import           Database.Beam.Postgres         ( Postgres
 import           Database.Beam.Postgres.PgCrypto
                                                 ( PgCrypto(..) )
 
-import qualified SweetSpot.Database.Migrations.V0001InitDb
-                                               as V1
-import           SweetSpot.Database.Migrations.V0001InitDb
-                                         hiding ( migration )
+import qualified SweetSpot.Database.Migrations.V0001InitDb as V1 (migration)
+import qualified SweetSpot.Database.Migrations.V0002AddSessions as V2 (migration)
 import           SweetSpot.Data.Common
 
-checkedDb :: CheckedDatabaseSettings Postgres V1.SweetSpotDb
+import SweetSpot.Database.Migrations.V0002AddSessions hiding (migration)
+
+checkedDb :: CheckedDatabaseSettings Postgres SweetSpotDb
 checkedDb = evaluateDatabase migration
 
-db :: DatabaseSettings Postgres V1.SweetSpotDb
+db :: DatabaseSettings Postgres SweetSpotDb
 db = unCheckDatabase checkedDb
 
 pgGenUUID_ :: QGenExpr ctxt Postgres s UUID
@@ -64,4 +65,6 @@ shopId_ = unsafeRetype pgGenUUID_
 productVariant_ :: QGenExpr ctxt Postgres s PVariantId
 productVariant_ = unsafeRetype pgGenUUID_
 
-migration = migrationStep "Initial schema" V1.migration
+migration =
+  migrationStep "Initial schema" V1.migration >>>
+  migrationStep "Add sessions" V2.migration

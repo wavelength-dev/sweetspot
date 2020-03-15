@@ -20,4 +20,10 @@ exports.heading = Heading
 exports.page = Page
 exports.resourceList = ResourceList
 
-exports.createApp = apiKey => shopOrigin => createApp({ apiKey, shopOrigin })
+exports.createApp = function(apiKey) {
+  return function(shopOrigin) {
+    return function() {
+      return createApp({ apiKey, shopOrigin })
+    }
+  }
+}

@@ -87,9 +87,11 @@ experimentsPage state dispatch =
 
 mkApp :: Effect (ReactComponent {})
 mkApp = do
+  let apiKey = "634b531a6568d6eb076c2ad5c7e0265a"
   mShopDomain <- getCookie "sweetspotShopOrigin"
-  case mShopDomain of
-    Just (Cookie { value }) -> Shopify.ensureEmbedded value
+
+  app <- case mShopDomain of
+    Just (Cookie { value }) -> Shopify.createApp apiKey value
     Nothing -> throw "Missing shop origin"
 
   component "App" \props -> React.do

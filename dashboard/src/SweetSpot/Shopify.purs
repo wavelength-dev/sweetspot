@@ -42,4 +42,10 @@ foreign import resourceList :: forall a.  ReactComponent { items :: Array a, ren
 
 foreign import heading :: ReactComponent { element :: String, children :: String}
 
-foreign import ensureEmbedded :: String -> Effect Unit
+data ClientAction = Navigate String
+
+type ClientApplication =
+  { dispatch :: ClientAction -> Effect Unit
+  }
+
+foreign import createApp :: String -> String -> Effect ClientApplication

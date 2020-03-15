@@ -18,7 +18,6 @@ import Network.HTTP.Media ((//), (/:))
 import Servant
 import Servant.API (toUrlPiece)
 import Servant.Links (safeLink)
-import Web.Cookie (defaultSetCookie, SetCookie(..))
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB(..))
@@ -33,18 +32,16 @@ data HTML
 newtype RawHTML = RawHTML { unRaw :: BS.ByteString }
 
 instance MimeRender HTML RawHTML where
-  mimeRender _ =  unRaw
+  mimeRender _ = unRaw
 
 instance Accept HTML where
   contentType _ = "text" // "html" /: ("charset", "utf-8")
-
-type HTMLWithCookie = Headers '[Header "Set-Cookie" SetCookie] RawHTML
 
 type IndexRoute = "dashboard" :> "index.html"
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
-  :> Get '[HTML] HTMLWithCookie
+  :> Get '[HTML] RawHTML
 
 type DashboardStatic = "dashboard" :> Raw
 
@@ -54,18 +51,13 @@ indexHandler
   :: Maybe ShopDomain
   -> Maybe Timestamp
   -> Maybe HMAC'
-  -> ServerM HTMLWithCookie
+  -> ServerM RawHTML
 indexHandler (Just domain) (Just ts) (Just hmac) =
   runAppM $ do
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
     case mToken of
-      Just _ -> addHeader cookie . RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
-        where
-          cookie = defaultSetCookie
-            { setCookieName = "sweetspotShopOrigin"
-            , setCookieValue = TE.encodeUtf8 txtDomain
-            }
+      Just _ -> RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
       Nothing -> throwError $ err302 { errHeaders = [("Location", "/api/" <> redirectPath)] }
         where
           redirectApi = Proxy :: Proxy OAuthAPI

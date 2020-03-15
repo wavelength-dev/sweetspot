@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "start": "run-p watch:*",
-    "watch:bundle": "parcel serve index.html",
+    "watch:bundle": "parcel serve src/index.html",
     "watch:purescript": "spago build --watch"
   },
   "devDependencies": {

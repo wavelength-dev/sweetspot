@@ -26,16 +26,13 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
   combinedOptions :: Record Options
   combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
-shopParam :: String
-shopParam = "?shop=libertyprice.myshopify.com"
-
 fetchThing
   :: forall t.
      String
   -> (Json -> Either String t)
   -> Aff (Either String t)
 fetchThing route decoder = do
-  res <- getJson (route <> shopParam) {}
+  res <- getJson route {}
   text <- Milkis.text res
   pure (jsonParser text >>= decodeJson >>= decoder)
 

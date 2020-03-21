@@ -21,6 +21,7 @@ import Servant.Links (safeLink)
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB(..))
+import SweetSpot.Database.Queries.Dashboard (DashboardDB(..))
 import SweetSpot.Route.OAuth (OAuthAPI, InstallRoute)
 import SweetSpot.Route.Util (badRequestErr)
 import Servant ((:>), Raw, serveDirectoryWith)
@@ -41,6 +42,7 @@ type IndexRoute = "dashboard" :> "index.html"
   :> QueryParam "shop" ShopDomain
   :> QueryParam "timestamp" Timestamp
   :> QueryParam "hmac" HMAC'
+  :> QueryParam "session" SessionId
   :> Get '[HTML] RawHTML
 
 type DashboardStatic = "dashboard" :> Raw
@@ -51,13 +53,16 @@ indexHandler
   :: Maybe ShopDomain
   -> Maybe Timestamp
   -> Maybe HMAC'
+  -> Maybe SessionId
   -> ServerM RawHTML
-indexHandler (Just domain) (Just ts) (Just hmac) =
+indexHandler (Just domain) (Just ts) (Just hmac) (Just sessionId) =
   runAppM $ do
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
     case mToken of
-      Just _ -> RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
+      Just _ -> do
+        createSession domain sessionId
+        RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
       Nothing -> throwError $ err302 { errHeaders = [("Location", "/api/" <> redirectPath)] }
         where
           redirectApi = Proxy :: Proxy OAuthAPI
@@ -66,7 +71,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) =
             $ toUrlPiece
             $ safeLink redirectApi redirectHandler (Just domain) (Just ts) (Just hmac)
 
-indexHandler _ _ _ = throwError badRequestErr
+indexHandler _ _ _ _ = throwError badRequestErr
 
 dashboardStaticHandler = serveDirectoryWith defaultOptions
   { ssMaxAge = MaxAgeSeconds 600

@@ -10,6 +10,7 @@
 module SweetSpot.Database.Queries.Dashboard
         ( DashboardDB(..)
         , InsertExperiment(..)
+        , validateSessionId
         )
 where
 
@@ -46,7 +47,7 @@ makeLenses ''InsertExperiment
 class Monad m => DashboardDB m where
   createExperiment :: InsertExperiment -> m ()
   getCampaigns :: ShopDomain -> m [UICampaign]
-  -- getCampaignStats :: ShopDomain -> CampaignId -> m CampaignStats
+  createSession :: ShopDomain -> SessionId -> m ()
 
 instance DashboardDB AppM where
   createExperiment args = withConn $ \conn -> do
@@ -86,7 +87,6 @@ instance DashboardDB AppM where
                 }
             ]
 
-
   getCampaigns domain = withConn $ \conn -> do
     cmps <- runBeamPostgres conn
       $ runSelectReturningList
@@ -94,6 +94,28 @@ instance DashboardDB AppM where
       $ selectShopCampaigns domain
 
     traverse (enhanceCampaign conn) cmps
+
+  createSession shopDomain' sessionId' = withConn $ \conn -> do
+    shopId <- runBeamPostgres conn
+      $ runSelectReturningOne
+      $ select
+      $ do
+        shop <- filter_ ((==. val_ shopDomain') . (^. shopDomain)) (all_ (db ^. shops))
+        pure $ shop ^. shopId
+
+    case shopId of
+      Just shopId' ->
+        runBeamPostgres conn
+          $ runInsert
+          $ insert (db ^. sessions)
+          $ insertExpressions
+            [ Session { _sessionId = val_ sessionId'
+                      , _sessionShopId  = val_ $ ShopKey shopId'
+                      }
+            ]
+      -- I don't see how this could ever happen
+      Nothing -> error "Tried to create session for non-existent shop"
+
 
 enhanceCampaign :: Connection -> Campaign -> IO UICampaign
 enhanceCampaign conn cmp = do
@@ -216,3 +238,19 @@ nonConvertersForTreatment cmpId' treatment' = aggregate_ (const countAll_)
         (\ce -> _cevUserId ce `references_` user)
 
       pure (user ^. usrId, event ^. cevId)
+
+
+
+validateSessionId :: Connection -> SessionId -> IO (Maybe ShopDomain)
+validateSessionId conn sessionId' =
+  runBeamPostgres conn
+    $ runSelectReturningOne
+    $ select
+    $ do
+      session <- all_ (db ^. sessions)
+      shop <- all_ (db ^. shops)
+
+      guard_ (_sessionShopId session `references_` shop)
+      guard_ (session ^. sessionId ==. val_ sessionId')
+
+      pure $ shop ^. shopDomain

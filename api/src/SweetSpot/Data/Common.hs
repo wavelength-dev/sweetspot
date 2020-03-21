@@ -380,3 +380,8 @@ instance FromHttpApiData SessionId where
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be SessionId where
   sqlValueSyntax = sqlValueSyntax . \(SessionId s) -> s
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be SessionId
+
+instance ShowText SessionId where
+  showText (SessionId session) = session

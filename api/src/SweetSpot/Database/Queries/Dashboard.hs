@@ -15,7 +15,9 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import           Control.Lens
+import           Control.Monad                  ( when )
 import           Data.Text                      ( Text )
+import           Data.Maybe                     ( isJust )
 import qualified Data.Vector                   as V
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
@@ -97,6 +99,12 @@ instance DashboardDB AppM where
     traverse (enhanceCampaign conn) cmps
 
   createSession shopDomain' sessionId' = withConn $ \conn -> do
+    mShopDomain <- validateSessionId' conn sessionId'
+
+    -- If session already exists, end here
+    when (isJust mShopDomain) $
+      return ()
+
     shopId <- runBeamPostgres conn
       $ runSelectReturningOne
       $ select

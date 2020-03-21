@@ -27,11 +27,11 @@ import SweetSpot.Shopify.Client (MonadShopify(..))
 import SweetSpot.Shopify.Types (FromShopJSON(..))
 
 type ProductsRoute = "products"
-  :> QueryParam "shop" ShopDomain
+  :> QueryParam "session" SessionId
   :> Get '[JSON] [Product]
 
 type CampaignRoute = "campaigns"
-  :> QueryParam "shop" ShopDomain
+  :> QueryParam "session" SessionId
   :> Get '[JSON] [UICampaign]
 
 type CreateExperimentRoute = "experiments"
@@ -41,18 +41,30 @@ type CreateExperimentRoute = "experiments"
 type DashboardAPI = "dashboard"
   :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute)
 
-getProductsHandler :: Maybe ShopDomain -> ServerM [Product]
-getProductsHandler (Just domain) = runAppM $ do
-  mProducts <- fetchProducts domain
-  case mProducts of
-    Right ps -> return ps
-    Left err -> do
-      L.error err
-      throwError internalServerErr
+getProductsHandler :: Maybe SessionId -> ServerM [Product]
+getProductsHandler (Just id) = runAppM $ do
+  mDomain <- validateSessionId id
+  case mDomain of
+    Just domain -> do
+      mProducts <- fetchProducts domain
+      case mProducts of
+        Right ps -> return ps
+        Left err -> do
+          L.error err
+          throwError internalServerErr
+    Nothing -> do
+      L.error "Invalid sessionId in getProductsHandler"
+      throwError badRequestErr
 getProductsHandler Nothing = throwError badRequestErr
 
-getCampaignsHandler :: Maybe ShopDomain -> ServerM [UICampaign]
-getCampaignsHandler (Just domain) = runAppM $ getCampaigns domain
+getCampaignsHandler :: Maybe SessionId -> ServerM [UICampaign]
+getCampaignsHandler (Just id) = runAppM $ do
+  mDomain <- validateSessionId id
+  case mDomain of
+    Just domain -> getCampaigns domain
+    Nothing -> do
+      L.error "Invalid sessionId in getCampaignsHandler"
+      throwError badRequestErr
 getCampaignsHandler Nothing = throwError badRequestErr
 
 createExperimentHandler :: CreateExperiment -> ServerM OkResponse

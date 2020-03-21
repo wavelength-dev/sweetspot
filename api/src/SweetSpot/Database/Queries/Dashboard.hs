@@ -15,9 +15,7 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import           Control.Lens
-import           Control.Monad                  ( when )
 import           Data.Text                      ( Text )
-import           Data.Maybe                     ( isJust )
 import qualified Data.Vector                   as V
 import           Database.Beam
 import           Database.Beam.Backend.SQL.BeamExtensions
@@ -101,29 +99,29 @@ instance DashboardDB AppM where
   createSession shopDomain' sessionId' = withConn $ \conn -> do
     mShopDomain <- validateSessionId' conn sessionId'
 
-    -- If session already exists, end here
-    when (isJust mShopDomain) $
-      return ()
+    case mShopDomain of
+      Nothing -> do
+        shopId <- runBeamPostgres conn
+          $ runSelectReturningOne
+          $ select
+          $ do
+            shop <- filter_ ((==. val_ shopDomain') . (^. shopDomain)) (all_ (db ^. shops))
+            pure $ shop ^. shopId
 
-    shopId <- runBeamPostgres conn
-      $ runSelectReturningOne
-      $ select
-      $ do
-        shop <- filter_ ((==. val_ shopDomain') . (^. shopDomain)) (all_ (db ^. shops))
-        pure $ shop ^. shopId
+        case shopId of
+          Just shopId' ->
+            runBeamPostgres conn
+              $ runInsert
+              $ insert (db ^. sessions)
+              $ insertExpressions
+                [ Session { _sessionId = val_ sessionId'
+                          , _sessionShopId  = val_ $ ShopKey shopId'
+                          }
+                ]
+          -- I don't see how this could ever happen
+          Nothing -> error "Tried to create session for non-existent shop"
 
-    case shopId of
-      Just shopId' ->
-        runBeamPostgres conn
-          $ runInsert
-          $ insert (db ^. sessions)
-          $ insertExpressions
-            [ Session { _sessionId = val_ sessionId'
-                      , _sessionShopId  = val_ $ ShopKey shopId'
-                      }
-            ]
-      -- I don't see how this could ever happen
-      Nothing -> error "Tried to create session for non-existent shop"
+      Just _ -> return ()
 
   validateSessionId sessionId' = withConn $ \conn ->
     validateSessionId' conn sessionId'

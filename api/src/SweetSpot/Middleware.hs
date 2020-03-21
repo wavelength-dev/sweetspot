@@ -43,6 +43,7 @@ import Network.Wai.Middleware.Routed (routedMiddleware)
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (validateDomain)
+import SweetSpot.Database.Queries.Dashboard (validateSessionId)
 import SweetSpot.Database.Queries.Util (withConnIO)
 import SweetSpot.Env (Environment(..))
 import qualified SweetSpot.Logger as L
@@ -103,6 +104,28 @@ validateShopDomain ctx app req sendResponse = do
       L.warn' appLogger "Missing shop query parameter"
       send400 "Missing shop query parameter" req sendResponse
 
+validateSession :: AppCtx -> Middleware
+validateSession ctx app req sendResponse = do
+  let
+    pool = ctx ^. ctxDbPool
+    appLogger = ctx ^. ctxLogger
+    params = queryString req
+    mSuppliedId =
+      SessionId . decodeUtf8 <$> (snd =<< L.find ((== "session") . fst) params)
+
+  L.info' appLogger $ T.pack . show $ params
+  case mSuppliedId of
+    Just id -> do
+      mShopDomain <- withConnIO pool $ \conn -> validateSessionId conn id
+      case mShopDomain of
+        Just _ -> app req sendResponse
+        Nothing -> do
+          L.warn' appLogger $ "Got invalid session query parameter: " <> showText id
+          send400 "Got invalid session query parameter" req sendResponse
+    Nothing -> do
+      L.warn' appLogger "Missing session query parameter"
+      send400 "Missing session query parameter" req sendResponse
+
 enableCors :: Middleware
 enableCors =
   cors $ \_ ->
@@ -120,22 +143,37 @@ getMiddleware :: AppCtx -> Middleware
 getMiddleware ctx =
   case env of
     -- So we don't have to deal with hmac during dev
-    Dev -> gzipStatic . validateShopDomainRouted . enableCors
+    Dev -> gzipStatic . validateShopDomainRouted . enableCors . validateSessionRouted
     -- So we can focus on testing handlers themselves
     TestBusiness -> gzipStatic
     -- Else everything
-    _ -> gzipStatic . verifyHmacRouted . validateShopDomainRouted
+    _ -> gzipStatic . verifyHmacRouted . validateShopDomainRouted . validateSessionRouted
   where
     env = ctx ^. ctxConfig . configEnvironment
 
+    matchDashboardApp paths = elem "dashboard" paths && elem "index.html" paths
+
+    -- Fulcrum endpoints are called through Shopify app proxy, and so
+    -- need to be hmac validated. Also OAuth endpoints and the initial
+    -- authentication request for the dashboard contain an hmac.
     hmacVerifiedRoutes paths =
-      elem "api" paths
-      || (elem "dashboard" paths && elem "index.html" paths)
-    -- During install, shop is not yet in db
+      elem "fulcrum" paths
+      || elem "oauth" paths
+      || matchDashboardApp paths
+
+    -- Domain verification applies to all the hmac verified routes, except
+    -- OAuth ones since shop doesn't exist yet during installation
     domainVerifiedRoutes paths =
-      hmacVerifiedRoutes paths && notElem "oauth" paths && notElem "index.html" paths
+      hmacVerifiedRoutes paths && notElem "oauth" paths
+
+    -- All dashboard APIs rely on session to identify the shop
+    sessionVerifiedRoutes paths =
+      elem "api" paths
+      && elem "dashboard" paths
 
     verifyHmacRouted =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
     validateShopDomainRouted =
       routedMiddleware domainVerifiedRoutes (validateShopDomain ctx)
+    validateSessionRouted =
+      routedMiddleware sessionVerifiedRoutes (validateSession ctx)

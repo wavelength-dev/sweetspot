@@ -10,7 +10,7 @@
 module SweetSpot.Database.Queries.Dashboard
         ( DashboardDB(..)
         , InsertExperiment(..)
-        , validateSessionId
+        , validateSessionId'
         )
 where
 
@@ -48,6 +48,7 @@ class Monad m => DashboardDB m where
   createExperiment :: InsertExperiment -> m ()
   getCampaigns :: ShopDomain -> m [UICampaign]
   createSession :: ShopDomain -> SessionId -> m ()
+  validateSessionId :: SessionId -> m (Maybe ShopDomain)
 
 instance DashboardDB AppM where
   createExperiment args = withConn $ \conn -> do
@@ -115,6 +116,9 @@ instance DashboardDB AppM where
             ]
       -- I don't see how this could ever happen
       Nothing -> error "Tried to create session for non-existent shop"
+
+  validateSessionId sessionId' = withConn $ \conn ->
+    validateSessionId' conn sessionId'
 
 
 enhanceCampaign :: Connection -> Campaign -> IO UICampaign
@@ -239,10 +243,8 @@ nonConvertersForTreatment cmpId' treatment' = aggregate_ (const countAll_)
 
       pure (user ^. usrId, event ^. cevId)
 
-
-
-validateSessionId :: Connection -> SessionId -> IO (Maybe ShopDomain)
-validateSessionId conn sessionId' =
+validateSessionId' :: Connection -> SessionId -> IO (Maybe ShopDomain)
+validateSessionId' conn sessionId' =
   runBeamPostgres conn
     $ runSelectReturningOne
     $ select

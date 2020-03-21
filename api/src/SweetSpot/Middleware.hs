@@ -43,7 +43,7 @@ import Network.Wai.Middleware.Routed (routedMiddleware)
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Injectable (validateDomain)
-import SweetSpot.Database.Queries.Dashboard (validateSessionId)
+import SweetSpot.Database.Queries.Dashboard (validateSessionId')
 import SweetSpot.Database.Queries.Util (withConnIO)
 import SweetSpot.Env (Environment(..))
 import qualified SweetSpot.Logger as L
@@ -116,7 +116,7 @@ validateSession ctx app req sendResponse = do
   L.info' appLogger $ T.pack . show $ params
   case mSuppliedId of
     Just id -> do
-      mShopDomain <- withConnIO pool $ \conn -> validateSessionId conn id
+      mShopDomain <- withConnIO pool $ \conn -> validateSessionId' conn id
       case mShopDomain of
         Just _ -> app req sendResponse
         Nothing -> do

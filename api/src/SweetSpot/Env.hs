@@ -39,8 +39,6 @@ data EnvConfig = EnvConfig
   , shopifyClientId :: !Text
   , shopifyClientSecret :: !Text
   , shopifyOAuthRedirectUri :: !Text
-  , basicAuthUser :: !Text
-  , basicAuthPassword :: !Text
   , port :: !Text
   } deriving (Show)
 
@@ -55,8 +53,6 @@ instance FromEnv EnvConfig where
       <*> env "SHOPIFY_CLIENT_ID"
       <*> env "SHOPIFY_CLIENT_SECRET"
       <*> env "SHOPIFY_OAUTH_REDIRECT_URI"
-      <*> env "BASIC_AUTH_USER"
-      <*> env "BASIC_AUTH_PASSWORD"
       <*> envMaybe "PORT" .!= "8082"
 
 getEnvConfig :: IO (Either String EnvConfig)

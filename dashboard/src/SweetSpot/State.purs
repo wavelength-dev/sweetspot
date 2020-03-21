@@ -9,8 +9,8 @@ module SweetSpot.State
   ) where
 
 import Prelude
-
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import SweetSpot.Data.Api (Product, UICampaign)
@@ -22,18 +22,20 @@ type AppState =
   , campaigns :: Array UICampaign
   , route :: Route
   , sessionId :: String
+    , shopName :: Maybe String
   }
 
-type RemoteState =
-  { products :: Array Product
-  , campaigns :: Array UICampaign
-  }
+type RemoteState
+  = { products :: Array Product
+    , campaigns :: Array UICampaign
+    }
 
 data Action
   = Populate RemoteState
   | Navigate Route
 
-type Dispatch = Action -> Effect Unit
+type Dispatch
+  = Action -> Effect Unit
 
 mkInitialState :: String -> AppState
 mkInitialState sessionId =
@@ -41,19 +43,18 @@ mkInitialState sessionId =
   , campaigns: []
   , route: Home
   , sessionId: sessionId
+  , shopName: Nothing
   }
 
 fetchRemoteState :: String -> Aff RemoteState
 fetchRemoteState session =
   combine <$> pure (Right []) <*> fetchCampaigns session
   where
-    combine =
-      case _, _ of
-        Right ps, Right cs -> { products: ps, campaigns: cs }
-        _, _ -> { products: [], campaigns: [] }
+  combine = case _, _ of
+    Right ps, Right cs -> { products: ps, campaigns: cs }
+    _, _ -> { products: [], campaigns: [] }
 
 reducer :: AppState -> Action -> AppState
-reducer state = case _ of
-  Populate { products, campaigns } ->
-    state { products = products, campaigns = campaigns }
+reducer state action = case action of
+  Populate { products, campaigns } -> state { products = products, campaigns = campaigns }
   Navigate route -> state { route = route }

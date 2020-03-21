@@ -9,7 +9,7 @@ import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
-import SweetSpot.Data.Api (Product, UICampaign(..))
+import SweetSpot.Data.Api (Product, UICampaign)
 import SweetSpot.Data.Codec as Codec
 
 fetch :: Fetch

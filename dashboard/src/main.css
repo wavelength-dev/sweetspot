@@ -1,15 +1,16 @@
-.price-experiment {
-  background: wheat;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
+ul {
+  list-style-type: none;
+  padding: 0;
 }
 
-.price-experiment__info {
-  display: flex;
-  justify-content: space-between;
+.price-experiment-wrapper {
+  margin-bottom: 1em;
+}
+
+.price-experiment-wrapper:last-child {
+  margin-bottom: 0;
 }
 
 .price-experiment .Polaris-Heading {
-  padding: 1.25em;
+  margin-bottom: 1.25em;
 }

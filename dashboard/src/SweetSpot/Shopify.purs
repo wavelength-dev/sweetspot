@@ -24,9 +24,9 @@ foreign import page ::
     , primaryAction :: Nullable Action
     }
 
-foreign import card :: ReactComponent { sectioned :: Boolean, children :: Array JSX }
+foreign import card :: ReactComponent { title :: String, sectioned :: Boolean, children :: Array JSX }
 
-foreign import button :: ReactComponent { onClick :: Effect Unit, children :: Array JSX }
+foreign import button :: ReactComponent { onClick :: Effect Unit, children :: String }
 
 foreign import emptyState ::
   ReactComponent
@@ -41,3 +41,5 @@ data Item a = Item a
 foreign import resourceList :: forall a.  ReactComponent { items :: Array a, renderItem :: a -> JSX }
 
 foreign import heading :: ReactComponent { element :: String, children :: String}
+
+foreign import subheading :: ReactComponent { element :: String, children :: String}

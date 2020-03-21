@@ -1,11 +1,10 @@
 module SweetSpot.Main where
 
 import Prelude
-
+import Assets (mountainCode) as Assets
+import Data.Array (null) as Array
 import Data.Either (Either(..))
-import Data.Lens ((^.))
-import Data.Maybe (Maybe(..))
-import Data.Nullable (notNull, null)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
@@ -13,92 +12,52 @@ import React.Basic.DOM as R
 import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Data.Api (Product, productTitle)
-import SweetSpot.QueryString as QS
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState, Dispatch, fetchRemoteState, mkInitialState, reducer)
+import SweetSpot.State (Action(..), AppState, fetchRemoteState, mkInitialState, reducer)
+import SweetSpot.Data.Api (UICampaign(..))
+import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
+import SweetSpot.QueryString as QS
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.Location (search)
 import Web.HTML.Window (document, location)
 
-gettingStartedPage :: String -> JSX
-gettingStartedPage name =
-  element Shopify.page
-    { title: "Getting started"
-    , subtitle: null
-    , primaryAction: null
-    , children:
-        [ element Shopify.emptyState
-            { heading: "Hi " <> name <> ", Discover more profitable prices for your products"
-            , action: { content: "Create Price Test", onAction: mempty }
-            , image: "lol.jpg"
-            , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
-            }
-        , R.a
-            { href: "/#/"
-            , children: [ R.button { children: [ R.text "Click here" ] } ]
-            }
-        ]
-    }
+gettingStartedPage :: AppState -> JSX
+gettingStartedPage { shopName } =
+  let
+    heading = case shopName of
+      Just name -> "Hi " <> name <> ", Discover more profitable prices for your products"
+      Nothing -> "Discover more profitable prices for your products"
+  in
+    element Shopify.emptyState
+      { heading: heading
+      , action: { content: "Create Price Experiment", onAction: mempty }
+      , image: Assets.mountainCode
+      , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
+      }
 
-type PriceTest
-  = { title :: String
-    , creationDate :: String
-    , price :: String
-    , status :: String
-    }
-
-renderPriceTest :: PriceTest -> JSX
-renderPriceTest { title } =
-  R.div
-    { children:
-        [ element Shopify.heading { element: "h2", children: title }
-        ]
-    }
-
-toPriceTest :: Product -> PriceTest
-toPriceTest product =
-  { title: product ^. productTitle
-  , creationDate: "Jan 18th"
-  , price: "$129"
-  , status: "Running"
+uiCampaignToExperimentCard :: UICampaign -> ExperimentCardProps
+uiCampaignToExperimentCard (UICampaign { _uiCampaignName, _uiCampaignStart }) =
+  { title: _uiCampaignName
+  , creationDate: fromMaybe "DRAFT" _uiCampaignStart
+  -- TODO: some localized date math
+  , status: Running
   }
-
-experimentsPage :: AppState -> Dispatch -> JSX
-experimentsPage state dispatch =
-  element Shopify.page
-    { title: "Price Tests"
-    , subtitle: notNull "All tests currently running or finished."
-    , primaryAction: notNull { content: "Create new price test", onAction: dispatch (Navigate (Campaign "lol")) }
-    , children:
-        [ element Shopify.card
-            { sectioned: true
-            , children:
-                [ element Shopify.resourceList
-                    { items: map toPriceTest state.products
-                    , renderItem: renderPriceTest
-                    }
-                ]
-            }
-        ]
-    }
 
 mkApp :: Effect (ReactComponent {})
 mkApp = do
   qs <- window >>= location >>= search
-
+  experimentListPage <- mkExperimentListPage
   let
     params = QS.parseQueryString qs
-    mSessionId = QS.findParam "session" params
 
+    mSessionId = QS.findParam "session" params
   sessionId <- case mSessionId of
     Just session -> pure session
     -- TODO: Figure out a better way to handle this case
     Nothing -> throw "Unable to parse sessionId"
-
   component "App" \props -> React.do
     state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
     mState <- useAff "appState" (fetchRemoteState sessionId)
@@ -111,9 +70,13 @@ mkApp = do
       $ element Shopify.appProvider
           { i18n: Shopify.enTranslations
           , children:
-              case state.route of
-                Home -> experimentsPage state dispatch
-                _ -> experimentsPage state dispatch
+              if Array.null state.campaigns then
+                gettingStartedPage state
+              else
+                element experimentListPage
+                  { experiments: (map uiCampaignToExperimentCard state.campaigns)
+                  , onCreateExperiment: dispatch (Navigate Home)
+                  }
           }
 
 main :: Effect Unit

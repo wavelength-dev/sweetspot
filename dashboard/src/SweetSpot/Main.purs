@@ -17,26 +17,13 @@ import SweetSpot.Shopify as Shopify
 import SweetSpot.State (Action(..), AppState, fetchRemoteState, mkInitialState, reducer)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
+import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.QueryString as QS
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.Location (search)
 import Web.HTML.Window (document, location)
-
-gettingStartedPage :: AppState -> JSX
-gettingStartedPage { shopName } =
-  let
-    heading = case shopName of
-      Just name -> "Hi " <> name <> ", Discover more profitable prices for your products"
-      Nothing -> "Discover more profitable prices for your products"
-  in
-    element Shopify.emptyState
-      { heading: heading
-      , action: { content: "Create Price Experiment", onAction: mempty }
-      , image: Assets.mountainCode
-      , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
-      }
 
 uiCampaignToExperimentCard :: UICampaign -> ExperimentCardProps
 uiCampaignToExperimentCard (UICampaign { _uiCampaignName, _uiCampaignStart }) =

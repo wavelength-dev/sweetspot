@@ -1,24 +1,24 @@
 module SweetSpot.Main where
 
 import Prelude
-import Assets (mountainCode) as Assets
+
 import Data.Array (null) as Array
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
+import Debug.Trace (traceM) as Debug
 import Effect (Effect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
-import React.Basic.DOM as R
-import React.Basic.Hooks (JSX, ReactComponent, component, element, useEffect, useReducer, (/\))
+import React.Basic.Hooks (ReactComponent, component, element, unsafeHook, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Route (Route(..), hoistRouter)
-import SweetSpot.Shopify as Shopify
-import SweetSpot.State (Action(..), AppState, fetchRemoteState, mkInitialState, reducer)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
+import SweetSpot.MissingSessionPage (mkMissingSessionPage)
 import SweetSpot.QueryString as QS
+import SweetSpot.Route (Route(..), hoistRouter)
+import SweetSpot.Shopify as Shopify
+import SweetSpot.State (Action(..), fetchRemoteState, mkInitialState, reducer)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (toNonElementParentNode)
@@ -41,34 +41,35 @@ mkApp = do
     params = QS.parseQueryString qs
 
     mSessionId = QS.findParam "session" params
-  sessionId <- case mSessionId of
-    Just session -> pure session
-    -- TODO: Figure out a better way to handle this case
-    Nothing -> throw "Unable to parse sessionId"
-  component "App" \props -> React.do
-    state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
-    mState <- useAff "appState" (fetchRemoteState sessionId)
-    useEffect "router" $ hoistRouter (dispatch <<< Navigate)
-    useEffect (React.UnsafeReference mState) do
-      case mState of
-        Just (Right st) -> pure $ dispatch $ Populate st
-        _ -> mempty
-    pure
-      $ element Shopify.appProvider
-          { i18n: Shopify.enTranslations
-          , children:
-              if Array.null state.campaigns then
-                gettingStartedPage state
-              else
-                element experimentListPage
-                  { experiments: (map uiCampaignToExperimentCard state.campaigns)
-                  , onCreateExperiment: dispatch (Navigate Home)
-                  }
-          }
+
+    app sessionId =
+      component "App" \props -> React.do
+        state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
+        unsafeHook (Debug.traceM state)
+        useAff sessionId do
+          remoteState <- fetchRemoteState sessionId
+          pure $ dispatch (UpdateRemoteState remoteState)
+        useEffect unit (hoistRouter (dispatch <<< Navigate))
+        pure
+          $ element Shopify.appProvider
+              { i18n: Shopify.enTranslations
+              , children:
+                  if Array.null state.campaigns then
+                    gettingStartedPage state
+                  else
+                    element experimentListPage
+                      { experiments: (map uiCampaignToExperimentCard state.campaigns)
+                      , onCreateExperiment: dispatch (Navigate Home)
+                      }
+              }
+  case mSessionId of
+    Just sessionId -> app sessionId
+    Nothing -> mkMissingSessionPage
 
 main :: Effect Unit
 main = do
-  mAppElement <- getElementById "app" =<< (map toNonElementParentNode $ document =<< window)
+  documentNode <- window >>= document >>= toNonElementParentNode >>> pure
+  mAppElement <- getElementById "app" documentNode
   case mAppElement of
     Nothing -> throw "app element not found."
     Just appElement -> do

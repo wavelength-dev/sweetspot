@@ -93,6 +93,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
             Right permCode -> do
               deleteInstallNonce shopDomain
               createShop shopDomain permCode
+              createCheckoutWebhook shopDomain
               L.info $ "Successfully installed app for " <> showText shopDomain
               return OkResponse { message = "This should redirect to dashboard" }
             Left err -> do

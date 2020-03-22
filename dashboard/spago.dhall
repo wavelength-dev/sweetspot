@@ -2,6 +2,7 @@
 , dependencies =
     [ "argonaut"
     , "console"
+    , "debug"
     , "effect"
     , "generics-rep"
     , "milkis"

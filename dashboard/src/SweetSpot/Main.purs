@@ -3,14 +3,13 @@ module SweetSpot.Main where
 import Prelude
 
 import Data.Array (null) as Array
-import Debug.Trace (traceM) as Debug
 import Data.Lens (non, view)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
-import React.Basic.Hooks (ReactComponent, component, element, unsafeHook, useEffect, useReducer, (/\))
-import React.Basic.Hooks as React
+import React.Basic.Hooks (ReactComponent, component, element, useEffect, useReducer, (/\))
+import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.Data.Api (UICampaign, uiCampaignName, uiCampaignStart)
 import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
@@ -26,6 +25,18 @@ import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.Location (search)
 import Web.HTML.Window (document, location)
 
+type SessionId
+  = String
+
+getSessionId :: Effect (Maybe SessionId)
+getSessionId =
+  window
+    >>= location
+    >>= search
+    >>= QS.parseQueryString
+    >>> QS.findParam "session"
+    >>> pure
+
 uiCampaignToExperimentCard :: UICampaign -> ExperimentCardProps
 uiCampaignToExperimentCard campaign =
   { title: view uiCampaignName campaign
@@ -34,45 +45,39 @@ uiCampaignToExperimentCard campaign =
   , status: Running
   }
 
-mkApp :: Effect (ReactComponent {})
-mkApp = do
-  qs <- window >>= location >>= search
+mkApp :: SessionId -> Effect (ReactComponent {})
+mkApp sessionId = do
   experimentListPage <- mkExperimentListPage
-  let
-    params = QS.parseQueryString qs
-
-    mSessionId = QS.findParam "session" params
-
-    app sessionId =
-      component "App" \props -> React.do
-        state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
-        unsafeHook (Debug.traceM state)
-        useAff sessionId do
-          remoteState <- fetchRemoteState sessionId
-          pure $ dispatch (UpdateRemoteState remoteState)
-        useEffect unit (hoistRouter (dispatch <<< Navigate))
-        pure
-          $ element Shopify.appProvider
-              { i18n: Shopify.enTranslations
-              , children:
-                  if Array.null state.campaigns then
-                    gettingStartedPage state
-                  else
-                    element experimentListPage
-                      { experiments: (map uiCampaignToExperimentCard state.campaigns)
-                      , onCreateExperiment: dispatch (Navigate Home)
-                      }
-              }
-  case mSessionId of
-    Just sessionId -> app sessionId
-    Nothing -> mkMissingSessionPage
+  component "App" \props -> React.do
+    state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
+    -- unsafeHook (Debug.traceM state)
+    useAff sessionId do
+      remoteState <- fetchRemoteState sessionId
+      pure $ dispatch (UpdateRemoteState remoteState)
+    useEffect unit (hoistRouter (dispatch <<< Navigate))
+    pure
+      $ element Shopify.appProvider
+          { i18n: Shopify.enTranslations
+          , children:
+              if Array.null state.campaigns then
+                gettingStartedPage state
+              else
+                element experimentListPage
+                  { experiments: (map uiCampaignToExperimentCard state.campaigns)
+                  , onCreateExperiment: dispatch (Navigate Home)
+                  }
+          }
 
 main :: Effect Unit
 main = do
+  mSessionId <- getSessionId
   documentNode <- window >>= document >>= toNonElementParentNode >>> pure
   mAppElement <- getElementById "app" documentNode
+  missingSessionPage <- mkMissingSessionPage
   case mAppElement of
     Nothing -> throw "app element not found."
-    Just appElement -> do
-      app <- mkApp
-      render (element app {}) appElement
+    Just appElement -> case mSessionId of
+      Nothing -> render (element missingSessionPage {}) appElement
+      Just sessionId -> do
+        app <- mkApp sessionId
+        render (element app {}) appElement

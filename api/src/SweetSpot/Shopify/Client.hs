@@ -70,107 +70,64 @@ class Monad m => MonadShopify m where
   createProduct :: ShopDomain -> Value -> m (Either Text Product)
   createCheckoutWebhook :: ShopDomain -> m (Either Text ())
 
-testBaseUrl :: BaseUrl
-testBaseUrl = BaseUrl { baseUrlScheme = Http
-                      , baseUrlHost = "localhost"
-                      , baseUrlPort = 9999
-                      , baseUrlPath = ""
-                      }
-
-getClientEnv :: ShopDomain -> AppM ClientEnv
-getClientEnv domain = do
-    manager <- liftIO $ newManager tlsManagerSettings
-    config <- asks (^. ctxConfig)
-    let
-      baseUrl = case config ^. configEnvironment of
-        TestBusiness -> testBaseUrl
-        _ -> BaseUrl { baseUrlScheme = Https
-                     , baseUrlHost = show domain
-                     , baseUrlPort = 443
-                     , baseUrlPath = ""
-                     }
-
-    return $ mkClientEnv manager baseUrl
-
-
 instance MonadShopify AppM where
-  exchangeAccessToken domain code = do
-    config <- asks (^. ctxConfig)
-    let
-      exchangeTokenClient = client (Proxy :: Proxy TokenExchangeRoute)
-      reqBody = TokenExchangeReq
-        { client_id = config ^. configShopifyClientId
-        , client_secret = config ^. configShopifyClientSecret
-        , code = code
-        }
-    clientEnv <- getClientEnv domain
-    res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
-    return $ case res of
-      Left err -> Left $ "Error exchanging auth token: " <> (T.pack . show $ err)
-      Right body -> Right $ access_token body
+  exchangeAccessToken domain code =
+    withClientEnvAndToken domain $ \clientEnv _ -> do
+      config <- asks (^. ctxConfig)
+      let
+        exchangeTokenClient = client (Proxy :: Proxy TokenExchangeRoute)
+        reqBody = TokenExchangeReq
+          { client_id = config ^. configShopifyClientId
+          , client_secret = config ^. configShopifyClientSecret
+          , code = code
+          }
+      res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error exchanging auth token: " <> (T.pack . show $ err)
+        Right body -> Right $ access_token body
 
-  fetchProducts domain = do
-    let
-      getProductsClient = client (Proxy :: Proxy GetProductsRoute)
-    clientEnv <- getClientEnv domain
-    mToken <- getOAuthToken domain
-    case mToken of
-      Just token -> do
-        res <- liftIO $ runClientM (getProductsClient (Just token)) clientEnv
-        return $ case res of
-          Left err -> Left $ "Error getting products: " <> (T.pack . show) err
-          Right body -> do
-            let
-              result = body ^? key "products"
-                & fmap (traverse (parse parseShopJSON) . toListOf values)
-            case result of
-              (Just (Success products)) -> Right products
-              (Just (Error err)) -> Left $ T.pack err
-              Nothing -> Left "Missing key 'products' in products response"
+  fetchProducts domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
+      res <- liftIO $ runClientM (getProductsClient (Just token)) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error getting products: " <> (T.pack . show) err
+        Right body -> do
+          let
+            result = body ^? key "products"
+              & fmap (traverse (parse parseShopJSON) . toListOf values)
+          case result of
+            Just (Success products) -> Right products
+            Just (Error err) -> Left $ T.pack err
+            Nothing -> Left "Missing key 'products' in products response"
 
-      Nothing -> return $ Left "Could not find OAuth token for shop domain"
+  fetchProductJson domain productId =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
+      res <- liftIO $ runClientM (getProductJsonClient productId (Just token)) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error fetching product json: " <> (T.pack . show $ err)
+        Right body -> Right body
 
-  fetchProductJson domain productId = do
-    let
-      getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
-    clientEnv <- getClientEnv domain
-    mToken <- getOAuthToken domain
-    case mToken of
-      Just token -> do
-        res <- liftIO $ runClientM (getProductJsonClient productId (Just token)) clientEnv
-        return $ case res of
-          Left err -> Left $ "Error fetching product json: " <> (T.pack . show $ err)
-          Right body -> Right body
-      Nothing -> return $ Left "Could not find OAuth token for shop domain"
+  createProduct domain json =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let createProductClient = client (Proxy :: Proxy CreateProductRoute)
+      res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error creating product: " <> (T.pack . show $ err)
+        Right body -> case parse parseShopJSON (body ^?! key "product") of
+          Success product -> Right product
+          Error err -> Left . T.pack . show $ err
 
-  createProduct domain json = do
-    let
-      createProductClient = client (Proxy :: Proxy CreateProductRoute)
-    clientEnv <- getClientEnv domain
-    mToken <- getOAuthToken domain
-    case mToken of
-      Just token -> do
-        res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
-        return $ case res of
-          Left err -> Left $ "Error creating product: " <> (T.pack . show $ err)
-          Right body -> case parse parseShopJSON (body ^?! key "product") of
-            Success product -> Right product
-            Error err -> Left . T.pack . show $ err
 
-      Nothing -> return $ Left "Could not find OAuth token for shop domain"
-
-  createCheckoutWebhook domain = do
-    clientEnv <- getClientEnv domain
-    mToken <- getOAuthToken domain
-    case mToken of
-      Just token -> do
+  createCheckoutWebhook domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
         res <- liftIO $ runClientM (createCheckoutWebhookClient payload (Just token)) clientEnv
         case res of
           Left err -> pure . Left $ "Error creating webhook: " <> (T.pack . show $ err)
           Right _ -> do
             L.info $ "Created checkout webhook for " <> showText domain
             pure $ Right ()
-      Nothing -> return $ Left "Could not find OAuth token for shop domain"
 
     where
       createCheckoutWebhookClient = client (Proxy :: Proxy CreateWebhookRoute)
@@ -181,3 +138,39 @@ instance MonadShopify AppM where
         , address = "https://app-staging.sweetspot.dev/api/" <> hookPath
         , format = "json"
         }
+
+
+withClientEnvAndToken
+  :: ShopDomain
+  -> (ClientEnv -> Text -> AppM (Either Text a))
+  -> AppM (Either Text a)
+withClientEnvAndToken domain f = do
+  clientEnv <- getClientEnv domain
+  mToken <- getOAuthToken domain
+  case mToken of
+    Just token -> f clientEnv token
+    Nothing ->
+      return . Left $ "Could not find OAuth token for shop domain " <> showText domain
+
+getClientEnv :: ShopDomain -> AppM ClientEnv
+getClientEnv domain = do
+  manager <- liftIO $ newManager tlsManagerSettings
+  config <- asks (^. ctxConfig)
+  let
+    baseUrl = case config ^. configEnvironment of
+      TestBusiness -> testBaseUrl
+      _ -> BaseUrl { baseUrlScheme = Https
+                    , baseUrlHost = show domain
+                    , baseUrlPort = 443
+                    , baseUrlPath = ""
+                    }
+
+  return $ mkClientEnv manager baseUrl
+
+testBaseUrl :: BaseUrl
+testBaseUrl = BaseUrl
+  { baseUrlScheme = Http
+  , baseUrlHost = "localhost"
+  , baseUrlPort = 9999
+  , baseUrlPath = ""
+  }

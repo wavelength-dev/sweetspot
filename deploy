@@ -36,6 +36,7 @@ fi
 
 # Update sweetspot deployment to latest image
 echo "=> Applying new image"
-ecs deploy default sweetspot-${ENV} --tag ${COMMIT}
+# gcloud beta run deploy sweetspot-${ENV} --image gcr.io/sweetspot-255522/sweetspot:${COMMIT}
+gcloud beta run deploy sweetspot --image gcr.io/sweetspot-255522/sweetspot:${COMMIT}
 exit_on_failure
 echo "=> Done!"

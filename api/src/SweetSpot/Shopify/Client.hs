@@ -83,7 +83,7 @@ instance MonadShopify AppM where
           }
       res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
       return $ case res of
-        Left err -> Left $ "Error exchanging auth token: " <> (T.pack . show $ err)
+        Left err -> Left $ "Error exchanging auth token: " <> errToText err
         Right body -> Right $ access_token body
 
   fetchProducts domain =
@@ -91,7 +91,7 @@ instance MonadShopify AppM where
       let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
       res <- liftIO $ runClientM (getProductsClient (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error getting products: " <> (T.pack . show) err
+        Left err -> Left $ "Error getting products: " <> errToText err
         Right body -> do
           let
             result = body ^? key "products"
@@ -106,7 +106,7 @@ instance MonadShopify AppM where
       let getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
       res <- liftIO $ runClientM (getProductJsonClient productId (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error fetching product json: " <> (T.pack . show $ err)
+        Left err -> Left $ "Error fetching product json: " <> errToText err
         Right body -> Right body
 
   createProduct domain json =
@@ -114,17 +114,17 @@ instance MonadShopify AppM where
       let createProductClient = client (Proxy :: Proxy CreateProductRoute)
       res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error creating product: " <> (T.pack . show $ err)
+        Left err -> Left $ "Error creating product: " <> errToText err
         Right body -> case parse parseShopJSON (body ^?! key "product") of
           Success product -> Right product
-          Error err -> Left . T.pack . show $ err
+          Error err -> Left . T.pack $ err
 
 
   createCheckoutWebhook domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
         res <- liftIO $ runClientM (createCheckoutWebhookClient payload (Just token)) clientEnv
         case res of
-          Left err -> pure . Left $ "Error creating webhook: " <> (T.pack . show $ err)
+          Left err -> pure . Left $ "Error creating webhook: " <> errToText err
           Right _ -> do
             L.info $ "Created checkout webhook for " <> showText domain
             pure $ Right ()
@@ -174,3 +174,6 @@ testBaseUrl = BaseUrl
   , baseUrlPort = 9999
   , baseUrlPath = ""
   }
+
+errToText :: ClientError -> Text
+errToText = T.pack . show

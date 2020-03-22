@@ -3,15 +3,16 @@ module SweetSpot.Main where
 import Prelude
 
 import Data.Array (null) as Array
-import Data.Maybe (Maybe(..), fromMaybe)
 import Debug.Trace (traceM) as Debug
+import Data.Lens (non, view)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.Hooks (ReactComponent, component, element, unsafeHook, useEffect, useReducer, (/\))
 import React.Basic.Hooks as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Data.Api (UICampaign(..))
+import SweetSpot.Data.Api (UICampaign, uiCampaignName, uiCampaignStart)
 import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (mkMissingSessionPage)
@@ -26,9 +27,9 @@ import Web.HTML.Location (search)
 import Web.HTML.Window (document, location)
 
 uiCampaignToExperimentCard :: UICampaign -> ExperimentCardProps
-uiCampaignToExperimentCard (UICampaign { _uiCampaignName, _uiCampaignStart }) =
-  { title: _uiCampaignName
-  , creationDate: fromMaybe "DRAFT" _uiCampaignStart
+uiCampaignToExperimentCard campaign =
+  { title: view uiCampaignName campaign
+  , creationDate: view (uiCampaignStart <<< non "DRAFT") campaign
   -- TODO: some localized date math
   , status: Running
   }

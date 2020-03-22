@@ -48,7 +48,7 @@ getTestMap = do
   mUserId <- liftEffect User.getUserId
   -- Fetch the list of TestMaps
   eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId (UserId "9"))
-  -- TODO: Cache the list of TestMaps in memory and local storage
+  -- TODO: Cache the list of TestMaps in local storage
   case eTestMaps of
     Left msg -> throwError msg
     Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
@@ -67,6 +67,7 @@ main = do
     eTestContext <- runExceptT getTestMap
     case eTestContext of
       Left msg -> throwError (error msg)
+      -- We do nothing here as our only goal is to cache the test maps
       Right testContext -> pure unit
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
@@ -75,9 +76,9 @@ insertPrice testMap element = do
   let
     eTestMap =
       rawVariantToEither mVariantId
-        >>= (lookupF testMap >>> note "No test for read variant id")
+        >>= lookupF testMap >>> note "No test for read variant id"
   case eTestMap of
-    Left msg -> Console.error msg -- pure $ Left msg
+    Left msg -> Console.error msg
     Right test -> setNodePrice test
   where
   lookupF = flip Map.lookup

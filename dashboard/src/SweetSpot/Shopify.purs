@@ -30,8 +30,8 @@ foreign import button :: ReactComponent { onClick :: Effect Unit, children :: St
 
 foreign import emptyState ::
   ReactComponent
-    { heading :: String
-    , action :: Action
+    { heading :: Nullable String
+    , action :: Nullable Action
     , image :: String
     , children :: Array JSX
     }

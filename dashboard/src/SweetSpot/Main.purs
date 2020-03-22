@@ -46,13 +46,12 @@ uiCampaignToExperimentCard campaign =
   }
 
 mkApp :: SessionId -> Effect (ReactComponent {})
-mkApp sessionId = do
+mkApp initialSessionId = do
   experimentListPage <- mkExperimentListPage
   component "App" \props -> React.do
-    state /\ dispatch <- useReducer (mkInitialState sessionId) reducer
-    -- unsafeHook (Debug.traceM state)
-    useAff sessionId do
-      remoteState <- fetchRemoteState sessionId
+    state /\ dispatch <- useReducer (mkInitialState initialSessionId) reducer
+    useAff state.sessionId do
+      remoteState <- fetchRemoteState state.sessionId
       pure $ dispatch (UpdateRemoteState remoteState)
     useEffect unit (hoistRouter (dispatch <<< Navigate))
     pure

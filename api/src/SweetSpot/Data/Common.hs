@@ -378,6 +378,9 @@ newtype SessionId =
 instance FromHttpApiData SessionId where
   parseQueryParam = Right . SessionId
 
+instance ToHttpApiData SessionId where
+  toQueryParam (SessionId sid) = sid
+
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be SessionId where
   sqlValueSyntax = sqlValueSyntax . \(SessionId s) -> s
 

@@ -5,7 +5,6 @@ module Spec.Business (businessLogicSpec) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString.Lazy as BS
-import qualified Data.Vector as V
 import Data.List (nub, find)
 import Data.Maybe (fromJust, isJust)
 import Network.HTTP.Client hiding (Proxy, responseHeaders)

@@ -35,3 +35,20 @@ data TokenExchangeRes = TokenExchangeRes
 
 instance ToJSON TokenExchangeRes
 instance FromJSON TokenExchangeRes
+
+-- | ---------------------------------------------------------------------------
+-- | CreateWebhookReq
+-- | ---------------------------------------------------------------------------
+data CreateWebhookData = CreateWebhookData
+  { topic :: Text
+  , address :: Text
+  , format :: Text
+  } deriving (Generic)
+
+instance ToJSON CreateWebhookData
+
+newtype CreateWebhookReq = CreateWebhookReq
+  { webhook :: CreateWebhookData
+  } deriving (Generic)
+
+instance ToJSON CreateWebhookReq

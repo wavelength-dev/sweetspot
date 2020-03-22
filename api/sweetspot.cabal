@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 382fe0d00bab1b3836d98734452633d1ec4c966f4c392b9a1366ce2fca8a263c
+-- hash: 4d99d60918553225623e3cbf87cd3ad1d26c641921d42f3742fa83bccc3587ab
 
 name:           sweetspot
 version:        0.1.0.0
@@ -45,6 +45,7 @@ library
       SweetSpot.Route.Injectable
       SweetSpot.Route.OAuth
       SweetSpot.Route.Util
+      SweetSpot.Route.Webhook
       SweetSpot.Server
       SweetSpot.Shopify.Client
       SweetSpot.Shopify.Types

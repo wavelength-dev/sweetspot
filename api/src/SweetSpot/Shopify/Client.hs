@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module SweetSpot.Shopify.Client where
 
@@ -19,6 +20,8 @@ import qualified Data.Text as T
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant
+import Servant.API (toUrlPiece)
+import Servant.Links (safeLink)
 import Servant.Client
 
 import SweetSpot.AppM
@@ -26,7 +29,11 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB(..))
 import SweetSpot.Env (Environment(..))
+import SweetSpot.Route.Webhook (CheckoutRoute, WebhookAPI)
+import qualified SweetSpot.Logger as L
 import SweetSpot.Shopify.Types
+
+type ApiVersion = "2019-07"
 
 type TokenExchangeRoute =
   "admin" :> "oauth" :> "access_token"
@@ -34,20 +41,25 @@ type TokenExchangeRoute =
   :> Post '[JSON] TokenExchangeRes
 
 type GetProductsRoute =
-  "admin" :> "api" :> "2019-07" :> "products.json"
+  "admin" :> "api" :> ApiVersion :> "products.json"
   :> Header "X-Shopify-Access-Token" Text
   :> Get '[JSON] Value
 
 type GetProductJsonRoute =
-  "admin" :> "api" :> "2019-07" :> "products"
+  "admin" :> "api" :> ApiVersion :> "products"
   :> Capture "productId" Pid
   :> Header "X-Shopify-Access-Token" Text
   :> Get '[JSON] Value
 
 type CreateProductRoute =
-  "admin" :> "api" :> "2019-07" :> "products.json"
+  "admin" :> "api" :> ApiVersion :> "products.json"
   :> ReqBody '[JSON] Value
   :> Header "X-Shopify-Access-Token" Text
+  :> Post '[JSON] Value
+
+type CreateWebhookRoute =
+  "admin" :> "api" :> ApiVersion :> "webhooks.json"
+  :> ReqBody '[JSON] CreateWebhookReq
   :> Post '[JSON] Value
 
 class Monad m => MonadShopify m where
@@ -55,6 +67,7 @@ class Monad m => MonadShopify m where
   fetchProducts :: ShopDomain -> m (Either Text [Product])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text Product)
+  createCheckoutWebhook :: ShopDomain -> m (Either Text ())
 
 testBaseUrl :: BaseUrl
 testBaseUrl = BaseUrl { baseUrlScheme = Http
@@ -141,6 +154,29 @@ instance MonadShopify AppM where
           Left err -> Left $ "Error creating product: " <> (T.pack . show $ err)
           Right body -> case parse parseShopJSON (body ^?! key "product") of
             Success product -> Right product
-            Error err -> Left $ T.pack . show $ err
+            Error err -> Left . T.pack . show $ err
 
       Nothing -> return $ Left "Could not find OAuth token for shop domain"
+
+  createCheckoutWebhook domain = do
+    clientEnv <- getClientEnv domain
+    mToken <- getOAuthToken domain
+    case mToken of
+      Just token -> do
+        res <- liftIO $ runClientM (createCheckoutWebhookClient payload) clientEnv
+        case res of
+          Left err -> pure . Left $ "Error creating webhook: " <> (T.pack . show $ err)
+          Right _ -> do
+            L.info $ "Created checkout webhook for " <> showText domain
+            pure $ Right ()
+      Nothing -> return $ Left "Could not find OAuth token for shop domain"
+
+    where
+      createCheckoutWebhookClient = client (Proxy :: Proxy CreateWebhookRoute)
+      hookPath = toUrlPiece
+        $ safeLink (Proxy :: Proxy WebhookAPI) (Proxy :: Proxy CheckoutRoute)
+      payload = CreateWebhookReq $ CreateWebhookData
+        { topic = "checkouts/create"
+        , address = "https://app-staging.sweetspot.dev/api/" <> hookPath
+        , format = "json"
+        }

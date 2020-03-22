@@ -31,6 +31,7 @@ import SweetSpot.Route.DashboardApp (DashboardApp, dashboardAppHandler)
 import SweetSpot.Route.Injectable (InjectableAPI, injectableHandler)
 import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
 import SweetSpot.Route.FulcrumApp (FulcrumApp, fulcrumAppHandler)
+import SweetSpot.Route.Webhook (WebhookAPI, webhookHandler)
 import System.Exit (ExitCode(..), exitWith)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
@@ -39,6 +40,7 @@ type RootAPI =
         (InjectableAPI
         :<|> DashboardAPI
         :<|> OAuthAPI
+        :<|> WebhookAPI
         )
     :<|> DashboardApp
     :<|> HealthAPI
@@ -48,7 +50,7 @@ rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server =
-    (injectableHandler :<|> dashboardHandler :<|> oauthHandler) :<|>
+    (injectableHandler :<|> dashboardHandler :<|> oauthHandler :<|> webhookHandler) :<|>
     dashboardAppHandler :<|>
     healthHandler :<|>
     fulcrumAppHandler

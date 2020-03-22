@@ -60,6 +60,7 @@ type CreateProductRoute =
 type CreateWebhookRoute =
   "admin" :> "api" :> ApiVersion :> "webhooks.json"
   :> ReqBody '[JSON] CreateWebhookReq
+  :> Header "X-Shopify-Access-Token" Text
   :> Post '[JSON] Value
 
 class Monad m => MonadShopify m where
@@ -163,7 +164,7 @@ instance MonadShopify AppM where
     mToken <- getOAuthToken domain
     case mToken of
       Just token -> do
-        res <- liftIO $ runClientM (createCheckoutWebhookClient payload) clientEnv
+        res <- liftIO $ runClientM (createCheckoutWebhookClient payload (Just token)) clientEnv
         case res of
           Left err -> pure . Left $ "Error creating webhook: " <> (T.pack . show $ err)
           Right _ -> do

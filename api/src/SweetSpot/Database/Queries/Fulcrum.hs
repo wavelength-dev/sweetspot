@@ -44,6 +44,7 @@ class Monad m => FulcrumDB m where
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
   insertCheckoutEvent :: ShopId -> ApiCheckoutEvent -> m ()
+  insertUserCartToken :: CartTokenReq -> m ()
 
 instance FulcrumDB AppM where
         getNewCampaignTestMaps cmpId mUid = do
@@ -75,6 +76,17 @@ instance FulcrumDB AppM where
                 runBeamPostgres conn $ runSelectReturningOne $ select $ do
                         shop <- matchShop shopDomain
                         pure $ shop ^. shopId
+
+        insertUserCartToken req = withConn $ \conn ->
+          runBeamPostgres conn
+            $ runInsert
+            $ insert (db ^. userCartTokens)
+            $ insertExpressions
+              [ UserCartToken
+                { _cartTokenId = val_ $ req ^. cartTokenReqToken
+                , _cartTokenUser = val_ $ UserKey $ req ^. cartTokenReqUser
+                }
+              ]
 
         insertCheckoutEvent shopId apiEvent = withConn $ \conn -> do
                 [dbEvent] <-

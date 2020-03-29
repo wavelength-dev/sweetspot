@@ -14,3 +14,5 @@ sweetspotBridge = defaultBridge
   <|> (typeName ^== "Pid" >> return psString)
   <|> (typeName ^== "CampaignId" >> return psString)
   <|> (typeName ^== "LocalTime" >> return psString)
+  <|> (typeName ^== "CartToken" >> return psString)
+  <|> (typeName ^== "UserId" >> return psString)

@@ -30,9 +30,14 @@ type CheckoutEventRoute =
              :> ReqBody '[JSON] ApiCheckoutEvent
              :> Post '[JSON] OkResponse
 
+type UserCartTokenRoute =
+  "cart-token" :> QueryParam "shop" ShopDomain
+               :> ReqBody '[JSON] CartTokenReq
+               :> Put '[JSON] OkResponse
+
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type FulcrumAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute) -- :<|> LogEventRoute
+type FulcrumAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
@@ -83,10 +88,19 @@ trackCheckoutEventHandler Nothing _ = runAppM $ do
   L.error "Missing shopDomain, cannot track checkout event"
   throwError badRequestErr
 
+userCartTokenHandler :: Maybe ShopDomain -> CartTokenReq -> ServerM OkResponse
+userCartTokenHandler (Just _) req = runAppM $ do
+  insertUserCartToken req
+  return OkResponse {message = "Cart token received"}
+userCartTokenHandler Nothing _ = runAppM $ do
+  L.error "Missing shopDomain, cannot insert cart token"
+  throwError badRequestErr
+
 -- trackLogMessageHandler :: Value -> ServerM OkResponse
 -- trackLogMessageHandler val = runAppM $ do
 --   insertEvent (Log, val)
 --   return OkResponse {message = "Event received"}
 
 fulcrumHandler =
-  getUserTestHandler :<|> trackCheckoutEventHandler -- :<|> trackLogMessageHandler
+  getUserTestHandler :<|> trackCheckoutEventHandler :<|> userCartTokenHandler
+  -- :<|> trackLogMessageHandler

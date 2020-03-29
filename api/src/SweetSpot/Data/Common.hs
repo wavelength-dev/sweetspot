@@ -394,7 +394,14 @@ instance ShowText SessionId where
 -- | ---------------------------------------------------------------------------
 newtype CartToken =
   CartToken Text
-  deriving (Eq, Show)
+  deriving (Generic, Eq, Show)
+
+instance FromJSON CartToken
+
+instance ToJSON CartToken
+
+instance FromHttpApiData CartToken where
+  parseQueryParam = Right . CartToken
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CartToken where
   sqlValueSyntax = sqlValueSyntax . \(CartToken t) -> t

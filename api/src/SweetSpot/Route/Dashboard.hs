@@ -19,7 +19,7 @@ import Servant
 import SweetSpot.AppM (ServerM, AppM(..))
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
+import SweetSpot.Database.Queries.Fulcrum (FulcrumDB(..))
 import SweetSpot.Database.Queries.Dashboard (DashboardDB(..), InsertExperiment(..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (internalServerErr, badRequestErr)

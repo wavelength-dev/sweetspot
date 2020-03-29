@@ -5,8 +5,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 
-module SweetSpot.Database.Queries.Injectable
-        ( InjectableDB(..)
+module SweetSpot.Database.Queries.Fulcrum
+        ( FulcrumDB(..)
         , validateDomain
         )
 where
@@ -38,14 +38,14 @@ import           SweetSpot.Data.Common
 
 
 
-class Monad m => InjectableDB m where
+class Monad m => FulcrumDB m where
   getNewCampaignTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
   getUserTestMaps :: UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
   insertCheckoutEvent :: ShopId -> ApiCheckoutEvent -> m ()
 
-instance InjectableDB AppM where
+instance FulcrumDB AppM where
         getNewCampaignTestMaps cmpId mUid = do
                 randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
                 withConn $ \conn -> do

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Spec.Http (httpSpec) where
 
 import Control.Lens

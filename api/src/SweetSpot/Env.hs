@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module SweetSpot.Env
   ( getEnvConfig
   , EnvConfig(..)

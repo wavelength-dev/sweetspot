@@ -1,6 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
-
 module SweetSpot.Route.FulcrumApp where
 
 import           Servant                        ( (:>)
@@ -19,4 +16,3 @@ fulcrumAppHandler = serveDirectoryWith defaultOptions
   { ssMaxAge = MaxAgeSeconds 600
   }
   where defaultOptions = defaultWebAppSettings "./dist/fulcrum"
-

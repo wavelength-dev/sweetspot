@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings, TypeFamilies, DataKinds,
-  TypeOperators #-}
-
 module Spec.Business (businessLogicSpec) where
 
 import qualified Data.Aeson as JSON

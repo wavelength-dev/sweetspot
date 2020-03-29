@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module SweetSpot.Middleware
   ( getMiddleware
   ) where

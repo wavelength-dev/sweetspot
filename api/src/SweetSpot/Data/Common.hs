@@ -388,3 +388,15 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 
 instance ShowText SessionId where
   showText (SessionId session) = session
+
+-- | ---------------------------------------------------------------------------
+-- | CartToken
+-- | ---------------------------------------------------------------------------
+newtype CartToken =
+  CartToken Text
+  deriving (Eq, Show)
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CartToken where
+  sqlValueSyntax = sqlValueSyntax . \(CartToken t) -> t
+
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be CartToken

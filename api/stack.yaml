@@ -36,7 +36,7 @@ packages:
 - .
 
 ghc-options:
-  "$locals": -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-imports -Wincomplete-patterns
+  "$locals": -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wunused-imports -Wincomplete-patterns
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.

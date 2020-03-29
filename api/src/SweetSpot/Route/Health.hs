@@ -1,7 +1,8 @@
 module SweetSpot.Route.Health
-  ( HealthAPI
-  , healthHandler
-  ) where
+  ( HealthAPI,
+    healthHandler,
+  )
+where
 
 import Servant
 import SweetSpot.AppM (ServerM)

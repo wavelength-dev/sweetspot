@@ -141,5 +141,4 @@ default-extensions:
   - TypeFamilies
   - TypeSynonymInstances
   - ViewPatterns
-  - TypeApplications
   - TypeOperators

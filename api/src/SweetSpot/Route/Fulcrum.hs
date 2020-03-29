@@ -1,38 +1,37 @@
 module SweetSpot.Route.Fulcrum
-  ( FulcrumAPI
-  , fulcrumHandler
-  , UserTestRoute
+  ( FulcrumAPI,
+    fulcrumHandler,
+    UserTestRoute,
   )
 where
 
 import Servant
-import SweetSpot.AppM (AppM(..), ServerM)
+import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Fulcrum (FulcrumDB(..))
-
+import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 
 type UserTestRoute =
   "bucket" :> QueryParam "shop" ShopDomain
-           :> QueryParam "sscid" CampaignId
-           :> QueryParam "uid" UserId
-           :> Get '[JSON] [TestMap]
+    :> QueryParam "sscid" CampaignId
+    :> QueryParam "uid" UserId
+    :> Get '[JSON] [TestMap]
 
 type CheckoutEventRoute =
   "checkout" :> QueryParam "shop" ShopDomain
-             :> ReqBody '[JSON] ApiCheckoutEvent
-             :> Post '[JSON] OkResponse
+    :> ReqBody '[JSON] ApiCheckoutEvent
+    :> Post '[JSON] OkResponse
 
 type UserCartTokenRoute =
   "cart-token" :> QueryParam "shop" ShopDomain
-               :> ReqBody '[JSON] CartTokenReq
-               :> Put '[JSON] OkResponse
+    :> ReqBody '[JSON] CartTokenReq
+    :> Put '[JSON] OkResponse
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type FulcrumAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
+type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> CheckoutEventRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
@@ -42,7 +41,7 @@ getUserTestHandler :: Maybe ShopDomain -> Maybe CampaignId -> Maybe UserId -> Se
 getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
   res <- getUserTestMaps uid
   case (mCmpId, res) of
-    (_, testMaps@(m:ms)) -> do
+    (_, testMaps@(m : ms)) -> do
       L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
       return testMaps
     (Nothing, []) -> do
@@ -51,8 +50,7 @@ getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
     (Just newCmpId, []) -> do
       isValidCampaign <- validateCampaign newCmpId
       if isValidCampaign
-        then
-          getNewCampaignTestMaps newCmpId (Just uid)
+        then getNewCampaignTestMaps newCmpId (Just uid)
         else do
           L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
           throwError notFoundErr
@@ -66,7 +64,6 @@ getUserTestHandler (Just shopDomain) (Just cmpId) Nothing = runAppM $ do
     else do
       L.info $ "Got invalid campaign id for new user: " <> showText cmpId
       throwError notFoundErr
-
 getUserTestHandler _ _ _ = throwError badRequestErr
 
 trackCheckoutEventHandler :: Maybe ShopDomain -> ApiCheckoutEvent -> ServerM OkResponse
@@ -98,4 +95,4 @@ userCartTokenHandler Nothing _ = runAppM $ do
 
 fulcrumHandler =
   getUserTestHandler :<|> trackCheckoutEventHandler :<|> userCartTokenHandler
-  -- :<|> trackLogMessageHandler
+-- :<|> trackLogMessageHandler

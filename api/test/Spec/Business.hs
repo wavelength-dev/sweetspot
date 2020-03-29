@@ -31,7 +31,7 @@ setup = do
 businessLogicSpec :: Spec
 businessLogicSpec =
   beforeAll_ setup . before_ reset $ do
-    let getTest :<|> postCheckout = client (Proxy :: Proxy FulcrumAPI)
+    let getTest :<|> postCheckout :<|> putCartToken = client (Proxy :: Proxy FulcrumAPI)
     let _ :<|> getCampaigns :<|> _ = client (Proxy :: Proxy DashboardAPI)
 
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
@@ -112,6 +112,17 @@ businessLogicSpec =
 
       it "should accept valid event" $ do
         result <- runClientM (postCheckout (Just shopDomain) validEv) clientEnv
+        case result of
+          Left err -> error $ show err
+          Right _ -> return ()
+
+    describe "PUT /api/fulcrum/cart-token" $ do
+      it "should accept valid cart-token request" $ do
+        let payload = CartTokenReq
+              { _cartTokenReqToken = CartToken "lol-some-cart-token123"
+              , _cartTokenReqUser =  user1
+              }
+        result <- runClientM (putCartToken (Just shopDomain) payload) clientEnv
         case result of
           Left err -> error $ show err
           Right _ -> return ()

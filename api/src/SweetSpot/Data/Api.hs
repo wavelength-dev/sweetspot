@@ -257,3 +257,17 @@ makeLenses ''ApiCheckoutEvent
 instance ToJSON ApiCheckoutEvent
 
 instance FromJSON ApiCheckoutEvent
+
+-- | ---------------------------------------------------------------------------
+-- | CartTokenReq
+-- | ---------------------------------------------------------------------------
+data CartTokenReq = CartTokenReq
+  { _cartTokenReqToken :: CartToken
+  , _cartTokenReqUser :: UserId
+  } deriving (Generic, Eq)
+
+makeLenses ''CartTokenReq
+
+instance FromJSON CartTokenReq
+
+instance ToJSON CartTokenReq

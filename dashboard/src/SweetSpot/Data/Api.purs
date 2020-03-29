@@ -211,3 +211,24 @@ productImage :: Lens' Product Image
 productImage = _Newtype <<< prop (SProxy :: SProxy "_productImage")
 
 --------------------------------------------------------------------------------
+newtype CartTokenReq =
+    CartTokenReq {
+      _cartTokenReqToken :: String
+    , _cartTokenReqUser :: String
+    }
+
+derive instance eqCartTokenReq :: Eq CartTokenReq
+derive instance genericCartTokenReq :: Generic CartTokenReq _
+derive instance newtypeCartTokenReq :: Newtype CartTokenReq _
+
+--------------------------------------------------------------------------------
+_CartTokenReq :: Iso' CartTokenReq { _cartTokenReqToken :: String, _cartTokenReqUser :: String}
+_CartTokenReq = _Newtype
+
+cartTokenReqToken :: Lens' CartTokenReq String
+cartTokenReqToken = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqToken")
+
+cartTokenReqUser :: Lens' CartTokenReq String
+cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
+
+--------------------------------------------------------------------------------

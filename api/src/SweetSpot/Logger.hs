@@ -1,29 +1,30 @@
 module SweetSpot.Logger
-  ( info
-  , info'
-  , warn
-  , warn'
-  , error
-  , error'
-  ) where
+  ( info,
+    info',
+    warn,
+    warn',
+    error,
+    error',
+  )
+where
 
 import Control.Lens ((^.))
-import Control.Monad.IO.Class (liftIO, MonadIO(..))
+import Control.Monad.IO.Class (MonadIO (..), liftIO)
 import Control.Monad.Reader (asks)
-import Control.Monad.Reader.Class     ( MonadReader(..) )
+import Control.Monad.Reader.Class (MonadReader (..))
 import Data.Aeson
-  ( ToJSON(..)
-  , defaultOptions
-  , encode
-  , genericToEncoding
-  , toEncoding
+  ( ToJSON (..),
+    defaultOptions,
+    encode,
+    genericToEncoding,
+    toEncoding,
   )
 import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
-import Prelude hiding (error, log)
 import SweetSpot.AppM
-import System.Log.FastLogger (LoggerSet, ToLogStr(..), pushLogStrLn)
+import System.Log.FastLogger (LoggerSet, ToLogStr (..), pushLogStrLn)
+import Prelude hiding (error, log)
 
 data LogLevel
   = Info
@@ -38,11 +39,13 @@ instance ToJSON LogLevel where
       Warn -> "warn"
       Error -> "error"
 
-data LogMessage = LogMessage
-  { level :: !LogLevel
-  , message :: !Text
-  , timestamp :: !UTCTime
-  } deriving (Eq, Show, Generic)
+data LogMessage
+  = LogMessage
+      { level :: !LogLevel,
+        message :: !Text,
+        timestamp :: !UTCTime
+      }
+  deriving (Eq, Show, Generic)
 
 instance ToJSON LogMessage where
   toEncoding = genericToEncoding defaultOptions
@@ -54,9 +57,9 @@ log :: (MonadReader AppCtx m, MonadIO m) => LogLevel -> Text -> m ()
 log lvl msg = do
   logset <- asks (^. ctxLogger)
   ts <- liftIO getCurrentTime
-  liftIO $
-    pushLogStrLn logset $
-    toLogStr LogMessage {level = lvl, message = msg, timestamp = ts}
+  liftIO
+    $ pushLogStrLn logset
+    $ toLogStr LogMessage {level = lvl, message = msg, timestamp = ts}
 
 info :: (MonadReader AppCtx m, MonadIO m) => Text -> m ()
 info = log Info

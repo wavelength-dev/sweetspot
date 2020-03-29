@@ -1,38 +1,39 @@
 module SweetSpot.Database.Schema
-        ( module SweetSpot.Database.Migrations.V0003AddUserCartTokens
-        , migration
-        , checkedDb
-        , db
-        , pgGenUUID_
-        , userId_
-        , eventId_
-        , nonce_
-        , shopId_
-        , productVariant_
-        )
+  ( module SweetSpot.Database.Migrations.V0003AddUserCartTokens,
+    migration,
+    checkedDb,
+    db,
+    pgGenUUID_,
+    userId_,
+    eventId_,
+    nonce_,
+    shopId_,
+    productVariant_,
+  )
 where
 
-import           Control.Arrow                  ( (>>>) )
-import           Data.UUID.Types                ( UUID )
-import           Database.Beam                  ( DatabaseSettings )
-import           Database.Beam.Query.Types      ( QGenExpr )
-import           Database.Beam.Query.Internal   ( unsafeRetype )
-import           Database.Beam.Migrate          ( CheckedDatabaseSettings
-                                                , evaluateDatabase
-                                                , unCheckDatabase
-                                                , migrationStep
-                                                )
-import           Database.Beam.Postgres         ( Postgres
-                                                , getPgExtension
-                                                )
-import           Database.Beam.Postgres.PgCrypto
-                                                ( PgCrypto(..) )
-
+import Control.Arrow ((>>>))
+import Data.UUID.Types (UUID)
+import Database.Beam (DatabaseSettings)
+import Database.Beam.Migrate
+  ( CheckedDatabaseSettings,
+    evaluateDatabase,
+    migrationStep,
+    unCheckDatabase,
+  )
+import Database.Beam.Postgres
+  ( Postgres,
+    getPgExtension,
+  )
+import Database.Beam.Postgres.PgCrypto
+  ( PgCrypto (..),
+  )
+import Database.Beam.Query.Internal (unsafeRetype)
+import Database.Beam.Query.Types (QGenExpr)
+import SweetSpot.Data.Common
 import qualified SweetSpot.Database.Migrations.V0001InitDb as V1 (migration)
 import qualified SweetSpot.Database.Migrations.V0002AddSessions as V2 (migration)
 import qualified SweetSpot.Database.Migrations.V0003AddUserCartTokens as V3 (migration)
-import           SweetSpot.Data.Common
-
 import SweetSpot.Database.Migrations.V0003AddUserCartTokens hiding (migration)
 
 checkedDb :: CheckedDatabaseSettings Postgres SweetSpotDb
@@ -60,6 +61,6 @@ productVariant_ :: QGenExpr ctxt Postgres s PVariantId
 productVariant_ = unsafeRetype pgGenUUID_
 
 migration =
-  migrationStep "Initial schema" V1.migration >>>
-  migrationStep "Add sessions" V2.migration >>>
-  migrationStep "Add user_cart_tokens" V3.migration
+  migrationStep "Initial schema" V1.migration
+    >>> migrationStep "Add sessions" V2.migration
+    >>> migrationStep "Add user_cart_tokens" V3.migration

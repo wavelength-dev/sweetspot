@@ -1,23 +1,25 @@
 module SweetSpot.Calc
-  ( InfParams(..)
-  , InfResult
-  , runInference
+  ( InfParams (..),
+    InfResult,
+    runInference,
   )
 where
 
-import qualified Data.Vector.Unboxed as V
-import Data.Vector.Unboxed (Vector, (!))
 import qualified Data.List as L
+import qualified Data.Vector.Unboxed as V
+import Data.Vector.Unboxed ((!), Vector)
 import Statistics.Resampling
 import Statistics.Sample (mean)
-import System.Random.MWC (createSystemRandom, GenIO, uniformR)
-import SweetSpot.Data.Api (InfResult(..))
+import SweetSpot.Data.Api (InfResult (..))
 import SweetSpot.Util (nanToZero)
+import System.Random.MWC (GenIO, createSystemRandom, uniformR)
 
-data InfParams = InfParams
-  { _conversions :: Vector Double
-  , _nilCount :: Int
-  } deriving (Show)
+data InfParams
+  = InfParams
+      { _conversions :: Vector Double,
+        _nilCount :: Int
+      }
+  deriving (Show)
 
 nBoot = 1000
 
@@ -40,19 +42,17 @@ runInference cParams tParams = do
   gen <- createSystemRandom
   cMeans <- resample' gen (getSample cParams)
   tMeans <- resample' gen (getSample tParams)
-  lifts <- mapM (const $ compareRandomPair gen cMeans tMeans) [0..nBoot]
-  let
-    sorted = V.fromList $ L.sort lifts
-    len = V.length sorted
-    nTails = floor $ fromIntegral len * 0.05
-    middle90 = V.slice nTails (len - nTails) sorted
-
-  return InfResult
-    { _mean = nanToZero $ mean sorted
-    , _lowerBound = nanToZero $ V.head middle90
-    , _upperBound = nanToZero $ V.last middle90
-    }
-
+  lifts <- mapM (const $ compareRandomPair gen cMeans tMeans) [0 .. nBoot]
+  let sorted = V.fromList $ L.sort lifts
+      len = V.length sorted
+      nTails = floor $ fromIntegral len * 0.05
+      middle90 = V.slice nTails (len - nTails) sorted
+  return
+    InfResult
+      { _mean = nanToZero $ mean sorted,
+        _lowerBound = nanToZero $ V.head middle90,
+        _upperBound = nanToZero $ V.last middle90
+      }
   where
     resample' gen s =
       resamples . snd . L.head <$> resample gen [Mean] 1000 s

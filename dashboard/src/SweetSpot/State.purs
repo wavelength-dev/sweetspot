@@ -1,27 +1,24 @@
-module SweetSpot.State
-  ( AppState(..)
-  , Action(..)
-  , Dispatch
-  , RemoteState
-  , mkInitialState
-  , fetchRemoteState
-  , reducer
-  ) where
+module SweetSpot.State where
 
 import Prelude
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Aff (parallel, sequential) as Aff
+import Effect.Class (liftEffect)
+import Effect.Console (error) as Console
 import SweetSpot.Data.Api (Product, UICampaign)
 import SweetSpot.Route (Route(..))
-import SweetSpot.Service (fetchCampaigns)
+import SweetSpot.Service (fetchCampaigns, fetchProducts)
+import SweetSpot.Session (SessionId)
 
 type AppState
   = { products :: Array Product
     , campaigns :: Array UICampaign
     , route :: Route
-    , sessionId :: String
+    , sessionId :: SessionId
     , shopName :: Maybe String
     }
 
@@ -39,25 +36,30 @@ data Action
 type Dispatch
   = Action -> Effect Unit
 
-mkInitialState :: String -> AppState
+mkInitialState :: SessionId -> AppState
 mkInitialState sessionId =
   { products: []
   , campaigns: []
   , route: Home
-  , sessionId: sessionId
+  , sessionId
   , shopName: Nothing
   }
 
-fetchRemoteState :: String -> Aff RemoteState
-fetchRemoteState session = combine <$> pure (Right []) <*> fetchCampaigns session
-  where
-  combine = case _, _ of
-    Right ps, Right cs -> RemoteState { products: ps, campaigns: cs }
-    _, _ -> RemoteStateError
+fetchRemoteState :: SessionId -> Aff RemoteState
+fetchRemoteState session = do
+  Tuple eProducts eCampaigns <-
+    Aff.sequential
+      $ Tuple
+      <$> Aff.parallel (fetchProducts session)
+      <*> Aff.parallel (fetchCampaigns session)
+  liftEffect case eProducts, eCampaigns of
+    Left err, _ -> Console.error err *> pure RemoteStateError
+    _, Left err -> Console.error err *> pure RemoteStateError
+    Right products, Right campaigns -> { products, campaigns } # RemoteState >>> pure
 
-reducer :: AppState -> Action -> AppState
-reducer state action = case action of
-  UpdateRemoteState RemoteStateError -> state { products = [], campaigns = [] }
+appStateReducer :: AppState -> Action -> AppState
+appStateReducer state action = case action of
+  UpdateRemoteState RemoteStateError -> state
   UpdateRemoteState (RemoteState { products, campaigns }) ->
     state
       { products = products

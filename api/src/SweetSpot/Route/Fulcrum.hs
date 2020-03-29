@@ -14,7 +14,7 @@ import Servant
 import SweetSpot.AppM (AppM(..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Injectable (InjectableDB(..))
+import SweetSpot.Database.Queries.Fulcrum (FulcrumDB(..))
 
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util

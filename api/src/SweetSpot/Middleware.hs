@@ -42,7 +42,7 @@ import Network.Wai.Middleware.Gzip ( GzipFiles(GzipCacheFolder)
 import Network.Wai.Middleware.Routed (routedMiddleware)
 import SweetSpot.AppM
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Injectable (validateDomain)
+import SweetSpot.Database.Queries.Fulcrum (validateDomain)
 import SweetSpot.Database.Queries.Dashboard (validateSessionId')
 import SweetSpot.Database.Queries.Util (withConnIO)
 import SweetSpot.Env (Environment(..))

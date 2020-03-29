@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SweetSpot.Database.Schema
-        ( module SweetSpot.Database.Migrations.V0002AddSessions
+        ( module SweetSpot.Database.Migrations.V0003AddUserCartTokens
         , migration
         , checkedDb
         , db
@@ -37,9 +37,10 @@ import           Database.Beam.Postgres.PgCrypto
 
 import qualified SweetSpot.Database.Migrations.V0001InitDb as V1 (migration)
 import qualified SweetSpot.Database.Migrations.V0002AddSessions as V2 (migration)
+import qualified SweetSpot.Database.Migrations.V0003AddUserCartTokens as V3 (migration)
 import           SweetSpot.Data.Common
 
-import SweetSpot.Database.Migrations.V0002AddSessions hiding (migration)
+import SweetSpot.Database.Migrations.V0003AddUserCartTokens hiding (migration)
 
 checkedDb :: CheckedDatabaseSettings Postgres SweetSpotDb
 checkedDb = evaluateDatabase migration
@@ -67,4 +68,5 @@ productVariant_ = unsafeRetype pgGenUUID_
 
 migration =
   migrationStep "Initial schema" V1.migration >>>
-  migrationStep "Add sessions" V2.migration
+  migrationStep "Add sessions" V2.migration >>>
+  migrationStep "Add user_cart_tokens" V3.migration

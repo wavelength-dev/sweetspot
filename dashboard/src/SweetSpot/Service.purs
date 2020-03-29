@@ -11,6 +11,7 @@ import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.Data.Api (Product, UICampaign)
 import SweetSpot.Data.Codec as Codec
+import SweetSpot.Session (SessionId(..))
 
 fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch
@@ -36,10 +37,10 @@ fetchThing route decoder = do
   text <- Milkis.text res
   pure (jsonParser text >>= decodeJson >>= decoder)
 
-fetchCampaigns :: String -> Aff (Either String (Array UICampaign))
-fetchCampaigns session =
+fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
+fetchCampaigns (SessionId session) =
   fetchThing ("/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns
 
-fetchProducts :: String -> Aff (Either String (Array Product))
-fetchProducts session =
+fetchProducts :: SessionId -> Aff (Either String (Array Product))
+fetchProducts (SessionId session) =
   fetchThing ("/api/dashboard/products?session=" <> session) Codec.decodeProducts

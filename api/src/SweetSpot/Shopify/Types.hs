@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module SweetSpot.Shopify.Types where
 
 import Data.Aeson

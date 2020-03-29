@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module SweetSpot.Calc
   ( InfParams(..)
   , InfResult

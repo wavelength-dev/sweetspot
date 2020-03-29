@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Util where
 
 import qualified Control.Concurrent as C

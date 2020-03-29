@@ -16,7 +16,7 @@ import Test.Hspec
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Route.Fulcrum (FulcrumAPI)
-import SweetSpot.Route.OAuth (OAuthAPI)
+-- import SweetSpot.Route.OAuth (OAuthAPI)
 import SweetSpot.Route.Dashboard (DashboardAPI)
 
 import Database (reset)
@@ -116,17 +116,17 @@ businessLogicSpec =
           Left err -> error $ show err
           Right _ -> return ()
 
-    describe "POST /api/oauth/install" $ do
-      let installHandler :<|> redirectHandler = client (Proxy :: Proxy OAuthAPI)
-      it "should return empty response from install endpoint" $ do
-        result <- runClientM (installHandler
-                              (Just (ShopDomain "localhost:9999"))
-                              (Just (Timestamp "12345"))
-                              (Just (HMAC' "lolbal")))
-                             clientEnv
-        case result of
-          Left err -> error $ "Got error: " <> show err
-          Right (Headers NoContent hs) -> return ()
+    -- describe "POST /api/oauth/install" $ do
+    --   let installHandler :<|> redirectHandler = client (Proxy :: Proxy OAuthAPI)
+    --   it "should return empty response from install endpoint" $ do
+    --     result <- runClientM (installHandler
+    --                           (Just (ShopDomain "localhost:9999"))
+    --                           (Just (Timestamp "12345"))
+    --                           (Just (HMAC' "lolbal")))
+    --                          clientEnv
+    --     case result of
+    --       Left err -> error $ "Got error: " <> show err
+    --       Right (Headers NoContent hs) -> return ()
 
     -- describe "GET /api/dashboard/campaigns" $ do
     --   it "should return correct stats" $ do

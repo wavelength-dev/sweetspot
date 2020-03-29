@@ -15,7 +15,7 @@ import Test.Hspec
 
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
-import SweetSpot.Route.Injectable (InjectableAPI)
+import SweetSpot.Route.Fulcrum (FulcrumAPI)
 import SweetSpot.Route.OAuth (OAuthAPI)
 import SweetSpot.Route.Dashboard (DashboardAPI)
 
@@ -31,7 +31,7 @@ setup = do
 businessLogicSpec :: Spec
 businessLogicSpec =
   beforeAll_ setup . before_ reset $ do
-    let getTest :<|> postCheckout = client (Proxy :: Proxy InjectableAPI)
+    let getTest :<|> postCheckout = client (Proxy :: Proxy FulcrumAPI)
     let _ :<|> getCampaigns :<|> _ = client (Proxy :: Proxy DashboardAPI)
 
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"

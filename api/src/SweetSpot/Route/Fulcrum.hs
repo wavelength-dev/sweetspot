@@ -3,9 +3,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module SweetSpot.Route.Injectable
-  ( InjectableAPI
-  , injectableHandler
+module SweetSpot.Route.Fulcrum
+  ( FulcrumAPI
+  , fulcrumHandler
   , UserTestRoute
   )
 where
@@ -32,7 +32,7 @@ type CheckoutEventRoute =
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type InjectableAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute) -- :<|> LogEventRoute
+type FulcrumAPI = "fulcrum" :> (UserTestRoute  :<|> CheckoutEventRoute) -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
@@ -88,5 +88,5 @@ trackCheckoutEventHandler Nothing _ = runAppM $ do
 --   insertEvent (Log, val)
 --   return OkResponse {message = "Event received"}
 
-injectableHandler =
+fulcrumHandler =
   getUserTestHandler :<|> trackCheckoutEventHandler -- :<|> trackLogMessageHandler

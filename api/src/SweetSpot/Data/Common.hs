@@ -73,14 +73,6 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 instance FromHttpApiData ShopDomain where
   parseQueryParam = Right . ShopDomain
 
--- TODO: figure out how to validate domain while using localhost:9999 for mock
--- if isValidHostname -- && isShopifyDomain
---       then Right $ ShopDomain qp
---       else Left "invalid ShopDomain"
--- where
---   isValidHostname = validHostname (encodeUtf8 qp)
--- isShopifyDomain = T.takeEnd 14 qp == ".myshopify.com"
-
 instance ToHttpApiData ShopDomain where
   toQueryParam (ShopDomain txt) = txt
 

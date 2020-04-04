@@ -10,6 +10,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
+import RIO hiding ((^.))
 import Servant
 import Servant.API (toUrlPiece)
 import Servant.Client

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c1bfd7942f848a37ce0b6e20092ff8ddd7d8fb3e49231ac847567980f4060ac
+-- hash: 78f396df21841f51f0833b0ee5182e651fcdf455835add7fd25a9e3eac56ad1e
 
 name:           sweetspot
 version:        0.1.0.0
@@ -55,15 +55,13 @@ library
       Paths_sweetspot
   hs-source-dirs:
       src
-  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
+  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
   build-depends:
       aeson
     , base >=4.7 && <5
     , beam-core
     , beam-migrate
     , beam-postgres
-    , bytestring
-    , containers
     , cryptonite
     , envy
     , exceptions
@@ -84,6 +82,7 @@ library
     , purescript-bridge
     , random
     , resource-pool
+    , rio
     , scientific
     , servant
     , servant-client
@@ -95,7 +94,6 @@ library
     , utf8-string
     , uuid
     , uuid-types
-    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -112,7 +110,7 @@ executable bridge-exe
       Paths_sweetspot
   hs-source-dirs:
       bridge
-  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
+  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -120,8 +118,6 @@ executable bridge-exe
     , beam-core
     , beam-migrate
     , beam-postgres
-    , bytestring
-    , containers
     , cryptonite
     , envy
     , exceptions
@@ -142,6 +138,7 @@ executable bridge-exe
     , purescript-bridge
     , random
     , resource-pool
+    , rio
     , scientific
     , servant
     , servant-client
@@ -154,7 +151,6 @@ executable bridge-exe
     , utf8-string
     , uuid
     , uuid-types
-    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -170,7 +166,7 @@ executable sweetspot-exe
       Paths_sweetspot
   hs-source-dirs:
       app
-  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
+  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -178,8 +174,6 @@ executable sweetspot-exe
     , beam-core
     , beam-migrate
     , beam-postgres
-    , bytestring
-    , containers
     , cryptonite
     , envy
     , exceptions
@@ -200,6 +194,7 @@ executable sweetspot-exe
     , purescript-bridge
     , random
     , resource-pool
+    , rio
     , scientific
     , servant
     , servant-client
@@ -212,7 +207,6 @@ executable sweetspot-exe
     , utf8-string
     , uuid
     , uuid-types
-    , vector
     , wai
     , wai-app-static
     , wai-cors
@@ -234,7 +228,7 @@ test-suite sweetspot-test
       Paths_sweetspot
   hs-source-dirs:
       test
-  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
+  default-extensions: AutoDeriveTypeable BangPatterns BinaryLiterals ConstraintKinds DataKinds DefaultSignatures DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DoAndIfThenElse EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures LambdaCase MonadFailDesugaring MultiParamTypeClasses MultiWayIf NamedFieldPuns NoImplicitPrelude OverloadedStrings PartialTypeSignatures PatternGuards PolyKinds RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns TypeOperators
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -242,8 +236,6 @@ test-suite sweetspot-test
     , beam-core
     , beam-migrate
     , beam-postgres
-    , bytestring
-    , containers
     , cryptonite
     , envy
     , exceptions
@@ -264,6 +256,7 @@ test-suite sweetspot-test
     , purescript-bridge
     , random
     , resource-pool
+    , rio
     , scientific
     , servant
     , servant-client
@@ -276,7 +269,6 @@ test-suite sweetspot-test
     , utf8-string
     , uuid
     , uuid-types
-    , vector
     , wai
     , wai-app-static
     , wai-cors

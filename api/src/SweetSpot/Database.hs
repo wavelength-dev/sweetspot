@@ -15,7 +15,9 @@ import Database.Beam.Migrate.Simple
   )
 import qualified Database.Beam.Postgres as PG
 import Database.Beam.Postgres.Migrate (migrationBackend)
+import RIO
 import SweetSpot.Database.Schema (migration)
+import Prelude (print)
 
 type Pool = P.Pool PG.Connection
 

@@ -1,11 +1,11 @@
 module SweetSpot.Database.Queries.Util where
 
-import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader.Class (asks)
 import Data.Pool (Pool, withResource)
 import Database.Beam
 import Database.Beam.Postgres
+import RIO
 import SweetSpot.AppM
 import SweetSpot.Database.Schema
 

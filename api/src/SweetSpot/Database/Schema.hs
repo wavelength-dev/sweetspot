@@ -30,6 +30,7 @@ import Database.Beam.Postgres.PgCrypto
   )
 import Database.Beam.Query.Internal (unsafeRetype)
 import Database.Beam.Query.Types (QGenExpr)
+import RIO
 import SweetSpot.Data.Common
 import qualified SweetSpot.Database.Migrations.V0001InitDb as V1 (migration)
 import qualified SweetSpot.Database.Migrations.V0002AddSessions as V2 (migration)

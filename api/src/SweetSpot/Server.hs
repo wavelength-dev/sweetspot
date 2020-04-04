@@ -4,7 +4,6 @@ module SweetSpot.Server
   )
 where
 
-import Control.Concurrent (threadDelay)
 import Control.Monad.Reader (runReaderT)
 import Data.Pool (withResource)
 import Data.Text as T
@@ -15,6 +14,8 @@ import Network.Wai.Handler.Warp
     setPort,
   )
 import Network.Wai.Logger (withStdoutLogger)
+import RIO
+import RIO.Partial (read)
 import Servant hiding (basicAuthPassword)
 import SweetSpot.AppM
 import SweetSpot.Database (DbConfig (..), getDbPool, migrate)
@@ -28,7 +29,6 @@ import SweetSpot.Route.FulcrumApp (FulcrumApp, fulcrumAppHandler)
 import SweetSpot.Route.Health (HealthAPI, healthHandler)
 import SweetSpot.Route.OAuth (OAuthAPI, oauthHandler)
 import SweetSpot.Route.Webhook (WebhookAPI, webhookHandler)
-import System.Exit (ExitCode (..), exitWith)
 import System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet)
 
 type RootAPI =

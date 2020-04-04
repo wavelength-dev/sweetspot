@@ -10,10 +10,11 @@ where
 
 import Control.Lens
 import Data.Text (Text)
-import qualified Data.Vector as V
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
+import RIO hiding (Vector, (^.))
+import RIO.Vector as V hiding (map)
 import Statistics.Sample (mean)
 import SweetSpot.AppM (AppM)
 import SweetSpot.Calc (InfParams (..), runInference)

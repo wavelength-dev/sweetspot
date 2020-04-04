@@ -3,6 +3,7 @@ module TypeBridges where
 import Control.Applicative
 import Language.PureScript.Bridge
 import Language.PureScript.Bridge.PSTypes
+import RIO
 
 sweetspotBridge :: BridgePart
 sweetspotBridge =

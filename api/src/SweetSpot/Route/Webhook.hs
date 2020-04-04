@@ -5,7 +5,7 @@ module SweetSpot.Route.Webhook
   )
 where
 
-import Control.Lens
+import RIO
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))

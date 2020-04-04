@@ -24,8 +24,6 @@ dependencies:
 - beam-core
 - beam-migrate
 - beam-postgres
-- bytestring
-- containers
 - cryptonite
 - envy
 - exceptions
@@ -46,6 +44,7 @@ dependencies:
 - purescript-bridge
 - random
 - resource-pool
+- rio
 - scientific
 - servant
 - servant-client
@@ -57,7 +56,6 @@ dependencies:
 - uuid
 - uuid-types
 - utf8-string
-- vector
 - wai
 - wai-app-static
 - wai-cors
@@ -129,6 +127,7 @@ default-extensions:
   - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns
+  - NoImplicitPrelude
   - OverloadedStrings
   - PartialTypeSignatures
   - PatternGuards

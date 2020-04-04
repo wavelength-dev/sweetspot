@@ -8,6 +8,7 @@ import Language.PureScript.Bridge
     writePSTypesWith,
   )
 import Language.PureScript.Bridge.CodeGenSwitches (useGenRep)
+import RIO
 import qualified SweetSpot.Data.Api as Api
 import TypeBridges (sweetspotBridge)
 

@@ -7,9 +7,9 @@ module SweetSpot.Route.OAuth
   )
 where
 
-import Control.Lens
 import Control.Monad.Reader.Class (asks)
 import Data.Text (Text)
+import RIO
 import Servant
 import SweetSpot.AppM
 import SweetSpot.Data.Api (OkResponse (..))

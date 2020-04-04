@@ -6,6 +6,8 @@ import Database (reset)
 import Mock.Shopify
 import Network.HTTP.Client hiding (Proxy, responseHeaders)
 import Network.HTTP.Types hiding (Header, responseHeaders)
+import RIO
+import RIO.List.Partial (head)
 import Servant
 import Servant.Client
 import SweetSpot.Data.Api

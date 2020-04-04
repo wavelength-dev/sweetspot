@@ -4,10 +4,6 @@ module SweetSpot.Database.Queries.Fulcrum
   )
 where
 
-import Control.Lens hiding
-  ( (<.),
-    (>.),
-  )
 import Data.Foldable (traverse_)
 import qualified Data.List as L
 import Data.Maybe
@@ -17,6 +13,7 @@ import Data.Maybe
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
+import RIO
 import SweetSpot.AppM (AppM (..))
 import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common

@@ -17,6 +17,7 @@ import Data.UUID.Types
 import Database.Beam.Backend.SQL
 import Database.Beam.Query (HasSqlEqualityCheck (..))
 import GHC.Generics (Generic)
+import RIO
 import Servant.API
   ( FromHttpApiData (..),
     ToHttpApiData (..),

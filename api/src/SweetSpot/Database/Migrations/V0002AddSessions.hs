@@ -12,6 +12,7 @@ import Database.Beam.Migrate
 import Database.Beam.Postgres (PgExtensionEntity, Postgres)
 import Database.Beam.Postgres.PgCrypto (PgCrypto)
 import Database.Beam.Postgres.Syntax (pgTextType)
+import RIO
 import SweetSpot.Data.Common
 import SweetSpot.Database.Migrations.V0001InitDb hiding
   ( SweetSpotDb (..),

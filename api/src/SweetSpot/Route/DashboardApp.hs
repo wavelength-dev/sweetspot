@@ -5,9 +5,10 @@ module SweetSpot.Route.DashboardApp
 where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.ByteString.Lazy as BS
 import qualified Data.Text.Encoding as TE
 import Network.HTTP.Media ((//), (/:))
+import RIO
+import qualified RIO.ByteString.Lazy as BS
 import Servant
 import Servant ((:>), Raw, serveDirectoryWith)
 import Servant.API (toUrlPiece)

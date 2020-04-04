@@ -20,6 +20,7 @@ import Database.Beam.Postgres.Syntax
   ( pgTextType,
     pgUuidType,
   )
+import RIO
 import SweetSpot.Data.Common
 
 -- | ---------------------------------------------------------------------------

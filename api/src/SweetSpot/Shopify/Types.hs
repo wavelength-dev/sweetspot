@@ -8,6 +8,7 @@ import Data.Aeson.Types (Parser)
 import Data.Text (Text)
 import Data.Time (LocalTime)
 import GHC.Generics (Generic)
+import RIO
 import SweetSpot.Data.Common
 
 class FromShopJSON a where

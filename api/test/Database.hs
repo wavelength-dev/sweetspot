@@ -1,18 +1,18 @@
 module Database where
 
-import qualified Data.ByteString as B
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Types (Query(..))
+import Database.PostgreSQL.Simple.Types (Query (..))
+import RIO
+import qualified RIO.ByteString as B
 
-
-
-connectInfo = ConnectInfo
-  { connectHost = "localhost"
-  , connectPort = 5432
-  , connectUser = "sweetspot"
-  , connectPassword = "password"
-  , connectDatabase = "sweetspot"
-  }
+connectInfo =
+  ConnectInfo
+    { connectHost = "localhost",
+      connectPort = 5432,
+      connectUser = "sweetspot",
+      connectPassword = "password",
+      connectDatabase = "sweetspot"
+    }
 
 migrateUp :: IO ()
 migrateUp = do

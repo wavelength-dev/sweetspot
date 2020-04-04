@@ -1,10 +1,10 @@
 module SweetSpot.Database.Queries.Install where
 
-import Control.Lens
 import Data.Text (Text)
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
+import RIO
 import SweetSpot.AppM (AppM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util

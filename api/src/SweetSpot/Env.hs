@@ -7,6 +7,7 @@ where
 
 import Data.Text (Text)
 import LoadEnv (loadEnv)
+import RIO
 import System.Envy
   ( (.!=),
     FromEnv,

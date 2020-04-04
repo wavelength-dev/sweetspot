@@ -10,6 +10,7 @@ import Control.Monad.Reader (ReaderT)
 import Control.Monad.Reader.Class (MonadReader)
 import Data.Text (Text)
 import GHC.Generics (Generic)
+import RIO hiding (Handler)
 import Servant
   ( Handler,
     ServerError,

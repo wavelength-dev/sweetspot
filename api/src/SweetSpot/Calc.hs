@@ -6,8 +6,10 @@ module SweetSpot.Calc
 where
 
 import qualified Data.List as L
-import qualified Data.Vector.Unboxed as V
-import Data.Vector.Unboxed ((!), Vector)
+import RIO hiding (Vector)
+import RIO.Vector.Unboxed (Vector)
+import RIO.Vector.Unboxed as V hiding (mapM)
+import RIO.Vector.Unboxed.Partial as VP
 import Statistics.Resampling
 import Statistics.Sample (mean)
 import SweetSpot.Data.Api (InfResult (..))
@@ -50,8 +52,8 @@ runInference cParams tParams = do
   return
     InfResult
       { _mean = nanToZero $ mean sorted,
-        _lowerBound = nanToZero $ V.head middle90,
-        _upperBound = nanToZero $ V.last middle90
+        _lowerBound = nanToZero $ VP.head middle90,
+        _upperBound = nanToZero $ VP.last middle90
       }
   where
     resample' gen s =

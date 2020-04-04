@@ -4,6 +4,7 @@ module SweetSpot.Route.Health
   )
 where
 
+import RIO
 import Servant
 import SweetSpot.AppM (ServerM)
 

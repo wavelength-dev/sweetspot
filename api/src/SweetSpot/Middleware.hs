@@ -3,11 +3,8 @@ module SweetSpot.Middleware
   )
 where
 
-import Control.Lens
 import Crypto.Hash (Digest, SHA256)
 import Crypto.MAC.HMAC
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BSL
 import qualified Data.List as L
 import Data.Maybe (mapMaybe)
 import qualified Data.Text as T
@@ -42,6 +39,9 @@ import Network.Wai.Middleware.Gzip
     gzipFiles,
   )
 import Network.Wai.Middleware.Routed (routedMiddleware)
+import RIO
+import qualified RIO.ByteString as BS
+import qualified RIO.ByteString.Lazy as BSL
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (validateSessionId')

@@ -5,6 +5,7 @@ module SweetSpot.Route.Fulcrum
   )
 where
 
+import RIO
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api

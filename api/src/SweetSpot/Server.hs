@@ -6,7 +6,6 @@ where
 
 import Control.Monad.Reader (runReaderT)
 import Data.Pool (withResource)
-import Data.Text as T
 import Network.Wai.Handler.Warp
   ( defaultSettings,
     runSettings,
@@ -16,6 +15,7 @@ import Network.Wai.Handler.Warp
 import Network.Wai.Logger (withStdoutLogger)
 import RIO
 import RIO.Partial (read)
+import RIO.Text as T
 import Servant hiding (basicAuthPassword)
 import SweetSpot.AppM
 import SweetSpot.Database (DbConfig (..), getDbPool, migrate)

@@ -7,8 +7,6 @@ import Crypto.Hash (Digest, SHA256)
 import Crypto.MAC.HMAC
 import qualified Data.List as L
 import Data.Maybe (mapMaybe)
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Network.HTTP.Types
   ( hContentType,
     hLocation,
@@ -42,6 +40,7 @@ import Network.Wai.Middleware.Routed (routedMiddleware)
 import RIO
 import qualified RIO.ByteString as BS
 import qualified RIO.ByteString.Lazy as BSL
+import qualified RIO.Text as T
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (validateSessionId')
@@ -86,7 +85,7 @@ verifyHmac ctx app req sendResponse =
   where
     secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
-    mSupplied = decodeUtf8 <$> (L.find ((== "hmac") . fst) params >>= snd)
+    mSupplied = decodeUtf8Lenient <$> (L.find ((== "hmac") . fst) params >>= snd)
     sansHMAC = filter ((/= "hmac") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
     checkable = BS.intercalate "&" joined
@@ -99,7 +98,7 @@ validateShopDomain ctx app req sendResponse = do
       appLogger = ctx ^. ctxLogger
       params = queryString req
       mSuppliedDomain =
-        ShopDomain . decodeUtf8 <$> (snd =<< L.find ((== "shop") . fst) params)
+        ShopDomain . decodeUtf8Lenient <$> (snd =<< L.find ((== "shop") . fst) params)
   L.info' appLogger $ T.pack . show $ params
   case mSuppliedDomain of
     Just domain -> do
@@ -119,7 +118,7 @@ validateSession ctx app req sendResponse = do
       appLogger = ctx ^. ctxLogger
       params = queryString req
       mSuppliedId =
-        SessionId . decodeUtf8 <$> (snd =<< L.find ((== "session") . fst) params)
+        SessionId . decodeUtf8Lenient <$> (snd =<< L.find ((== "session") . fst) params)
   L.info' appLogger $ T.pack . show $ params
   case mSuppliedId of
     Just id -> do

@@ -5,7 +5,6 @@ module SweetSpot.Shopify.Types where
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Text (Text)
 import Data.Time (LocalTime)
 import GHC.Generics (Generic)
 import RIO

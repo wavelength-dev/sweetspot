@@ -1,6 +1,6 @@
 module SweetSpot.Route.Util where
 
-import Data.Text (Text)
+import RIO
 import Servant
 
 internalServerErr = err500 {errBody = "Something went wrong"}

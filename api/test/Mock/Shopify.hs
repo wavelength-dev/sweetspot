@@ -2,7 +2,6 @@ module Mock.Shopify (withShopify) where
 
 import qualified Control.Concurrent as C
 import Control.Monad.IO.Class (liftIO)
-import Data.Text (Text)
 import Network.Wai (Application)
 import qualified Network.Wai.Handler.Warp as Warp
 import RIO hiding (Handler)

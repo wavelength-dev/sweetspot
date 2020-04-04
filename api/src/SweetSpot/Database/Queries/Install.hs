@@ -1,6 +1,5 @@
 module SweetSpot.Database.Queries.Install where
 
-import Data.Text (Text)
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres

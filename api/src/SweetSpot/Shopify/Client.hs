@@ -6,11 +6,10 @@ import Control.Monad.Reader.Class (asks)
 import Data.Aeson (Value)
 import Data.Aeson.Lens
 import Data.Aeson.Types (Result (..), parse)
-import Data.Text (Text)
-import qualified Data.Text as T
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import RIO hiding ((^.))
+import qualified RIO.Text as T
 import Servant
 import Servant.API (toUrlPiece)
 import Servant.Client

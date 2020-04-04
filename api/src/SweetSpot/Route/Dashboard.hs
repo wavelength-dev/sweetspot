@@ -9,8 +9,8 @@ import Control.Monad (unless)
 import Data.Aeson (Result (..), Value (..))
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
-import qualified Data.Text as T
 import RIO hiding ((^.))
+import qualified RIO.Text as T
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api

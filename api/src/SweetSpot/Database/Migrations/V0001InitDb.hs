@@ -4,7 +4,6 @@
 module SweetSpot.Database.Migrations.V0001InitDb where
 
 import Data.Aeson (Value)
-import Data.Text (Text)
 import Data.Time (LocalTime)
 import Data.UUID.Types (UUID)
 import Database.Beam

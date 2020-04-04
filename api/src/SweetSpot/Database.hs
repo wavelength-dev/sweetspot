@@ -8,7 +8,6 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Pool as P
-import qualified Data.Text as T
 import Database.Beam.Migrate.Simple
   ( BringUpToDateHooks (..),
     bringUpToDateWithHooks,
@@ -16,6 +15,7 @@ import Database.Beam.Migrate.Simple
 import qualified Database.Beam.Postgres as PG
 import Database.Beam.Postgres.Migrate (migrationBackend)
 import RIO
+import qualified RIO.Text as T
 import SweetSpot.Database.Schema (migration)
 import Prelude (print)
 

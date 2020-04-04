@@ -7,8 +7,6 @@ import Data.Aeson
     ToJSON,
   )
 import Data.Scientific (Scientific)
-import Data.Text (Text)
-import qualified Data.Text as T
 import Data.UUID.Types
   ( UUID,
     fromText,
@@ -18,6 +16,7 @@ import Database.Beam.Backend.SQL
 import Database.Beam.Query (HasSqlEqualityCheck (..))
 import GHC.Generics (Generic)
 import RIO
+import qualified RIO.Text as T
 import Servant.API
   ( FromHttpApiData (..),
     ToHttpApiData (..),

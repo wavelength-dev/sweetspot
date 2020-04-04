@@ -1,9 +1,14 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module SweetSpot.Shopify.Types where
 
+import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Text (Text)
+import Data.Time (LocalTime)
 import GHC.Generics (Generic)
+import SweetSpot.Data.Common
 
 class FromShopJSON a where
   parseShopJSON :: Value -> Parser a
@@ -60,3 +65,42 @@ newtype CreateWebhookReq
   deriving (Generic)
 
 instance ToJSON CreateWebhookReq
+
+-- | ---------------------------------------------------------------------------
+-- | LineItem
+-- | ---------------------------------------------------------------------------
+data LineItem
+  = LineItem
+      { _lineItemVariantId :: Svid,
+        _lineItemQuantity :: Int
+      }
+  deriving (Show)
+
+makeLenses ''LineItem
+
+instance FromJSON LineItem where
+  parseJSON = withObject "LineItem" $ \v ->
+    LineItem
+      <$> v .: "variant_id"
+      <*> v .: "quantity"
+
+-- | ---------------------------------------------------------------------------
+-- | Order
+-- | ---------------------------------------------------------------------------
+data Order
+  = Order
+      { _orderId :: OrderId,
+        _orderCartToken :: CartToken,
+        _orderCreatedAt :: LocalTime,
+        _orderLineItems :: [LineItem]
+      }
+
+makeLenses ''Order
+
+instance FromJSON Order where
+  parseJSON = withObject "Order" $ \v ->
+    Order
+      <$> v .: "id"
+      <*> v .: "cart_token"
+      <*> v .: "created_at"
+      <*> v .: "line_items"

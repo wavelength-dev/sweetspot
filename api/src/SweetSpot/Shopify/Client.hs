@@ -20,7 +20,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Webhook (CheckoutRoute, WebhookAPI)
+import SweetSpot.Route.Webhook (OrderRoute, WebhookAPI)
 import SweetSpot.Shopify.Types
 
 type ApiVersion = "2019-07"
@@ -121,7 +121,7 @@ instance MonadShopify AppM where
       createCheckoutWebhookClient = client (Proxy :: Proxy CreateWebhookRoute)
       hookPath =
         toUrlPiece $
-          safeLink (Proxy :: Proxy WebhookAPI) (Proxy :: Proxy CheckoutRoute)
+          safeLink (Proxy :: Proxy WebhookAPI) (Proxy :: Proxy OrderRoute)
       payload =
         CreateWebhookReq $
           CreateWebhookData

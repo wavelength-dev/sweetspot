@@ -19,11 +19,6 @@ type UserTestRoute =
     :> QueryParam "uid" UserId
     :> Get '[JSON] [TestMap]
 
-type CheckoutEventRoute =
-  "checkout" :> QueryParam "shop" ShopDomain
-    :> ReqBody '[JSON] ApiCheckoutEvent
-    :> Post '[JSON] OkResponse
-
 type UserCartTokenRoute =
   "cart-token" :> QueryParam "shop" ShopDomain
     :> ReqBody '[JSON] CartTokenReq
@@ -31,7 +26,7 @@ type UserCartTokenRoute =
 
 -- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
 
-type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> CheckoutEventRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
+type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
 
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
@@ -66,20 +61,6 @@ getUserTestHandler (Just shopDomain) (Just cmpId) Nothing = runAppM $ do
       throwError notFoundErr
 getUserTestHandler _ _ _ = throwError badRequestErr
 
-trackCheckoutEventHandler :: Maybe ShopDomain -> ApiCheckoutEvent -> ServerM OkResponse
-trackCheckoutEventHandler (Just shopDomain) event = runAppM $ do
-  mShopId <- validateShopDomain shopDomain
-  case mShopId of
-    Just shopId -> do
-      insertCheckoutEvent shopId event
-      return OkResponse {message = "Event received"}
-    Nothing -> do
-      L.error $ "Got invalid shopDomain: " <> showText shopDomain <> ", cannot track checkout event"
-      throwError badRequestErr
-trackCheckoutEventHandler Nothing _ = runAppM $ do
-  L.error "Missing shopDomain, cannot track checkout event"
-  throwError badRequestErr
-
 userCartTokenHandler :: Maybe ShopDomain -> CartTokenReq -> ServerM OkResponse
 userCartTokenHandler (Just _) req = runAppM $ do
   insertUserCartToken req
@@ -94,5 +75,5 @@ userCartTokenHandler Nothing _ = runAppM $ do
 --   return OkResponse {message = "Event received"}
 
 fulcrumHandler =
-  getUserTestHandler :<|> trackCheckoutEventHandler :<|> userCartTokenHandler
+  getUserTestHandler :<|> userCartTokenHandler
 -- :<|> trackLogMessageHandler

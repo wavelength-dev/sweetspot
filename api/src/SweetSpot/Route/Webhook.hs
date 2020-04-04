@@ -5,22 +5,11 @@ module SweetSpot.Route.Webhook
   )
 where
 
-import Control.Applicative (liftA2)
 import Control.Lens
-import Data.Aeson (FromJSON, Value)
-import Data.Aeson.Lens
-import Data.Maybe (catMaybes)
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Text.Lens (packed)
-import Data.Time (LocalTime)
-import GHC.Generics (Generic)
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
-import SweetSpot.Data.Common (CartToken (..), Svid (..))
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
-import qualified SweetSpot.Logger as L
 import SweetSpot.Shopify.Types
 
 type OrderRoute =

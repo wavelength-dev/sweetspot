@@ -5,7 +5,6 @@ module SweetSpot.Route.DashboardApp
 where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.Text.Encoding as TE
 import Network.HTTP.Media ((//), (/:))
 import RIO
 import qualified RIO.ByteString.Lazy as BS
@@ -63,7 +62,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) (Just sessionId) =
           redirectApi = Proxy :: Proxy OAuthAPI
           redirectHandler = Proxy :: Proxy InstallRoute
           redirectPath =
-            TE.encodeUtf8
+            encodeUtf8
               $ toUrlPiece
               $ safeLink redirectApi redirectHandler (Just domain) (Just ts) (Just hmac)
 indexHandler _ _ _ _ = throwError badRequestErr

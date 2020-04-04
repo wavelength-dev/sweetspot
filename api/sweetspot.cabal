@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 78f396df21841f51f0833b0ee5182e651fcdf455835add7fd25a9e3eac56ad1e
+-- hash: 8bee9babc7df382d8df8c3df1f201020843cf2a4d4389f3f647020fa8b60d4f8
 
 name:           sweetspot
 version:        0.1.0.0
@@ -88,7 +88,6 @@ library
     , servant-client
     , servant-server
     , statistics
-    , text
     , time
     , transformers
     , utf8-string
@@ -145,7 +144,6 @@ executable bridge-exe
     , servant-server
     , statistics
     , sweetspot
-    , text
     , time
     , transformers
     , utf8-string
@@ -201,7 +199,6 @@ executable sweetspot-exe
     , servant-server
     , statistics
     , sweetspot
-    , text
     , time
     , transformers
     , utf8-string
@@ -263,7 +260,6 @@ test-suite sweetspot-test
     , servant-server
     , statistics
     , sweetspot
-    , text
     , time
     , transformers
     , utf8-string

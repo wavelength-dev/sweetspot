@@ -19,9 +19,9 @@ import Data.Aeson
     genericToEncoding,
     toEncoding,
   )
-import Data.Text (Text)
 import Data.Time.Clock (UTCTime, getCurrentTime)
 import GHC.Generics (Generic)
+import RIO.Text (Text)
 import SweetSpot.AppM
 import System.Log.FastLogger (LoggerSet, ToLogStr (..), pushLogStrLn)
 import Prelude hiding (error, log)

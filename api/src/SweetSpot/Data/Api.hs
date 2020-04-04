@@ -13,7 +13,6 @@ import Data.Aeson
     withObject,
   )
 import Data.Scientific (Scientific)
-import Data.Text (Text)
 import Data.Time (LocalTime)
 import GHC.Generics (Generic)
 import RIO

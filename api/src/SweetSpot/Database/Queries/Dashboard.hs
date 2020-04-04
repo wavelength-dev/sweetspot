@@ -9,7 +9,6 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import Control.Lens
-import Data.Text (Text)
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres

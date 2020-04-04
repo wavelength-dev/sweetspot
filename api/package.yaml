@@ -50,7 +50,6 @@ dependencies:
 - servant-client
 - servant-server
 - statistics
-- text
 - time
 - transformers
 - uuid

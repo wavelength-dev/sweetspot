@@ -37,8 +37,6 @@ orderHandler order = runAppM $ do
     Just (shopId, cmpId, userId) -> do
       insertOrder shopId cmpId userId order
       return OkResponse {message = "Registered order"}
-    Nothing -> do
-      L.error $ "Failed to register order"
-      return OkResponse {message = ""}
+    Nothing -> return OkResponse {message = ""}
 
 webhookHandler = orderHandler

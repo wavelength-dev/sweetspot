@@ -1,5 +1,5 @@
 module SweetSpot.Route.Webhook
-  ( CheckoutRoute,
+  ( OrderRoute,
     WebhookAPI,
     webhookHandler,
   )
@@ -7,39 +7,38 @@ where
 
 import Control.Applicative (liftA2)
 import Control.Lens
-import Data.Aeson (Value)
+import Data.Aeson (FromJSON, Value)
 import Data.Aeson.Lens
 import Data.Maybe (catMaybes)
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Lens (packed)
+import Data.Time (LocalTime)
+import GHC.Generics (Generic)
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
-import SweetSpot.Data.Common (Svid (..))
+import SweetSpot.Data.Common (CartToken (..), Svid (..))
+import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
+import SweetSpot.Shopify.Types
 
-type CheckoutRoute =
-  "webhook" :> "checkout"
-    :> ReqBody '[JSON] Value
+type OrderRoute =
+  "webhook" :> "order"
+    :> ReqBody '[JSON] Order
     :> Post '[JSON] OkResponse
 
-type WebhookAPI = CheckoutRoute
+type WebhookAPI = OrderRoute
 
-checkoutHandler :: Value -> ServerM OkResponse
-checkoutHandler v = runAppM $ do
-  let conversions :: [(Svid, Integer)]
-      conversions =
-        v ^.. key "line_items"
-          . values
-          . to
-            ( \li ->
-                liftA2
-                  (,)
-                  (li ^? key "variant_id" . _Integer . to show . packed . to Svid)
-                  (li ^? key "quantity" . _Integer)
-            )
-          & catMaybes
-  L.info . T.pack . show $ conversions
-  return OkResponse {message = "Received checkout"}
+orderHandler :: Order -> ServerM OkResponse
+orderHandler order = runAppM $ do
+  result <- validateUserCartToken $ order ^. orderCartToken
+  case result of
+    Just (shopId, cmpId, userId) -> do
+      insertOrder shopId cmpId userId order
+      return OkResponse {message = "Registered order"}
+    Nothing -> do
+      L.error $ "Failed to register order"
+      return OkResponse {message = ""}
 
-webhookHandler = checkoutHandler
+webhookHandler = orderHandler

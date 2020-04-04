@@ -8,6 +8,7 @@ import Control.Lens hiding
   ( (<.),
     (>.),
   )
+import Data.Foldable (traverse_)
 import qualified Data.List as L
 import Data.Maybe
   ( Maybe (..),
@@ -23,9 +24,8 @@ import SweetSpot.Database.Queries.Util
   ( matchShop,
     withConn,
   )
-import SweetSpot.Database.Schema hiding
-  ( UserId,
-  )
+import SweetSpot.Database.Schema hiding (UserId)
+import SweetSpot.Shopify.Types
 import System.Random (randomRIO)
 
 class Monad m => FulcrumDB m where
@@ -33,8 +33,9 @@ class Monad m => FulcrumDB m where
   getUserTestMaps :: UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
-  insertCheckoutEvent :: ShopId -> ApiCheckoutEvent -> m ()
   insertUserCartToken :: CartTokenReq -> m ()
+  validateUserCartToken :: CartToken -> m (Maybe (ShopId, CampaignId, UserId))
+  insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
 
 instance FulcrumDB AppM where
   getNewCampaignTestMaps cmpId mUid = do
@@ -76,38 +77,9 @@ instance FulcrumDB AppM where
             }
         ]
 
-  insertCheckoutEvent shopId apiEvent = withConn $ \conn -> do
-    [dbEvent] <-
-      runBeamPostgres conn
-        $ BeamExt.runInsertReturningList
-        $ insert (db ^. checkoutEvents)
-        $ insertExpressions
-          [ CheckoutEvent
-              { _cevId = eventId_,
-                _cevCreated = now_,
-                _cevCmpId = val_ $ CampaignKey $ apiEvent ^. aceCampaignId,
-                _cevOrderId = val_ $ apiEvent ^. aceOrderId,
-                _cevShopId = val_ $ ShopKey shopId,
-                _cevUserId = val_ $ UserKey $ apiEvent ^. aceUserId
-              }
-          ]
-    runBeamPostgres conn
-      $ runInsert
-      $ insert (db ^. checkoutItems)
-      $ insertExpressions
-      $ L.map
-        ( \li ->
-            CheckoutItem
-              { _ciId = pgGenUUID_,
-                _ciCheckoutEventId =
-                  val_
-                    $ CheckoutEventKey
-                    $ dbEvent ^. cevId,
-                _ciQuantity = val_ $ li ^. liQuantity,
-                _ciSvid = val_ $ li ^. liVariantId
-              }
-        )
-        (apiEvent ^. aceItems)
+  validateUserCartToken = validateUserCartToken'
+
+  insertOrder = insertOrder'
 
 insertUser :: Connection -> IO UserId
 insertUser conn = do
@@ -190,3 +162,55 @@ validateDomain conn domain =
   runBeamPostgres conn $ runSelectReturningOne $ select $ do
     row <- matchShop domain
     pure $ row ^. shopDomain
+
+validateUserCartToken' :: CartToken -> AppM (Maybe (ShopId, CampaignId, UserId))
+validateUserCartToken' token = withConn $ \conn ->
+  runBeamPostgres conn
+    $ runSelectReturningOne
+    $ select
+    $ do
+      user <- all_ (db ^. users)
+      userToken <- all_ (db ^. userCartTokens)
+      userExperiment <- all_ (db ^. userExperiments)
+      campaign <- all_ (db ^. campaigns)
+      shop <- all_ (db ^. shops)
+      guard_ (_cartTokenUser userToken `references_` user)
+      guard_ (_ueUserId userExperiment `references_` user)
+      guard_ (_ueCmpId userExperiment `references_` campaign)
+      guard_ (_cmpShopId campaign `references_` shop)
+      guard_ (userToken ^. cartTokenId ==. val_ token)
+      pure (shop ^. shopId, campaign ^. cmpId, user ^. usrId)
+
+insertLineItem :: Connection -> EventId -> LineItem -> IO ()
+insertLineItem conn eid item =
+  runBeamPostgres conn
+    $ runInsert
+    $ insert (db ^. checkoutItems)
+    $ insertExpressions
+      [ CheckoutItem
+          { _ciId = pgGenUUID_,
+            _ciCheckoutEventId = val_ $ CheckoutEventKey eid,
+            _ciQuantity = val_ $ item ^. lineItemQuantity,
+            _ciSvid = val_ $ item ^. lineItemVariantId
+          }
+      ]
+
+insertOrder' :: ShopId -> CampaignId -> UserId -> Order -> AppM ()
+insertOrder' sid cid uid order = withConn $ \conn -> do
+  [event] <-
+    runBeamPostgres conn
+      $ BeamExt.runInsertReturningList
+      $ insert (db ^. checkoutEvents)
+      $ insertExpressions
+        [ CheckoutEvent
+            { _cevId = eventId_,
+              _cevCreated = val_ $ order ^. orderCreatedAt,
+              _cevCmpId = val_ $ CampaignKey cid,
+              _cevOrderId = val_ $ order ^. orderId,
+              _cevShopId = val_ $ ShopKey sid,
+              _cevUserId = val_ $ UserKey uid
+            }
+        ]
+  traverse_
+    (insertLineItem conn (event ^. cevId))
+    (order ^. orderLineItems)

@@ -4,7 +4,7 @@ module SweetSpot.Route.Dashboard
   )
 where
 
-import Control.Lens
+import Control.Lens hiding (Strict)
 import Control.Monad (unless)
 import Data.Aeson (Result (..), Value (..))
 import Data.Aeson.Lens (_String, key, values)
@@ -24,12 +24,12 @@ import SweetSpot.Shopify.Types (FromShopJSON (..))
 
 type ProductsRoute =
   "products"
-    :> QueryParam "session" SessionId
+    :> QueryParam' '[Required, Strict] "session" SessionId
     :> Get '[JSON] [Product]
 
 type CampaignRoute =
   "campaigns"
-    :> QueryParam "session" SessionId
+    :> QueryParam' '[Required, Strict] "session" SessionId
     :> Get '[JSON] [UICampaign]
 
 type CreateExperimentRoute =
@@ -41,8 +41,8 @@ type DashboardAPI =
   "dashboard"
     :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute)
 
-getProductsHandler :: Maybe SessionId -> ServerM [Product]
-getProductsHandler (Just id) = runAppM $ do
+getProductsHandler :: SessionId -> ServerM [Product]
+getProductsHandler id = runAppM $ do
   mDomain <- validateSessionId id
   case mDomain of
     Just domain -> do
@@ -52,20 +52,14 @@ getProductsHandler (Just id) = runAppM $ do
         Left err -> do
           L.error err
           throwError internalServerErr
-    Nothing -> do
-      L.error "Invalid sessionId in getProductsHandler"
-      throwError badRequestErr
-getProductsHandler Nothing = throwError badRequestErr
+    Nothing -> throwError $ err400 {errBody = "Bad sessionId, no domain found"}
 
-getCampaignsHandler :: Maybe SessionId -> ServerM [UICampaign]
-getCampaignsHandler (Just id) = runAppM $ do
+getCampaignsHandler :: SessionId -> ServerM [UICampaign]
+getCampaignsHandler id = runAppM $ do
   mDomain <- validateSessionId id
   case mDomain of
     Just domain -> getCampaigns domain
-    Nothing -> do
-      L.error "Invalid sessionId in getCampaignsHandler"
-      throwError badRequestErr
-getCampaignsHandler Nothing = throwError badRequestErr
+    Nothing -> throwError $ err400 {errBody = "Bad sessionId, no domain found"}
 
 createExperimentHandler :: CreateExperiment -> ServerM OkResponse
 createExperimentHandler ce = runAppM $ do

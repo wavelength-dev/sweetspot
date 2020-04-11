@@ -8,8 +8,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), joinWith, split, stripPrefix) as String
 import Data.Traversable as Traversable
 import Data.Tuple (Tuple(..))
-import Global (decodeURIComponent)
-import Global (encodeURIComponent) as Global
+import Global (decodeURIComponent, encodeURIComponent) as Global
 
 type Key
   = String
@@ -45,7 +44,7 @@ parseQueryString =
     [ key ] -> Left "Parameter without an '='"
     [ "", _ ] -> Left "Parameter without a key"
     [ key, "" ] -> Right $ QueryParam key Nothing
-    [ key, value ] -> Right $ QueryParam key (decodeURIComponent value)
+    [ key, value ] -> Right $ QueryParam key (Global.decodeURIComponent value)
     _ -> Left "More than one '=' in single parameter"
 
 findParam :: Key -> Array (Either String QueryParam) -> Maybe String

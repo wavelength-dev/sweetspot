@@ -1,12 +1,15 @@
 module SweetSpot.QueryString where
 
 import Prelude
-
 import Data.Either (Either(..))
+import Data.Either as Either
 import Data.Lens (_Just, _Right, filtered, firstOf, folded, to)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String (Pattern(..), split, stripPrefix) as String
+import Data.String (Pattern(..), joinWith, split, stripPrefix) as String
+import Data.Traversable as Traversable
+import Data.Tuple (Tuple(..))
 import Global (decodeURIComponent)
+import Global (encodeURIComponent) as Global
 
 type Key
   = String
@@ -47,9 +50,25 @@ parseQueryString =
 
 findParam :: Key -> Array (Either String QueryParam) -> Maybe String
 findParam key =
-  firstOf $
-    folded
+  firstOf
+    $ folded
     <<< _Right
     <<< filtered (\(QueryParam k _) -> k == key)
     <<< to (\(QueryParam _ v) -> v)
     <<< _Just
+
+encodePair :: Tuple Key Value -> Either String String
+encodePair (Tuple key value) = do
+  encodedKey <- Either.note ("Cannot encode key: " <> key) $ Global.encodeURIComponent key
+  encodedValue <- Either.note ("Cannot encode value: " <> value) $ Global.encodeURIComponent value
+  pure $ encodedKey <> "=" <> encodedValue
+
+type QueryString
+  = String
+
+buildQueryString :: Array (Tuple Key Value) -> Either String QueryString
+buildQueryString =
+  Traversable.traverse encodePair
+    >=> String.joinWith "&"
+    >>> (<>) "?"
+    >>> pure

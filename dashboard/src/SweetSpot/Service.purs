@@ -26,8 +26,8 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
   combinedOptions :: Record Options
   combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
-fetchThing :: forall t. String -> (Json -> Either String t) -> Aff (Either String t)
-fetchThing route decoder = do
+fetchResource :: forall t. String -> (Json -> Either String t) -> Aff (Either String t)
+fetchResource route decoder = do
   res <- getJson route {}
   text <- Milkis.text res
   let
@@ -43,7 +43,7 @@ fetchThing route decoder = do
   textToMessage str = str
 
 fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
-fetchCampaigns (SessionId session) = fetchThing ("//localhost:8082/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns
+fetchCampaigns (SessionId session) = fetchResource ("//localhost:8082/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns
 
 fetchProducts :: SessionId -> Aff (Either String (Array Product))
-fetchProducts (SessionId session) = fetchThing ("//localhost:8082/api/dashboard/products?session=" <> session) Codec.decodeProducts
+fetchProducts (SessionId session) = fetchResource ("//localhost:8082/api/dashboard/products?session=" <> session) Codec.decodeProducts

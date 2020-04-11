@@ -36,7 +36,11 @@ fetchThing route decoder = do
     if status == 200 || status == 201 then
       (jsonParser text >>= decodeJson >>= decoder)
     else
-      (Left (show status <> " - " <> text))
+      (Left (show status <> " - " <> (textToMessage text)))
+  where
+  textToMessage "" = "Empty body"
+
+  textToMessage str = str
 
 fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
 fetchCampaigns (SessionId session) = fetchThing ("//localhost:8082/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns

@@ -26,7 +26,7 @@ import SweetSpot.Shopify.Types
 import System.Random (randomRIO)
 
 class Monad m => FulcrumDB m where
-  getNewCampaignTestMaps :: CampaignId -> Maybe UserId -> m [TestMap]
+  getNewCampaignTestMaps :: CampaignId -> UserId -> m [TestMap]
   getUserTestMaps :: UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
@@ -35,12 +35,10 @@ class Monad m => FulcrumDB m where
   insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
 
 instance FulcrumDB AppM where
-  getNewCampaignTestMaps cmpId mUid = do
+  getNewCampaignTestMaps cmpId userId = do
     randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
     withConn $ \conn -> do
-      uid <- case mUid of
-        Just id -> pure id
-        Nothing -> insertUser conn
+      uid <- insertUser conn userId
       assignUserToCampaign conn (uid, cmpId, randTreatment)
       getUserTestMaps' conn uid
 
@@ -78,14 +76,25 @@ instance FulcrumDB AppM where
 
   insertOrder = insertOrder'
 
-insertUser :: Connection -> IO UserId
-insertUser conn = do
-  [user] <-
+insertUser :: Connection -> UserId -> IO UserId
+insertUser conn uid = do
+  mUserId <-
     runBeamPostgres conn
-      $ BeamExt.runInsertReturningList
-      $ insert (db ^. users)
-      $ insertExpressions [User userId_ now_]
-  return $ user ^. usrId
+      $ runSelectReturningOne
+      $ select
+      $ do
+        user <- all_ (db ^. users)
+        guard_ (user ^. usrId ==. val_ uid)
+        pure $ user ^. usrId
+  case mUserId of
+    Just userId -> return userId
+    Nothing -> do
+      [user] <-
+        runBeamPostgres conn
+          $ BeamExt.runInsertReturningList
+          $ insert (db ^. users)
+          $ insertExpressions [User (val_ uid) now_]
+      return $ user ^. usrId
 
 assignUserToCampaign :: Connection -> (UserId, CampaignId, Int) -> IO CampaignId
 assignUserToCampaign conn (usrId, campaignId, treatment) = do

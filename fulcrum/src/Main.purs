@@ -58,6 +58,7 @@ getTestMap = do
         Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
   where
   inadequateRuntimeError = "sweetspot can't run in current runtime"
+
   missingUserIdError = "sweetspot can't run without userId"
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
@@ -82,7 +83,8 @@ insertPrice testMap element = do
   let
     eTestMap =
       rawVariantToEither mVariantId
-        >>= lookupF testMap >>> note "No test for read variant id"
+        >>= lookupF testMap
+        >>> note "No test for read variant id"
   case eTestMap of
     Left msg -> Console.error msg
     Right test -> setNodePrice test
@@ -138,11 +140,12 @@ reapply = queueNext applyDynamicPrice
 startCartTokenInterval :: Effect Unit
 startCartTokenInterval = setInterval 5000 cb *> pure unit
   where
-    cb :: Effect Unit
-    cb = Aff.launchAff_ $ do
-      mUserId <- liftEffect User.findUserId
-      mToken <- liftEffect Cart.findCartToken
-      case mUserId, mToken of
-        (Just uid), (Just token) ->
-          Service.sendCartToken uid token *> pure unit
-        _, _ -> pure unit
+  cb :: Effect Unit
+  cb =
+    Aff.launchAff_
+      $ do
+          mUserId <- liftEffect User.findUserId
+          mToken <- liftEffect Cart.findCartToken
+          case mUserId, mToken of
+            (Just uid), (Just token) -> Service.sendCartToken uid token *> pure unit
+            _, _ -> pure unit

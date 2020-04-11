@@ -4,7 +4,6 @@ module Fulcrum.User
   ) where
 
 import Prelude
-
 import Data.Argonaut (class EncodeJson)
 import Data.Argonaut (encodeJson) as Argonaut
 import Data.Generic.Rep (class Generic)
@@ -14,7 +13,6 @@ import Data.Nullable (Nullable, toMaybe)
 import Effect (Effect)
 
 -- As we're making big changes to the schema we'll have users locally that are not in the database. We may have to handle that situation here or in the service. One approach could be always setting the userId that comes back on a getTestMaps request and having the service effectively execute the migration.
-
 -- | UserIds are id's assigned to users within the SweetSpot system.
 newtype UserId
   = UserId String

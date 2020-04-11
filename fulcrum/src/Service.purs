@@ -114,8 +114,8 @@ sendCartToken uid token = do
       Nothing -> Left $ "sending cart token failed, status: " <> show status <> ", no body"
       Just message -> Left $ "sending cart token failed, status: " <> show status <> ", body: " <> message
   where
-    reqBody =
-      Argonaut.encodeJson
-        { _cartTokenReqUser: uid
-        , _cartTokenReqToken: token
-        }
+  reqBody =
+    Argonaut.encodeJson
+      { _cartTokenReqUser: uid
+      , _cartTokenReqToken: token
+      }

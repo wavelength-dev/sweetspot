@@ -4,7 +4,6 @@ module SweetSpot.Database.Schema
     checkedDb,
     db,
     pgGenUUID_,
-    userId_,
     eventId_,
     nonce_,
     shopId_,
@@ -45,9 +44,6 @@ db = unCheckDatabase checkedDb
 
 pgGenUUID_ :: QGenExpr ctxt Postgres s UUID
 pgGenUUID_ = pgCryptoGenRandomUUID $ getPgExtension (_cryptoExtension db)
-
-userId_ :: QGenExpr ctxt Postgres s UserId
-userId_ = unsafeRetype pgGenUUID_
 
 eventId_ :: QGenExpr ctxt Postgres s EventId
 eventId_ = unsafeRetype pgGenUUID_

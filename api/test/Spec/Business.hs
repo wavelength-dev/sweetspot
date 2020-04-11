@@ -37,12 +37,12 @@ businessLogicSpec =
           Left err -> error (show err)
           Right tms -> (userId . head $ tms) `shouldBe` user1
       it "should create a new user when given a valid campaign id" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign1) Nothing) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
         case result of
           Left err -> error (show err)
           Right _ -> return ()
       it "should not return buckets for invalid campaign ids" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) Nothing) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) (Just unknownUser)) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
@@ -59,13 +59,13 @@ businessLogicSpec =
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should not return buckets for expired campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign2) Nothing) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just campaign2) (Just user2)) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should not return buckets for not yet active campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign3) Nothing) clientEnv
+        result <- runClientM (getTest (Just shopDomain) (Just campaign3) (Just user2)) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)

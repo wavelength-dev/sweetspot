@@ -44,7 +44,8 @@ httpSpec =
       it "should return 200 with valid hmac and shop domain" $ do
         let shopId = "test-shop.myshopify.com"
             cmpId = "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
-            hmac = "c3025d4b6029cf8df8478a6b56e0e33a904853f42891d22b857eb34c30815fd3"
+            hmac = "d2f6ba3da004a18ecb7bbc6e6f2f315a7bc07b11ffa6870021d900f10444ed01"
+            uid = "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
         res <-
           getWith opts $
             apiRoot <> "/api/fulcrum/bucket"
@@ -54,4 +55,6 @@ httpSpec =
               <> cmpId
               <> "&hmac="
               <> hmac
+              <> "&uid="
+              <> uid
         res ^. responseStatus . statusCode `shouldBe` 200

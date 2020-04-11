@@ -22,8 +22,7 @@ import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) 
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
-import Fulcrum.User (UserId(..))
-import Fulcrum.User (getUserId) as User
+import Fulcrum.User (findUserId) as User
 import Web.DOM (Element)
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
@@ -45,15 +44,19 @@ getTestMap :: ExceptT String Aff TestMapByVariant
 getTestMap = do
   isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
   when (not isRuntimeAdequate) (throwError inadequateRuntimeError)
-  mUserId <- liftEffect User.getUserId
-  -- Fetch the list of TestMaps
-  eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId (UserId "9"))
-  -- TODO: Cache the list of TestMaps in local storage
-  case eTestMaps of
-    Left msg -> throwError msg
-    Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
+  mUserId <- liftEffect User.findUserId
+  case mUserId of
+    Nothing -> throwError missingUserIdError
+    Just userId -> do
+      -- Fetch the list of TestMaps
+      eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId userId)
+      -- TODO: Cache the list of TestMaps in local storage
+      case eTestMaps of
+        Left msg -> throwError msg
+        Right testMaps -> testMaps # hashMapFromTestMaps >>> pure
   where
   inadequateRuntimeError = "sweetspot can't run in current runtime"
+  missingUserIdError = "sweetspot can't run without userId"
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of

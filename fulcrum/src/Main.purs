@@ -51,8 +51,8 @@ getTestMap = do
     Nothing -> throwError missingUserIdError
     Just userId -> do
       -- Fetch the list of TestMaps
+      -- TODO: add cache control header
       eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId userId)
-      -- TODO: Cache the list of TestMaps in local storage
       case eTestMaps of
         Left msg -> throwError msg
         Right testMaps -> testMaps # hashMapFromTestMaps >>> pure

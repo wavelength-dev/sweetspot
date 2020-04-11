@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-14.26 AS build
+FROM fpco/stack-build:lts-14.27 AS build
 WORKDIR /opt/build
 
 # We depend on postgres

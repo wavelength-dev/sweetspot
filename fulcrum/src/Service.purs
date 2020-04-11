@@ -10,13 +10,14 @@ import Effect.Aff (Aff)
 import Effect.Aff (attempt) as Aff
 import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
+import Fulcrum.Cart (CartToken)
+import Fulcrum.Config (apiUrl) as Config
+import Fulcrum.Data (CampaignId(..), TestMap, decodeTestMaps)
+import Fulcrum.User (UserId(..))
 import Milkis (Fetch, Options, Response)
 import Milkis (URL(..), fetch, getMethod, json, makeHeaders, postMethod, statusCode, text) as Milkis
 import Milkis.Impl.Window (windowFetch) as MilkisImpl
 import Record.Unsafe.Union (unsafeUnion) as RecordUnsafe
-import Fulcrum.Config (apiUrl) as Config
-import Fulcrum.Data (CampaignId(..), TestMap, decodeTestMaps)
-import Fulcrum.User (UserId(..))
 
 testMapEndpoint :: String
 testMapEndpoint = Config.apiUrl <> "/bucket"
@@ -26,6 +27,9 @@ eventEndpoint = Config.apiUrl <> "/event"
 
 logEndpoint :: String
 logEndpoint = Config.apiUrl <> "/log"
+
+cartTokenEndpoint :: String
+cartTokenEndpoint = Config.apiUrl <> "/cart-token"
 
 fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch
@@ -96,3 +100,22 @@ sendLog log = do
     else case mMessage of
       Nothing -> Left $ "sending log failed, status: " <> show status <> ", no body"
       Just message -> Left $ "sending log failed, status: " <> show status <> ", body: " <> message
+
+sendCartToken :: UserId -> CartToken -> Aff (Either String Unit)
+sendCartToken uid token = do
+  response <- postJson cartTokenEndpoint reqBody
+  mMessage <- getServiceError response
+  let
+    status = Milkis.statusCode response
+  pure
+    if status == 200 then
+      Right unit
+    else case mMessage of
+      Nothing -> Left $ "sending cart token failed, status: " <> show status <> ", no body"
+      Just message -> Left $ "sending cart token failed, status: " <> show status <> ", body: " <> message
+  where
+    reqBody =
+      Argonaut.encodeJson
+        { _cartTokenReqUser: uid
+        , _cartTokenReqToken: token
+        }

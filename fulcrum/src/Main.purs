@@ -12,9 +12,11 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.AVar as AVar
 import Effect.Aff (Aff, error)
-import Effect.Aff (runAff_) as Aff
+import Effect.Aff (runAff_, launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Console (error, log, logShow) as Console
+import Effect.Timer (setInterval)
+import Fulcrum.Cart as Cart
 import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
@@ -65,6 +67,7 @@ handleExit = case _ of
 
 main :: Effect Unit
 main = do
+  startCartTokenInterval
   RunState.initRunQueue
   Aff.runAff_ Console.logShow do
     eTestContext <- runExceptT getTestMap
@@ -131,3 +134,15 @@ queueNext fn = do
 
 reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
+
+startCartTokenInterval :: Effect Unit
+startCartTokenInterval = setInterval 5000 cb *> pure unit
+  where
+    cb :: Effect Unit
+    cb = Aff.launchAff_ $ do
+      mUserId <- liftEffect User.findUserId
+      mToken <- liftEffect Cart.findCartToken
+      case mUserId, mToken of
+        (Just uid), (Just token) ->
+          Service.sendCartToken uid token *> pure unit
+        _, _ -> pure unit

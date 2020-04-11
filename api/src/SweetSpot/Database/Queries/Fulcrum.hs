@@ -61,16 +61,26 @@ instance FulcrumDB AppM where
       shop <- matchShop shopDomain
       pure $ shop ^. shopId
 
-  insertUserCartToken req = withConn $ \conn ->
-    runBeamPostgres conn
-      $ runInsert
-      $ insert (db ^. userCartTokens)
-      $ insertExpressions
-        [ UserCartToken
-            { _cartTokenId = val_ $ req ^. cartTokenReqToken,
-              _cartTokenUser = val_ $ UserKey $ req ^. cartTokenReqUser
-            }
-        ]
+  insertUserCartToken req = withConn $ \conn -> do
+    mToken <- runBeamPostgres conn
+      $ runSelectReturningOne
+      $ select
+      $ do
+        cartToken <- all_ (db ^. userCartTokens)
+        guard_ (cartToken ^. cartTokenId ==. val_ (req ^. cartTokenReqToken))
+        pure $ cartToken ^. cartTokenId
+    case mToken of
+      Just _ -> pure ()
+      Nothing ->
+        runBeamPostgres conn
+          $ runInsert
+          $ insert (db ^. userCartTokens)
+          $ insertExpressions
+            [ UserCartToken
+                { _cartTokenId = val_ $ req ^. cartTokenReqToken,
+                  _cartTokenUser = val_ $ UserKey $ req ^. cartTokenReqUser
+                }
+            ]
 
   validateUserCartToken = validateUserCartToken'
 

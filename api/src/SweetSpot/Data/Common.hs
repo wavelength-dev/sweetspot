@@ -394,3 +394,6 @@ instance HasSqlValueSyntax be Text => HasSqlValueSyntax be CartToken where
   sqlValueSyntax = sqlValueSyntax . \(CartToken t) -> t
 
 instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be CartToken
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CartToken where
+  fromBackendRow = CartToken <$> fromBackendRow

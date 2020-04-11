@@ -1,7 +1,6 @@
 module Fulcrum.Site where
 
 import Prelude
-
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))

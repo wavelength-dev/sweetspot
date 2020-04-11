@@ -1,7 +1,6 @@
 module Fulcrum.Data where
 
 import Prelude
-
 import Data.Argonaut (caseJsonString, decodeJson) as Argonaut
 import Data.Argonaut (class DecodeJson, Json)
 import Data.Either (Either(..))

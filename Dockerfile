@@ -1,4 +1,4 @@
-FROM gcr.io/sweetspot-255522/sweetspot-build:latest AS build
+FROM fpco/stack-build:lts-14.26 AS build
 WORKDIR /opt/build
 
 # We depend on postgres

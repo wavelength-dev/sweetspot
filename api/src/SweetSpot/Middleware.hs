@@ -5,6 +5,7 @@ where
 
 import Crypto.Hash (Digest, SHA256)
 import Crypto.MAC.HMAC
+import qualified Data.ByteString.Base64 as Base64
 import qualified Data.List as L
 import Data.Maybe (mapMaybe)
 import Network.HTTP.Types
@@ -16,8 +17,11 @@ import Network.HTTP.Types
 import Network.Wai
   ( Application,
     Middleware,
+    Request,
+    getRequestBodyChunk,
     queryString,
     rawQueryString,
+    requestHeaders,
     responseLBS,
   )
 import Network.Wai.Middleware.Cors
@@ -110,6 +114,30 @@ verifyProxySignature ctx app req sendResponse =
     digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
     digestTxt = T.pack $ show digest
 
+verifyWebhookSignature :: AppCtx -> Middleware
+verifyWebhookSignature ctx app req sendResponse = do
+  body <- readBody req ""
+  let digest = hmacGetDigest $ hmac (encodeUtf8 secret) body :: Digest SHA256
+      encoded = Base64.encode . fromString . show $ digest
+  case (== encoded) <$> mSuppliedSignature of
+    Just True -> app req sendResponse
+    _ -> do
+      L.warn' appLogger "Got invalid webhook signature"
+      send400 "Invalid webhook signature" req sendResponse
+  where
+    appLogger = ctx ^. ctxLogger
+    secret = ctx ^. ctxConfig . configShopifyClientSecret
+    mSuppliedSignature =
+      requestHeaders req
+        & L.find ((== "X-Shopify-Hmac-SHA256") . fst)
+        & fmap snd
+    readBody :: Request -> ByteString -> IO ByteString
+    readBody req acc = do
+      chunk <- getRequestBodyChunk req
+      if chunk == BS.empty
+        then return acc
+        else readBody req (acc <> chunk)
+
 validateShopDomain :: AppCtx -> Middleware
 validateShopDomain ctx app req sendResponse = do
   let pool = ctx ^. ctxDbPool
@@ -167,11 +195,21 @@ getMiddleware :: AppCtx -> Middleware
 getMiddleware ctx =
   case env of
     -- So we don't have to deal with hmac during dev
-    Dev -> gzipStatic . validateShopDomainRouted . enableCors . validateSessionRouted
+    Dev ->
+      gzipStatic
+        . validateShopDomainRouted
+        . enableCors
+        . validateSessionRouted
     -- So we can focus on testing handlers themselves
     TestBusiness -> gzipStatic
     -- Else everything
-    _ -> gzipStatic . verifySignatureRouted . verifyHmacRouted . validateShopDomainRouted . validateSessionRouted
+    _ ->
+      gzipStatic
+        . verifySignatureRouted
+        . verifyHmacRouted
+        . verifyWebhookRouted
+        . validateShopDomainRouted
+        . validateSessionRouted
   where
     env = ctx ^. ctxConfig . configEnvironment
     matchDashboardApp paths = elem "dashboard" paths && elem "index.html" paths
@@ -181,6 +219,7 @@ getMiddleware ctx =
     signatureVerifiedRoutes = elem "fulcrum"
     -- Authentication request for the dashboard contains an hmac.
     hmacVerifiedRoutes paths = elem "oauth" paths || matchDashboardApp paths
+    webhookVerifiedRoutes = elem "webhook"
     -- Domain verification applies to all the hmac verified routes, except
     -- OAuth ones since shop doesn't exist yet during installation
     domainVerifiedRoutes paths =
@@ -192,6 +231,8 @@ getMiddleware ctx =
     verifySignatureRouted = routedMiddleware signatureVerifiedRoutes (verifyProxySignature ctx)
     verifyHmacRouted =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
+    verifyWebhookRouted =
+      routedMiddleware webhookVerifiedRoutes (verifyWebhookSignature ctx)
     validateShopDomainRouted =
       routedMiddleware domainVerifiedRoutes (validateShopDomain ctx)
     validateSessionRouted =

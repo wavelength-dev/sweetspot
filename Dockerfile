@@ -71,7 +71,7 @@ RUN apt-get --quiet update \
 COPY --from=build /root/.local/bin/sweetspot-exe .
 COPY --from=build /opt/build/migrations ./migrations
 COPY --from=build-fulcrum /opt/build/dist/* /opt/sweetspot/dist/fulcrum/
-COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
+#COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
 
 EXPOSE 8082/tcp
 CMD ["/opt/sweetspot/sweetspot-exe"]

@@ -15,7 +15,7 @@ import Fulcrum.Config (apiUrl) as Config
 import Fulcrum.Data (CampaignId(..), TestMap, decodeTestMaps)
 import Fulcrum.User (UserId(..))
 import Milkis (Fetch, Options, Response)
-import Milkis (URL(..), fetch, getMethod, json, makeHeaders, postMethod, statusCode, text) as Milkis
+import Milkis as Milkis
 import Milkis.Impl.Window (windowFetch) as MilkisImpl
 import Record.Unsafe.Union (unsafeUnion) as RecordUnsafe
 
@@ -73,6 +73,15 @@ postJson url json =
     , body: Argonaut.stringify json
     }
 
+putJson :: String -> Json -> Aff Response
+putJson url json =
+  fetch
+    (Milkis.URL url)
+    { method: Milkis.putMethod
+    , headers: Milkis.makeHeaders { "Content-Type": "application/json" }
+    , body: Argonaut.stringify json
+    }
+
 getServiceError :: Response -> Aff (Maybe String)
 getServiceError response = do
   eFBody <- Aff.attempt $ Milkis.json response
@@ -103,7 +112,7 @@ sendLog log = do
 
 sendCartToken :: UserId -> CartToken -> Aff (Either String Unit)
 sendCartToken uid token = do
-  response <- postJson cartTokenEndpoint reqBody
+  response <- putJson cartTokenEndpoint reqBody
   mMessage <- getServiceError response
   let
     status = Milkis.statusCode response

@@ -138,7 +138,7 @@ reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
 
 startCartTokenInterval :: Effect Unit
-startCartTokenInterval = setInterval 5000 cb *> pure unit
+startCartTokenInterval = setInterval (1000 * 30) cb *> pure unit
   where
   cb :: Effect Unit
   cb =

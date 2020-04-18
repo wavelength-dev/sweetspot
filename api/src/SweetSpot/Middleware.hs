@@ -106,7 +106,7 @@ verifyProxySignature ctx app req sendResponse =
     mSupplied = decodeUtf8Lenient <$> (L.find ((== "signature") . fst) params >>= snd)
     sansHMAC = filter ((/= "signature") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
-    checkable = mconcat joined
+    checkable = mconcat $ L.sort joined
     digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
     digestTxt = T.pack $ show digest
 

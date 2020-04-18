@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8bee9babc7df382d8df8c3df1f201020843cf2a4d4389f3f647020fa8b60d4f8
+-- hash: 341774872334f674353d13b97ee0ec5082b5df5d30ee27b89258824d48948ebe
 
 name:           sweetspot
 version:        0.1.0.0
@@ -59,6 +59,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -114,6 +115,7 @@ executable bridge-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -169,6 +171,7 @@ executable sweetspot-exe
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -230,6 +233,7 @@ test-suite sweetspot-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres

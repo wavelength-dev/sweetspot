@@ -92,6 +92,24 @@ verifyHmac ctx app req sendResponse =
     digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
     digestTxt = T.pack $ show digest
 
+verifyProxySignature :: AppCtx -> Middleware
+verifyProxySignature ctx app req sendResponse =
+  case (== digestTxt) <$> mSupplied of
+    Just True -> app req sendResponse
+    _ -> do
+      let appLogger = ctx ^. ctxLogger
+      L.warn' appLogger "Got invalid signature"
+      send400 "Invalid signature" req sendResponse
+  where
+    secret = ctx ^. ctxConfig . configShopifyClientSecret
+    params = queryString req
+    mSupplied = decodeUtf8Lenient <$> (L.find ((== "signature") . fst) params >>= snd)
+    sansHMAC = filter ((/= "signature") . fst) params
+    joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
+    checkable = mconcat joined
+    digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
+    digestTxt = T.pack $ show digest
+
 validateShopDomain :: AppCtx -> Middleware
 validateShopDomain ctx app req sendResponse = do
   let pool = ctx ^. ctxDbPool
@@ -153,17 +171,16 @@ getMiddleware ctx =
     -- So we can focus on testing handlers themselves
     TestBusiness -> gzipStatic
     -- Else everything
-    _ -> gzipStatic . verifyHmacRouted . validateShopDomainRouted . validateSessionRouted
+    _ -> gzipStatic . verifySignatureRouted . verifyHmacRouted . validateShopDomainRouted . validateSessionRouted
   where
     env = ctx ^. ctxConfig . configEnvironment
     matchDashboardApp paths = elem "dashboard" paths && elem "index.html" paths
     -- Fulcrum endpoints are called through Shopify app proxy, and so
-    -- need to be hmac validated. Also OAuth endpoints and the initial
-    -- authentication request for the dashboard contain an hmac.
-    hmacVerifiedRoutes paths =
-      elem "fulcrum" paths
-        || elem "oauth" paths
-        || matchDashboardApp paths
+    -- need to be hmac validated. For some reason this works slightly differently
+    -- from hmac query param for dashboard routes
+    signatureVerifiedRoutes = elem "fulcrum"
+    -- Authentication request for the dashboard contains an hmac.
+    hmacVerifiedRoutes paths = elem "oauth" paths || matchDashboardApp paths
     -- Domain verification applies to all the hmac verified routes, except
     -- OAuth ones since shop doesn't exist yet during installation
     domainVerifiedRoutes paths =
@@ -172,6 +189,7 @@ getMiddleware ctx =
     sessionVerifiedRoutes paths =
       elem "api" paths
         && elem "dashboard" paths
+    verifySignatureRouted = routedMiddleware signatureVerifiedRoutes (verifyProxySignature ctx)
     verifyHmacRouted =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
     validateShopDomainRouted =

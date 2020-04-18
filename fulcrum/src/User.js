@@ -1,6 +1,6 @@
 exports.readTrekkieToken = function() {
   try {
-    return window.user().traits().uniqToken;
+    return window.trekkie.user().traits().uniqToken;
   } catch (err) {
     return null;
   }

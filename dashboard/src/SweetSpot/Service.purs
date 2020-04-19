@@ -7,7 +7,6 @@ import Data.Either (Either(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Effect.Aff (attempt) as Aff
-import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow) as Unsafe
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
@@ -72,11 +71,7 @@ fetchResource resource (SessionId sessionId) =
           Right qs -> qs
 
 fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
-fetchCampaigns sessionId = do
-  eJsonResource <- fetchResource Campaigns sessionId
-  case eJsonResource of
-       Left errMsg -> pure $ Left errMsg
-       Right jsonResource -> liftEffect $ Codec.decodeUICampaigns jsonResource
+fetchCampaigns sessionId = fetchResource Campaigns sessionId <#> \eCampaigns -> eCampaigns >>= Codec.decodeUICampaigns
 
 fetchProducts :: SessionId -> Aff (Either String (Array Product))
-fetchProducts sessionId = fetchResource Products sessionId >>= \rwCmp -> pure (rwCmp >>= Codec.decodeProducts)
+fetchProducts sessionId = fetchResource Products sessionId <#> \eProducts -> eProducts >>= Codec.decodeProducts

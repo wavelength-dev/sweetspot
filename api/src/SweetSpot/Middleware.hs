@@ -3,7 +3,7 @@ module SweetSpot.Middleware
   )
 where
 
-import Crypto.Hash (Digest, SHA256)
+import Crypto.Hash (Digest, SHA256, digestFromByteString)
 import Crypto.MAC.HMAC
 import Data.ByteArray.Encoding (Base (..), convertToBase)
 import qualified Data.List as L
@@ -79,39 +79,51 @@ send302 msg req sendResponse =
 
 verifyHmac :: AppCtx -> Middleware
 verifyHmac ctx app req sendResponse =
-  case (== digestTxt) <$> mSupplied of
+  case (== digest) <$> mSupplied of
     Just True -> app req sendResponse
-    _ -> do
-      let appLogger = ctx ^. ctxLogger
-      L.warn' appLogger "Got invalid hmac digest"
+    Just False -> do
+      L.warn' appLogger "Invalid hmac digest"
       send400 "Invalid HMAC digest" req sendResponse
+    Nothing -> do
+      L.warn' appLogger "Missing hmac digest"
+      send400 "Missing HMAC digest" req sendResponse
   where
+    appLogger = ctx ^. ctxLogger
     secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
-    mSupplied = decodeUtf8Lenient <$> (L.find ((== "hmac") . fst) params >>= snd)
+    mSupplied :: Maybe (Digest SHA256)
+    mSupplied =
+      L.find ((== "hmac") . fst) params
+        >>= snd
+        >>= digestFromByteString
     sansHMAC = filter ((/= "hmac") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
     checkable = BS.intercalate "&" joined
     digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
-    digestTxt = T.pack $ show digest
 
 verifyProxySignature :: AppCtx -> Middleware
 verifyProxySignature ctx app req sendResponse =
-  case (== digestTxt) <$> mSupplied of
+  case (== digest) <$> mSupplied of
     Just True -> app req sendResponse
-    _ -> do
-      let appLogger = ctx ^. ctxLogger
-      L.warn' appLogger "Got invalid signature"
+    Just False -> do
+      L.warn' appLogger "Invalid signature"
       send400 "Invalid signature" req sendResponse
+    Nothing -> do
+      L.warn' appLogger "Missing signature"
+      send400 "Missing signature" req sendResponse
   where
+    appLogger = ctx ^. ctxLogger
     secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
-    mSupplied = decodeUtf8Lenient <$> (L.find ((== "signature") . fst) params >>= snd)
+    mSupplied :: Maybe (Digest SHA256)
+    mSupplied =
+      L.find ((== "signature") . fst) params
+        >>= snd
+        >>= digestFromByteString
     sansHMAC = filter ((/= "signature") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
     checkable = mconcat $ L.sort joined
     digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
-    digestTxt = T.pack $ show digest
 
 verifyWebhookSignature :: AppCtx -> Middleware
 verifyWebhookSignature ctx app req sendResponse = do

@@ -1,16 +1,21 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
-import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
+
 import Data.Argonaut (Json, decodeJson, getField)
 import Data.Argonaut.Decode ((.:))
+import Data.DateTime (DateTime(..))
 import Data.Either (Either(..))
+import Data.Formatter.DateTime as Formatter
 import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Maybe (fromJust) as Maybe
+import Data.Profunctor (unwrapIso)
 import Data.Traversable (sequence, traverse)
 import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
+import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
+import Unsafe.Coerce (unsafeCoerce)
 
 decodeInfResult :: Json -> Either String InfResult
 decodeInfResult json = do
@@ -62,53 +67,36 @@ decodeUITreatment json = do
         , _uiTreatmentVariants: vs
         }
 
+-- Brittle parser of ISO8601 / RFC3339
+parseDateTime :: Maybe String -> Either String (Maybe DateTime)
+parseDateTime Nothing = Right Nothing
+parseDateTime (Just encodedDateTime) =
+  Formatter.unformatDateTime "YYYY-MM-DDTHH:mm:ssZ" encodedDateTime
+  <#> Just
 
-decodeUICampaign :: Json -> Effect (Either String UICampaign)
+decodeUICampaign :: Json -> Either String UICampaign
 decodeUICampaign json = do
-  e_uiCampaignStart <- case (decodeJson json >>= \obj -> getField obj "_uiCampaignStart") of
-    Left err -> pure $ Left err
-    Right (Nothing) -> pure $ Right Nothing
-    Right (Just start) -> do
-      startJSDate <- JSDate.parse start
-      let
-        startDateTime = JSDate.toDateTime startJSDate # (unsafePartial Maybe.fromJust)
-      pure $ Right $ Just startDateTime
-  e_uiCampaignEnd <- case (decodeJson json >>= \obj -> getField obj "_uiCampaignEnd") of
-    Left err -> pure $ Left err
-    Right (Nothing) -> pure $ Right Nothing
-    Right (Just end) -> do
-      endJSDate <- JSDate.parse end
-      let
-        endDateTime = JSDate.toDateTime endJSDate # (unsafePartial Maybe.fromJust)
-      pure $ Right $ Just endDateTime
+  obj <- decodeJson json
+  _uiCampaignId <- obj .: "_uiCampaignId"
+  _uiCampaignName <- obj .: "_uiCampaignName"
+  _uiCampaignStart <- obj .: "_uiCampaignStart" >>= parseDateTime
+  _uiCampaignEnd <- obj .: "_uiCampaignEnd" >>= parseDateTime
+  _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult
+  _uiCampaignCtrlTreatment <- obj .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment
+  _uiCampaignTestTreatment <- obj .: "_uiCampaignTestTreatment" >>= decodeUITreatment
   pure
-    $ do
-        _uiCampaignStart <- e_uiCampaignStart
-        _uiCampaignEnd <- e_uiCampaignEnd
-        o <- decodeJson json
-        _uiCampaignId <- o .: "_uiCampaignId"
-        _uiCampaignName <- o .: "_uiCampaignName"
-        _uiCampaignLift <- o .: "_uiCampaignLift" >>= decodeInfResult
-        _uiCampaignCtrlTreatment <- o .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment
-        _uiCampaignTestTreatment <- o .: "_uiCampaignTestTreatment" >>= decodeUITreatment
-        pure
-          $ UICampaign
-              { _uiCampaignId
-              , _uiCampaignName
-              , _uiCampaignStart
-              , _uiCampaignEnd
-              , _uiCampaignLift
-              , _uiCampaignCtrlTreatment
-              , _uiCampaignTestTreatment
-              }
+    $ UICampaign
+        { _uiCampaignId
+        , _uiCampaignName
+        , _uiCampaignStart
+        , _uiCampaignEnd
+        , _uiCampaignLift
+        , _uiCampaignCtrlTreatment
+        , _uiCampaignTestTreatment
+        }
 
-decodeUICampaigns :: Json -> Effect (Either String (Array UICampaign))
-decodeUICampaigns json = do
-  let
-    eArray = decodeJson json
-  case eArray of
-    Left errMsg -> pure $ Left errMsg
-    Right array -> traverse decodeUICampaign array >>= sequence >>> pure
+decodeUICampaigns :: Json -> Either String (Array UICampaign)
+decodeUICampaigns json = decodeJson json >>= traverse decodeUICampaign
 
 decodeImage :: Json -> Either String Image
 decodeImage json = do

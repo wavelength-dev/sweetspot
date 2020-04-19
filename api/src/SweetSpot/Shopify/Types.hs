@@ -5,7 +5,7 @@ module SweetSpot.Shopify.Types where
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Time (LocalTime)
+import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
 import SweetSpot.Data.Common
@@ -91,7 +91,7 @@ data Order
   = Order
       { _orderId :: OrderId,
         _orderCartToken :: CartToken,
-        _orderCreatedAt :: LocalTime,
+        _orderCreatedAt :: UTCTime,
         _orderLineItems :: [LineItem]
       }
 

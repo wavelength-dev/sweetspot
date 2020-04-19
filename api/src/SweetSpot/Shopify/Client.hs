@@ -125,7 +125,7 @@ instance MonadShopify AppM where
       payload =
         CreateWebhookReq $
           CreateWebhookData
-            { topic = "checkouts/create",
+            { topic = "orders/create",
               address = "https://app-staging.sweetspot.dev/api/" <> hookPath,
               format = "json"
             }

@@ -5,3 +5,5 @@ terraform/
 injectable/.psci_modules/
 injectable/output/
 injectable/.spago/
+dashboard-ts/
+fulcrum-ts/

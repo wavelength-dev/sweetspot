@@ -1,13 +1,4 @@
-FROM gcr.io/sweetspot-255522/sweetspot-build:latest AS build
-WORKDIR /opt/build
-
-# We depend on postgres
-RUN apt-get update --quiet && apt-get install --yes --quiet libpq-dev
-
-# Install deps first for improved caching
-COPY ./api/stack.yaml .
-COPY ./api/sweetspot.cabal .
-RUN stack build --only-dependencies --verbosity warn
+FROM gcr.io/sweetspot-255522/sweetspot-build AS build-api
 
 # Copy code and build our binary
 COPY ./api /opt/build
@@ -15,7 +6,6 @@ RUN stack build --verbosity warn --copy-bins
 
 # Build Fulcrum
 FROM node:13 AS build-fulcrum
-WORKDIR /opt/build
 
 # PureScript installer depends on libtinfo.so.5
 RUN apt update && apt install --yes libncurses5
@@ -36,7 +26,6 @@ RUN uglifyjs --compress --mangle --output ./dist/fulcrum.min.js ./dist/fulcrum.j
 
 # Build Dashboard
 FROM node:13 AS build-dashboard
-WORKDIR /opt/build
 
 # PureScript installer depends on libtinfo.so.5
 RUN apt update && apt install --yes libncurses5
@@ -68,8 +57,8 @@ RUN apt-get --quiet update \
   libpq-dev \
   # Shopify ca auth is unknown without installing this package
   ca-certificates
-COPY --from=build /root/.local/bin/sweetspot-exe .
-COPY --from=build /opt/build/migrations ./migrations
+COPY --from=build-api /root/.local/bin/sweetspot-exe .
+COPY --from=build-api /opt/build/migrations ./migrations
 COPY --from=build-fulcrum /opt/build/dist/* /opt/sweetspot/dist/fulcrum/
 #COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
 

@@ -1,15 +1,21 @@
 module SweetSpot.Service where
 
 import Prelude
-import Data.Argonaut (decodeJson, jsonParser, Json)
+
+import Data.Argonaut (Json, jsonParser)
 import Data.Either (Either(..))
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
+import Effect.Aff (attempt) as Aff
+import Effect.Class (liftEffect)
+import Effect.Exception.Unsafe (unsafeThrow) as Unsafe
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.Data.Api (Product, UICampaign)
-import SweetSpot.Data.Codec as Codec
+import SweetSpot.Data.Codec (decodeProducts, decodeUICampaigns) as Codec
+import SweetSpot.QueryString (buildQueryString) as QueryString
 import SweetSpot.Session (SessionId(..))
 
 fetch :: Fetch
@@ -26,24 +32,51 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
   combinedOptions :: Record Options
   combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
-fetchResource :: forall t. String -> (Json -> Either String t) -> Aff (Either String t)
-fetchResource route decoder = do
-  res <- getJson route {}
-  text <- Milkis.text res
-  let
-    status = Milkis.statusCode res
-  pure
-    if status == 200 || status == 201 then
-      (jsonParser text >>= decodeJson >>= decoder)
-    else
-      (Left (show status <> " - " <> (textToMessage text)))
-  where
-  textToMessage "" = "Empty body"
+serviceUrl :: String
+serviceUrl = "//localhost:8082/api/dashboard/"
 
-  textToMessage str = str
+data Resource
+  = Campaigns
+  | Products
+
+getResourceRoute :: Resource -> String
+getResourceRoute Campaigns = serviceUrl <> "campaigns"
+
+getResourceRoute Products = serviceUrl <> "products"
+
+fetchResource :: Resource -> SessionId -> Aff (Either String Json)
+fetchResource resource (SessionId sessionId) =
+  Aff.attempt (getJson (route <> queryString) {})
+    >>= case _ of
+        Left requestErrMsg -> requestErrMsg # show >>> Left >>> pure
+        Right res -> do
+          bodyText <- Milkis.text res
+          pure
+            if status == 200 || status == 201 then
+              jsonParser bodyText
+            else
+              Left (show status <> " - " <> textToMessage bodyText)
+          where
+          status = Milkis.statusCode res
+
+          textToMessage "" = "Empty body"
+
+          textToMessage str = "Body: " <> str
+  where
+  route = getResourceRoute resource
+
+  queryString =
+    QueryString.buildQueryString [ Tuple "session" sessionId ]
+      # case _ of
+          Left errMsg -> Unsafe.unsafeThrow errMsg
+          Right qs -> qs
 
 fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
-fetchCampaigns (SessionId session) = fetchResource ("//localhost:8082/api/dashboard/campaigns?session=" <> session) Codec.decodeUICampaigns
+fetchCampaigns sessionId = do
+  eJsonResource <- fetchResource Campaigns sessionId
+  case eJsonResource of
+       Left errMsg -> pure $ Left errMsg
+       Right jsonResource -> liftEffect $ Codec.decodeUICampaigns jsonResource
 
 fetchProducts :: SessionId -> Aff (Either String (Array Product))
-fetchProducts (SessionId session) = fetchResource ("//localhost:8082/api/dashboard/products?session=" <> session) Codec.decodeProducts
+fetchProducts sessionId = fetchResource Products sessionId >>= \rwCmp -> pure (rwCmp >>= Codec.decodeProducts)

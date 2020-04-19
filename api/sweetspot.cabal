@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 341774872334f674353d13b97ee0ec5082b5df5d30ee27b89258824d48948ebe
+-- hash: 612baabb60c3a22ec9c54299b14c7160840618955b68edecd7e8d116096bcbce
 
 name:           sweetspot
 version:        0.1.0.0
@@ -59,7 +59,6 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
-    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -77,6 +76,7 @@ library
     , lens
     , lens-aeson
     , load-env >=0.2.1.0
+    , memory
     , mtl
     , mwc-random
     , postgresql-simple
@@ -115,7 +115,6 @@ executable bridge-exe
   build-depends:
       aeson
     , base >=4.7 && <5
-    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -133,6 +132,7 @@ executable bridge-exe
     , lens
     , lens-aeson
     , load-env >=0.2.1.0
+    , memory
     , mtl
     , mwc-random
     , postgresql-simple
@@ -171,7 +171,6 @@ executable sweetspot-exe
   build-depends:
       aeson
     , base >=4.7 && <5
-    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -189,6 +188,7 @@ executable sweetspot-exe
     , lens
     , lens-aeson
     , load-env >=0.2.1.0
+    , memory
     , mtl
     , mwc-random
     , postgresql-simple
@@ -233,7 +233,6 @@ test-suite sweetspot-test
   build-depends:
       aeson
     , base >=4.7 && <5
-    , base64-bytestring
     , beam-core
     , beam-migrate
     , beam-postgres
@@ -251,6 +250,7 @@ test-suite sweetspot-test
     , lens
     , lens-aeson
     , load-env >=0.2.1.0
+    , memory
     , mtl
     , mwc-random
     , postgresql-simple

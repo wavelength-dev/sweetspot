@@ -45,9 +45,9 @@ RUN yarn install
 # Compile, test, bundle and uglify our scripts
 COPY ./dashboard/src ./src
 COPY ./dashboard/test ./test
-# RUN spago test
-# RUN spago build
-# RUN parcel build --public-url /dashboard src/index.html
+RUN spago test
+RUN spago build
+RUN parcel build --public-url /dashboard src/index.html
 
 # Leave only the build artifacts in the final image
 FROM debian:buster-slim
@@ -60,7 +60,7 @@ RUN apt-get --quiet update \
 COPY --from=build-api /root/.local/bin/sweetspot-exe .
 COPY --from=build-api /opt/build/migrations ./migrations
 COPY --from=build-fulcrum /opt/build/dist/* /opt/sweetspot/dist/fulcrum/
-#COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
+COPY --from=build-dashboard /opt/build/dist/* /opt/sweetspot/dist/dashboard/
 
 EXPOSE 8082/tcp
 CMD ["/opt/sweetspot/sweetspot-exe"]

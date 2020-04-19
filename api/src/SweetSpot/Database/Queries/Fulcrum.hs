@@ -14,6 +14,7 @@ import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
 import RIO
+import RIO.Time
 import SweetSpot.AppM (AppM (..))
 import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common
@@ -213,6 +214,8 @@ insertLineItem conn eid item =
 
 insertOrder' :: ShopId -> CampaignId -> UserId -> Order -> AppM ()
 insertOrder' sid cid uid order = withConn $ \conn -> do
+  tz <- getCurrentTimeZone
+  let createdAt = utcToLocalTime tz (order ^. orderCreatedAt)
   [event] <-
     runBeamPostgres conn
       $ BeamExt.runInsertReturningList
@@ -220,7 +223,7 @@ insertOrder' sid cid uid order = withConn $ \conn -> do
       $ insertExpressions
         [ CheckoutEvent
             { _cevId = eventId_,
-              _cevCreated = val_ $ order ^. orderCreatedAt,
+              _cevCreated = val_ createdAt,
               _cevCmpId = val_ $ CampaignKey cid,
               _cevOrderId = val_ $ order ^. orderId,
               _cevShopId = val_ $ ShopKey sid,

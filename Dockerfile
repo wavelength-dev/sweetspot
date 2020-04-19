@@ -1,4 +1,5 @@
 FROM gcr.io/sweetspot-255522/sweetspot-build AS build-api
+WORKDIR /opt/build
 
 # Copy code and build our binary
 COPY ./api /opt/build

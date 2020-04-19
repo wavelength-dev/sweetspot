@@ -1,12 +1,16 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
-import SweetSpot.Data.Api
-
-import Data.Argonaut (decodeJson, Json)
+import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
+import Data.Argonaut (Json, decodeJson, getField)
 import Data.Argonaut.Decode ((.:))
-import Data.Either (Either)
-import Data.Traversable (traverse)
+import Data.Either (Either(..))
+import Data.JSDate as JSDate
+import Data.Maybe (Maybe(..))
+import Data.Maybe (fromJust) as Maybe
+import Data.Traversable (sequence, traverse)
+import Effect (Effect)
+import Partial.Unsafe (unsafePartial)
 
 decodeInfResult :: Json -> Either String InfResult
 decodeInfResult json = do
@@ -59,34 +63,52 @@ decodeUITreatment json = do
         }
 
 
-decodeUICampaign :: Json -> Either String UICampaign
+decodeUICampaign :: Json -> Effect (Either String UICampaign)
 decodeUICampaign json = do
-  o <- decodeJson json
-  construct
-    <$> o .: "_uiCampaignId"
-    <*> o .: "_uiCampaignName"
-    <*> o .: "_uiCampaignStart"
-    <*> o .: "_uiCampaignEnd"
-    <*> (o .: "_uiCampaignLift" >>= decodeInfResult)
-    <*> (o .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment)
-    <*> (o .: "_uiCampaignTestTreatment" >>= decodeUITreatment)
+  e_uiCampaignStart <- case (decodeJson json >>= \obj -> getField obj "_uiCampaignStart") of
+    Left err -> pure $ Left err
+    Right (Nothing) -> pure $ Right Nothing
+    Right (Just start) -> do
+      startJSDate <- JSDate.parse start
+      let
+        startDateTime = JSDate.toDateTime startJSDate # (unsafePartial Maybe.fromJust)
+      pure $ Right $ Just startDateTime
+  e_uiCampaignEnd <- case (decodeJson json >>= \obj -> getField obj "_uiCampaignEnd") of
+    Left err -> pure $ Left err
+    Right (Nothing) -> pure $ Right Nothing
+    Right (Just end) -> do
+      endJSDate <- JSDate.parse end
+      let
+        endDateTime = JSDate.toDateTime endJSDate # (unsafePartial Maybe.fromJust)
+      pure $ Right $ Just endDateTime
+  pure
+    $ do
+        _uiCampaignStart <- e_uiCampaignStart
+        _uiCampaignEnd <- e_uiCampaignEnd
+        o <- decodeJson json
+        _uiCampaignId <- o .: "_uiCampaignId"
+        _uiCampaignName <- o .: "_uiCampaignName"
+        _uiCampaignLift <- o .: "_uiCampaignLift" >>= decodeInfResult
+        _uiCampaignCtrlTreatment <- o .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment
+        _uiCampaignTestTreatment <- o .: "_uiCampaignTestTreatment" >>= decodeUITreatment
+        pure
+          $ UICampaign
+              { _uiCampaignId
+              , _uiCampaignName
+              , _uiCampaignStart
+              , _uiCampaignEnd
+              , _uiCampaignLift
+              , _uiCampaignCtrlTreatment
+              , _uiCampaignTestTreatment
+              }
 
-  where
-    construct id name start end lift ctrlTreatment testTreatment =
-      UICampaign
-        { _uiCampaignId: id
-        , _uiCampaignName: name
-        , _uiCampaignStart: start
-        , _uiCampaignEnd: end
-        , _uiCampaignLift: lift
-        , _uiCampaignCtrlTreatment: ctrlTreatment
-        , _uiCampaignTestTreatment: testTreatment
-        }
-
-decodeUICampaigns :: Json -> Either String (Array UICampaign)
+decodeUICampaigns :: Json -> Effect (Either String (Array UICampaign))
 decodeUICampaigns json = do
-  arr <- decodeJson json
-  traverse decodeUICampaign arr
+  let
+    eArray = decodeJson json
+  case eArray of
+    Left errMsg -> pure $ Left errMsg
+    Right array -> traverse decodeUICampaign array >>= sequence >>> pure
 
 decodeImage :: Json -> Either String Image
 decodeImage json = do

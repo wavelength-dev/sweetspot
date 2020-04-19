@@ -1,19 +1,21 @@
 module SweetSpot.ExperimentListPage where
 
 import Prelude
+import Data.Array (fold)
+import Data.DateTime (DateTime)
+import Data.Formatter.DateTime (FormatterCommand(..))
+import Data.Formatter.DateTime (format) as Formatter
+import Data.List (List(..), (:))
 import Data.Nullable (notNull)
 import Effect (Effect)
 import React.Basic.DOM (css, div, li, text, ul) as R
 import React.Basic.Hooks (JSX, ReactComponent, component, element)
-import SweetSpot.Shopify (button, heading, page, subheading) as Shopify
+import SweetSpot.Shopify (button, heading, page) as Shopify
 
-data ExperimentStatus
-  = Running
-  | Done
+data ExperimentStatus = Draft | Starting DateTime | Running DateTime | Finished DateTime
 
 type ExperimentCardProps
   = { title :: String
-    , creationDate :: String
     , status :: ExperimentStatus
     }
 
@@ -28,8 +30,10 @@ experimentStatus status =
           { padding: "0.25em 1.125em"
           , background:
               case status of
-                Running -> "#B4E0FA"
-                Done -> "#BBE5B3"
+                Draft -> "#DFE3E8"
+                Starting _ -> "#DFE3E8"
+                Running _ -> "#B4E0FA"
+                Finished _ -> "#BBE5B3"
           , border: "0.125em solid #FFFFFF"
           , borderRadius: "6.25em"
           , fontFamily: "SF Pro Text"
@@ -41,13 +45,20 @@ experimentStatus status =
           }
     , children:
         [ R.text case status of
-            Running -> "Running"
-            Done -> "Done"
+            Draft -> "Running"
+            Starting startDateTime -> "Starting on " <> formatDate startDateTime
+            Running startDateTime -> "Running since " <> formatDate startDateTime
+            Finished endDateTime -> "Finished on " <> formatDate endDateTime
         ]
     }
+    where formatDate dateTime = fold [
+      Formatter.format (MonthShort : Nil) dateTime
+      , " "
+      , Formatter.format (DayOfMonth : Nil) dateTime
+      ]
 
 experimentCard :: ExperimentCardProps -> JSX
-experimentCard { creationDate, status, title } =
+experimentCard { status, title } =
   R.div
     { className: "price-experiment"
     , style:
@@ -72,11 +83,7 @@ experimentCard { creationDate, status, title } =
                 [ element Shopify.heading { element: "h2", children: title }
                 , R.div
                     { style: R.css { display: "flex", alignItems: "center" }
-                    , children:
-                        [ element Shopify.subheading { element: "h3", children: creationDate }
-                        , spacer "1.125em"
-                        , experimentStatus status
-                        ]
+                    , children: [ experimentStatus status ]
                     }
                 ]
             }

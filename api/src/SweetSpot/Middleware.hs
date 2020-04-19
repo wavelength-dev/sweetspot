@@ -5,7 +5,7 @@ where
 
 import Crypto.Hash (Digest, SHA256)
 import Crypto.MAC.HMAC
-import qualified Data.ByteString.Base64 as Base64
+import Data.ByteArray.Encoding (Base (..), convertToBase)
 import qualified Data.List as L
 import Data.Maybe (mapMaybe)
 import Network.HTTP.Types
@@ -17,12 +17,11 @@ import Network.HTTP.Types
 import Network.Wai
   ( Application,
     Middleware,
-    Request,
-    getRequestBodyChunk,
     queryString,
     rawQueryString,
     requestHeaders,
     responseLBS,
+    strictRequestBody,
   )
 import Network.Wai.Middleware.Cors
   ( cors,
@@ -116,13 +115,16 @@ verifyProxySignature ctx app req sendResponse =
 
 verifyWebhookSignature :: AppCtx -> Middleware
 verifyWebhookSignature ctx app req sendResponse = do
-  body <- readBody req ""
+  body <- BSL.toStrict <$> strictRequestBody req
   let digest = hmacGetDigest $ hmac (encodeUtf8 secret) body :: Digest SHA256
-      encoded = Base64.encode . fromString . show $ digest
+      encoded = convertToBase Base64 digest
   case (== encoded) <$> mSuppliedSignature of
     Just True -> app req sendResponse
-    _ -> do
+    Just False -> do
       L.warn' appLogger "Got invalid webhook signature"
+      send400 "Invalid webhook signature" req sendResponse
+    Nothing -> do
+      L.warn' appLogger "Missing webhook signature"
       send400 "Invalid webhook signature" req sendResponse
   where
     appLogger = ctx ^. ctxLogger
@@ -131,12 +133,6 @@ verifyWebhookSignature ctx app req sendResponse = do
       requestHeaders req
         & L.find ((== "X-Shopify-Hmac-SHA256") . fst)
         & fmap snd
-    readBody :: Request -> ByteString -> IO ByteString
-    readBody req acc = do
-      chunk <- getRequestBodyChunk req
-      if chunk == BS.empty
-        then return acc
-        else readBody req (acc <> chunk)
 
 validateShopDomain :: AppCtx -> Middleware
 validateShopDomain ctx app req sendResponse = do

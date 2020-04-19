@@ -21,7 +21,6 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - aeson
-- base64-bytestring
 - beam-core
 - beam-migrate
 - beam-postgres
@@ -39,6 +38,7 @@ dependencies:
 - lens
 - lens-aeson
 - load-env >= 0.2.1.0
+- memory
 - mtl
 - mwc-random
 - postgresql-simple

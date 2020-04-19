@@ -15,7 +15,7 @@ data Route = Home | Campaign String
 
 instance showRoute :: Show Route where
   show Home = "Home"
-  show (Campaign cmpId) = "Campaign" <> cmpId
+  show (Campaign campaignId) = "Campaign" <> campaignId
 
 derive instance genericRoute :: Generic Route _
 
@@ -26,8 +26,8 @@ route = root $ G.sum
   }
 
 hoistRouter ::  (Route -> Effect Unit) -> Effect (Effect Unit)
-hoistRouter navigateTo =
-  matchesWith (parse route) \_ new ->
-    case new of
-      Home -> navigateTo Home
-      (Campaign s) -> navigateTo (Campaign s)
+hoistRouter setRoute =
+  matchesWith (parse route) \_ newRoute ->
+    case newRoute of
+      Home -> setRoute Home
+      Campaign campaignId -> setRoute (Campaign campaignId)

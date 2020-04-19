@@ -152,7 +152,9 @@ validateShopDomain ctx app req sendResponse = do
       appLogger = ctx ^. ctxLogger
       params = queryString req
       mSuppliedDomain =
-        ShopDomain . decodeUtf8Lenient <$> (snd =<< L.find ((== "shop") . fst) params)
+        L.find ((== "shop") . fst) params
+          >>= snd
+          & fmap (ShopDomain . decodeUtf8Lenient)
   L.info' appLogger $ T.pack . show $ params
   case mSuppliedDomain of
     Just domain -> do
@@ -172,7 +174,9 @@ validateSession ctx app req sendResponse = do
       appLogger = ctx ^. ctxLogger
       params = queryString req
       mSuppliedId =
-        SessionId . decodeUtf8Lenient <$> (snd =<< L.find ((== "session") . fst) params)
+        L.find ((== "session") . fst) params
+          >>= snd
+          & fmap (SessionId . decodeUtf8Lenient)
   L.info' appLogger $ T.pack . show $ params
   case mSuppliedId of
     Just id -> do

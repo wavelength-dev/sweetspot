@@ -8,14 +8,20 @@ module SweetSpot.Database.Schema
     nonce_,
     shopId_,
     productVariant_,
+    nowUTC_,
   )
 where
 
 import Control.Arrow ((>>>))
+import Data.Time (UTCTime)
 import Data.UUID.Types (UUID)
-import Database.Beam (DatabaseSettings)
+import Database.Beam (DatabaseSettings, QExpr)
+import Database.Beam.Backend.SQL.SQL92
+  ( timestampType,
+  )
 import Database.Beam.Migrate
   ( CheckedDatabaseSettings,
+    HasDefaultSqlDataType (..),
     evaluateDatabase,
     migrationStep,
     unCheckDatabase,
@@ -23,6 +29,7 @@ import Database.Beam.Migrate
 import Database.Beam.Postgres
   ( Postgres,
     getPgExtension,
+    now_,
   )
 import Database.Beam.Postgres.PgCrypto
   ( PgCrypto (..),
@@ -56,6 +63,12 @@ shopId_ = unsafeRetype pgGenUUID_
 
 productVariant_ :: QGenExpr ctxt Postgres s PVariantId
 productVariant_ = unsafeRetype pgGenUUID_
+
+nowUTC_ :: QExpr Postgres s UTCTime
+nowUTC_ = unsafeRetype now_
+
+instance HasDefaultSqlDataType Postgres UTCTime where
+  defaultSqlDataType _ _ _ = timestampType Nothing True
 
 migration =
   migrationStep "Initial schema" V1.migration

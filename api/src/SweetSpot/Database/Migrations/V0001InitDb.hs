@@ -4,11 +4,12 @@
 module SweetSpot.Database.Migrations.V0001InitDb where
 
 import Data.Aeson (Value)
-import Data.Time (LocalTime)
+import Data.Time (UTCTime)
 import Data.UUID.Types (UUID)
 import Database.Beam
 import Database.Beam.Backend.SQL.SQL92
   ( numericType,
+    timestampType,
   )
 import Database.Beam.Migrate
 import Database.Beam.Postgres
@@ -28,7 +29,7 @@ import SweetSpot.Data.Common
 data ShopT f
   = Shop
       { _shopId :: Columnar f ShopId,
-        _shopCreated :: Columnar f LocalTime,
+        _shopCreated :: Columnar f UTCTime,
         _shopDomain :: Columnar f ShopDomain,
         _shopOAuthToken :: Columnar f Text
       }
@@ -79,7 +80,7 @@ InstallNonce (LensFor installShopDomain) (LensFor installNonce) = tableLenses
 data UserT f
   = User
       { _usrId :: Columnar f UserId,
-        _usrCreated :: Columnar f LocalTime
+        _usrCreated :: Columnar f UTCTime
       }
   deriving (Generic, Beamable)
 
@@ -107,8 +108,8 @@ data CampaignT f
       { _cmpId :: Columnar f CampaignId,
         _cmpShopId :: PrimaryKey ShopT f,
         _cmpName :: Columnar f Text,
-        _cmpStart :: Columnar f (Maybe LocalTime),
-        _cmpEnd :: Columnar f (Maybe LocalTime)
+        _cmpStart :: Columnar f (Maybe UTCTime),
+        _cmpEnd :: Columnar f (Maybe UTCTime)
       }
   deriving (Generic, Beamable)
 
@@ -220,7 +221,7 @@ UserExperiment (UserKey (LensFor ueUserId)) (CampaignKey (LensFor ueCmpId)) (Len
 data CheckoutEventT f
   = CheckoutEvent
       { _cevId :: Columnar f EventId,
-        _cevCreated :: Columnar f LocalTime,
+        _cevCreated :: Columnar f UTCTime,
         _cevCmpId :: PrimaryKey CampaignT f,
         _cevOrderId :: Columnar f OrderId,
         _cevShopId :: PrimaryKey ShopT f,
@@ -355,6 +356,9 @@ uuidType = DataType pgUuidType
 nonceType :: DataType Postgres Nonce
 nonceType = DataType pgUuidType
 
+ts :: DataType Postgres UTCTime
+ts = DataType (timestampType Nothing True)
+
 -- | ---------------------------------------------------------------------------
 -- | Migration
 -- | ---------------------------------------------------------------------------
@@ -374,7 +378,7 @@ migration () =
           _shopCreated =
             field
               "created"
-              timestamptz
+              ts
               notNull,
           _shopDomain =
             field
@@ -412,7 +416,7 @@ migration () =
           _usrCreated =
             field
               "created"
-              timestamptz
+              ts
               notNull
         }
     <*> createTable
@@ -438,12 +442,12 @@ migration () =
           _cmpStart =
             field
               "start_date"
-              ( maybeType timestamptz
+              ( maybeType ts
               ),
           _cmpEnd =
             field
               "end_date"
-              (maybeType timestamptz)
+              (maybeType ts)
         }
     <*> createTable
       "product_variants"
@@ -537,7 +541,7 @@ migration () =
           _cevCreated =
             field
               "created"
-              timestamptz
+              ts
               notNull,
           _cevCmpId =
             CampaignKey

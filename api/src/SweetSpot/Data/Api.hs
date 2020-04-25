@@ -13,7 +13,7 @@ import Data.Aeson
     withObject,
   )
 import Data.Scientific (Scientific)
-import Data.Time (LocalTime)
+import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
 import RIO.Partial (read)
@@ -164,8 +164,8 @@ data UICampaign
   = UICampaign
       { _uiCampaignId :: !CampaignId,
         _uiCampaignName :: !Text,
-        _uiCampaignStart :: !(Maybe LocalTime),
-        _uiCampaignEnd :: !(Maybe LocalTime),
+        _uiCampaignStart :: !(Maybe UTCTime),
+        _uiCampaignEnd :: !(Maybe UTCTime),
         _uiCampaignLift :: !InfResult,
         _uiCampaignCtrlTreatment :: !UITreatment,
         _uiCampaignTestTreatment :: !UITreatment

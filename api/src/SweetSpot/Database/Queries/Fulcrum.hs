@@ -14,7 +14,6 @@ import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
 import RIO
-import RIO.Time
 import SweetSpot.AppM (AppM (..))
 import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common
@@ -104,7 +103,7 @@ insertUser conn uid = do
         runBeamPostgres conn
           $ BeamExt.runInsertReturningList
           $ insert (db ^. users)
-          $ insertExpressions [User (val_ uid) now_]
+          $ insertExpressions [User (val_ uid) nowUTC_]
       return $ user ^. usrId
 
 assignUserToCampaign :: Connection -> (UserId, CampaignId, Int) -> IO CampaignId
@@ -169,8 +168,8 @@ getUserTestMaps' conn uid = do
     _ -> return []
 
 isCampaignActive cmp =
-  maybe_ false_ (<. now_) (cmp ^. cmpStart)
-    &&. maybe_ false_ (>. now_) (cmp ^. cmpEnd)
+  maybe_ false_ (<. nowUTC_) (cmp ^. cmpStart)
+    &&. maybe_ false_ (>. nowUTC_) (cmp ^. cmpEnd)
   where
     false_ = val_ False
 
@@ -214,8 +213,6 @@ insertLineItem conn eid item =
 
 insertOrder' :: ShopId -> CampaignId -> UserId -> Order -> AppM ()
 insertOrder' sid cid uid order = withConn $ \conn -> do
-  tz <- getCurrentTimeZone
-  let createdAt = utcToLocalTime tz (order ^. orderCreatedAt)
   [event] <-
     runBeamPostgres conn
       $ BeamExt.runInsertReturningList
@@ -223,7 +220,7 @@ insertOrder' sid cid uid order = withConn $ \conn -> do
       $ insertExpressions
         [ CheckoutEvent
             { _cevId = eventId_,
-              _cevCreated = val_ createdAt,
+              _cevCreated = val_ $ order ^. orderCreatedAt,
               _cevCmpId = val_ $ CampaignKey cid,
               _cevOrderId = val_ $ order ^. orderId,
               _cevShopId = val_ $ ShopKey sid,

@@ -4,7 +4,7 @@ set -e
 # get docker cli
 apk add docker
 
-created=$(docker inspect -f '{{.Created}}' gcr.io/$PROJECT_ID/sweetspot-build)
+created=$(docker inspect -f '{{.Created}}' gcr.io/sweetspot-255522/sweetspot-build)
 last_run=$(date -d$created +%s)
 now=$(date +%s)
 seconds_since_last_run=$(($now - $last_run))

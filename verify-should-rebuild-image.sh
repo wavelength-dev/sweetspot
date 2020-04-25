@@ -4,7 +4,9 @@ set -e
 # get docker cli
 apk add docker
 
-created=$(docker inspect -f '{{.Created}}' gcr.io/sweetspot-255522/sweetspot-build)
+image=gcr.io/sweetspot-255522/sweetspot-build
+docker pull $image
+created=$(docker inspect -f '{{.Created}}' $image)
 last_run=$(date -d$created +%s)
 now=$(date +%s)
 seconds_since_last_run=$(($now - $last_run))

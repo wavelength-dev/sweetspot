@@ -3,7 +3,9 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
-      - --tag gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA .
+      - --tag
+      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+      - .
   # push the container image to Container Registry
   - name: gcr.io/cloud-builders/docker
     args:
@@ -13,7 +15,14 @@ steps:
   - name: gcr.io/cloud-builders/gcloud
     args:
       - run
-      - deploy sweetspot --image gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA --region europe-west1 --platform managed
+      - deploy
+      - sweetspot
+      - --image
+      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+      - --region
+      - europe-west1
+      - --platform
+      - managed
 images:
   - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
 timeout: 1800s

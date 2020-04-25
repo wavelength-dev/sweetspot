@@ -20,7 +20,6 @@ import SweetSpot.Data.Api (UICampaign, uiCampaignEnd, uiCampaignName, uiCampaign
 import SweetSpot.ExperimentListPage (ExperimentCardProps, ExperimentStatus(..), mkExperimentListPage)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (mkMissingSessionPage)
-import SweetSpot.Mock (expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
 import SweetSpot.Route (Route(..), hoistRouter)
 import SweetSpot.Service (fetchCampaigns) as Service
 import SweetSpot.Session (SessionId)

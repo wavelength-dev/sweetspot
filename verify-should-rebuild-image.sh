@@ -1,13 +1,10 @@
 #!/usr/local/bin/bash
 set -e
 
-# get docker cli
-apk add docker
-
 # add gnu date for date parsing
 apk add coreutils
 
-image=gcr.io/sweetspot-255522/sweetspot-build
+image="gcr.io/$PROJECT_ID/sweetspot-build"
 docker pull $image
 created=$(docker inspect -f '{{.Created}}' $image)
 last_run=$(date -d$created +%s)
@@ -21,5 +18,6 @@ if [ $seconds_since_last_run -gt $seconds_in_day ]; then
   exit 0
 else
   echo "Shouldn't rebuild the image yet, exiting with error to stop build"
+  gcloud builds cancel $BUILD_ID
   exit 1
 fi

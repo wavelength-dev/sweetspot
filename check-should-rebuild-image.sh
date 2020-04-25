@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-created=$(docker inspect -f '{{.Created}}' gcr.io/$PROJECT_ID/sweetspot-build)
+# get docker cli
+curl -LOs https://github.com/docker/cli/archive/v19.03.8.tar.gz
+tar -xzf ./v19.03.8.tar.gz
+
+created=$(./docker inspect -f '{{.Created}}' gcr.io/$PROJECT_ID/sweetspot-build)
 last_run=$(date -d$created +%s)
 now=$(date +%s)
 seconds_since_last_run=$(($now - $last_run))

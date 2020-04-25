@@ -115,15 +115,14 @@ verifyProxySignature ctx app req sendResponse =
     appLogger = ctx ^. ctxLogger
     secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
-    mSupplied :: Maybe (Digest SHA256)
     mSupplied =
       L.find ((== "signature") . fst) params
         >>= snd
-        >>= digestFromByteString
+        & fmap decodeUtf8Lenient
     sansHMAC = filter ((/= "signature") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
     checkable = mconcat $ L.sort joined
-    digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
+    digest = tshow (hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256)
 
 verifyWebhookSignature :: AppCtx -> Middleware
 verifyWebhookSignature ctx app req sendResponse = do
@@ -177,7 +176,7 @@ validateSession ctx app req sendResponse = do
         L.find ((== "session") . fst) params
           >>= snd
           & fmap (SessionId . decodeUtf8Lenient)
-  L.info' appLogger $ T.pack . show $ params
+  L.info' appLogger $ tshow params
   case mSuppliedId of
     Just id -> do
       mShopDomain <- withConnIO pool $ \conn -> validateSessionId' conn id

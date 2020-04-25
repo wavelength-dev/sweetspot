@@ -29,22 +29,22 @@ httpSpec =
         res <- getWith opts $ apiRoot <> "/health"
         res ^. responseStatus . statusCode `shouldBe` 200
     describe "GET /api/bucket" $ do
-      it "should return 400 with no hmac" $ do
+      it "should return 400 with no signature" $ do
         res <- getWith opts $ apiRoot <> "/api/fulcrum/bucket"
         res ^. responseStatus . statusCode `shouldBe` 400
-      it "should return 400 with incorrect hmac" $ do
-        res <- getWith opts $ apiRoot <> "/api/fulcrum/bucket?lol=123&hmac=bal"
+      it "should return 400 with incorrect signature" $ do
+        res <- getWith opts $ apiRoot <> "/api/fulcrum/bucket?lol=123&signature=bal"
         res ^. responseStatus . statusCode `shouldBe` 400
       it "should return 400 with invalid shop domain" $ do
         let hmac = "09f99b5b9ed6ab4b2d75e64fecd8eab1b6fd1b2c326fa1fc9d67f533b19de7a1"
         res <-
           getWith opts $
-            apiRoot <> "/api/fulcrum/bucket?shop=invalid.myshopify.com&hmac=" <> hmac
+            apiRoot <> "/api/fulcrum/bucket?shop=invalid.myshopify.com&signature=" <> hmac
         res ^. responseStatus . statusCode `shouldBe` 400
-      it "should return 200 with valid hmac and shop domain" $ do
+      it "should return 200 with valid signature and shop domain" $ do
         let shopId = "test-shop.myshopify.com"
             cmpId = "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
-            hmac = "d2f6ba3da004a18ecb7bbc6e6f2f315a7bc07b11ffa6870021d900f10444ed01"
+            sig = "dacb4484fd19f1383c27d93884142eaabaed14d7487c1c5d769db5ada7dd569c"
             uid = "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
         res <-
           getWith opts $
@@ -53,8 +53,8 @@ httpSpec =
               <> shopId
               <> "&sscid="
               <> cmpId
-              <> "&hmac="
-              <> hmac
+              <> "&signature="
+              <> sig
               <> "&uid="
               <> uid
         res ^. responseStatus . statusCode `shouldBe` 200

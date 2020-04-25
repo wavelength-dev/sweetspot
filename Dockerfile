@@ -7,6 +7,7 @@ RUN stack build --verbosity warn --copy-bins
 
 # Build Fulcrum
 FROM node:13 AS build-fulcrum
+WORKDIR /opt/build
 
 # PureScript installer depends on libtinfo.so.5
 RUN apt update && apt install --yes libncurses5
@@ -27,6 +28,7 @@ RUN uglifyjs --compress --mangle --output ./dist/fulcrum.min.js ./dist/fulcrum.j
 
 # Build Dashboard
 FROM node:13 AS build-dashboard
+WORKDIR /opt/build
 
 # PureScript installer depends on libtinfo.so.5
 RUN apt update && apt install --yes libncurses5

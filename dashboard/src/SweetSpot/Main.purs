@@ -92,9 +92,6 @@ mkApp = do
         # const
         >>> setCampaignsResource
         >>> liftEffect
-      liftEffect
-        $ setCampaignsResource \_ ->
-            Resource [ storewide10Campaign, expensiveJacketsCheapMonkeysCampaign ]
       pure unit
     pure
       $ element Shopify.appProvider

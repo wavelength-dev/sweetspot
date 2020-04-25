@@ -54,7 +54,7 @@ instance InstallDB AppM where
       $ insertExpressions
         [ Shop
             { _shopId = shopId_,
-              _shopCreated = now_,
+              _shopCreated = nowUTC_,
               _shopDomain = val_ shopDomain,
               _shopOAuthToken = val_ token
             }

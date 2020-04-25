@@ -2,6 +2,7 @@
 set -e
 
 # get docker cli
+apk add curl
 curl -LOs https://github.com/docker/cli/archive/v19.03.8.tar.gz
 tar -xzf ./v19.03.8.tar.gz
 

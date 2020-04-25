@@ -38,7 +38,6 @@ data EnvConfig
         environment :: !Environment,
         shopifyClientId :: !Text,
         shopifyClientSecret :: !Text,
-        shopifyOAuthRedirectUri :: !Text,
         port :: !Text
       }
   deriving (Show)
@@ -53,7 +52,6 @@ instance FromEnv EnvConfig where
       <*> env "ENVIRONMENT"
       <*> env "SHOPIFY_CLIENT_ID"
       <*> env "SHOPIFY_CLIENT_SECRET"
-      <*> env "SHOPIFY_OAUTH_REDIRECT_URI"
       <*> envMaybe "PORT"
       .!= "8082"
 

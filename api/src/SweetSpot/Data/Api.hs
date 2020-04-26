@@ -232,22 +232,6 @@ instance ToJSON TestMap where
         "swapPrice" .= price
       ]
 
-instance FromJSON TestMap where
-  parseJSON = withObject "TestMap" $ \v -> do
-    userId <- v .: "userId"
-    targetId <- v .: "targetId"
-    sku <- v .: "sku"
-    swapId <- v .: "swapId"
-    swapPrice <- v .: "swapPrice"
-    return
-      TestMap
-        { userId = UserId userId,
-          targetId = Svid targetId,
-          sku = Sku sku,
-          swapId = Svid swapId,
-          swapPrice = Price swapPrice
-        }
-
 -- | ---------------------------------------------------------------------------
 -- | CartTokenReq
 -- | ---------------------------------------------------------------------------

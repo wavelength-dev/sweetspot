@@ -11,7 +11,6 @@ import Control.Monad.Reader.Class (asks)
 import RIO
 import Servant
 import SweetSpot.AppM
-import SweetSpot.Data.Api (OkResponse (..))
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install
   ( InstallDB (..),
@@ -34,7 +33,7 @@ type RedirectRoute =
     :> QueryParam "timestamp" Timestamp
     :> QueryParam "state" Nonce
     :> QueryParam "shop" ShopDomain
-    :> Get '[JSON] OkResponse
+    :> Get303 '[PlainText] NoContent
 
 type OAuthAPI = InstallRoute :<|> RedirectRoute
 
@@ -46,7 +45,7 @@ getAuthUri ::
   Nonce ->
   Text
 getAuthUri shopDomain clientId redirectUri nonce =
-  "http://" <> showText shopDomain <> "/admin/oauth/authorize?"
+  "https://" <> showText shopDomain <> "/admin/oauth/authorize?"
     <> "client_id="
     <> clientId
     <> "&scope="
@@ -78,7 +77,7 @@ redirectHandler ::
   Maybe Timestamp ->
   Maybe Nonce ->
   Maybe ShopDomain ->
-  ServerM OkResponse
+  ServerM (Headers '[Header "Location" Text] NoContent)
 redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopDomain) =
   runAppM $ do
     mDbNonce <- getInstallNonce shopDomain
@@ -91,7 +90,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
             createShop shopDomain permCode
             registerWebhooks shopDomain
             L.info $ "Successfully installed app for " <> showText shopDomain
-            return OkResponse {message = "This should redirect to dashboard"}
+            return $ addHeader adminUrl NoContent
           Left err -> do
             deleteInstallNonce shopDomain
             L.error err
@@ -99,6 +98,8 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"
         throwError badRequestErr
+  where
+    adminUrl = "https://" <> showText shopDomain <> "/admin"
 redirectHandler _ _ _ _ _ = throwError badRequestErr
 
 oauthHandler = installHandler :<|> redirectHandler

@@ -20,7 +20,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Webhook (OrderRoute, WebhookAPI)
+import SweetSpot.Route.Webhook
 import SweetSpot.Shopify.Types
 
 type ApiVersion = "2019-07"
@@ -47,7 +47,7 @@ type CreateProductRoute =
     :> Header "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
-type CreateWebhookRoute =
+type RegisterWebhookRoute =
   "admin" :> "api" :> ApiVersion :> "webhooks.json"
     :> ReqBody '[JSON] CreateWebhookReq
     :> Header "X-Shopify-Access-Token" Text
@@ -58,7 +58,7 @@ class Monad m => MonadShopify m where
   fetchProducts :: ShopDomain -> m (Either Text [Product])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text Product)
-  createCheckoutWebhook :: ShopDomain -> m (Either Text ())
+  registerWebhooks :: ShopDomain -> m (Either Text ())
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code =
@@ -109,24 +109,47 @@ instance MonadShopify AppM where
           Success product -> Right product
           Error err -> Left . T.pack $ err
 
-  createCheckoutWebhook domain =
+  registerWebhooks domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
-      res <- liftIO $ runClientM (createCheckoutWebhookClient payload (Just token)) clientEnv
-      case res of
-        Left err -> pure . Left $ "Error creating webhook: " <> errToText err
-        Right _ -> do
-          L.info $ "Created checkout webhook for " <> showText domain
+      let registerWebhook :: WebhookTopic -> AppM (Either ClientError Value)
+          registerWebhook topic = liftIO $ runClientM (createWebhookClient (getRequest topic) (Just token)) clientEnv
+      orderRes <- registerWebhook OrdersCreate
+      shopRes <- registerWebhook ShopRedact
+      customerRes <- registerWebhook CustomersRedact
+      requestRes <- registerWebhook CustomersDataRequest
+      case (orderRes, shopRes, customerRes, requestRes) of
+        (Right _, Right _, Right _, Right _) -> do
+          L.info "Succesfully registered webhooks"
           pure $ Right ()
+        _ -> pure $ Left "Error while trying to register webhooks"
     where
-      createCheckoutWebhookClient = client (Proxy :: Proxy CreateWebhookRoute)
-      hookPath =
+      createWebhookClient = client (Proxy :: Proxy RegisterWebhookRoute)
+      webhookAPI = Proxy :: Proxy WebhookAPI
+      orderPath =
         toUrlPiece $
-          safeLink (Proxy :: Proxy WebhookAPI) (Proxy :: Proxy OrderRoute)
-      payload =
+          safeLink webhookAPI (Proxy :: Proxy OrderRoute)
+      redactShopPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RedactShopRoute)
+      redactCustomerPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RedactCustomerRoute)
+      requestDataPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
+      getRequest :: WebhookTopic -> CreateWebhookReq
+      getRequest topic =
         CreateWebhookReq $
           CreateWebhookData
-            { topic = "orders/create",
-              address = "https://app-staging.sweetspot.dev/api/" <> hookPath,
+            { topic = tshow topic,
+              address =
+                "https://app-staging.sweetspot.dev/api/"
+                  <> ( case topic of
+                         OrdersCreate -> orderPath
+                         ShopRedact -> redactShopPath
+                         CustomersRedact -> redactCustomerPath
+                         CustomersDataRequest -> requestDataPath
+                     ),
               format = "json"
             }
 

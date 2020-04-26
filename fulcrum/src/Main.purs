@@ -17,13 +17,14 @@ import Effect.Class (liftEffect)
 import Effect.Console (error, log, logShow) as Console
 import Effect.Timer (setInterval)
 import Fulcrum.Cart as Cart
-import Fulcrum.Data (TestMap, VariantId(..))
+import Fulcrum.Data (TestMap, VariantId(..), CampaignId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
+import Fulcrum.Site as Site
 import Fulcrum.User (findUserId) as User
 import Web.DOM (Element)
 import Web.DOM.Document as Document
@@ -52,7 +53,11 @@ getTestMap = do
     Just userId -> do
       -- Fetch the list of TestMaps
       -- TODO: add cache control header
-      eTestMaps <- lift $ Service.fetchTestMaps (OnlyUserId userId)
+      mCmpId <- liftEffect $ Site.getUrlParam "sscid"
+      let payload = case mCmpId of
+            Just cmpId -> UserAndCampaignId userId (CampaignId cmpId)
+            Nothing -> OnlyUserId userId
+      eTestMaps <- lift $ Service.fetchTestMaps payload
       case eTestMaps of
         Left msg -> throwError msg
         Right testMaps -> testMaps # hashMapFromTestMaps >>> pure

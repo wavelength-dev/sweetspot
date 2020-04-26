@@ -226,7 +226,7 @@ instance ToJSON TestMap where
   toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price) =
     object
       [ "userId" .= userId,
-        "targetId" .= targetId,
+        "variantId" .= targetId,
         "sku" .= sku,
         "swapId" .= swapId,
         "swapPrice" .= price

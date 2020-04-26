@@ -8,6 +8,7 @@
   , "formatters"
   , "generics-rep"
   , "js-date"
+  , "js-timers"
   , "milkis"
   , "now"
   , "profunctor-lenses"

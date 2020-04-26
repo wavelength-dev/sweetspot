@@ -10,7 +10,7 @@ import Effect.Aff (parallel, sequential) as Aff
 import Effect.Class (liftEffect)
 import Effect.Console (error) as Console
 import SweetSpot.Data.Api (Product, UICampaign)
-import SweetSpot.Route (Route(..))
+import SweetSpot.Routerless (Route(..))
 import SweetSpot.Service (fetchCampaigns, fetchProducts)
 import SweetSpot.Session (SessionId)
 

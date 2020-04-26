@@ -3,7 +3,7 @@ module SweetSpot.Middleware
   )
 where
 
-import Crypto.Hash (Digest, SHA256, digestFromByteString)
+import Crypto.Hash (Digest, SHA256)
 import Crypto.MAC.HMAC
 import Data.ByteArray.Encoding (Base (..), convertToBase)
 import qualified Data.List as L
@@ -91,15 +91,14 @@ verifyHmac ctx app req sendResponse =
     appLogger = ctx ^. ctxLogger
     secret = ctx ^. ctxConfig . configShopifyClientSecret
     params = queryString req
-    mSupplied :: Maybe (Digest SHA256)
     mSupplied =
       L.find ((== "hmac") . fst) params
         >>= snd
-        >>= digestFromByteString
+        & fmap decodeUtf8Lenient
     sansHMAC = filter ((/= "hmac") . fst) params
     joined = mapMaybe (\(key, val) -> fmap (\v -> key <> "=" <> v) val) sansHMAC
     checkable = BS.intercalate "&" joined
-    digest = hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256
+    digest = tshow (hmacGetDigest $ hmac (encodeUtf8 secret) checkable :: Digest SHA256)
 
 verifyProxySignature :: AppCtx -> Middleware
 verifyProxySignature ctx app req sendResponse =

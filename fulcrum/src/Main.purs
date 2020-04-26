@@ -80,7 +80,7 @@ main = do
     case eTestContext of
       Left msg -> throwError (error msg)
       -- We do nothing here as our only goal is to cache the test maps
-      Right testContext -> pure unit
+      Right testContext -> liftEffect $ applyTestMaps testContext
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do

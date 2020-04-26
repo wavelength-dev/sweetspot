@@ -1,23 +1,69 @@
 module SweetSpot.ExperimentListPage where
 
 import Prelude
+
 import Data.Array (fold)
 import Data.DateTime (DateTime)
 import Data.Formatter.DateTime (FormatterCommand(..))
 import Data.Formatter.DateTime (format) as Formatter
 import Data.List (List(..), (:))
-import Data.Nullable (notNull)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (notNull, null)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Now (nowDateTime) as Now
+import Effect.Timer (clearInterval, setInterval) as Timer
+import Effect.Unsafe (unsafePerformEffect)
 import React.Basic.DOM (css, div, li, text, ul) as R
-import React.Basic.Hooks (JSX, ReactComponent, component, element)
+import React.Basic.Hooks (Component, JSX, component, element, useEffect, useState)
+import React.Basic.Hooks (bind, discard) as React
+import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.Shopify (button, heading, page) as Shopify
 
-data ExperimentStatus = Draft | Starting DateTime | Running DateTime | Finished DateTime
+type Now
+  = DateTime
+
+data ExperimentStatus
+  = Draft
+  | Starting DateTime
+  | Running DateTime
+  | Finished DateTime
+
+type ExperimentId
+  = String
 
 type ExperimentCardProps
-  = { title :: String
+  = { id :: ExperimentId
+    , title :: String
     , status :: ExperimentStatus
+    , onViewCampaign :: Effect Unit
     }
+
+type CampaignEnd
+  = DateTime
+
+type CampaignStart
+  = DateTime
+
+-- TODO: move this logic to the backend
+toStatus :: Now -> Maybe CampaignEnd -> Maybe CampaignStart -> ExperimentStatus
+toStatus now endDateTime startDateTime = case endDateTime, startDateTime of
+  Nothing, Nothing -> Draft
+  Just end, Nothing -> Draft
+  Just end, Just start
+    | end < now -> Finished end
+    | otherwise -> toStatus now Nothing startDateTime
+  Nothing, Just start
+    | start < now -> Running start
+    | otherwise -> Starting start
+
+campaignToCardProps :: Now -> (UICampaign -> Effect Unit) -> UICampaign -> ExperimentCardProps
+campaignToCardProps now onViewCampaignByCampaign campaign'@(UICampaign campaign) =
+  { id: campaign._uiCampaignId
+  , title: campaign._uiCampaignName
+  , status: toStatus now campaign._uiCampaignEnd campaign._uiCampaignStart
+  , onViewCampaign: onViewCampaignByCampaign campaign'
+  }
 
 spacer :: String -> JSX
 spacer size = R.div { style: R.css { width: size, height: size } }
@@ -51,14 +97,16 @@ experimentStatus status =
             Finished endDateTime -> "Finished on " <> formatDate endDateTime
         ]
     }
-    where formatDate dateTime = fold [
-      Formatter.format (MonthShort : Nil) dateTime
+  where
+  formatDate dateTime =
+    fold
+      [ Formatter.format (MonthShort : Nil) dateTime
       , " "
       , Formatter.format (DayOfMonth : Nil) dateTime
       ]
 
 experimentCard :: ExperimentCardProps -> JSX
-experimentCard { status, title } =
+experimentCard { id, status, title, onViewCampaign } =
   R.div
     { className: "price-experiment"
     , style:
@@ -89,19 +137,28 @@ experimentCard { status, title } =
             }
         , R.div
             { style: R.css { display: "flex", alignItems: "center" }
-            , children: [ element Shopify.button { onClick: mempty, children: "View" } ]
+            , children: [ element Shopify.button { onClick: notNull onViewCampaign, children: "View", url: null } ]
             }
         ]
     }
 
 type ExperimentListPageProps
-  = { experiments :: Array ExperimentCardProps
+  = { campaigns :: Array UICampaign
+    , onViewCampaignByCampaign :: UICampaign -> Effect Unit
     , onCreateExperiment :: Effect Unit
     }
 
-mkExperimentListPage :: Effect (ReactComponent ExperimentListPageProps)
+mkExperimentListPage :: Component ExperimentListPageProps
 mkExperimentListPage =
-  component "ExperimentListPage" \props ->
+  component "ExperimentListPage" \props -> React.do
+    now /\ setNow <- useState (unsafePerformEffect Now.nowDateTime)
+    let
+      campaigns = map (campaignToCardProps now props.onViewCampaignByCampaign) props.campaigns
+
+      setNow' = const >>> setNow
+    useEffect unit do
+      intervalId <- Timer.setInterval 1000 (Now.nowDateTime >>= setNow')
+      pure $ Timer.clearInterval intervalId
     pure
       $ element Shopify.page
           { title: "Price Experiment List"
@@ -114,10 +171,10 @@ mkExperimentListPage =
                         ( \cardProps ->
                             R.li
                               { className: "price-experiment-wrapper"
-                              , children: [ (experimentCard cardProps) ]
+                              , children: [ experimentCard cardProps ]
                               }
                         )
-                        props.experiments
+                        campaigns
                   }
               ]
           }

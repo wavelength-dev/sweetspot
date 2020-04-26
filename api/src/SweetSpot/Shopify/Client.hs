@@ -73,7 +73,7 @@ instance MonadShopify AppM where
             }
     res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
     return $ case res of
-      Left err -> Left $ "Error exchanging auth token: " <> errToText err
+      Left err -> Left $ "Error exchanging auth token: " <> tshow err
       Right body -> Right $ access_token body
 
   fetchProducts domain =
@@ -81,7 +81,7 @@ instance MonadShopify AppM where
       let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
       res <- liftIO $ runClientM (getProductsClient (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error getting products: " <> errToText err
+        Left err -> Left $ "Error getting products: " <> tshow err
         Right body -> do
           let result =
                 body ^? key "products"
@@ -96,7 +96,7 @@ instance MonadShopify AppM where
       let getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
       res <- liftIO $ runClientM (getProductJsonClient productId (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error fetching product json: " <> errToText err
+        Left err -> Left $ "Error fetching product json: " <> tshow err
         Right body -> Right body
 
   createProduct domain json =
@@ -104,7 +104,7 @@ instance MonadShopify AppM where
       let createProductClient = client (Proxy :: Proxy CreateProductRoute)
       res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
       return $ case res of
-        Left err -> Left $ "Error creating product: " <> errToText err
+        Left err -> Left $ "Error creating product: " <> tshow err
         Right body -> case parse parseShopJSON (body ^?! key "product") of
           Success product -> Right product
           Error err -> Left . T.pack $ err
@@ -190,6 +190,3 @@ testBaseUrl =
       baseUrlPort = 9999,
       baseUrlPath = ""
     }
-
-errToText :: ClientError -> Text
-errToText = T.pack . show

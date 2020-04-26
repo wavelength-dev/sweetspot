@@ -15,8 +15,8 @@
     "parcel-bundler": "^1.12.4"
   },
   "dependencies": {
-    "@shopify/polaris": "^4.10.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "@shopify/polaris": "^4.20.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   }
 }

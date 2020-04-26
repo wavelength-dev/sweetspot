@@ -14,7 +14,7 @@ foreign import data I18N :: Type
 
 foreign import enTranslations :: I18N
 
-foreign import appProvider :: ReactComponent { i18n :: I18N, children :: JSX }
+foreign import appProvider :: ReactComponent { i18n :: I18N, children :: Array JSX }
 
 foreign import page ::
   ReactComponent
@@ -26,7 +26,7 @@ foreign import page ::
 
 foreign import card :: ReactComponent { title :: String, sectioned :: Boolean, children :: Array JSX }
 
-foreign import button :: ReactComponent { onClick :: Effect Unit, children :: String }
+foreign import button :: ReactComponent { url :: Nullable String, onClick :: Nullable (Effect Unit), children :: String }
 
 foreign import emptyState ::
   ReactComponent

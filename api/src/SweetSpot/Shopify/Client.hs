@@ -61,20 +61,20 @@ class Monad m => MonadShopify m where
   registerWebhooks :: ShopDomain -> m (Either Text ())
 
 instance MonadShopify AppM where
-  exchangeAccessToken domain code =
-    withClientEnvAndToken domain $ \clientEnv _ -> do
-      config <- asks (^. ctxConfig)
-      let exchangeTokenClient = client (Proxy :: Proxy TokenExchangeRoute)
-          reqBody =
-            TokenExchangeReq
-              { client_id = config ^. configShopifyClientId,
-                client_secret = config ^. configShopifyClientSecret,
-                code = code
-              }
-      res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
-      return $ case res of
-        Left err -> Left $ "Error exchanging auth token: " <> errToText err
-        Right body -> Right $ access_token body
+  exchangeAccessToken domain code = do
+    config <- asks (^. ctxConfig)
+    clientEnv <- getClientEnv domain
+    let exchangeTokenClient = client (Proxy :: Proxy TokenExchangeRoute)
+        reqBody =
+          TokenExchangeReq
+            { client_id = config ^. configShopifyClientId,
+              client_secret = config ^. configShopifyClientSecret,
+              code = code
+            }
+    res <- liftIO $ runClientM (exchangeTokenClient reqBody) clientEnv
+    return $ case res of
+      Left err -> Left $ "Error exchanging auth token: " <> errToText err
+      Right body -> Right $ access_token body
 
   fetchProducts domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
@@ -112,7 +112,9 @@ instance MonadShopify AppM where
   registerWebhooks domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let registerWebhook :: WebhookTopic -> AppM (Either ClientError Value)
-          registerWebhook topic = liftIO $ runClientM (createWebhookClient (getRequest topic) (Just token)) clientEnv
+          registerWebhook topic =
+            liftIO $
+              runClientM (createWebhookClient (getRequest topic) (Just token)) clientEnv
       orderRes <- registerWebhook OrdersCreate
       shopRes <- registerWebhook ShopRedact
       customerRes <- registerWebhook CustomersRedact

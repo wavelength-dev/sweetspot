@@ -35,14 +35,12 @@ fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch
 
 data TestMapProvisions
-  = OnlyCampaignId CampaignId
-  | OnlyUserId UserId
+  = OnlyUserId UserId
   | UserAndCampaignId UserId CampaignId
 
 getTestMapQueryString :: TestMapProvisions -> String
 getTestMapQueryString = case _ of
   UserAndCampaignId (UserId uid) (CampaignId cid) -> "?uid=" <> uid <> "&sscid=" <> cid
-  OnlyCampaignId (CampaignId cid) -> "?sscid=" <> cid
   OnlyUserId (UserId uid) -> "?uid=" <> uid
 
 fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))

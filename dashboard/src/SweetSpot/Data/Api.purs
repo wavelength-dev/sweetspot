@@ -233,6 +233,27 @@ cartTokenReqUser :: Lens' CartTokenReq String
 cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 
 --------------------------------------------------------------------------------
+newtype CreateExperiment =
+    CreateExperiment {
+      _createExperimentProductId :: String
+    , _createExperimentPrice :: Number
+    }
+
+derive instance eqCreateExperiment :: Eq CreateExperiment
+derive instance genericCreateExperiment :: Generic CreateExperiment _
+derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
+
+--------------------------------------------------------------------------------
+_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Number}
+_CreateExperiment = _Newtype
+
+createExperimentProductId :: Lens' CreateExperiment String
+createExperimentProductId = _Newtype <<< prop (SProxy :: SProxy "_createExperimentProductId")
+
+createExperimentPrice :: Lens' CreateExperiment Number
+createExperimentPrice = _Newtype <<< prop (SProxy :: SProxy "_createExperimentPrice")
+
+--------------------------------------------------------------------------------
 newtype CreateCampaign =
     CreateCampaign {
       _createCampaignName :: String

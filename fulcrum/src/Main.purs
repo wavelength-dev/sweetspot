@@ -6,16 +6,16 @@ import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..), note)
 import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
-import Data.Maybe (Maybe(..), fromJust, isJust)
+import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
-import Effect (Effect, untilE)
+import Effect (Effect)
 import Effect.AVar as AVar
 import Effect.Aff (Aff, error)
 import Effect.Aff (runAff_, launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Console (error, log, logShow) as Console
-import Effect.Timer (setInterval)
+import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Data (TestMap, VariantId(..), CampaignId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
@@ -69,17 +69,18 @@ handleExit = case _ of
   Left message -> Logging.log LogLevel.Error $ show message
   Right _ -> pure unit
 
-main :: Partial => Effect Unit
-main = do
-  userId <- waitForUserId
-  startCartTokenInterval userId
-  RunState.initRunQueue
-  Aff.runAff_ Console.logShow do
-    eTestContext <- runExceptT $ getTestMap userId
-    case eTestContext of
-      Left msg -> throwError (error msg)
-      -- We do nothing here as our only goal is to cache the test maps
-      Right testContext -> liftEffect $ applyTestMaps testContext
+main :: Effect Unit
+main =
+  withUserId
+    $ \userId -> do
+        startCartTokenInterval userId
+        RunState.initRunQueue
+        Aff.runAff_ Console.logShow do
+          eTestContext <- runExceptT $ getTestMap userId
+          case eTestContext of
+            Left msg -> throwError (error msg)
+            -- We do nothing here as our only goal is to cache the test maps
+            Right testContext -> liftEffect $ applyTestMaps testContext
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do
@@ -158,7 +159,14 @@ startCartTokenInterval userId = setInterval (1000 * 10) cb *> pure unit
             Just token -> Service.sendCartToken userId token *> pure unit
             Nothing -> liftEffect $ Console.error "Can't send cart token, token not found"
 
-waitForUserId :: Partial => Effect UserId
-waitForUserId = do
-  untilE (isJust <$> User.findUserId)
-  fromJust <$> User.findUserId
+withUserId :: (UserId -> Effect Unit) -> Effect Unit
+withUserId f = check
+  where
+  timeoutMs = 100
+
+  check :: Effect Unit
+  check = do
+    mUserId <- liftEffect User.findUserId
+    case mUserId of
+      Just uid -> f uid
+      Nothing -> setTimeout timeoutMs check *> mempty

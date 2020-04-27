@@ -233,3 +233,28 @@ cartTokenReqUser :: Lens' CartTokenReq String
 cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 
 --------------------------------------------------------------------------------
+newtype CreateCampaign =
+    CreateCampaign {
+      _createCampaignName :: String
+    , _createCampaignEnd :: Maybe DateTime
+    , _createCampaignExperiments :: Array CreateExperiment
+    }
+
+derive instance eqCreateCampaign :: Eq CreateCampaign
+derive instance genericCreateCampaign :: Generic CreateCampaign _
+derive instance newtypeCreateCampaign :: Newtype CreateCampaign _
+
+--------------------------------------------------------------------------------
+_CreateCampaign :: Iso' CreateCampaign { _createCampaignName :: String, _createCampaignEnd :: Maybe DateTime, _createCampaignExperiments :: Array CreateExperiment}
+_CreateCampaign = _Newtype
+
+createCampaignName :: Lens' CreateCampaign String
+createCampaignName = _Newtype <<< prop (SProxy :: SProxy "_createCampaignName")
+
+createCampaignEnd :: Lens' CreateCampaign (Maybe DateTime)
+createCampaignEnd = _Newtype <<< prop (SProxy :: SProxy "_createCampaignEnd")
+
+createCampaignExperiments :: Lens' CreateCampaign (Array CreateExperiment)
+createCampaignExperiments = _Newtype <<< prop (SProxy :: SProxy "_createCampaignExperiments")
+
+--------------------------------------------------------------------------------

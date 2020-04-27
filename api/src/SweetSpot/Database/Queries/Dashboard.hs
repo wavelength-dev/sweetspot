@@ -12,7 +12,8 @@ import Control.Lens
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
-import RIO hiding (Vector, (^.))
+import RIO hiding (Vector, (^.), view)
+import RIO.Partial (fromJust)
 import RIO.Vector as V hiding (map)
 import Statistics.Sample (mean)
 import SweetSpot.AppM (AppM)
@@ -38,12 +39,30 @@ data InsertExperiment
 makeLenses ''InsertExperiment
 
 class Monad m => DashboardDB m where
+  createCampaign :: ShopDomain -> CreateCampaign -> m CampaignId
   createExperiment :: InsertExperiment -> m ()
   getCampaigns :: ShopDomain -> m [UICampaign]
   createSession :: ShopDomain -> SessionId -> m ()
   validateSessionId :: SessionId -> m (Maybe ShopDomain)
 
 instance DashboardDB AppM where
+  createCampaign domain cc = withConn $ \conn -> do
+    shopId <- unsafeFindShopId conn domain
+    [newCmp] <-
+      runBeamPostgres conn
+        $ BeamExt.runInsertReturningList
+        $ insert (db ^. campaigns)
+        $ insertExpressions
+          [ Campaign
+              { _cmpId = campaignId_,
+                _cmpShopId = val_ $ ShopKey shopId,
+                _cmpName = val_ $ cc ^. createCampaignName,
+                _cmpStart = just_ nowUTC_,
+                _cmpEnd = val_ $ cc ^. createCampaignEnd
+              }
+          ]
+    pure $ newCmp ^. cmpId
+
   createExperiment args = withConn $ \conn -> do
     let domain = args ^. insertExperimentShopDomain
     Just shopId <- runBeamPostgres conn
@@ -238,3 +257,12 @@ validateSessionId' conn sessionId' =
       guard_ (_sessionShopId session `references_` shop)
       guard_ (session ^. sessionId ==. val_ sessionId')
       pure $ shop ^. shopDomain
+
+unsafeFindShopId :: Connection -> ShopDomain -> IO ShopId
+unsafeFindShopId conn domain =
+  fromJust
+    <$> ( runBeamPostgres conn
+            $ runSelectReturningOne
+            $ select
+            $ view shopId <$> matchShop domain
+        )

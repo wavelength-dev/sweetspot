@@ -151,7 +151,7 @@ reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
 
 startCartTokenInterval :: Effect Unit
-startCartTokenInterval = setInterval (1000 * 30) cb *> pure unit
+startCartTokenInterval = setInterval (1000 * 10) cb *> pure unit
   where
   cb :: Effect Unit
   cb =
@@ -161,4 +161,6 @@ startCartTokenInterval = setInterval (1000 * 30) cb *> pure unit
           mToken <- liftEffect Cart.findCartToken
           case mUserId, mToken of
             (Just uid), (Just token) -> Service.sendCartToken uid token *> pure unit
-            _, _ -> pure unit
+            Nothing, Just _ -> liftEffect $ Console.error "Can't send cart token, missing userId"
+            Just _, Nothing -> liftEffect $ Console.error "Can't send cart token, missing cartToken"
+            _, _ -> liftEffect $ Console.error "Can't send cart token, missing userId and cartToken"

@@ -28,10 +28,12 @@ import Fulcrum.Site as Site
 import Fulcrum.User (findUserId) as User
 import Web.DOM (Element)
 import Web.DOM.Document as Document
+import Web.DOM.DOMTokenList as DTL
 import Web.DOM.Element as Element
 import Web.DOM.HTMLCollection as HTMLCollection
 import Web.DOM.Node as Node
 import Web.HTML (window) as HTML
+import Web.HTML.HTMLElement as HTMLElement
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
 import Web.HTML.Window (document) as Window
 
@@ -54,9 +56,10 @@ getTestMap = do
       -- Fetch the list of TestMaps
       -- TODO: add cache control header
       mCmpId <- liftEffect $ Site.getUrlParam "sscid"
-      let payload = case mCmpId of
-            Just cmpId -> UserAndCampaignId userId (CampaignId cmpId)
-            Nothing -> OnlyUserId userId
+      let
+        payload = case mCmpId of
+          Just cmpId -> UserAndCampaignId userId (CampaignId cmpId)
+          Nothing -> OnlyUserId userId
       eTestMaps <- lift $ Service.fetchTestMaps payload
       case eTestMaps of
         Left msg -> throwError msg
@@ -92,7 +95,7 @@ insertPrice testMap element = do
         >>> note "No test for read variant id"
   case eTestMap of
     Left msg -> Console.error msg
-    Right test -> setNodePrice test
+    Right test -> setNodePrice test *> revealPrice
   where
   lookupF = flip Map.lookup
 
@@ -101,6 +104,11 @@ insertPrice testMap element = do
 
   setNodePrice :: TestMap -> Effect Unit
   setNodePrice { swapPrice } = Node.setTextContent (show swapPrice) (Element.toNode element)
+
+  revealPrice :: Effect Unit
+  revealPrice = case HTMLElement.fromElement element of
+    Just el -> HTMLElement.classList el >>= (flip DTL.remove) "sweetspot__price--hidden"
+    Nothing -> Console.error "Unable to reveal price"
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap =

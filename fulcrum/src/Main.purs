@@ -67,7 +67,7 @@ getTestMap userId = do
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
   Left message -> Logging.log LogLevel.Error $ show message
-  Right _ -> pure unit
+  Right _ -> mempty
 
 main :: Effect Unit
 main =
@@ -148,7 +148,7 @@ reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
 
 startCartTokenInterval :: UserId -> Effect Unit
-startCartTokenInterval userId = setInterval (1000 * 10) cb *> pure unit
+startCartTokenInterval userId = setInterval (1000 * 10) cb *> mempty
   where
   cb :: Effect Unit
   cb =
@@ -156,7 +156,7 @@ startCartTokenInterval userId = setInterval (1000 * 10) cb *> pure unit
       $ do
           mToken <- liftEffect Cart.findCartToken
           case mToken of
-            Just token -> Service.sendCartToken userId token *> pure unit
+            Just token -> Service.sendCartToken userId token *> mempty
             Nothing -> liftEffect $ Console.error "Can't send cart token, token not found"
 
 withUserId :: (UserId -> Effect Unit) -> Effect Unit

@@ -1,10 +1,9 @@
 module Fulcrum.Cart
   ( CartToken
   , findCartToken
- ) where
+  ) where
 
 import Prelude
-
 import Control.Bind (bindFlipped)
 import Data.Argonaut (class EncodeJson)
 import Data.Argonaut (encodeJson) as Argonaut
@@ -25,7 +24,7 @@ instance encodeJsonUserId :: EncodeJson CartToken where
 foreign import readCookies :: Effect String
 
 parseCartToken :: String -> Maybe CartToken
-parseCartToken  =
+parseCartToken =
   S.split (S.Pattern ";")
     >>> map (S.split (S.Pattern "=") >>> map S.trim)
     >>> A.find (\arr -> maybe false (eq "cart") $ A.index arr 0)

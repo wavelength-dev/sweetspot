@@ -22,6 +22,6 @@ sweetspotBridge =
     <|> (typeName ^== "Svid" >> return psString)
     <|> (typeName ^== "Pid" >> return psString)
     <|> (typeName ^== "CampaignId" >> return psString)
-    <|> (typeName ^== "LocalTime" >> return psDate)
+    <|> (typeName ^== "UTCTime" >> return psDate)
     <|> (typeName ^== "CartToken" >> return psString)
     <|> (typeName ^== "UserId" >> return psString)

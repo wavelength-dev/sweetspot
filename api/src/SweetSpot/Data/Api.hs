@@ -183,10 +183,8 @@ instance FromJSON UICampaign
 -- | ---------------------------------------------------------------------------
 data CreateExperiment
   = CreateExperiment
-      { _ceProductId :: !Pid,
-        _cePrice :: !Price,
-        _ceCampaignId :: !CampaignId,
-        _ceShopDomain :: !ShopDomain
+      { _createExperimentProductId :: !Pid,
+        _createExperimentPrice :: !Price
       }
   deriving (Eq, Generic, Show)
 
@@ -195,6 +193,23 @@ makeLenses ''CreateExperiment
 instance ToJSON CreateExperiment
 
 instance FromJSON CreateExperiment
+
+-- | ---------------------------------------------------------------------------
+-- | CreateCampaign
+-- | ---------------------------------------------------------------------------
+data CreateCampaign
+  = CreateCampaign
+      { _createCampaignName :: !Text,
+        _createCampaignEnd :: !(Maybe UTCTime),
+        _createCampaignExperiments :: ![CreateExperiment]
+      }
+  deriving (Eq, Generic)
+
+makeLenses ''CreateCampaign
+
+instance FromJSON CreateCampaign
+
+instance ToJSON CreateCampaign
 
 -- | ---------------------------------------------------------------------------
 -- | OkResponse
@@ -231,6 +246,22 @@ instance ToJSON TestMap where
         "swapId" .= swapId,
         "swapPrice" .= price
       ]
+
+instance FromJSON TestMap where
+  parseJSON = withObject "TestMap" $ \v -> do
+    userId <- v .: "userId"
+    targetId <- v .: "variantId"
+    sku <- v .: "sku"
+    swapId <- v .: "swapId"
+    swapPrice <- v .: "swapPrice"
+    return
+      TestMap
+        { userId = UserId userId,
+          targetId = Svid targetId,
+          sku = Sku sku,
+          swapId = Svid swapId,
+          swapPrice = Price swapPrice
+        }
 
 -- | ---------------------------------------------------------------------------
 -- | CartTokenReq

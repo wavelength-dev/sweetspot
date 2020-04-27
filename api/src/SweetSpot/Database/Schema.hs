@@ -7,6 +7,7 @@ module SweetSpot.Database.Schema
     eventId_,
     nonce_,
     shopId_,
+    campaignId_,
     productVariant_,
     nowUTC_,
   )
@@ -60,6 +61,9 @@ nonce_ = unsafeRetype pgGenUUID_
 
 shopId_ :: QGenExpr ctxt Postgres s ShopId
 shopId_ = unsafeRetype pgGenUUID_
+
+campaignId_ :: QGenExpr ctxt Postgres s CampaignId
+campaignId_ = unsafeRetype pgGenUUID_
 
 productVariant_ :: QGenExpr ctxt Postgres s PVariantId
 productVariant_ = unsafeRetype pgGenUUID_

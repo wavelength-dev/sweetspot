@@ -5,7 +5,6 @@ module SweetSpot.Route.Dashboard
 where
 
 import Control.Lens hiding (Strict)
-import Control.Monad (unless)
 import Data.Aeson (Result (..), Value (..))
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
@@ -16,9 +15,8 @@ import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..), InsertExperiment (..))
-import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (badRequestErr, internalServerErr)
+import SweetSpot.Route.Util (internalServerErr)
 import SweetSpot.Shopify.Client (MonadShopify (..))
 import SweetSpot.Shopify.Types (FromShopJSON (..))
 
@@ -32,14 +30,15 @@ type CampaignRoute =
     :> QueryParam' '[Required, Strict] "session" SessionId
     :> Get '[JSON] [UICampaign]
 
-type CreateExperimentRoute =
-  "experiments"
-    :> ReqBody '[JSON] CreateExperiment
+type CreateCampaignRoute =
+  "campaigns"
+    :> QueryParam' '[Required, Strict] "session" SessionId
+    :> ReqBody '[JSON] CreateCampaign
     :> Post '[JSON] OkResponse
 
 type DashboardAPI =
   "dashboard"
-    :> (ProductsRoute :<|> CampaignRoute :<|> CreateExperimentRoute)
+    :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute)
 
 getProductsHandler :: SessionId -> ServerM [Product]
 getProductsHandler id = runAppM $ do
@@ -61,18 +60,26 @@ getCampaignsHandler id = runAppM $ do
     Just domain -> getCampaigns domain
     Nothing -> throwError $ err400 {errBody = "Bad sessionId, no domain found"}
 
-createExperimentHandler :: CreateExperiment -> ServerM OkResponse
-createExperimentHandler ce = runAppM $ do
-  isValidCampaign <- validateCampaign (ce ^. ceCampaignId)
-  unless isValidCampaign (throwError badRequestErr)
-  mJson <- fetchProductJson (ce ^. ceShopDomain) (ce ^. ceProductId)
+createCampaignHandler :: SessionId -> CreateCampaign -> ServerM OkResponse
+createCampaignHandler id cc = runAppM $ do
+  mDomain <- validateSessionId id
+  case mDomain of
+    Just domain -> do
+      newCmpId <- createCampaign domain cc
+      traverse_ (createCampaignExperiment domain newCmpId) (cc ^. createCampaignExperiments)
+      return OkResponse {message = "Campaign created"}
+    Nothing -> throwError $ err400 {errBody = "Bad sessionId, no domain found"}
+
+createCampaignExperiment :: ShopDomain -> CampaignId -> CreateExperiment -> AppM ()
+createCampaignExperiment domain cmpId ce = do
+  mJson <- fetchProductJson domain (ce ^. createExperimentProductId)
   case mJson of
     Left err -> do
       L.error err
       throwError internalServerErr
     Right json -> do
       let mControlProduct = parse parseShopJSON $ json ^?! key "product"
-          textPrice = showText $ ce ^. cePrice
+          textPrice = showText $ ce ^. createExperimentPrice
           -- Assumes all variants have the same price
           withNewPrice =
             json
@@ -81,7 +88,7 @@ createExperimentHandler ce = runAppM $ do
               & key "product" . key "product_type" . _String .~ "sweetspot-variant"
               & key "product" . key "images" . values . key "variant_ids" .~ Null
               & key "product" . key "variants" . values . key "image_id" .~ Null
-      mNewProduct <- createProduct (ce ^. ceShopDomain) withNewPrice
+      mNewProduct <- createProduct domain withNewPrice
       case (mControlProduct, mNewProduct) of
         (Success controlProduct, Right newProduct) -> do
           let controlVariant = controlProduct ^?! productVariants . ix 0
@@ -97,23 +104,23 @@ createExperimentHandler ce = runAppM $ do
                         _insertExperimentSvid = variant ^. variantId,
                         _insertExperimentProductId = variant ^. variantProductId,
                         _insertExperimentPrice = price,
-                        _insertExperimentShopDomain = ce ^. ceShopDomain,
-                        _insertExperimentCampaignId = ce ^. ceCampaignId,
+                        _insertExperimentShopDomain = domain,
+                        _insertExperimentCampaignId = cmpId,
                         _insertExperimentProductName = controlProduct ^. productTitle,
                         _insertExperimentTreatment = treatment
                       }
           traverseOf_ (productVariants . traversed) (createDbExperiment 0 testPrice) controlProduct
           traverseOf_ (productVariants . traversed) (createDbExperiment 1 controlPrice) newProduct
           L.info "Created experiment(s)"
-          return OkResponse {message = "Created experiment(s)"}
+          return ()
         (Error err, _) -> do
           L.error $ "Failed to parse control product " <> T.pack err
-          throwError internalServerErr
+          return ()
         (_, Left err) -> do
           L.error $ "Failed to create test product " <> err
-          throwError internalServerErr
+          return ()
 
 dashboardHandler =
   getProductsHandler
     :<|> getCampaignsHandler
-    :<|> createExperimentHandler
+    :<|> createCampaignHandler

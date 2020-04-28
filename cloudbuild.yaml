@@ -9,7 +9,8 @@ steps:
       - build
       - --tag
       - gcr.io/$PROJECT_ID/sweetspot-build:$SHORT_SHA
-      - --file Dockerfile.base
+      - --file
+      - Dockerfile.base
       - .
   # push the container image to Container Registry
   - name: gcr.io/cloud-builders/docker

@@ -1,7 +1,6 @@
 steps:
   # check if we want to rebuild
-  - name: gcr.io/cloud-builders/docker
-    entrypoint: bash
+  - name: bash
     args:
       - ./verify-should-rebuild-image.sh
   # build the image

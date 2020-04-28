@@ -1,6 +1,12 @@
 #!/usr/local/bin/bash
 set -e
 
+# get docker cli
+apk add docker
+
+# add gnu date for date parsing
+apk add coreutils
+
 image="gcr.io/$PROJECT_ID/sweetspot-build"
 docker pull $image
 created=$(docker inspect -f '{{.Created}}' $image)

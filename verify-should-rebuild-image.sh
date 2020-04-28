@@ -7,7 +7,7 @@ apk add docker
 # add gnu date for date parsing
 apk add coreutils
 
-image="gcr.io/$PROJECT_ID/sweetspot-build"
+image="gcr.io/sweetspot-255522/sweetspot-build"
 docker pull $image
 created=$(docker inspect -f '{{.Created}}' $image)
 last_run=$(date -d$created +%s)

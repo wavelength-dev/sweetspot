@@ -217,7 +217,7 @@ getMiddleware ctx =
       gzipStatic
         . verifySignatureRouted
         . verifyHmacRouted
-        . verifyWebhookRouted
+        -- . verifyWebhookRouted
         . validateShopDomainRouted
         . validateSessionRouted
   where

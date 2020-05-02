@@ -3,10 +3,15 @@
 module SweetSpot.Data.Common where
 
 import Data.Aeson
-  ( FromJSON,
+  ( FromJSON (..),
     ToJSON,
+    withScientific,
   )
-import Data.Scientific (Scientific)
+import Data.Scientific
+  ( FPFormat (..),
+    Scientific,
+    formatScientific,
+  )
 import Data.UUID.Types
   ( UUID,
     fromText,
@@ -246,7 +251,11 @@ newtype OrderId
   = OrderId Text
   deriving (Eq, Show, Generic)
 
-instance FromJSON OrderId
+instance FromJSON OrderId where
+  parseJSON =
+    withScientific "OrderId" $ \v -> do
+      let txt = T.pack $ formatScientific Fixed (Just 0) v
+      return $ OrderId txt
 
 instance ToJSON OrderId
 

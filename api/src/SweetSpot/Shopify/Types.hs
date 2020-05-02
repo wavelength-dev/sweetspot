@@ -5,9 +5,11 @@ module SweetSpot.Shopify.Types where
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types (Parser)
+import Data.Scientific (FPFormat (..), formatScientific)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
+import qualified RIO.Text as T
 import SweetSpot.Data.Common
 
 class FromShopJSON a where
@@ -79,10 +81,15 @@ data LineItem
 makeLenses ''LineItem
 
 instance FromJSON LineItem where
-  parseJSON = withObject "LineItem" $ \v ->
-    LineItem
-      <$> v .: "variant_id"
-      <*> v .: "quantity"
+  parseJSON = withObject "LineItem" $ \v -> do
+    svid <- v .: "variant_id"
+    quantity <- v .: "quantity"
+    let txtSvid = T.pack $ formatScientific Fixed (Just 0) svid
+    return
+      LineItem
+        { _lineItemVariantId = Svid txtSvid,
+          _lineItemQuantity = quantity
+        }
 
 -- | ---------------------------------------------------------------------------
 -- | Order

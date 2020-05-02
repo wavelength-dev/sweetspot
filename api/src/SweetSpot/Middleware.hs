@@ -188,13 +188,6 @@ validateSession ctx app req sendResponse = do
       L.warn' appLogger "Missing session query parameter"
       send400 "Missing session query parameter" req sendResponse
 
-logRequestBody :: AppCtx -> Middleware
-logRequestBody ctx app req sendResponse = do
-  body <- BSL.toStrict <$> strictRequestBody req
-  let appLogger = ctx ^. ctxLogger
-  L.info' appLogger $ "Request body: " <> tshow body
-  app req sendResponse
-
 enableCors :: Middleware
 enableCors =
   cors $ \_ ->
@@ -213,8 +206,7 @@ getMiddleware ctx =
   case env of
     -- So we don't have to deal with hmac during dev
     Dev ->
-      logRequestBody ctx
-        . gzipStatic
+      gzipStatic
         . validateShopDomainRouted
         . enableCors
         . validateSessionRouted
@@ -222,8 +214,7 @@ getMiddleware ctx =
     TestBusiness -> gzipStatic
     -- Else everything
     _ ->
-      logRequestBody ctx
-        . gzipStatic
+      gzipStatic
         . verifySignatureRouted
         . verifyHmacRouted
         . verifyWebhookRouted

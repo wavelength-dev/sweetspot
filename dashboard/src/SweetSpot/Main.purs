@@ -56,9 +56,6 @@ mkApp = do
       eitherToResource eCampaigns
         # setCampaignsResource'
         >>> liftEffect
-      Resource [ expensiveJacketsCheapMonkeysCampaign, storewide10Campaign ]
-        # setCampaignsResource'
-        >>> liftEffect
       pure unit
     let
       onViewCampaignByCampaign (UICampaign campaign) = setRoute' (Campaign campaign._uiCampaignId)

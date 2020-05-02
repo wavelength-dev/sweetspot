@@ -18,7 +18,6 @@ import SweetSpot.ExperimentListPage (mkExperimentListPage)
 import SweetSpot.ExperimentPage (mkExperimentPage)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (mkMissingSessionPage)
-import SweetSpot.Mock (expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
 import SweetSpot.Routerless (Route(..))
 import SweetSpot.Service (fetchCampaigns) as Service
 import SweetSpot.Session (SessionId)

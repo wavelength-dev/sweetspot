@@ -1,7 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
-import Data.Array (find, null) as Array
+import Data.Array (null) as Array
 import Data.Either (Either, either)
 import Data.Maybe (Maybe(..))
 import Debug.Trace (traceM) as Trace
@@ -13,7 +13,6 @@ import React.Basic.DOM (text) as R
 import React.Basic.Hooks (Component, component, element, useEffect, useState, (/\))
 import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.ExperimentListPage (mkExperimentListPage)
 import SweetSpot.ExperimentPage (mkExperimentPage)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
@@ -58,7 +57,7 @@ mkApp = do
         >>> liftEffect
       pure unit
     let
-      onViewCampaignByCampaign (UICampaign campaign) = setRoute' (Campaign campaign._uiCampaignId)
+      onViewCampaignByCampaign = Campaign >>> setRoute'
     useEffect { route, campaignsResource } $ Trace.traceM { route, campaignsResource } *> pure mempty
     pure
       $ element Shopify.appProvider

@@ -14,3 +14,9 @@ ul {
 .price-experiment .Polaris-Heading {
   margin-bottom: 1.25em;
 }
+
+@custom-media --for-phone-only (max-width: 599px);
+@custom-media --for-tablet-portrait-up (min-width: 600px);
+@custom-media --for-tablet-landscape-up (min-width: 600px);
+@custom-media --for-desktop-up (min-width: 600px);
+@custom-media --for-tablet-portrait-up (min-width: 600px);

@@ -24,11 +24,11 @@ import Routing.Hash (matchesWith)
 --   pure mempty
 
 data Route
-  = Home { session :: Maybe String }
+  = CampaignList { session :: Maybe String }
   | Campaign String { session :: Maybe String }
 
 instance showRoute :: Show Route where
-  show (Home { session }) = "Home " <> ", session: " <> (fromMaybe "missing session" session)
+  show (CampaignList { session }) = "Campaign list" <> ", session: " <> (fromMaybe "missing session" session)
   show (Campaign campaignId { session }) = "Campaign" <> campaignId <> (fromMaybe "messing session" session)
 
 derive instance genericRoute :: Generic Route _
@@ -39,7 +39,7 @@ routeCodec :: RouteDuplex' Route
 routeCodec =
   root
     $ sum
-        { "Home": (record # _session := optional (param "session"))
+        { "CampaignList": path "campaign-list" (record # _session := optional (param "session"))
         -- , "Campaign": (path "campaign" ? { session: optional })
         , "Campaign": product (path "campaign" segment) (record # _session := optional (param "session"))
         }
@@ -49,5 +49,5 @@ routeCodec =
 hoistRouter :: (Route -> Effect Unit) -> Effect (Effect Unit)
 hoistRouter setRoute =
   matchesWith (parse routeCodec) \_ newRoute -> case newRoute of
-    Home sessionId -> setRoute (Home sessionId)
+    CampaignList sessionId -> setRoute (CampaignList sessionId)
     Campaign campaignId sessionId -> setRoute (Campaign campaignId sessionId)

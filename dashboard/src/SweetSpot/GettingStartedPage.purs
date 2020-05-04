@@ -10,8 +10,8 @@ import SweetSpot.Shopify (emptyState) as Shopify
 gettingStartedPage :: JSX
 gettingStartedPage =
   element Shopify.emptyState
-    { heading: notNull "Discover more profitable prices for your products"
-    , action: notNull { content: "Create Price Experiment", onAction: mempty }
+    { heading: "Discover more profitable prices for your products"
+    , action: notNull { content: "Create Price Experiment", onAction: pure unit }
     , image: Assets.mountainCode
     , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
     }

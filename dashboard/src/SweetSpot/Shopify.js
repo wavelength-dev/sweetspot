@@ -8,6 +8,7 @@ const {
   Page,
   ResourceList,
   Subheading,
+  TextContainer,
 } = require('@shopify/polaris')
 
 exports.appProvider = AppProvider
@@ -19,3 +20,4 @@ exports.heading = Heading
 exports.page = Page
 exports.resourceList = ResourceList
 exports.subheading = Subheading
+exports.textContainer = TextContainer

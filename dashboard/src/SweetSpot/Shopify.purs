@@ -1,6 +1,7 @@
 module SweetSpot.Shopify where
 
 import Prelude
+import Data.Nullable (Nullable)
 import Effect (Effect)
 import Prim.Row (class Union)
 import React.Basic.Hooks (JSX, ReactComponent, element)
@@ -19,31 +20,32 @@ foreign import appProvider :: ReactComponent { i18n :: I18N, children :: JSX }
 type Breadcrum
   = { content :: String, url :: String }
 
-type PageProps
-  = ( title :: String
-    , subtitle :: String
+foreign import page ::
+  ReactComponent
+    { title :: String
+    , subtitle :: Nullable String
     , children :: JSX
-    , primaryAction :: Action
+    , primaryAction :: Nullable Action
     , breadcrumbs :: Array Breadcrum
-    )
-
-foreign import page :: forall props props_. Union props props_ PageProps => ReactComponent (Record props)
+    }
 
 foreign import card :: ReactComponent { title :: String, sectioned :: Boolean, children :: JSX }
 
 type ButtonProps
   = ( url :: String, onClick :: Effect Unit, children :: JSX )
 
-foreign import button :: forall props props_. Union props props_ ButtonProps => ReactComponent (Record props)
+foreign import button ::
+  forall props props_.
+  Union props props_ ButtonProps =>
+  ReactComponent (Record props)
 
-type EmptyStateProps
-  = ( heading :: String
-    , action :: Action
+foreign import emptyState ::
+  ReactComponent
+    { heading :: String
+    , action :: Nullable Action
     , image :: String
-    , children :: JSX
-    )
-
-foreign import emptyState :: ReactComponent (Record EmptyStateProps)
+    , children :: Array JSX
+    }
 
 foreign import resourceList :: forall a. ReactComponent { items :: Array a, renderItem :: a -> JSX }
 
@@ -51,3 +53,7 @@ foreign import heading :: ReactComponent { element :: String, children :: JSX }
 
 foreign import subheading :: ReactComponent { element :: String, children :: JSX }
 
+foreign import textContainer :: ReactComponent { children :: JSX }
+
+textContainer_ :: JSX -> JSX
+textContainer_ children = element textContainer { children }

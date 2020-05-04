@@ -23,7 +23,7 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Webhook
 import SweetSpot.Shopify.Types
 
-type ApiVersion = "2019-07"
+type ApiVersion = "2020-04"
 
 type TokenExchangeRoute =
   "admin" :> "oauth" :> "access_token"

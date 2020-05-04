@@ -11,11 +11,10 @@ import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.Argonaut as Argonaut
 import Data.Array as A
 import Data.Either (Either(..), hush, note)
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe, isJust, maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Data.String as S
 import Effect (Effect)
-import Effect.Console as Console
 import Fulcrum.Config as Config
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
@@ -67,12 +66,7 @@ persistSentToken token = do
     Right arr -> storeStash $ A.snoc arr token
   where
   storeStash :: Array CartToken -> Effect Unit
-  storeStash arr =
-    Argonaut.encodeJson arr
-      # Argonaut.toString
-      # case _ of
-          Nothing -> Console.error "Failed to serialize new cart token stash"
-          Just serialized ->
-            window
-              >>= localStorage
-              >>= setItem Config.tokenStashKey serialized
+  storeStash tokenArr = do
+    let
+      payload = Argonaut.stringify $ Argonaut.encodeJson tokenArr
+    window >>= localStorage >>= setItem Config.tokenStashKey payload

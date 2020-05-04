@@ -22,6 +22,7 @@ import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
+import Fulcrum.Intl as Intl
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
 import Fulcrum.Site as Site
@@ -100,7 +101,9 @@ insertPrice testMap element = do
   rawVariantToEither rawVariantId = note "Missing variant id" rawVariantId <#> VariantId
 
   setNodePrice :: TestMap -> Effect Unit
-  setNodePrice { swapPrice } = Node.setTextContent (show swapPrice) (Element.toNode element)
+  setNodePrice { swapPrice } = do
+    formatted <- Intl.formatPrice swapPrice
+    Node.setTextContent formatted (Element.toNode element)
 
   revealPrice :: Effect Unit
   revealPrice = case HTMLElement.fromElement element of

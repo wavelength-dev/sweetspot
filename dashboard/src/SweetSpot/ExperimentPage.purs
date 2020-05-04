@@ -4,14 +4,13 @@ import Prelude
 
 import Data.Array (fold)
 import Data.DateTime (DateTime)
-import Data.Formatter.DateTime (format)
 import Data.Lens (view)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element)
-import SweetSpot.Data.Api (UICampaign(..), lowerBound, mean, uiCampaignLift, uiCampaignName, upperBound)
+import SweetSpot.Data.Api (UICampaign(..), lowerBound, mean, uiCampaignLift, upperBound)
 import SweetSpot.Shopify (page, textContainer_) as Shopify
 import SweetSpot.ShopifyWrapper (Element(..))
 import SweetSpot.ShopifyWrapper (heading) as ShopifyWrapper

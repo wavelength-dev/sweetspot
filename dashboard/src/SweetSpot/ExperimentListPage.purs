@@ -8,7 +8,7 @@ import Data.Formatter.DateTime (FormatterCommand(..))
 import Data.Formatter.DateTime (format) as Formatter
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
-import Data.Nullable (notNull, null)
+import Data.Nullable (notNull)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Now (nowDateTime) as Now
@@ -128,7 +128,7 @@ experimentCard { id, status, title, onViewCampaign } =
                   , justifyContent: "space-between"
                   }
             , children:
-                [ element Shopify.heading { element: "h2", children: title }
+                [ element Shopify.heading { element: "h2", children: R.text title }
                 , R.div
                     { style: R.css { display: "flex", alignItems: "center" }
                     , children: [ experimentStatus status ]
@@ -137,7 +137,7 @@ experimentCard { id, status, title, onViewCampaign } =
             }
         , R.div
             { style: R.css { display: "flex", alignItems: "center" }
-            , children: [ element Shopify.button { onClick: notNull onViewCampaign, children: "View", url: null } ]
+            , children: [ element Shopify.button { onClick: onViewCampaign, children: R.text "View" } ]
             }
         ]
     }
@@ -164,17 +164,17 @@ mkExperimentListPage =
           { title: "Price Experiment List"
           , subtitle: notNull "All tests currently running, or finished."
           , primaryAction: notNull { content: "Create Price Experiment", onAction: props.onCreateExperiment }
+          , breadcrumbs: []
           , children:
-              [ R.ul
-                  { children:
-                      map
-                        ( \cardProps ->
-                            R.li
-                              { className: "price-experiment-wrapper"
-                              , children: [ experimentCard cardProps ]
-                              }
-                        )
-                        campaigns
-                  }
-              ]
+              R.ul
+                { children:
+                    map
+                      ( \cardProps ->
+                          R.li
+                            { className: "price-experiment-wrapper"
+                            , children: [ experimentCard cardProps ]
+                            }
+                      )
+                      campaigns
+                }
           }

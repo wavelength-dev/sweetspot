@@ -1,0 +1,138 @@
+:root {
+  --colorInk: #212b36;
+  --colorSubdued: #637381;
+  --colorGreen: #50b83c;
+  --colorRed: #de3618;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  font-family: SF Pro Text;
+}
+
+.status {
+  display: flex;
+  justify-content: space-around;
+  margin: 3.2rem 0;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statusItem__title {
+  color: var(--colorInk);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.statusItem__subtitle {
+  color: var(--colorSubdued);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.statusBox {
+  background: #ffffff;
+  box-shadow: 0px 1px 3px rgba(51, 51, 51, 0.15);
+  padding: 1.333em;
+}
+
+.heading {
+  color: var(--colorInk);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.description {
+  color: var(--colorInk);
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.revenueResults {
+  display: flex;
+  justify-content: space-around;
+}
+
+.resultIndicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.resultAmount {
+  font-family: SF Pro Display;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 32px;
+  color: var(--colorInk);
+}
+
+.resultAmount__big {
+  font-family: SF Pro Display;
+  font-weight: 600;
+  font-size: 42px;
+  line-height: 32px;
+  color: var(--colorInk);
+}
+
+.resultLabel {
+  font-family: SF Pro Text;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 14px;
+  color: var(--colorSubdued);
+}
+
+.arrowUp {
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+
+  border-bottom: 12px solid var(--colorGreen);
+  opacity: 40%;
+}
+
+.arrowDown {
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+
+  border-top: 12px solid var(--colorRed);
+  opacity: 40%;
+}
+
+.arrowUp {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+
+  border-bottom: 14px solid var(--colorGreen);
+  opacity: 40%;
+}
+
+.arrowDown {
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+
+  border-top: 14px solid var(--colorRed);
+  opacity: 40%;
+}

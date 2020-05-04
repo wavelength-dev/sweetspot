@@ -151,13 +151,16 @@ startCartTokenInterval :: UserId -> Effect Unit
 startCartTokenInterval userId = setInterval (1000 * 10) cb *> mempty
   where
   cb :: Effect Unit
-  cb =
-    Aff.launchAff_
-      $ do
-          mToken <- liftEffect Cart.findCartToken
-          case mToken of
-            Just token -> Service.sendCartToken userId token *> mempty
-            Nothing -> liftEffect $ Console.error "Can't send cart token, token not found"
+  cb = do
+    mToken <- Cart.findCartToken
+    case mToken of
+      (Just token) -> do
+        shouldSend <- not <$> Cart.hasCartTokenBeenSent token
+        when shouldSend
+          $ Aff.launchAff_
+          $ Service.sendCartToken userId token
+          *> liftEffect (Cart.persistSentToken token)
+      Nothing -> mempty
 
 withUserId :: (UserId -> Effect Unit) -> Effect Unit
 withUserId f = check

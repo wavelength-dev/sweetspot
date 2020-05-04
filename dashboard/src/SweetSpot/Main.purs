@@ -64,7 +64,7 @@ mkApp = do
           { i18n: Shopify.enTranslations
           , children:
               [ case route of
-                  Home -> case campaignsResource of
+                  CampaignList -> case campaignsResource of
                     Empty -> R.text "EMPTY"
                     Loading -> R.text "LOADING"
                     Error err -> R.text ("ERROR: " <> err)

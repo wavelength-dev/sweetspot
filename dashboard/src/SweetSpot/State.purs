@@ -40,7 +40,7 @@ mkInitialState :: SessionId -> AppState
 mkInitialState sessionId =
   { products: []
   , campaigns: []
-  , route: Home
+  , route: CampaignList
   , sessionId
   , shopName: Nothing
   }

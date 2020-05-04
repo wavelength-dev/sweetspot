@@ -19,6 +19,7 @@ import Network.Wai
     Middleware,
     queryString,
     rawQueryString,
+    requestBody,
     requestHeaders,
     responseLBS,
     strictRequestBody,
@@ -125,17 +126,23 @@ verifyProxySignature ctx app req sendResponse =
 
 verifyWebhookSignature :: AppCtx -> Middleware
 verifyWebhookSignature ctx app req sendResponse = do
-  body <- BSL.toStrict <$> strictRequestBody req
-  let digest = hmacGetDigest $ hmac (encodeUtf8 secret) body :: Digest SHA256
+  body <- strictRequestBody req
+  chunksRef <- newMVar $ BSL.toChunks body
+  let chunkByChunk = modifyMVar chunksRef $ \chunks ->
+        pure $ case chunks of
+          [] -> mempty
+          x : xs -> (xs, x)
+      newReq = req {requestBody = chunkByChunk}
+      digest = hmacGetDigest $ hmac (encodeUtf8 secret) (BSL.toStrict body) :: Digest SHA256
       encoded = convertToBase Base64 digest
   case (== encoded) <$> mSuppliedSignature of
-    Just True -> app req sendResponse
+    Just True -> app newReq sendResponse
     Just False -> do
       L.warn' appLogger "Got invalid webhook signature"
-      send400 "Invalid webhook signature" req sendResponse
+      send400 "Invalid webhook signature" newReq sendResponse
     Nothing -> do
       L.warn' appLogger "Missing webhook signature"
-      send400 "Invalid webhook signature" req sendResponse
+      send400 "Invalid webhook signature" newReq sendResponse
   where
     appLogger = ctx ^. ctxLogger
     secret = ctx ^. ctxConfig . configShopifyClientSecret
@@ -217,7 +224,7 @@ getMiddleware ctx =
       gzipStatic
         . verifySignatureRouted
         . verifyHmacRouted
-        -- . verifyWebhookRouted
+        . verifyWebhookRouted
         . validateShopDomainRouted
         . validateSessionRouted
   where

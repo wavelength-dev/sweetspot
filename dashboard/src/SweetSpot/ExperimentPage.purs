@@ -5,11 +5,11 @@ import Prelude
 import Data.Array (fold)
 import Data.DateTime (DateTime)
 import Data.Lens (view)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (null)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
-import React.Basic.Hooks (Component, component, element)
+import React.Basic.Hooks (Component, component, element, empty)
 import SweetSpot.Data.Api (UICampaign(..), lowerBound, mean, uiCampaignLift, upperBound)
 import SweetSpot.Shopify (page, textContainer_) as Shopify
 import SweetSpot.ShopifyWrapper (Element(..))
@@ -52,31 +52,25 @@ data Direction
   = Up
   | Down
 
-toDirection :: Number -> Direction
-toDirection num = if num >= 0.0 then Up else Down
+numberToDirection :: Number -> Direction
+numberToDirection num = if num >= 0.0 then Up else Down
 
-arrowUp :: JSX
-arrowUp = R.div { className: styles.arrowUp }
-
-arrowDown :: JSX
-arrowDown = R.div { className: styles.arrowDown }
+getIndicatorArrow :: Direction -> JSX
+getIndicatorArrow = case _ of
+  Up -> R.div { className: styles.arrowUp }
+  Down -> R.div { className: styles.arrowDown }
 
 resultIndicator :: String -> String -> Maybe Direction -> JSX
 resultIndicator amount label directionIndicator =
   R.div
     { className: styles.resultIndicator
     , children:
-        [ indicatorArrow directionIndicator
+        [ maybe empty getIndicatorArrow directionIndicator
         , Spacing.small
         , R.div { className: styles.resultAmount, children: [ R.text amount ] }
         , R.div { className: styles.resultLabel, children: [ R.text label ] }
         ]
     }
-  where
-  indicatorArrow = case _ of
-    Nothing -> mempty
-    Just Up -> arrowUp
-    Just Down -> arrowDown
 
 mkExperimentPage :: Component { campaign :: UICampaign }
 mkExperimentPage =
@@ -132,7 +126,7 @@ mkExperimentPage =
 
   getUpperBound = view (uiCampaignLift <<< upperBound) >>> formatPercentage
 
-  getDirection = view (uiCampaignLift <<< mean) >>> toDirection >>> Just
+  getDirection = view (uiCampaignLift <<< mean) >>> numberToDirection
 
   formatPercentage num = getDirectionSign num <> show num <> "%"
 
@@ -142,7 +136,7 @@ mkExperimentPage =
     R.div
       { className: styles.resultIndicator
       , children:
-          [ indicatorArrow direction
+          [ getIndicatorArrow direction
           , Spacing.small
           , R.div
               { className: styles.resultAmount__big
@@ -154,8 +148,3 @@ mkExperimentPage =
               }
           ]
       }
-    where
-    indicatorArrow = case _ of
-      Nothing -> mempty
-      Just Up -> arrowUp
-      Just Down -> arrowDown

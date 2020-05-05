@@ -57,12 +57,12 @@ toStatus now endDateTime startDateTime = case endDateTime, startDateTime of
     | start < now -> Running start
     | otherwise -> Starting start
 
-campaignToCardProps :: Now -> (UICampaign -> Effect Unit) -> UICampaign -> ExperimentCardProps
+campaignToCardProps :: Now -> (String -> Effect Unit) -> UICampaign -> ExperimentCardProps
 campaignToCardProps now onViewCampaignByCampaign campaign'@(UICampaign campaign) =
   { id: campaign._uiCampaignId
   , title: campaign._uiCampaignName
   , status: toStatus now campaign._uiCampaignEnd campaign._uiCampaignStart
-  , onViewCampaign: onViewCampaignByCampaign campaign'
+  , onViewCampaign: onViewCampaignByCampaign campaign._uiCampaignId
   }
 
 spacer :: String -> JSX
@@ -144,7 +144,7 @@ experimentCard { id, status, title, onViewCampaign } =
 
 type ExperimentListPageProps
   = { campaigns :: Array UICampaign
-    , onViewCampaignByCampaign :: UICampaign -> Effect Unit
+    , onViewCampaignByCampaign :: String -> Effect Unit
     , onCreateExperiment :: Effect Unit
     }
 

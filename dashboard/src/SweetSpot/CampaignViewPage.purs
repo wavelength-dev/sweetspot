@@ -1,7 +1,6 @@
-module SweetSpot.ExperimentPage where
+module SweetSpot.CampaignViewPage where
 
 import Prelude
-
 import Data.Array (fold)
 import Data.DateTime (DateTime)
 import Data.Lens (view)
@@ -72,16 +71,16 @@ resultIndicator amount label directionIndicator =
         ]
     }
 
-mkExperimentPage :: Component { campaign :: UICampaign }
-mkExperimentPage =
-  component "ExperimentPage" \{ campaign } -> React.do
+mkCampaignViewPage :: Component { campaign :: UICampaign }
+mkCampaignViewPage =
+  component "CampaignPage" \{ campaign } -> React.do
     let
       (UICampaign c) = campaign
     pure
       $ element Shopify.page
           { title: c._uiCampaignName
           , subtitle: null
-          , breadcrumbs: [ { content: "Experiment List", url: "#campaign-list" } ]
+          , breadcrumbs: [ { content: "campaign List", url: "#campaign-list" } ]
           , primaryAction: null
           , children:
               fold

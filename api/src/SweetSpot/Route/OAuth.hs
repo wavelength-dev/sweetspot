@@ -87,10 +87,16 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
         case mPermCode of
           Right permCode -> do
             deleteInstallNonce shopDomain
-            createShop shopDomain permCode
-            registerWebhooks shopDomain
-            L.info $ "Successfully installed app for " <> showText shopDomain
-            return $ addHeader adminUrl NoContent
+            eShopInfo <- fetchShopInfo shopDomain
+            case eShopInfo of
+              Left err -> do
+                L.error $ "Failed to fetch shopInfo, installation failed"
+                throwError internalServerErr
+              Right shopInfo -> do
+                createShop shopDomain shopInfo permCode
+                registerWebhooks shopDomain
+                L.info $ "Successfully installed app for " <> showText shopDomain
+                return $ addHeader adminUrl NoContent
           Left err -> do
             deleteInstallNonce shopDomain
             L.error err

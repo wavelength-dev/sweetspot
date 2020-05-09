@@ -53,12 +53,18 @@ type RegisterWebhookRoute =
     :> Header "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
+type GetShopInfoRoute =
+  "admin" :> "api" :> ApiVersion :> "shop.json"
+    :> Header "X-Shopify-Access-Token" Text
+    :> Get '[JSON] ShopInfoResponse
+
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [Product])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text Product)
   registerWebhooks :: ShopDomain -> m (Either Text ())
+  fetchShopInfo :: ShopDomain -> m (Either Text ShopInfo)
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -108,6 +114,14 @@ instance MonadShopify AppM where
         Right body -> case parse parseShopJSON (body ^?! key "product") of
           Success product -> Right product
           Error err -> Left . T.pack $ err
+
+  fetchShopInfo domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let fetchShopInfo = client (Proxy :: Proxy GetShopInfoRoute)
+      res <- liftIO $ runClientM (fetchShopInfo (Just token)) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
+        Right shopInfoRes -> Right $ _shopInfoResponseShop shopInfoRes
 
   registerWebhooks domain =
     withClientEnvAndToken domain $ \clientEnv token -> do

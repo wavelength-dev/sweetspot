@@ -31,7 +31,11 @@ data ShopT f
       { _shopId :: Columnar f ShopId,
         _shopCreated :: Columnar f UTCTime,
         _shopDomain :: Columnar f ShopDomain,
-        _shopOAuthToken :: Columnar f Text
+        _shopOAuthToken :: Columnar f Text,
+        _shopEmail :: Columnar f Text,
+        _shopCountryCode :: Columnar f Text,
+        _shopCurrency :: Columnar f Text,
+        _shopMoneyFormat :: Columnar f Text
       }
   deriving (Generic, Beamable)
 
@@ -49,7 +53,7 @@ instance Table ShopT where
     deriving (Generic, Beamable)
   primaryKey = ShopKey . _shopId
 
-Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopOAuthToken) =
+Shop (LensFor shopId) (LensFor shopCreated) (LensFor shopDomain) (LensFor shopOAuthToken) (LensFor shopEmail) (LensFor shopCountryCode) (LensFor shopCurrency) (LensFor shopMoneyFormat) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -390,7 +394,11 @@ migration () =
         { _shopId = field "id" (DataType pgUuidType) notNull,
           _shopCreated = field "created" ts notNull,
           _shopDomain = field "shop_domain" (DataType pgTextType) notNull,
-          _shopOAuthToken = field "oauth_token" text notNull
+          _shopOAuthToken = field "oauth_token" text notNull,
+          _shopEmail = field "email" text notNull,
+          _shopCountryCode = field "country_code" text notNull,
+          _shopCurrency = field "shop_currency" text notNull,
+          _shopMoneyFormat = field "money_format" text notNull
         }
     <*> createTable
       "install_nonces"

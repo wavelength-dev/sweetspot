@@ -201,3 +201,36 @@ instance Show WebhookTopic where
     ShopRedact -> "shop/redact"
     CustomersRedact -> "customers/redact"
     CustomersDataRequest -> "customers/data_request"
+
+-- | ---------------------------------------------------------------------------
+-- | ShopInfo
+-- | ---------------------------------------------------------------------------
+data ShopInfo
+  = ShopInfo
+      { _shopInfoEmail :: !Text,
+        _shopInfoCountryCode :: !Text,
+        _shopInfoCurrency :: !Text,
+        _shopInfoMoneyFormat :: !Text
+      }
+
+instance FromJSON ShopInfo where
+  parseJSON = withObject "ShopInfo" $ \v ->
+    ShopInfo
+      <$> v .: "email"
+      <*> v .: "country_code"
+      <*> v .: "currency"
+      <*> v .: "money_format"
+
+makeLenses ''ShopInfo
+
+-- | ---------------------------------------------------------------------------
+-- | ShopInfoResponse
+-- | ---------------------------------------------------------------------------
+data ShopInfoResponse
+  = ShopInfoResponse
+      { _shopInfoResponseShop :: !ShopInfo
+      }
+
+instance FromJSON ShopInfoResponse where
+  parseJSON = withObject "ShopInfoResponse" $ \v ->
+    ShopInfoResponse <$> v .: "shop"

@@ -10,12 +10,13 @@ import SweetSpot.Database.Queries.Util
   ( withConn,
   )
 import SweetSpot.Database.Schema
+import SweetSpot.Shopify.Types
 
 class Monad m => InstallDB m where
   generateInstallNonce :: ShopDomain -> m Nonce
   getInstallNonce :: ShopDomain -> m (Maybe Nonce)
   deleteInstallNonce :: ShopDomain -> m ()
-  createShop :: ShopDomain -> Text -> m ()
+  createShop :: ShopDomain -> ShopInfo -> Text -> m ()
   getOAuthToken :: ShopDomain -> m (Maybe Text)
 
 instance InstallDB AppM where
@@ -47,7 +48,7 @@ instance InstallDB AppM where
         (db ^. installNonces)
         ((==. val_ shopDomain) . (^. installShopDomain))
 
-  createShop shopDomain token = withConn $ \conn ->
+  createShop shopDomain shopInfo token = withConn $ \conn ->
     runBeamPostgres conn
       $ runInsert
       $ insert (db ^. shops)
@@ -56,7 +57,11 @@ instance InstallDB AppM where
             { _shopId = shopId_,
               _shopCreated = nowUTC_,
               _shopDomain = val_ shopDomain,
-              _shopOAuthToken = val_ token
+              _shopOAuthToken = val_ token,
+              _shopCountryCode = val_ $ shopInfo ^. shopInfoCountryCode,
+              _shopCurrency = val_ $ shopInfo ^. shopInfoCurrency,
+              _shopEmail = val_ $ shopInfo ^. shopInfoEmail,
+              _shopMoneyFormat = val_ $ shopInfo ^. shopInfoMoneyFormat
             }
         ]
 

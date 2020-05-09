@@ -397,7 +397,7 @@ migration () =
           _shopOAuthToken = field "oauth_token" text notNull,
           _shopEmail = field "email" text notNull,
           _shopCountryCode = field "country_code" text notNull,
-          _shopCurrency = field "shop_currency" text notNull,
+          _shopCurrency = field "currency" text notNull,
           _shopMoneyFormat = field "money_format" text notNull
         }
     <*> createTable

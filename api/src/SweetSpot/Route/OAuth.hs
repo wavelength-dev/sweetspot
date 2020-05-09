@@ -90,7 +90,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
             eShopInfo <- fetchShopInfo shopDomain
             case eShopInfo of
               Left err -> do
-                L.error $ "Failed to fetch shopInfo, installation failed"
+                L.error $ "Failed to fetch shopInfo, installation failed: " <> err
                 throwError internalServerErr
               Right shopInfo -> do
                 createShop shopDomain shopInfo permCode

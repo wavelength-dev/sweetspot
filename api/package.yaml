@@ -42,6 +42,8 @@ dependencies:
 - mtl
 - mwc-random
 - postgresql-simple
+- postgresql-simple-migration
+- pretty-simple
 - purescript-bridge
 - random
 - resource-pool

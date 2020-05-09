@@ -106,5 +106,5 @@ migration currentDb =
       "user_cart_tokens"
       UserCartToken
         { _cartTokenId = field "cart_token" cartTokenType notNull,
-          _cartTokenUser = V2.UserKey $ field "user_id" V2.userIdType notNull
+          _cartTokenUser = V2.UserKey $ field "user_id" V2.userIdType
         }

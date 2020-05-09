@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+import Data.Array (find)
 import Data.Array (null) as Array
 import Data.Either (Either, either)
 import Data.Maybe (Maybe(..))
@@ -9,15 +10,16 @@ import Effect.Class (liftEffect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM (text) as R
-import React.Basic.Hooks (Component, component, element, useState, (/\))
+import React.Basic.Hooks (Component, component, element, empty, useEffectOnce, useState, (/\))
 import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
-import SweetSpot.ExperimentListPage (mkExperimentListPage)
-import SweetSpot.ExperimentPage (mkExperimentPage)
+import SweetSpot.CampaignListPage (mkCampaignListPage)
+import SweetSpot.CampaignViewPage (mkCampaignViewPage)
+import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Mock (expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
-import SweetSpot.Routerless (Route(..))
+import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns) as Service
 import SweetSpot.Session (SessionId)
 import SweetSpot.Session (getSessionId) as Session
@@ -40,12 +42,13 @@ eitherToResource = either Error Resource
 
 mkApp :: Component { sessionId :: SessionId }
 mkApp = do
-  experimentListPage <- mkExperimentListPage
-  experimentPage <- mkExperimentPage
+  campaignListPage <- mkCampaignListPage
+  campaignViewPage <- mkCampaignViewPage
   component "App" \props -> React.do
-    route /\ setRoute <- useState (Campaign expensiveJacketsCheapMonkeysCampaign)
+    route /\ setRoute <- useState CampaignList
     let
       setRoute' = const >>> setRoute
+    useEffectOnce (useRouter setRoute')
     campaignsResource /\ setCampaignsResource <- useState Empty
     let
       setCampaignsResource' = const >>> setCampaignsResource
@@ -59,8 +62,6 @@ mkApp = do
         # setCampaignsResource'
         >>> liftEffect
       pure unit
-    let
-      onViewCampaignByCampaign = Campaign >>> setRoute'
     pure
       $ element Shopify.appProvider
           { i18n: Shopify.enTranslations
@@ -74,13 +75,22 @@ mkApp = do
                     if Array.null campaigns then
                       gettingStartedPage
                     else
-                      experimentListPage
+                      campaignListPage
                         { campaigns
-                        , onViewCampaignByCampaign: onViewCampaignByCampaign
-                        , onCreateExperiment: mempty
+                        , onViewCampaignByCampaignId: CampaignView >>> setRoute'
+                        , onCreateCampaign: mempty
                         }
-                Campaign campaign -> experimentPage { campaign }
+                CampaignCreate -> R.text "Campaign Create Page"
+                CampaignView rawCampaignId -> case campaignsResource of
+                  Empty -> empty
+                  Loading -> R.text "LOADING"
+                  Error err -> R.text ("ERROR: " <> err)
+                  Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of
+                    Nothing -> R.text ("ERROR: campaign not found")
+                    Just campaign -> campaignViewPage { campaign: campaign }
           }
+  where
+  getCampaignById targetId (UICampaign campaign) = targetId == campaign._uiCampaignId
 
 main :: Effect Unit
 main = do

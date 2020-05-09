@@ -80,7 +80,7 @@ mkCampaignViewPage =
       $ element Shopify.page
           { title: c._uiCampaignName
           , subtitle: null
-          , breadcrumbs: [ { content: "campaign List", url: "#campaign-list" } ]
+          , breadcrumbs: [ { content: "campaign List", url: "#/" } ]
           , primaryAction: null
           , children:
               fold

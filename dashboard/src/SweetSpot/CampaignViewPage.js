@@ -1,3 +1,3 @@
-const styles = require('../../src/SweetSpot/ExperimentPage.css')
+const styles = require('../../src/SweetSpot/CampaignViewPage.css')
 
 exports.styles = styles

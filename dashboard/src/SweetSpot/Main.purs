@@ -18,7 +18,6 @@ import SweetSpot.CampaignViewPage (mkCampaignViewPage)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (missingSessionPage)
-import SweetSpot.Mock (expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns) as Service
 import SweetSpot.Session (SessionId)
@@ -56,9 +55,6 @@ mkApp = do
       liftEffect $ setCampaignsResource $ const Loading
       eCampaigns <- Service.fetchCampaigns props.sessionId
       eitherToResource eCampaigns
-        # setCampaignsResource'
-        >>> liftEffect
-      Resource [ expensiveJacketsCheapMonkeysCampaign, storewide10Campaign ]
         # setCampaignsResource'
         >>> liftEffect
       pure unit

@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 
-module SweetSpot.Database.Migrations.V0001InitDb where
+module SweetSpot.Database.Migration.Init where
 
 import Data.Aeson (Value)
 import Data.Time (UTCTime)
@@ -288,6 +288,60 @@ instance Table EventT where
   primaryKey = EventKey . _evId
 
 -- | ---------------------------------------------------------------------------
+-- | Session
+-- | ---------------------------------------------------------------------------
+data SessionT f
+  = Session
+      { _sessionId :: Columnar f SessionId,
+        _sessionShopId :: PrimaryKey ShopT f
+      }
+  deriving (Generic, Beamable)
+
+type Session = SessionT Identity
+
+type SessionKey = PrimaryKey SessionT Identity
+
+deriving instance Show Session
+
+deriving instance Show SessionKey
+
+instance Table SessionT where
+  data PrimaryKey SessionT f
+    = SessionKey (Columnar f SessionId)
+    deriving (Generic, Beamable)
+  primaryKey = SessionKey . _sessionId
+
+Session (LensFor sessionId) (ShopKey (LensFor sessionShopDomain)) = tableLenses
+
+sessionIdType :: DataType Postgres SessionId
+sessionIdType = DataType pgTextType
+
+-- | ---------------------------------------------------------------------------
+-- | UserCartToken
+-- | ---------------------------------------------------------------------------
+data UserCartTokenT f
+  = UserCartToken
+      { _cartTokenId :: Columnar f CartToken,
+        _cartTokenUser :: PrimaryKey UserT f
+      }
+  deriving (Generic, Beamable)
+
+type UserCartToken = UserCartTokenT Identity
+
+type UserCartTokenKey = PrimaryKey UserCartTokenT Identity
+
+instance Table UserCartTokenT where
+  data PrimaryKey UserCartTokenT f
+    = UserCartTokenKey (Columnar f CartToken)
+    deriving (Generic, Beamable)
+  primaryKey = UserCartTokenKey . _cartTokenId
+
+UserCartToken (LensFor cartTokenId) (UserKey (LensFor cartTokenUser)) = tableLenses
+
+cartTokenType :: DataType Postgres CartToken
+cartTokenType = DataType pgTextType
+
+-- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f
@@ -302,59 +356,22 @@ data SweetSpotDb f
         _checkoutEvents :: f (TableEntity CheckoutEventT),
         _checkoutItems :: f (TableEntity CheckoutItemT),
         _events :: f (TableEntity EventT),
+        _sessions :: f (TableEntity SessionT),
+        _userCartTokens :: f (TableEntity UserCartTokenT),
         _cryptoExtension :: f (PgExtensionEntity PgCrypto)
       }
   deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens cryptoExtension) =
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens cryptoExtension) =
   dbLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Migration types
 -- | ---------------------------------------------------------------------------
-pricePrecision :: Maybe (Word, Maybe Word)
-pricePrecision = Just (12, Just 2)
-
-campaignIdType :: DataType Postgres CampaignId
-campaignIdType = DataType pgUuidType
-
-shopIdType :: DataType Postgres ShopId
-shopIdType = DataType pgUuidType
-
-shopDomainType :: DataType Postgres ShopDomain
-shopDomainType = DataType pgTextType
-
-pVariantIdType :: DataType Postgres PVariantId
-pVariantIdType = DataType pgUuidType
-
-pidType :: DataType Postgres Pid
-pidType = DataType pgTextType
-
-svidType :: DataType Postgres Svid
-svidType = DataType pgTextType
-
-skuType :: DataType Postgres Sku
-skuType = DataType pgTextType
-
 priceType :: DataType Postgres Price
-priceType = DataType (numericType pricePrecision)
-
-userIdType :: DataType Postgres UserId
-userIdType = DataType pgUuidType
-
-eventIdType :: DataType Postgres EventId
-eventIdType = DataType pgUuidType
-
-orderIdType :: DataType Postgres OrderId
-orderIdType = DataType pgTextType
-
-uuidType :: DataType Postgres UUID
-uuidType = DataType pgUuidType
-
-nonceType :: DataType Postgres Nonce
-nonceType = DataType pgUuidType
+priceType = DataType (numericType (Just (12, Just 2)))
 
 ts :: DataType Postgres UTCTime
 ts = DataType (timestampType Nothing True)
@@ -370,221 +387,92 @@ migration () =
     <$> createTable
       "shops"
       Shop
-        { _shopId =
-            field
-              "id"
-              shopIdType
-              notNull,
-          _shopCreated =
-            field
-              "created"
-              ts
-              notNull,
-          _shopDomain =
-            field
-              "shop_domain"
-              shopDomainType
-              notNull,
-          _shopOAuthToken =
-            field
-              "oauth_token"
-              text
-              notNull
+        { _shopId = field "id" (DataType pgUuidType) notNull,
+          _shopCreated = field "created" ts notNull,
+          _shopDomain = field "shop_domain" (DataType pgTextType) notNull,
+          _shopOAuthToken = field "oauth_token" text notNull
         }
     <*> createTable
       "install_nonces"
       InstallNonce
-        { _installShopDomain =
-            field
-              "shop_domain"
-              shopDomainType
-              notNull,
-          _installNonce =
-            field
-              "nonce"
-              nonceType
-              notNull
+        { _installShopDomain = field "shop_domain" (DataType pgTextType) notNull,
+          _installNonce = field "nonce" (DataType pgUuidType) notNull
         }
     <*> createTable
       "users"
       User
-        { _usrId = field "id" userIdType,
-          _usrCreated =
-            field
-              "created"
-              ts
-              notNull
+        { _usrId = field "id" (DataType pgUuidType),
+          _usrCreated = field "created" ts notNull
         }
     <*> createTable
       "campaigns"
       Campaign
-        { _cmpId =
-            field
-              "id"
-              campaignIdType
-              notNull,
-          _cmpShopId =
-            ShopKey
-              ( field
-                  "shop_id"
-                  shopIdType
-              ),
-          _cmpName =
-            field
-              "campaign_name"
-              text
-              notNull,
-          _cmpStart =
-            field
-              "start_date"
-              ( maybeType ts
-              ),
-          _cmpEnd =
-            field
-              "end_date"
-              (maybeType ts)
+        { _cmpId = field "id" (DataType pgUuidType) notNull,
+          _cmpShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _cmpName = field "campaign_name" text notNull,
+          _cmpStart = field "start_date" (maybeType ts),
+          _cmpEnd = field "end_date" (maybeType ts)
         }
     <*> createTable
       "product_variants"
       ProductVariant
-        { _pvId =
-            field
-              "id"
-              pVariantIdType
-              notNull,
-          _pvShopId =
-            ShopKey
-              ( field
-                  "shop_id"
-                  shopIdType
-              ),
+        { _pvId = field "id" (DataType pgUuidType) notNull,
+          _pvShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
           _pvTitle = field "title" text notNull,
-          _pvSku = field "sku" skuType notNull,
-          _pvProductId =
-            field
-              "shopify_product_id"
-              pidType
-              notNull,
-          _pvVariantId =
-            field
-              "shopify_variant_id"
-              svidType
-              notNull,
+          _pvSku = field "sku" (DataType pgTextType) notNull,
+          _pvProductId = field "shopify_product_id" (DataType pgTextType) notNull,
+          _pvVariantId = field "shopify_variant_id" (DataType pgTextType) notNull,
           _pvPrice = field "price" priceType notNull,
-          _pvCurrency =
-            field
-              "currency"
-              text
-              notNull
+          _pvCurrency = field "currency" text notNull
         }
     <*> createTable
       "treatments"
       Treatment
-        { _trCmpId =
-            CampaignKey
-              ( field
-                  "campaign_id"
-                  campaignIdType
-                  notNull
-              ),
-          _trTreatment =
-            field
-              "treatment"
-              int
-              notNull,
-          _trProductVariantId =
-            PVariantKey
-              ( field
-                  "product_variant_id"
-                  pVariantIdType
-                  notNull
-              )
+        { _trCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
+          _trTreatment = field "treatment" int notNull,
+          _trProductVariantId = PVariantKey (field "product_variant_id" (DataType pgUuidType) notNull)
         }
     <*> createTable
       "user_experiments"
       UserExperiment
-        { _ueUserId =
-            UserKey
-              ( field
-                  "user_id"
-                  userIdType
-                  notNull
-              ),
-          _ueCmpId =
-            CampaignKey
-              ( field
-                  "campaign_id"
-                  campaignIdType
-                  notNull
-              ),
-          _ueTreatment =
-            field
-              "treatment"
-              int
-              notNull
+        { _ueUserId = UserKey (field "user_id" (DataType pgUuidType) notNull),
+          _ueCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
+          _ueTreatment = field "treatment" int notNull
         }
     <*> createTable
       "checkout_events"
       CheckoutEvent
-        { _cevId =
-            field
-              "id"
-              eventIdType
-              notNull,
-          _cevCreated =
-            field
-              "created"
-              ts
-              notNull,
-          _cevCmpId =
-            CampaignKey
-              ( field
-                  "campaign_id"
-                  campaignIdType
-              ),
-          _cevOrderId =
-            field
-              "order_id"
-              orderIdType
-              notNull,
-          _cevShopId =
-            ShopKey
-              ( field
-                  "shop_id"
-                  shopIdType
-              ),
-          _cevUserId =
-            UserKey
-              ( field
-                  "user_id"
-                  userIdType
-              )
+        { _cevId = field "id" (DataType pgUuidType) notNull,
+          _cevCreated = field "created" ts notNull,
+          _cevCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType)),
+          _cevOrderId = field "order_id" (DataType pgTextType) notNull,
+          _cevShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _cevUserId = UserKey (field "user_id" (DataType pgUuidType))
         }
     <*> createTable
       "checkout_items"
       CheckoutItem
-        { _ciId =
-            field
-              "id"
-              uuidType
-              notNull,
-          _ciCheckoutEventId =
-            CheckoutEventKey
-              ( field
-                  "checkout_event_id"
-                  eventIdType
-              ),
+        { _ciId = field "id" (DataType pgUuidType) notNull,
+          _ciCheckoutEventId = CheckoutEventKey (field "checkout_event_id" (DataType pgUuidType)),
           _ciQuantity = field "quantity" int notNull,
-          _ciSvid =
-            field
-              "shopify_variant_id"
-              svidType
-              notNull
+          _ciSvid = field "shopify_variant_id" (DataType pgTextType) notNull
         }
     <*> createTable
       "events"
       Event
-        { _evId = field "id" eventIdType notNull,
+        { _evId = field "id" (DataType pgUuidType) notNull,
           _evPayload = field "payload" jsonb notNull
+        }
+    <*> createTable
+      "sessions"
+      Session
+        { _sessionId = field "id" (DataType pgTextType),
+          _sessionShopId = ShopKey (field "shop_id" (DataType pgUuidType))
+        }
+    <*> createTable
+      "user_cart_tokens"
+      UserCartToken
+        { _cartTokenId = field "cart_token" (DataType pgTextType) notNull,
+          _cartTokenUser = UserKey (field "user_id" (DataType pgUuidType))
         }
     <*> pgCreateExtension

@@ -1,6 +1,5 @@
 module SweetSpot.Database.Schema
-  ( module SweetSpot.Database.Migrations.V0003AddUserCartTokens,
-    migration,
+  ( module SweetSpot.Database.Migration.Init,
     checkedDb,
     db,
     pgGenUUID_,
@@ -13,7 +12,6 @@ module SweetSpot.Database.Schema
   )
 where
 
-import Control.Arrow ((>>>))
 import Data.Time (UTCTime)
 import Data.UUID.Types (UUID)
 import Database.Beam (DatabaseSettings, QExpr)
@@ -39,13 +37,12 @@ import Database.Beam.Query.Internal (unsafeRetype)
 import Database.Beam.Query.Types (QGenExpr)
 import RIO
 import SweetSpot.Data.Common
-import qualified SweetSpot.Database.Migrations.V0001InitDb as V1 (migration)
-import qualified SweetSpot.Database.Migrations.V0002AddSessions as V2 (migration)
-import qualified SweetSpot.Database.Migrations.V0003AddUserCartTokens as V3 (migration)
-import SweetSpot.Database.Migrations.V0003AddUserCartTokens hiding (migration)
+import SweetSpot.Database.Migration.Init
 
 checkedDb :: CheckedDatabaseSettings Postgres SweetSpotDb
-checkedDb = evaluateDatabase migration
+checkedDb = evaluateDatabase schema
+  where
+    schema = migrationStep "Initial schema" migration
 
 db :: DatabaseSettings Postgres SweetSpotDb
 db = unCheckDatabase checkedDb
@@ -73,8 +70,3 @@ nowUTC_ = unsafeRetype now_
 
 instance HasDefaultSqlDataType Postgres UTCTime where
   defaultSqlDataType _ _ _ = timestampType Nothing True
-
-migration =
-  migrationStep "Initial schema" V1.migration
-    >>> migrationStep "Add sessions" V2.migration
-    >>> migrationStep "Add user_cart_tokens" V3.migration

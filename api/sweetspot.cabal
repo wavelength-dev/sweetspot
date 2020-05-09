@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 612baabb60c3a22ec9c54299b14c7160840618955b68edecd7e8d116096bcbce
+-- hash: ab9c7c46cb1414bdac0f81bc6133492a0dbe0b97eae373ba23e0ac837ca5ac86
 
 name:           sweetspot
 version:        0.1.0.0
@@ -80,6 +80,8 @@ library
     , mtl
     , mwc-random
     , postgresql-simple
+    , postgresql-simple-migration
+    , pretty-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -136,6 +138,8 @@ executable bridge-exe
     , mtl
     , mwc-random
     , postgresql-simple
+    , postgresql-simple-migration
+    , pretty-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -192,6 +196,8 @@ executable sweetspot-exe
     , mtl
     , mwc-random
     , postgresql-simple
+    , postgresql-simple-migration
+    , pretty-simple
     , purescript-bridge
     , random
     , resource-pool
@@ -254,6 +260,8 @@ test-suite sweetspot-test
     , mtl
     , mwc-random
     , postgresql-simple
+    , postgresql-simple-migration
+    , pretty-simple
     , purescript-bridge
     , random
     , resource-pool

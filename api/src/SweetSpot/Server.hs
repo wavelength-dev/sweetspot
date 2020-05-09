@@ -18,7 +18,12 @@ import RIO.Partial (read)
 import RIO.Text as T
 import Servant hiding (basicAuthPassword)
 import SweetSpot.AppM
-import SweetSpot.Database (DbConfig (..), getDbPool, migrate)
+import SweetSpot.Database
+  ( DbConfig (..),
+    getDbPool,
+    migrate,
+    verifyDbSchema,
+  )
 import qualified SweetSpot.Env as Env
 import qualified SweetSpot.Logger as L
 import SweetSpot.Middleware (getMiddleware)
@@ -57,10 +62,6 @@ createApp ctx =
     $ serve rootAPI
     $ hoistServer rootAPI (`runReaderT` ctx) server
 
-rightOrThrow :: Either Text a -> a
-rightOrThrow (Left msg) = error . T.unpack $ msg
-rightOrThrow (Right a) = a
-
 runServer :: IO ()
 runServer = do
   mEnvConfig <- Env.getEnvConfig
@@ -81,26 +82,18 @@ runServer = do
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize
+  withResource dbPool migrate
+  withResource dbPool verifyDbSchema
   let ctx =
         AppCtx
           { _ctxConfig = config,
             _ctxLogger = appLogger,
             _ctxDbPool = dbPool
           }
-  L.info' appLogger "Running migrations"
-  res <- withResource dbPool $ \conn -> migrate conn
-  case res of
-    Nothing -> do
-      L.error' appLogger "Error while trying to migrate"
-      -- Make sure error gets logged
-      threadDelay 1000000
-      exitWith $ ExitFailure 1
-    Just _ -> do
-      L.info' appLogger ("Listening on port " <> Env.port envConfig <> "...")
-      withStdoutLogger stdoutLogger
-      where
-        stdoutLogger aplogger = do
-          let port = read (T.unpack $ Env.port envConfig)
-              app = createApp ctx
-              settings = setPort port $ setLogger aplogger defaultSettings
-          runSettings settings app
+      stdoutLogger aplogger = do
+        let port = read (T.unpack $ Env.port envConfig)
+            app = createApp ctx
+            settings = setPort port $ setLogger aplogger defaultSettings
+        runSettings settings app
+  L.info' appLogger ("Listening on port " <> Env.port envConfig <> "...")
+  withStdoutLogger stdoutLogger

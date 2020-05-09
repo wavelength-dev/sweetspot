@@ -106,6 +106,6 @@ migration currentDb =
     <*> createTable
       "sessions"
       Session
-        { _sessionId = field "session_id" sessionIdType notNull unique,
-          _sessionShopId = V1.ShopKey $ field "shop_id" V1.shopIdType notNull
+        { _sessionId = field "id" sessionIdType,
+          _sessionShopId = V1.ShopKey $ field "shop_id" V1.shopIdType
         }

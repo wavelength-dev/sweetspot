@@ -372,7 +372,7 @@ migration () =
       Shop
         { _shopId =
             field
-              "shop_id"
+              "id"
               shopIdType
               notNull,
           _shopCreated =
@@ -384,14 +384,12 @@ migration () =
             field
               "shop_domain"
               shopDomainType
-              notNull
-              unique,
+              notNull,
           _shopOAuthToken =
             field
               "oauth_token"
               text
               notNull
-              unique
         }
     <*> createTable
       "install_nonces"
@@ -400,19 +398,17 @@ migration () =
             field
               "shop_domain"
               shopDomainType
-              notNull
-              unique,
+              notNull,
           _installNonce =
             field
               "nonce"
               nonceType
               notNull
-              unique
         }
     <*> createTable
       "users"
       User
-        { _usrId = field "user_id" userIdType,
+        { _usrId = field "id" userIdType,
           _usrCreated =
             field
               "created"
@@ -424,7 +420,7 @@ migration () =
       Campaign
         { _cmpId =
             field
-              "campaign_id"
+              "id"
               campaignIdType
               notNull,
           _cmpShopId =
@@ -432,7 +428,6 @@ migration () =
               ( field
                   "shop_id"
                   shopIdType
-                  notNull
               ),
           _cmpName =
             field
@@ -454,7 +449,7 @@ migration () =
       ProductVariant
         { _pvId =
             field
-              "product_variant_id"
+              "id"
               pVariantIdType
               notNull,
           _pvShopId =
@@ -462,7 +457,6 @@ migration () =
               ( field
                   "shop_id"
                   shopIdType
-                  notNull
               ),
           _pvTitle = field "title" text notNull,
           _pvSku = field "sku" skuType notNull,
@@ -475,8 +469,7 @@ migration () =
             field
               "shopify_variant_id"
               svidType
-              notNull
-              unique,
+              notNull,
           _pvPrice = field "price" priceType notNull,
           _pvCurrency =
             field
@@ -535,7 +528,7 @@ migration () =
       CheckoutEvent
         { _cevId =
             field
-              "event_id"
+              "id"
               eventIdType
               notNull,
           _cevCreated =
@@ -548,7 +541,6 @@ migration () =
               ( field
                   "campaign_id"
                   campaignIdType
-                  notNull
               ),
           _cevOrderId =
             field
@@ -560,14 +552,12 @@ migration () =
               ( field
                   "shop_id"
                   shopIdType
-                  notNull
               ),
           _cevUserId =
             UserKey
               ( field
                   "user_id"
                   userIdType
-                  notNull
               )
         }
     <*> createTable
@@ -575,7 +565,7 @@ migration () =
       CheckoutItem
         { _ciId =
             field
-              "checkout_item_id"
+              "id"
               uuidType
               notNull,
           _ciCheckoutEventId =
@@ -583,7 +573,6 @@ migration () =
               ( field
                   "checkout_event_id"
                   eventIdType
-                  notNull
               ),
           _ciQuantity = field "quantity" int notNull,
           _ciSvid =
@@ -595,7 +584,7 @@ migration () =
     <*> createTable
       "events"
       Event
-        { _evId = field "event_id" eventIdType notNull,
+        { _evId = field "id" eventIdType notNull,
           _evPayload = field "payload" jsonb notNull
         }
     <*> pgCreateExtension

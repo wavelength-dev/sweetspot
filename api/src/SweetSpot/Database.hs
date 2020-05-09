@@ -2,22 +2,30 @@ module SweetSpot.Database
   ( Pool,
     getDbPool,
     DbConfig (..),
+    verifyDbSchema,
     migrate,
   )
 where
 
-import Control.Monad.IO.Class (liftIO)
 import qualified Data.Pool as P
 import Database.Beam.Migrate.Simple
-  ( BringUpToDateHooks (..),
-    bringUpToDateWithHooks,
+  ( VerificationResult (..),
+    verifySchema,
   )
 import qualified Database.Beam.Postgres as PG
 import Database.Beam.Postgres.Migrate (migrationBackend)
+import Database.PostgreSQL.Simple (withTransaction)
+import Database.PostgreSQL.Simple.Migration
+  ( MigrationCommand (..),
+    MigrationContext (..),
+    MigrationResult,
+    runMigration,
+  )
+import Database.PostgreSQL.Simple.Util (existsTable)
 import RIO
 import qualified RIO.Text as T
-import SweetSpot.Database.Schema (migration)
-import Prelude (print)
+import SweetSpot.Database.Schema (checkedDb)
+import Text.Pretty.Simple (pPrint)
 
 type Pool = P.Pool PG.Connection
 
@@ -51,63 +59,21 @@ getDbPool DbConfig {..} =
     timeoutMs = 2000
     poolSize = 10
 
--- | ---------------------------------------------------------------------------
--- | Migration
--- | ---------------------------------------------------------------------------
-verboseHooks :: BringUpToDateHooks PG.Pg
-verboseHooks =
-  BringUpToDateHooks
-    { runIrreversibleHook = pure True,
-      startStepHook = \a b ->
-        liftIO
-          ( print $
-              "startStepHook N"
-                ++ show a
-                ++ ": "
-                ++ show b
-          ),
-      endStepHook = \a b ->
-        liftIO
-          ( print $
-              "endStepHook N"
-                ++ show a
-                ++ ": "
-                ++ show b
-          ),
-      runCommandHook = \a b ->
-        liftIO
-          ( print $
-              "runCommandHook N"
-                ++ show a
-                ++ ": "
-                ++ show b
-          ),
-      queryFailedHook = fail "Log entry query fails",
-      discontinuousMigrationsHook = \ix ->
-        fail
-          ( "Discontinuous migration log: missing migration at "
-              ++ show ix
-          ),
-      logMismatchHook = \ix actual expected ->
-        fail
-          ( "Log mismatch at index "
-              ++ show ix
-              ++ ":\n"
-              ++ "  expected: "
-              ++ T.unpack expected
-              ++ "\n"
-              ++ "  actual  : "
-              ++ T.unpack actual
-          ),
-      databaseAheadHook = \aheadBy ->
-        fail
-          ( "The database is ahead of the known schema by "
-              ++ show aheadBy
-              ++ " migration(s)"
-          )
-    }
+verifyDbSchema :: PG.Connection -> IO ()
+verifyDbSchema conn = do
+  res <- PG.runBeamPostgres conn (verifySchema migrationBackend checkedDb)
+  case res of
+    VerificationFailed cs -> do
+      pPrint cs
+      exitWith (ExitFailure 1)
+    VerificationSucceeded -> mempty
 
-migrate conn =
-  PG.runBeamPostgres
-    conn
-    (bringUpToDateWithHooks verboseHooks migrationBackend migration)
+migrate :: PG.Connection -> IO (MigrationResult String)
+migrate conn = do
+  initialized <- existsTable conn "schema_migrations"
+  when (not initialized) $ do
+    withTransaction conn $ runMigration $ MigrationContext MigrationInitialization True conn
+    mempty
+  withTransaction conn $ runMigration $ MigrationContext migrationDir True conn
+  where
+    migrationDir = MigrationDirectory "./migrations"

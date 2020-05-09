@@ -3,7 +3,6 @@ module SweetSpot.Shopify where
 import Prelude
 import Data.Nullable (Nullable)
 import Effect (Effect)
-import Prim.Row (class Union)
 import React.Basic.Hooks (JSX, ReactComponent, element)
 
 type Action
@@ -31,13 +30,15 @@ foreign import page ::
 
 foreign import card :: ReactComponent { title :: String, sectioned :: Boolean, children :: JSX }
 
-type ButtonProps
-  = ( url :: String, onClick :: Effect Unit, children :: JSX )
+-- type ButtonProps
+--   = ( id :: String, url :: String, onClick :: Effect Unit, children :: JSX )
 
-foreign import button ::
-  forall props props_.
-  Union props props_ ButtonProps =>
-  ReactComponent (Record props)
+-- foreign import button ::
+--   forall props props_.
+--   Union props props_ ButtonProps =>
+--   ReactComponent (Record props)
+
+foreign import button :: ReactComponent { url :: Nullable String, onClick :: Nullable (Effect Unit), children :: JSX }
 
 foreign import emptyState ::
   ReactComponent

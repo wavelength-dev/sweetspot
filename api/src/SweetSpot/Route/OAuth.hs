@@ -87,7 +87,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
         case mPermCode of
           Right permCode -> do
             deleteInstallNonce shopDomain
-            eShopInfo <- fetchShopInfo shopDomain
+            eShopInfo <- fetchShopInfo permCode shopDomain
             case eShopInfo of
               Left err -> do
                 L.error $ "Failed to fetch shopInfo, installation failed: " <> err
@@ -99,7 +99,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
                 return $ addHeader adminUrl NoContent
           Left err -> do
             deleteInstallNonce shopDomain
-            L.error err
+            L.error $ "Failed to exchange oauth token"
             throwError internalServerErr
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"

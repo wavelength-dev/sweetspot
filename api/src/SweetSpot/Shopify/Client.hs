@@ -64,7 +64,7 @@ class Monad m => MonadShopify m where
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text Product)
   registerWebhooks :: ShopDomain -> m (Either Text ())
-  fetchShopInfo :: ShopDomain -> m (Either Text ShopInfo)
+  fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -115,13 +115,13 @@ instance MonadShopify AppM where
           Success product -> Right product
           Error err -> Left . T.pack $ err
 
-  fetchShopInfo domain =
-    withClientEnvAndToken domain $ \clientEnv token -> do
-      let fetchShopInfo = client (Proxy :: Proxy GetShopInfoRoute)
-      res <- liftIO $ runClientM (fetchShopInfo (Just token)) clientEnv
-      return $ case res of
-        Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
-        Right shopInfoRes -> Right $ _shopInfoResponseShop shopInfoRes
+  fetchShopInfo token domain = do
+    let fetchShopInfoClient = client (Proxy :: Proxy GetShopInfoRoute)
+    clientEnv <- getClientEnv domain
+    res <- liftIO $ runClientM (fetchShopInfoClient (Just token)) clientEnv
+    return $ case res of
+      Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
+      Right shopInfoRes -> Right $ _shopInfoResponseShop shopInfoRes
 
   registerWebhooks domain =
     withClientEnvAndToken domain $ \clientEnv token -> do

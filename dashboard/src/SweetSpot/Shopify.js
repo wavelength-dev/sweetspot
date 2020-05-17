@@ -3,6 +3,7 @@ const {
   AppProvider,
   Button,
   Card,
+  DataTable,
   EmptyState,
   Heading,
   Page,
@@ -21,3 +22,4 @@ exports.page = Page
 exports.resourceList = ResourceList
 exports.subheading = Subheading
 exports.textContainer = TextContainer
+exports.dataTable = DataTable

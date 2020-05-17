@@ -20,13 +20,13 @@ invalidDomain = ShopDomain "lol-shop.myshopify.com"
 
 newShopDomain = ShopDomain "new-shop.myshopify.com"
 
-user1 = UserId $ toUUID "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
+user1 = UserId "2eb6a046-6609-4518-ab23-87f1ad56bbaa"
 
-user2 = UserId $ toUUID "e3b937e7-ac65-4324-9d67-040cdc35b555"
+user2 = UserId "e3b937e7-ac65-4324-9d67-040cdc35b555"
 
-user3 = UserId $ toUUID "85271f15-683b-4972-bd68-b7aaacdeb70d"
+user3 = UserId "85271f15-683b-4972-bd68-b7aaacdeb70d"
 
-unknownUser = UserId $ toUUID "8a2492c7-82f8-4845-844a-00589d270f66"
+unknownUser = UserId "8a2492c7-82f8-4845-844a-00589d270f66"
 
 campaign1 = CampaignId $ toUUID "6072b6ea-7c37-4b26-80cd-f8f87d05a991"
 

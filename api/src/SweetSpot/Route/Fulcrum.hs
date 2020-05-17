@@ -37,10 +37,10 @@ getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
   res <- getUserTestMaps shopDomain uid
   case (mCmpId, res) of
     (_, testMaps@(m : ms)) -> do
-      L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
+      L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> tshow uid
       return testMaps
     (Nothing, []) -> do
-      L.info $ "Could not find bucket(s) for userId: " <> showText uid
+      L.info $ "Could not find bucket(s) for userId: " <> tshow uid
       throwError notFoundErr
     (Just newCmpId, []) -> do
       isValidCampaign <- validateCampaign newCmpId

@@ -180,31 +180,26 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 -- | UserId
 -- | ---------------------------------------------------------------------------
 newtype UserId
-  = UserId UUID
+  = UserId Text
   deriving (Eq, Show, Generic, Ord)
 
 instance ToJSON UserId
 
 instance FromJSON UserId
 
-instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be UserId where
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be UserId where
   sqlValueSyntax = sqlValueSyntax . \(UserId uuid) -> uuid
 
-instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be UserId where
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be UserId where
   fromBackendRow = UserId <$> fromBackendRow
 
-instance (BeamSqlBackend be, HasSqlEqualityCheck be UUID) => HasSqlEqualityCheck be UserId
+instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck be UserId
 
 instance FromHttpApiData UserId where
-  parseQueryParam userId = case fromText userId of
-    (Just uuid) -> Right $ UserId uuid
-    Nothing -> Left "Got invalid UUID for userId"
+  parseQueryParam = Right . UserId
 
 instance ToHttpApiData UserId where
-  toQueryParam (UserId uuid) = toText uuid
-
-instance ShowText UserId where
-  showText = T.pack . show
+  toQueryParam (UserId uuid) = uuid
 
 -- | ---------------------------------------------------------------------------
 -- | PVariantId

@@ -1,6 +1,7 @@
 module SweetSpot.CampaignListPage where
 
 import Prelude
+
 import Data.Array (fold, intercalate)
 import Data.DateTime (DateTime)
 import Data.Formatter.DateTime (FormatterCommand(..))
@@ -9,7 +10,6 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Effect.Now (nowDateTime) as Now
 import Effect.Timer (clearInterval, setInterval) as Timer
@@ -120,6 +120,7 @@ campaignCard { status, title, campaignId } =
                   }
             , children:
                 [ element Shopify.heading { element: "h2", children: R.text title }
+                , Spacing.small
                 , R.div
                     { style: R.css { display: "flex", alignItems: "center" }
                     , children: [ campaignStatus status ]
@@ -134,10 +135,7 @@ campaignCard { status, title, campaignId } =
     }
 
 type CampaignListPageProps
-  = { campaigns :: Array UICampaign
-    , onViewCampaignByCampaignId :: String -> Effect Unit
-    , onCreateCampaign :: Effect Unit
-    }
+  = { campaigns :: Array UICampaign }
 
 mkCampaignListPage :: Component CampaignListPageProps
 mkCampaignListPage =
@@ -154,7 +152,7 @@ mkCampaignListPage =
       $ element Shopify.page
           { title: "Price Experiment List"
           , subtitle: notNull "All tests currently running, or finished."
-          , primaryAction: notNull { content: "Create Price Experiment", onAction: props.onCreateCampaign }
+          , primaryAction: { content: "Create Price Experiment", url: "#/campaign" }
           , breadcrumbs: []
           , children:
               R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ]

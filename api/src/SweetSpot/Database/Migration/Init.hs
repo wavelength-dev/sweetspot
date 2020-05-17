@@ -342,9 +342,6 @@ instance Table UserCartTokenT where
 
 UserCartToken (LensFor cartTokenId) (UserKey (LensFor cartTokenUser)) = tableLenses
 
-cartTokenType :: DataType Postgres CartToken
-cartTokenType = DataType pgTextType
-
 -- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------

@@ -23,11 +23,12 @@ import SweetSpot.Database.Queries.Util
   )
 import SweetSpot.Database.Schema hiding (UserId)
 import SweetSpot.Shopify.Types
+import SweetSpot.Util (formatPrice)
 import System.Random (randomRIO)
 
 class Monad m => FulcrumDB m where
-  getNewCampaignTestMaps :: CampaignId -> UserId -> m [TestMap]
-  getUserTestMaps :: UserId -> m [TestMap]
+  getNewCampaignTestMaps :: ShopDomain -> CampaignId -> UserId -> m [TestMap]
+  getUserTestMaps :: ShopDomain -> UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
   insertUserCartToken :: CartTokenReq -> m ()
@@ -35,14 +36,15 @@ class Monad m => FulcrumDB m where
   insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
 
 instance FulcrumDB AppM where
-  getNewCampaignTestMaps cmpId userId = do
+  getNewCampaignTestMaps domain cmpId userId = do
     randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
     withConn $ \conn -> do
       uid <- insertUser conn userId
       assignUserToCampaign conn (uid, cmpId, randTreatment)
-      getUserTestMaps' conn uid
+      getUserTestMaps' conn domain uid
 
-  getUserTestMaps uid = withConn $ \conn -> getUserTestMaps' conn uid
+  getUserTestMaps domain uid = withConn $ \conn ->
+    getUserTestMaps' conn domain uid
 
   validateCampaign cmpId = withConn $ \conn -> do
     res <-
@@ -120,8 +122,12 @@ assignUserToCampaign conn (usrId, campaignId, treatment) = do
         ]
   return $ cmpUsr ^. ueCmpId
 
-getUserTestMaps' :: Connection -> UserId -> IO [TestMap]
-getUserTestMaps' conn uid = do
+getUserTestMaps' :: Connection -> ShopDomain -> UserId -> IO [TestMap]
+getUserTestMaps' conn domain uid = do
+  (Just moneyFormat) <-
+    runBeamPostgres conn $ runSelectReturningOne $ select $
+      (^. shopMoneyFormat)
+        <$> filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))
   mUserTreatments <-
     runBeamPostgres conn $ runSelectReturningList $ select $ do
       cmps <- all_ (db ^. campaigns)
@@ -161,7 +167,7 @@ getUserTestMaps' conn uid = do
                 { userId = uid,
                   targetId = v ^. pvVariantId,
                   sku = v ^. pvSku,
-                  swapPrice = v ^. pvPrice,
+                  swapPrice = formatPrice moneyFormat (v ^. pvPrice),
                   swapId = (^. pvVariantId) . snd . fromJust $ findSwap v
                 }
          in L.map toTestMap nonTreatmentVariants

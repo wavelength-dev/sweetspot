@@ -106,6 +106,17 @@ instance ShowText Price where
   showText (Price n) = T.pack $ show n
 
 -- | ---------------------------------------------------------------------------
+-- | FormattedPrice
+-- | ---------------------------------------------------------------------------
+newtype FormattedPrice
+  = FormattedPrice Text
+  deriving (Generic, Show, Eq)
+
+instance ToJSON FormattedPrice
+
+instance FromJSON FormattedPrice
+
+-- | ---------------------------------------------------------------------------
 -- | Svid
 -- | ---------------------------------------------------------------------------
 newtype Svid
@@ -406,3 +417,18 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be CartToken where
   fromBackendRow = CartToken <$> fromBackendRow
+
+-- | ---------------------------------------------------------------------------
+-- | MoneyFormat
+-- | ---------------------------------------------------------------------------
+newtype MoneyFormat
+  = MoneyFormat Text
+  deriving (Generic, Show)
+
+instance FromJSON MoneyFormat
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be MoneyFormat where
+  sqlValueSyntax = sqlValueSyntax . \(MoneyFormat mf) -> mf
+
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be MoneyFormat where
+  fromBackendRow = MoneyFormat <$> fromBackendRow

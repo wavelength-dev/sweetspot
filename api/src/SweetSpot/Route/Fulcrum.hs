@@ -34,7 +34,7 @@ type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute) -- :<|> L
 
 getUserTestHandler :: Maybe ShopDomain -> Maybe CampaignId -> Maybe UserId -> ServerM [TestMap]
 getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
-  res <- getUserTestMaps uid
+  res <- getUserTestMaps shopDomain uid
   case (mCmpId, res) of
     (_, testMaps@(m : ms)) -> do
       L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> showText uid
@@ -45,7 +45,7 @@ getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
     (Just newCmpId, []) -> do
       isValidCampaign <- validateCampaign newCmpId
       if isValidCampaign
-        then getNewCampaignTestMaps newCmpId uid
+        then getNewCampaignTestMaps shopDomain newCmpId uid
         else do
           L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
           throwError notFoundErr

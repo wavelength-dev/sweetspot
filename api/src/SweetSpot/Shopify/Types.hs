@@ -210,7 +210,7 @@ data ShopInfo
       { _shopInfoEmail :: !Text,
         _shopInfoCountryCode :: !Text,
         _shopInfoCurrency :: !Text,
-        _shopInfoMoneyFormat :: !Text
+        _shopInfoMoneyFormat :: !MoneyFormat
       }
 
 instance FromJSON ShopInfo where

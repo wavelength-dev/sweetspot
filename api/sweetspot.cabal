@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9a39fc1118beb5f23b7d9c601669cfbacdd34d5d6ccd70befe4f3b660a81ed40
+-- hash: 181cbd7ca0e9a05592d4dff7f8f0fb4b14bd6ce5e5534149a9f9ba37c543316d
 
 name:           sweetspot
 version:        0.1.0.0
@@ -228,6 +228,7 @@ test-suite sweetspot-test
       Mock.Shopify
       Spec.Business
       Spec.Http
+      Spec.Price
       Util
       Paths_sweetspot
   hs-source-dirs:

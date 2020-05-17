@@ -15,12 +15,8 @@ where
 import Data.Time (UTCTime)
 import Data.UUID.Types (UUID)
 import Database.Beam (DatabaseSettings, QExpr)
-import Database.Beam.Backend.SQL.SQL92
-  ( timestampType,
-  )
 import Database.Beam.Migrate
   ( CheckedDatabaseSettings,
-    HasDefaultSqlDataType (..),
     evaluateDatabase,
     migrationStep,
     unCheckDatabase,
@@ -67,6 +63,3 @@ productVariant_ = unsafeRetype pgGenUUID_
 
 nowUTC_ :: QExpr Postgres s UTCTime
 nowUTC_ = unsafeRetype now_
-
-instance HasDefaultSqlDataType Postgres UTCTime where
-  defaultSqlDataType _ _ _ = timestampType Nothing True

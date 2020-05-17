@@ -8,6 +8,7 @@ import Data.Scientific
 import RIO
 import qualified RIO.List as L
 import qualified RIO.Text as T
+import qualified RIO.Text.Partial as T
 import SweetSpot.Data.Common
 
 nanToZero :: Double -> Double
@@ -16,18 +17,29 @@ nanToZero double = if isNaN double then 0 else double
 data ThousandSep = Point Bool | Comma Bool | Apostrophe
 
 formatPrice :: MoneyFormat -> Price -> FormattedPrice
-formatPrice (MoneyFormat format) (Price price) =
-  FormattedPrice (currencySymbol <> formattedPrice)
+formatPrice (MoneyFormat format) (Price price)
+  | T.isInfixOf amount format =
+    let formatted = withFormat (Point True) price
+     in FormattedPrice $ T.replace amount formatted format
+  | T.isInfixOf amountNoDecimals format =
+    let formatted = withFormat (Point False) price
+     in FormattedPrice $ T.replace amountNoDecimals formatted format
+  | T.isInfixOf amountWithCommaSep format =
+    let formatted = withFormat (Comma True) price
+     in FormattedPrice $ T.replace amountWithCommaSep formatted format
+  | T.isInfixOf amountNoDecimalsWithCommaSep format =
+    let formatted = withFormat (Comma False) price
+     in FormattedPrice $ T.replace amountNoDecimalsWithCommaSep formatted format
+  | T.isInfixOf amountWithApostropheSep format =
+    let formatted = withFormat Apostrophe price
+     in FormattedPrice $ T.replace amountWithApostropheSep formatted format
+  | otherwise = error "Invalid money format"
   where
-    -- TODO: properly parse location of currency symbol
-    currencySymbol = T.take 1 format
-    formattedPrice = case T.drop 1 format of
-      "{{amount}}" -> withFormat (Point True) price
-      "{{amount_no_decimals}}" -> withFormat (Point False) price
-      "{{amount_with_comma_separator}}" -> withFormat (Comma True) price
-      "{{amount_no_decimals_with_comma_separator}}" -> withFormat (Comma False) price
-      "{{amount_with_apostrophe_separator}}" -> withFormat Apostrophe price
-      _ -> error "Unexpected money format"
+    amount = "{{amount}}"
+    amountNoDecimals = "{{amount_no_decimals}}"
+    amountWithCommaSep = "{{amount_with_comma_separator}}"
+    amountNoDecimalsWithCommaSep = "{{amount_no_decimals_with_comma_separator}}"
+    amountWithApostropheSep = "{{amount_with_apostrophe_separator}}"
 
 withFormat :: ThousandSep -> Scientific -> Text
 withFormat (Point True) n =

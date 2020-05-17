@@ -233,7 +233,7 @@ data TestMap
         targetId :: !Svid,
         sku :: !Sku,
         swapId :: !Svid,
-        swapPrice :: !Price
+        swapPrice :: !FormattedPrice
       }
   deriving (Eq, Generic, Show)
 
@@ -260,7 +260,7 @@ instance FromJSON TestMap where
           targetId = Svid targetId,
           sku = Sku sku,
           swapId = Svid swapId,
-          swapPrice = Price swapPrice
+          swapPrice = FormattedPrice swapPrice
         }
 
 -- | ---------------------------------------------------------------------------

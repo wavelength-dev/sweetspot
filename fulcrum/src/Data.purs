@@ -35,7 +35,7 @@ instance showSku :: Show Sku where
 type TestMap
   = { sku :: Sku
     , swapId :: String
-    , swapPrice :: Number
+    , swapPrice :: String
     , variantId :: String
     , userId :: String
     }

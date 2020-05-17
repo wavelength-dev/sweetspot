@@ -35,7 +35,7 @@ data ShopT f
         _shopEmail :: Columnar f Text,
         _shopCountryCode :: Columnar f Text,
         _shopCurrency :: Columnar f Text,
-        _shopMoneyFormat :: Columnar f Text
+        _shopMoneyFormat :: Columnar f MoneyFormat
       }
   deriving (Generic, Beamable)
 
@@ -398,7 +398,7 @@ migration () =
           _shopEmail = field "email" text notNull,
           _shopCountryCode = field "country_code" text notNull,
           _shopCurrency = field "currency" text notNull,
-          _shopMoneyFormat = field "money_format" text notNull
+          _shopMoneyFormat = field "money_format" (DataType pgTextType) notNull
         }
     <*> createTable
       "install_nonces"

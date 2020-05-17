@@ -409,7 +409,7 @@ migration () =
     <*> createTable
       "users"
       User
-        { _usrId = field "id" (DataType pgUuidType),
+        { _usrId = field "id" (DataType pgTextType),
           _usrCreated = field "created" ts notNull
         }
     <*> createTable
@@ -443,7 +443,7 @@ migration () =
     <*> createTable
       "user_experiments"
       UserExperiment
-        { _ueUserId = UserKey (field "user_id" (DataType pgUuidType) notNull),
+        { _ueUserId = UserKey (field "user_id" (DataType pgTextType) notNull),
           _ueCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
           _ueTreatment = field "treatment" int notNull
         }
@@ -455,7 +455,7 @@ migration () =
           _cevCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType)),
           _cevOrderId = field "order_id" (DataType pgTextType) notNull,
           _cevShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
-          _cevUserId = UserKey (field "user_id" (DataType pgUuidType))
+          _cevUserId = UserKey (field "user_id" (DataType pgTextType))
         }
     <*> createTable
       "checkout_items"
@@ -481,6 +481,6 @@ migration () =
       "user_cart_tokens"
       UserCartToken
         { _cartTokenId = field "cart_token" (DataType pgTextType) notNull,
-          _cartTokenUser = UserKey (field "user_id" (DataType pgUuidType))
+          _cartTokenUser = UserKey (field "user_id" (DataType pgTextType))
         }
     <*> pgCreateExtension

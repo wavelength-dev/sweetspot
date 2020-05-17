@@ -71,11 +71,7 @@ mkApp = do
                     if Array.null campaigns then
                       gettingStartedPage
                     else
-                      campaignListPage
-                        { campaigns
-                        , onViewCampaignByCampaignId: CampaignView >>> setRoute'
-                        , onCreateCampaign: mempty
-                        }
+                      campaignListPage { campaigns }
                 CampaignCreate -> R.text "Campaign Create Page"
                 CampaignView rawCampaignId -> case campaignsResource of
                   Empty -> empty

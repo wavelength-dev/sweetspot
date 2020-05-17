@@ -27,8 +27,8 @@ routeCodec =
   root
     $ sum
         { "CampaignList": noArgs
-        , "CampaignView": "campaign" / segment
         , "CampaignCreate": "campaign" / noArgs
+        , "CampaignView": "campaign" / segment
         }
 
 useRouter :: (Route -> Effect Unit) -> Effect (Effect Unit)

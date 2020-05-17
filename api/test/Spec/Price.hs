@@ -20,7 +20,7 @@ amountWithCommaSep = MoneyFormat "${{amount_with_comma_separator}}"
 
 amountNoDecimalsWithCommaSep = MoneyFormat "${{amount_no_decimals_with_comma_separator}}"
 
-amountWithApostropheSeparator = MoneyFormat "€{{amount_with_apostrophe_separator}}"
+amountWithApostropheSeparator = MoneyFormat "{{amount_with_apostrophe_separator}} €"
 
 priceSpec :: Spec
 priceSpec = do
@@ -43,4 +43,4 @@ priceSpec = do
         `shouldBe` FormattedPrice "$101.000"
     it "{{amount_with_apostrophe_separator}} should format correctly" $
       formatPrice amountWithApostropheSeparator (Price 100000000.90)
-        `shouldBe` FormattedPrice "€100'000'000.90"
+        `shouldBe` FormattedPrice "100'000'000.90 €"

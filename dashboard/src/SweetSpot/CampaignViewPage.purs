@@ -2,17 +2,19 @@ module SweetSpot.CampaignViewPage where
 
 import Prelude
 import Data.Array (fold)
+import Data.Array (zip) as Array
 import Data.DateTime (DateTime)
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
 import Data.Lens (view)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (null)
+import Data.Tuple (Tuple(..))
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty)
-import SweetSpot.Data.Api (UICampaign(..), lowerBound, mean, uiCampaignCtrlTreatment, uiCampaignLift, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, upperBound)
-import SweetSpot.Shopify (page, textContainer_) as Shopify
+import SweetSpot.Data.Api (UICampaign(..), lowerBound, mean, uiCampaignCtrlTreatment, uiCampaignLift, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
+import SweetSpot.Shopify (card, dataTable, page, textContainer_) as Shopify
 import SweetSpot.ShopifyWrapper (Element(..))
 import SweetSpot.ShopifyWrapper (heading) as ShopifyWrapper
 import SweetSpot.Spacing (large, small) as Spacing
@@ -177,9 +179,41 @@ mkCampaignViewPage =
                             }
                         ]
                     }
+                , Spacing.large
+                , element Shopify.card
+                    { title: "Products under test"
+                    , sectioned: false
+                    , children:
+                        fold
+                          [ element Shopify.dataTable
+                              { columnContentTypes: [ "text", "text", "numeric", "numeric" ]
+                              , headings: [ "Product", "Sku", "Control price", "Test price" ]
+                              , rows: campaignToProductRows campaign
+                              }
+                          ]
+                    }
                 ]
           }
   where
+  controlVariantsOptic = uiCampaignCtrlTreatment <<< uiTreatmentVariants
+
+  testVariantsOptic = uiCampaignTestTreatment <<< uiTreatmentVariants
+
+  campaignToProductRows campaign =
+    let
+      controlVariants = view controlVariantsOptic campaign
+
+      testVariants = view testVariantsOptic campaign
+
+      variantPairToRow (Tuple controlVariant testVariant) =
+        [ view uiTreatmentVariantTitle controlVariant
+        , view uiTreatmentSku controlVariant
+        , view uiTreatmentVariantPrice controlVariant # show
+        , view uiTreatmentVariantPrice testVariant # show
+        ]
+    in
+      map variantPairToRow (Array.zip controlVariants testVariants)
+
   controlConversionOptic = uiCampaignCtrlTreatment <<< uiTreatmentCR
 
   testConversionOptic = uiCampaignTestTreatment <<< uiTreatmentCR

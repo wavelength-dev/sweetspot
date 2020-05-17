@@ -3,7 +3,6 @@ module SweetSpot.Shopify where
 import Prelude
 import Data.Nullable (Nullable)
 import Effect (Effect)
-import Foreign (Foreign)
 import React.Basic.Hooks (JSX, ReactComponent, element)
 
 type Action
@@ -23,16 +22,26 @@ type Breadcrum
 
 foreign import page ::
   forall a. ReactComponent (Record a)
-    -- { title :: String
-    -- , subtitle :: Nullable String
-    -- , children :: JSX
-    -- , primaryAction :: Nullable Action
-    -- , breadcrumbs :: Array Breadcrum
-    -- }
 
-foreign import card :: ReactComponent { title :: String, sectioned :: Boolean, children :: JSX }
+-- { title :: String
+-- , subtitle :: Nullable String
+-- , children :: JSX
+-- , primaryAction :: Nullable Action
+-- , breadcrumbs :: Array Breadcrum
+-- }
+foreign import card ::
+  ReactComponent
+    { title :: String
+    , sectioned :: Boolean
+    , children :: JSX
+    }
 
-foreign import button :: ReactComponent { url :: Nullable String, onClick :: Nullable (Effect Unit), children :: JSX }
+foreign import button ::
+  ReactComponent
+    { url :: Nullable String
+    , onClick :: Nullable (Effect Unit)
+    , children :: JSX
+    }
 
 foreign import emptyState ::
   ReactComponent
@@ -52,3 +61,10 @@ foreign import textContainer :: ReactComponent { children :: JSX }
 
 textContainer_ :: JSX -> JSX
 textContainer_ children = element textContainer { children }
+
+foreign import dataTable ::
+  ReactComponent
+    { columnContentTypes :: Array String
+    , headings :: Array String
+    , rows :: Array (Array String)
+    }

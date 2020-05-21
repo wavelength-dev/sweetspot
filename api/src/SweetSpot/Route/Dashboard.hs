@@ -18,7 +18,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Data.Mapping (fromShopProduct)
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..), InsertExperiment (..))
 import qualified SweetSpot.Logger as Log
-import SweetSpot.Route.Util (internalServerErr)
+import SweetSpot.Route.Util (internalServerErr, unauthorizedErr)
 import SweetSpot.Shopify.Client (MonadShopify (..))
 import SweetSpot.Shopify.Types
 
@@ -38,9 +38,14 @@ type CreateCampaignRoute =
     :> ReqBody '[JSON] CreateCampaign
     :> Post '[JSON] OkResponse
 
+type StopCampaignRoute =
+  "campaigns" :> Capture "campaignId" CampaignId :> "stop"
+    :> QueryParam' '[Required, Strict] "session" SessionId
+    :> Get '[JSON] OkResponse
+
 type DashboardAPI =
   "dashboard"
-    :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute)
+    :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute :<|> StopCampaignRoute)
 
 getProductsHandler :: SessionId -> ServerM [Product]
 getProductsHandler id = runAppM $ do
@@ -124,7 +129,15 @@ createCampaignExperiment domain cmpId ce = do
           Log.error $ "Failed to create test product " <> err
           return ()
 
+stopCampaignHandler :: CampaignId -> SessionId -> ServerM OkResponse
+stopCampaignHandler campaignId sessionId = runAppM $ do
+  authorized <- campaignBelongsToShop sessionId campaignId
+  if authorized
+    then stopCampaign campaignId >> pure OkResponse {message = "Campaign stopped"}
+    else throwError unauthorizedErr
+
 dashboardHandler =
   getProductsHandler
     :<|> getCampaignsHandler
     :<|> createCampaignHandler
+    :<|> stopCampaignHandler

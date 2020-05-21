@@ -50,6 +50,8 @@ class Monad m => DashboardDB m where
   createSession :: ShopDomain -> SessionId -> m ()
   validateSessionId :: SessionId -> m (Maybe ShopDomain)
   unsafeGetShopMoneyFormat :: ShopDomain -> m MoneyFormat
+  campaignBelongsToShop :: SessionId -> CampaignId -> m Bool
+  stopCampaign :: CampaignId -> m ()
 
 instance DashboardDB AppM where
   createCampaign domain cc = withConn $ \conn -> do
@@ -149,6 +151,29 @@ instance DashboardDB AppM where
               $ select
               $ selectShopMoneyFormat domain
           )
+
+  campaignBelongsToShop sessionId' cmpId' = withConn $ \conn ->
+    isJust
+      <$> ( runBeamPostgres conn
+              $ runSelectReturningOne
+              $ select
+              $ do
+                session <- all_ (db ^. sessions)
+                shop <- all_ (db ^. shops)
+                campaign <- all_ (db ^. campaigns)
+                guard_ (session ^. sessionId ==. val_ sessionId')
+                guard_ (_sessionShopId session `references_` shop)
+                guard_ (_cmpShopId campaign `references_` shop)
+                pure $ campaign ^. cmpId
+          )
+
+  stopCampaign cmpId' = withConn $ \conn ->
+    runBeamPostgres conn
+      $ runUpdate
+      $ update
+        (db ^. campaigns)
+        (\cmp -> cmp ^. cmpEnd <-. just_ nowUTC_)
+        (\cmp -> cmp ^. cmpId ==. val_ cmpId')
 
 enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
 enhanceCampaign conn domain cmp = do

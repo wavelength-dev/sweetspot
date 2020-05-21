@@ -12,11 +12,9 @@ import Data.Aeson
     object,
     withObject,
   )
-import Data.Scientific (Scientific)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
-import RIO.Partial (read)
 import SweetSpot.Data.Common
 import SweetSpot.Shopify.Types (FromShopJSON (..))
 
@@ -49,7 +47,7 @@ data Variant
         _variantProductId :: !Pid,
         _variantTitle :: !Text,
         _variantSku :: !Sku,
-        _variantPrice :: !Price
+        _variantPrice :: !FormattedPrice
       }
   deriving (Eq, Generic, Show)
 
@@ -58,22 +56,6 @@ makeLenses ''Variant
 instance ToJSON Variant
 
 instance FromJSON Variant
-
-instance FromShopJSON Variant where
-  parseShopJSON = withObject "Variant" $ \v -> do
-    id <- v .: "id"
-    productId <- v .: "product_id"
-    title <- v .: "title"
-    sku <- v .: "sku"
-    price <- v .: "price"
-    return
-      Variant
-        { _variantId = Svid . showText @Int $ id,
-          _variantProductId = Pid . showText @Int $ productId,
-          _variantTitle = title,
-          _variantSku = sku,
-          _variantPrice = Price . read @Scientific $ price
-        }
 
 -- | ---------------------------------------------------------------------------
 -- | Product
@@ -92,20 +74,6 @@ makeLenses ''Product
 instance ToJSON Product
 
 instance FromJSON Product
-
-instance FromShopJSON Product where
-  parseShopJSON = withObject "Product" $ \v -> do
-    id <- v .: "id"
-    title <- v .: "title"
-    variants <- v .: "variants" >>= traverse parseShopJSON
-    image <- v .: "image" >>= parseShopJSON
-    return
-      Product
-        { _productId = Pid . showText @Int $ id,
-          _productTitle = title,
-          _productVariants = variants,
-          _productImage = image
-        }
 
 -- | ---------------------------------------------------------------------------
 -- | InfResult

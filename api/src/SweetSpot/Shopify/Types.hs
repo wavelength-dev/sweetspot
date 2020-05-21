@@ -1,14 +1,20 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 
 module SweetSpot.Shopify.Types where
 
 import Control.Lens
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Scientific (FPFormat (..), formatScientific)
+import Data.Scientific
+  ( FPFormat (..),
+    Scientific (..),
+    formatScientific,
+  )
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
+import RIO.Partial (read)
 import qualified RIO.Text as T
 import SweetSpot.Data.Common
 
@@ -234,3 +240,84 @@ data ShopInfoResponse
 instance FromJSON ShopInfoResponse where
   parseJSON = withObject "ShopInfoResponse" $ \v ->
     ShopInfoResponse <$> v .: "shop"
+
+-- | ---------------------------------------------------------------------------
+-- | ShopImage
+-- | ---------------------------------------------------------------------------
+data ShopImage
+  = ShopImage
+      { _shopImageSrc :: !Text
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''ShopImage
+
+instance ToJSON ShopImage
+
+instance FromJSON ShopImage where
+  parseJSON = withObject "ShopImage" $ \v ->
+    ShopImage
+      <$> v .: "src"
+
+-- | ---------------------------------------------------------------------------
+-- | ShopVariant
+-- | ---------------------------------------------------------------------------
+data ShopVariant
+  = ShopVariant
+      { _shopVariantId :: !Svid,
+        _shopVariantProductId :: !Pid,
+        _shopVariantTitle :: !Text,
+        _shopVariantSku :: !Sku,
+        _shopVariantPrice :: !Price
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''ShopVariant
+
+instance ToJSON ShopVariant
+
+instance FromJSON ShopVariant where
+  parseJSON = withObject "ShopVariant" $ \v -> do
+    id <- v .: "id"
+    productId <- v .: "product_id"
+    title <- v .: "title"
+    sku <- v .: "sku"
+    price <- v .: "price"
+    return
+      ShopVariant
+        { _shopVariantId = id & showText @Int & Svid,
+          _shopVariantProductId = productId & showText @Int & Pid,
+          _shopVariantTitle = title,
+          _shopVariantSku = sku,
+          _shopVariantPrice = price & read @Scientific & Price
+        }
+
+-- | ---------------------------------------------------------------------------
+-- | ShopProduct
+-- | ---------------------------------------------------------------------------
+data ShopProduct
+  = ShopProduct
+      { _shopProductId :: !Pid,
+        _shopProductTitle :: !Text,
+        _shopProductVariants :: ![ShopVariant],
+        _shopProductImage :: !ShopImage
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''ShopProduct
+
+instance ToJSON ShopProduct
+
+instance FromJSON ShopProduct where
+  parseJSON = withObject "ShopProduct" $ \v -> do
+    id <- v .: "id"
+    title <- v .: "title"
+    variants <- v .: "variants" >>= traverse parseJSON
+    image <- v .: "image" >>= parseJSON
+    return
+      ShopProduct
+        { _shopProductId = id & showText @Int & Pid,
+          _shopProductTitle = title,
+          _shopProductVariants = variants,
+          _shopProductImage = image
+        }

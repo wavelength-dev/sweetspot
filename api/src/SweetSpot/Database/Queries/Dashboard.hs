@@ -49,6 +49,7 @@ class Monad m => DashboardDB m where
   getCampaigns :: ShopDomain -> m [UICampaign]
   createSession :: ShopDomain -> SessionId -> m ()
   validateSessionId :: SessionId -> m (Maybe ShopDomain)
+  unsafeGetShopMoneyFormat :: ShopDomain -> m MoneyFormat
 
 instance DashboardDB AppM where
   createCampaign domain cc = withConn $ \conn -> do
@@ -138,6 +139,16 @@ instance DashboardDB AppM where
 
   validateSessionId sessionId' = withConn $ \conn ->
     validateSessionId' conn sessionId'
+
+  unsafeGetShopMoneyFormat domain = withConn $ \conn ->
+    -- If you call an dashboard endpoint then you have a session,
+    -- which means you have an install which means you'll have a money format
+    fromJust
+      <$> ( runBeamPostgres conn
+              $ runSelectReturningOne
+              $ select
+              $ selectShopMoneyFormat domain
+          )
 
 enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
 enhanceCampaign conn domain cmp = do

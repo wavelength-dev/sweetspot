@@ -5,20 +5,22 @@ module SweetSpot.Route.Dashboard
 where
 
 import Control.Lens hiding (Strict)
-import Data.Aeson (Result (..), Value (..))
+import Data.Aeson (Result (..), Value (..), parseJSON)
 import Data.Aeson.Lens (_String, key, values)
 import Data.Aeson.Types (parse)
 import RIO hiding ((^.))
+import qualified RIO.List as L
 import qualified RIO.Text as T
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api
 import SweetSpot.Data.Common
+import SweetSpot.Data.Mapping (fromShopProduct)
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..), InsertExperiment (..))
-import qualified SweetSpot.Logger as L
+import qualified SweetSpot.Logger as Log
 import SweetSpot.Route.Util (internalServerErr)
 import SweetSpot.Shopify.Client (MonadShopify (..))
-import SweetSpot.Shopify.Types (FromShopJSON (..))
+import SweetSpot.Shopify.Types
 
 type ProductsRoute =
   "products"
@@ -47,9 +49,11 @@ getProductsHandler id = runAppM $ do
     Just domain -> do
       mProducts <- fetchProducts domain
       case mProducts of
-        Right ps -> return ps
+        Right ps -> do
+          moneyFormat <- unsafeGetShopMoneyFormat domain
+          return $ L.map (fromShopProduct moneyFormat) ps
         Left err -> do
-          L.error err
+          Log.error err
           throwError internalServerErr
     Nothing -> throwError $ err400 {errBody = "Bad sessionId, no domain found"}
 
@@ -75,10 +79,10 @@ createCampaignExperiment domain cmpId ce = do
   mJson <- fetchProductJson domain (ce ^. createExperimentProductId)
   case mJson of
     Left err -> do
-      L.error err
+      Log.error err
       throwError internalServerErr
     Right json -> do
-      let mControlProduct = parse parseShopJSON $ json ^?! key "product"
+      let mControlProduct = parse parseJSON $ json ^?! key "product"
           textPrice = showText $ ce ^. createExperimentPrice
           -- Assumes all variants have the same price
           withNewPrice =
@@ -91,33 +95,33 @@ createCampaignExperiment domain cmpId ce = do
       mNewProduct <- createProduct domain withNewPrice
       case (mControlProduct, mNewProduct) of
         (Success controlProduct, Right newProduct) -> do
-          let controlVariant = controlProduct ^?! productVariants . ix 0
-              testVariant = newProduct ^?! productVariants . ix 0
-              controlPrice = controlVariant ^. variantPrice
-              testPrice = testVariant ^. variantPrice
-              createDbExperiment :: Int -> Price -> Variant -> AppM ()
+          let controlVariant = controlProduct ^?! shopProductVariants . ix 0
+              testVariant = newProduct ^?! shopProductVariants . ix 0
+              controlPrice = controlVariant ^. shopVariantPrice
+              testPrice = testVariant ^. shopVariantPrice
+              createDbExperiment :: Int -> Price -> ShopVariant -> AppM ()
               createDbExperiment treatment price variant = createExperiment args
                 where
                   args =
                     InsertExperiment
-                      { _insertExperimentSku = variant ^. variantSku,
-                        _insertExperimentSvid = variant ^. variantId,
-                        _insertExperimentProductId = variant ^. variantProductId,
+                      { _insertExperimentSku = variant ^. shopVariantSku,
+                        _insertExperimentSvid = variant ^. shopVariantId,
+                        _insertExperimentProductId = variant ^. shopVariantProductId,
                         _insertExperimentPrice = price,
                         _insertExperimentShopDomain = domain,
                         _insertExperimentCampaignId = cmpId,
-                        _insertExperimentProductName = controlProduct ^. productTitle,
+                        _insertExperimentProductName = controlProduct ^. shopProductTitle,
                         _insertExperimentTreatment = treatment
                       }
-          traverseOf_ (productVariants . traversed) (createDbExperiment 0 testPrice) controlProduct
-          traverseOf_ (productVariants . traversed) (createDbExperiment 1 controlPrice) newProduct
-          L.info "Created experiment(s)"
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0 testPrice) controlProduct
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1 controlPrice) newProduct
+          Log.info "Created experiment(s)"
           return ()
         (Error err, _) -> do
-          L.error $ "Failed to parse control product " <> T.pack err
+          Log.error $ "Failed to parse control product " <> T.pack err
           return ()
         (_, Left err) -> do
-          L.error $ "Failed to create test product " <> err
+          Log.error $ "Failed to create test product " <> err
           return ()
 
 dashboardHandler =

@@ -152,7 +152,7 @@ newtype Variant =
     , _variantProductId :: String
     , _variantTitle :: String
     , _variantSku :: String
-    , _variantPrice :: Number
+    , _variantPrice :: String
     }
 
 derive instance eqVariant :: Eq Variant
@@ -160,7 +160,7 @@ derive instance genericVariant :: Generic Variant _
 derive instance newtypeVariant :: Newtype Variant _
 
 --------------------------------------------------------------------------------
-_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantSku :: String, _variantPrice :: Number}
+_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantSku :: String, _variantPrice :: String}
 _Variant = _Newtype
 
 variantId :: Lens' Variant String
@@ -175,7 +175,7 @@ variantTitle = _Newtype <<< prop (SProxy :: SProxy "_variantTitle")
 variantSku :: Lens' Variant String
 variantSku = _Newtype <<< prop (SProxy :: SProxy "_variantSku")
 
-variantPrice :: Lens' Variant Number
+variantPrice :: Lens' Variant String
 variantPrice = _Newtype <<< prop (SProxy :: SProxy "_variantPrice")
 
 --------------------------------------------------------------------------------

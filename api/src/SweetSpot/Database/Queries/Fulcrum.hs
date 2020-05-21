@@ -23,7 +23,7 @@ import SweetSpot.Database.Queries.Util
     withConn,
   )
 import SweetSpot.Database.Schema hiding (UserId)
-import SweetSpot.Shopify.Types
+import SweetSpot.Shopify.Types hiding (productVariants)
 import SweetSpot.Util (formatPrice)
 import System.Random (randomRIO)
 

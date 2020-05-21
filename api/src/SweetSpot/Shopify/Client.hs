@@ -5,7 +5,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader.Class (asks)
 import Data.Aeson (Value)
 import Data.Aeson.Lens
-import Data.Aeson.Types (Result (..), parse)
+import Data.Aeson.Types (Result (..), parse, parseJSON)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import RIO hiding ((^.))
@@ -15,7 +15,6 @@ import Servant.API (toUrlPiece)
 import Servant.Client
 import Servant.Links (safeLink)
 import SweetSpot.AppM
-import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Env (Environment (..))
@@ -60,9 +59,9 @@ type GetShopInfoRoute =
 
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
-  fetchProducts :: ShopDomain -> m (Either Text [Product])
+  fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
-  createProduct :: ShopDomain -> Value -> m (Either Text Product)
+  createProduct :: ShopDomain -> Value -> m (Either Text ShopProduct)
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
 
@@ -91,7 +90,7 @@ instance MonadShopify AppM where
         Right body -> do
           let result =
                 body ^? key "products"
-                  & fmap (traverse (parse parseShopJSON) . toListOf values)
+                  & fmap (traverse (parse parseJSON) . toListOf values)
           case result of
             Just (Success products) -> Right products
             Just (Error err) -> Left $ T.pack err
@@ -111,7 +110,7 @@ instance MonadShopify AppM where
       res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
       return $ case res of
         Left err -> Left $ "Error creating product: " <> tshow err
-        Right body -> case parse parseShopJSON (body ^?! key "product") of
+        Right body -> case parse parseJSON (body ^?! key "product") of
           Success product -> Right product
           Error err -> Left . T.pack $ err
 

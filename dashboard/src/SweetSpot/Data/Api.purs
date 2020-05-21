@@ -10,6 +10,7 @@ import Data.Maybe (Maybe, Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
 import Prim (Array, Number, String)
+import SweetSpot.Data.Common (Price)
 
 import Prelude
 
@@ -45,6 +46,7 @@ newtype UICampaign =
     , _uiCampaignStart :: Maybe DateTime
     , _uiCampaignEnd :: Maybe DateTime
     , _uiCampaignLift :: InfResult
+    , _uiCampaignAOVChange :: Number
     , _uiCampaignCtrlTreatment :: UITreatment
     , _uiCampaignTestTreatment :: UITreatment
     }
@@ -54,7 +56,7 @@ derive instance genericUICampaign :: Generic UICampaign _
 derive instance newtypeUICampaign :: Newtype UICampaign _
 
 --------------------------------------------------------------------------------
-_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: InfResult, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
+_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: InfResult, _uiCampaignAOVChange :: Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
 _UICampaign = _Newtype
 
 uiCampaignId :: Lens' UICampaign String
@@ -71,6 +73,9 @@ uiCampaignEnd = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignEnd")
 
 uiCampaignLift :: Lens' UICampaign InfResult
 uiCampaignLift = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignLift")
+
+uiCampaignAOVChange :: Lens' UICampaign Number
+uiCampaignAOVChange = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignAOVChange")
 
 uiCampaignCtrlTreatment :: Lens' UICampaign UITreatment
 uiCampaignCtrlTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignCtrlTreatment")
@@ -232,7 +237,7 @@ cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 newtype CreateExperiment =
     CreateExperiment {
       _createExperimentProductId :: String
-    , _createExperimentPrice :: Number
+    , _createExperimentPrice :: Price
     }
 
 derive instance eqCreateExperiment :: Eq CreateExperiment
@@ -240,13 +245,13 @@ derive instance genericCreateExperiment :: Generic CreateExperiment _
 derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
 
 --------------------------------------------------------------------------------
-_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Number}
+_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Price}
 _CreateExperiment = _Newtype
 
 createExperimentProductId :: Lens' CreateExperiment String
 createExperimentProductId = _Newtype <<< prop (SProxy :: SProxy "_createExperimentProductId")
 
-createExperimentPrice :: Lens' CreateExperiment Number
+createExperimentPrice :: Lens' CreateExperiment Price
 createExperimentPrice = _Newtype <<< prop (SProxy :: SProxy "_createExperimentPrice")
 
 --------------------------------------------------------------------------------

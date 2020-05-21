@@ -164,15 +164,15 @@ mkCampaignViewPage =
                             { className: styles.revenueResults
                             , children:
                                 [ resultIndicator
-                                    (campaign # view controlAverageOrderValueOptic >>> show >>> ("$" <> _))
+                                    (campaign # view controlAverageOrderValueOptic)
                                     "control"
                                     Nothing
                                 , resultIndicator
-                                    (campaign # view testAverageOrderValueOptic >>> show >>> ("$" <> _))
+                                    (campaign # view testAverageOrderValueOptic)
                                     "test"
                                     Nothing
                                 , resultIndicator
-                                    (campaign # getAverageOrderValueChange >>> formatPercentage)
+                                    (campaign # getAverageOrderValueChange)
                                     "change"
                                     (numberToDirection (getConversionChange campaign) # Just)
                                 ]
@@ -208,8 +208,8 @@ mkCampaignViewPage =
       variantPairToRow (Tuple controlVariant testVariant) =
         [ view uiTreatmentVariantTitle controlVariant
         , view uiTreatmentSku controlVariant
-        , view uiTreatmentVariantPrice controlVariant # show
-        , view uiTreatmentVariantPrice testVariant # show
+        , view uiTreatmentVariantPrice controlVariant
+        , view uiTreatmentVariantPrice testVariant
         ]
     in
       map variantPairToRow (Array.zip controlVariants testVariants)
@@ -236,7 +236,7 @@ mkCampaignViewPage =
 
       testAverageOrderValue = view testAverageOrderValueOptic campaign
     in
-      (testAverageOrderValue - controlAverageOrderValue) / controlAverageOrderValue
+      controlAverageOrderValue <> " / " <> testAverageOrderValue
 
   getMean = view (uiCampaignLift <<< mean) >>> formatPercentage
 

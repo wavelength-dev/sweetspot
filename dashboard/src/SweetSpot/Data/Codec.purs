@@ -1,33 +1,23 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
-
-import Data.Argonaut (Json, decodeJson, getField)
+import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:))
-import Data.DateTime (DateTime(..))
+import Data.DateTime (DateTime)
 import Data.Either (Either(..))
 import Data.Formatter.DateTime as Formatter
-import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
-import Data.Maybe (fromJust) as Maybe
-import Data.Profunctor (unwrapIso)
-import Data.Traversable (sequence, traverse)
-import Effect (Effect)
-import Partial.Unsafe (unsafePartial)
+import Data.Traversable (traverse)
 import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
-import Unsafe.Coerce (unsafeCoerce)
 
 decodeInfResult :: Json -> Either String InfResult
 decodeInfResult json = do
   o <- decodeJson json
-  construct
-    <$> o .: "_lowerBound"
-    <*> o .: "_upperBound"
-    <*> o .: "_mean"
-
-  where
-    construct lb ub mean =
-      InfResult
+  lb <- o .: "_lowerBound"
+  ub <- o .: "_upperBound"
+  mean <- o .: "_mean"
+  pure
+    $ InfResult
         { _lowerBound: lb
         , _upperBound: ub
         , _mean: mean
@@ -36,32 +26,24 @@ decodeInfResult json = do
 decodeUITreatmentVariant :: Json -> Either String UITreatmentVariant
 decodeUITreatmentVariant json = do
   o <- decodeJson json
-  construct
-    <$> o .: "_uiTreatmentVariantTitle"
-    <*> o .: "_uiTreatmentSku"
-    <*> o .: "_uiTreatmentVariantPrice"
-    <*> o .: "_uiTreatmentVariantCurrency"
-
-  where
-    construct title sku price currency =
-      UITreatmentVariant
+  title <- o .: "_uiTreatmentVariantTitle"
+  sku <- o .: "_uiTreatmentSku"
+  price <- o .: "_uiTreatmentVariantPrice"
+  pure
+    $ UITreatmentVariant
         { _uiTreatmentVariantTitle: title
         , _uiTreatmentSku: sku
         , _uiTreatmentVariantPrice: price
-        , _uiTreatmentVariantCurrency: currency
         }
 
 decodeUITreatment :: Json -> Either String UITreatment
 decodeUITreatment json = do
   o <- decodeJson json
-  construct
-    <$> o .: "_uiTreatmentCR"
-    <*> o .: "_uiTreatmentAOV"
-    <*> (o .: "_uiTreatmentVariants" >>= traverse decodeUITreatmentVariant)
-
-  where
-    construct cr aov vs =
-      UITreatment
+  cr <- o .: "_uiTreatmentCR"
+  aov <- o .: "_uiTreatmentAOV"
+  vs <- o .: "_uiTreatmentVariants" >>= traverse decodeUITreatmentVariant
+  pure
+    $ UITreatment
         { _uiTreatmentCR: cr
         , _uiTreatmentAOV: aov
         , _uiTreatmentVariants: vs
@@ -70,9 +52,10 @@ decodeUITreatment json = do
 -- Brittle parser of ISO8601 / RFC3339
 parseDateTime :: Maybe String -> Either String (Maybe DateTime)
 parseDateTime Nothing = Right Nothing
+
 parseDateTime (Just encodedDateTime) =
   Formatter.unformatDateTime "YYYY-MM-DDTHH:mm:ssZ" encodedDateTime
-  <#> Just
+    <#> Just
 
 decodeUICampaign :: Json -> Either String UICampaign
 decodeUICampaign json = do
@@ -103,21 +86,18 @@ decodeImage json = do
   o <- decodeJson json
   construct <$> o .: "_imageSrc"
   where
-    construct src = Image { _imageSrc: src }
+  construct src = Image { _imageSrc: src }
 
 decodeVariant :: Json -> Either String Variant
 decodeVariant json = do
   o <- decodeJson json
-  construct
-    <$> o .: "_variantId"
-    <*> o .: "_variantProductId"
-    <*> o .: "_variantTitle"
-    <*> o .: "_variantSku"
-    <*> o .: "_variantPrice"
-
-  where
-    construct vid pid title sku price =
-      Variant
+  vid <- o .: "_variantId"
+  pid <- o .: "_variantProductId"
+  title <- o .: "_variantTitle"
+  sku <- o .: "_variantSku"
+  price <- o .: "_variantPrice"
+  pure
+    $ Variant
         { _variantId: vid
         , _variantProductId: pid
         , _variantTitle: title
@@ -128,15 +108,12 @@ decodeVariant json = do
 decodeProduct :: Json -> Either String Product
 decodeProduct json = do
   o <- decodeJson json
-  construct
-    <$> o .: "_productId"
-    <*> o .: "_productTitle"
-    <*> (o .: "_productVariants" >>= traverse decodeVariant)
-    <*> (o .: "_productImage" >>= decodeImage)
-
-  where
-    construct pid title variants image =
-      Product
+  pid <- o .: "_productId"
+  title <- o .: "_productTitle"
+  variants <- o .: "_productVariants" >>= traverse decodeVariant
+  image <- o .: "_productImage" >>= decodeImage
+  pure
+    $ Product
         { _productId: pid
         , _productTitle: title
         , _productVariants: variants

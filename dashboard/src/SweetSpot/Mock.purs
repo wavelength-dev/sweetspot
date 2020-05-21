@@ -28,26 +28,24 @@ storewide10Campaign =
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2
-          , _uiTreatmentAOV: 324.0
+          , _uiTreatmentAOV: "$324"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Cup"
                   , _uiTreatmentSku: "6412"
-                  , _uiTreatmentVariantPrice: 349.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$349.99"
                   }
               ]
           }
     , _uiCampaignTestTreatment:
         UITreatment
           { _uiTreatmentCR: 6.1e-2
-          , _uiTreatmentAOV: 348.0
+          , _uiTreatmentAOV: "$348"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Cup"
                   , _uiTreatmentSku: "6412"
-                  , _uiTreatmentVariantPrice: 379.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$379.99"
                   }
               ]
           }
@@ -64,38 +62,34 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2
-          , _uiTreatmentAOV: 324.0
+          , _uiTreatmentAOV: "$324"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Brown leather jacket"
                   , _uiTreatmentSku: "6412"
-                  , _uiTreatmentVariantPrice: 349.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$349.99"
                   }
               , UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Bonobo"
                   , _uiTreatmentSku: "242"
-                  , _uiTreatmentVariantPrice: 49.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$49.99"
                   }
               ]
           }
     , _uiCampaignTestTreatment:
         UITreatment
           { _uiTreatmentCR: 6.1e-2
-          , _uiTreatmentAOV: 348.0
+          , _uiTreatmentAOV: "$348.0"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Brown leather jacket"
                   , _uiTreatmentSku: "6412"
-                  , _uiTreatmentVariantPrice: 379.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$379.99"
                   }
               , UITreatmentVariant
                   { _uiTreatmentVariantTitle: "Bonobo"
                   , _uiTreatmentSku: "242"
-                  , _uiTreatmentVariantPrice: 29.99
-                  , _uiTreatmentVariantCurrency: "USD"
+                  , _uiTreatmentVariantPrice: "$29.99"
                   }
               ]
           }

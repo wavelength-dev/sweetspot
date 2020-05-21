@@ -17,6 +17,7 @@ psDate =
 sweetspotBridge :: BridgePart
 sweetspotBridge =
   defaultBridge
+    <|> (typeName ^== "Price" >> return psNumber)
     <|> (typeName ^== "FormattedPrice" >> return psString)
     <|> (typeName ^== "Sku" >> return psString)
     <|> (typeName ^== "Svid" >> return psString)

@@ -9,6 +9,7 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import Control.Lens
+import Data.Scientific (fromFloatDigits)
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
@@ -20,9 +21,13 @@ import SweetSpot.AppM (AppM)
 import SweetSpot.Calc (InfParams (..), runInference)
 import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Util (matchShop, withConn)
+import SweetSpot.Database.Queries.Util
+  ( matchShop,
+    selectShopMoneyFormat,
+    withConn,
+  )
 import SweetSpot.Database.Schema
-import SweetSpot.Util (nanToZero)
+import SweetSpot.Util (formatPrice, nanToZero)
 
 data InsertExperiment
   = InsertExperiment
@@ -104,7 +109,7 @@ instance DashboardDB AppM where
         $ runSelectReturningList
         $ select
         $ selectShopCampaigns domain
-    traverse (enhanceCampaign conn) cmps
+    traverse (enhanceCampaign conn domain) cmps
 
   createSession shopDomain' sessionId' = withConn $ \conn -> do
     mShopDomain <- validateSessionId' conn sessionId'
@@ -134,9 +139,11 @@ instance DashboardDB AppM where
   validateSessionId sessionId' = withConn $ \conn ->
     validateSessionId' conn sessionId'
 
-enhanceCampaign :: Connection -> Campaign -> IO UICampaign
-enhanceCampaign conn cmp = do
+enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
+enhanceCampaign conn domain cmp = do
   let cmpId' = cmp ^. cmpId
+  (Just moneyFormat) <-
+    runBeamPostgres conn $ runSelectReturningOne $ select $ selectShopMoneyFormat domain
   [(ctrlRevs, ctrlNils, testRevs, testNils)] <-
     runBeamPostgres conn
       $ runSelectReturningList
@@ -152,8 +159,7 @@ enhanceCampaign conn cmp = do
         UITreatmentVariant
           { _uiTreatmentVariantTitle = title,
             _uiTreatmentSku = sku,
-            _uiTreatmentVariantPrice = price,
-            _uiTreatmentVariantCurrency = "USD"
+            _uiTreatmentVariantPrice = formatPrice moneyFormat price
           }
   infResult <-
     runInference
@@ -179,14 +185,14 @@ enhanceCampaign conn cmp = do
         _uiCampaignCtrlTreatment =
           UITreatment
             { _uiTreatmentCR = nanToZero ctrlCR,
-              _uiTreatmentAOV = nanToZero ctrlAOV,
+              _uiTreatmentAOV = nanToZero testAOV & fromFloatDigits & Price & formatPrice moneyFormat,
               _uiTreatmentVariants =
                 map toUITreatmentVariant ctrlTreatmentVariants
             },
         _uiCampaignTestTreatment =
           UITreatment
             { _uiTreatmentCR = nanToZero testCR,
-              _uiTreatmentAOV = nanToZero testAOV,
+              _uiTreatmentAOV = nanToZero testAOV & fromFloatDigits & Price & formatPrice moneyFormat,
               _uiTreatmentVariants =
                 map toUITreatmentVariant testTreatmentVariants
             }

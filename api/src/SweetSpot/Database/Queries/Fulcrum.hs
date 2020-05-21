@@ -19,6 +19,7 @@ import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
   ( matchShop,
+    selectShopMoneyFormat,
     withConn,
   )
 import SweetSpot.Database.Schema hiding (UserId)
@@ -126,8 +127,7 @@ getUserTestMaps' :: Connection -> ShopDomain -> UserId -> IO [TestMap]
 getUserTestMaps' conn domain uid = do
   (Just moneyFormat) <-
     runBeamPostgres conn $ runSelectReturningOne $ select $
-      (^. shopMoneyFormat)
-        <$> filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))
+      selectShopMoneyFormat domain
   mUserTreatments <-
     runBeamPostgres conn $ runSelectReturningList $ select $ do
       cmps <- all_ (db ^. campaigns)

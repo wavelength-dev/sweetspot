@@ -18,3 +18,7 @@ withConnIO :: Pool Connection -> (Connection -> IO a) -> IO a
 withConnIO pool f = liftIO . withResource pool $ \conn -> f conn
 
 matchShop domain = filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))
+
+selectShopMoneyFormat domain =
+  (^. shopMoneyFormat)
+    <$> filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))

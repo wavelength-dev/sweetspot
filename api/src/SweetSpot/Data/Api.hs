@@ -129,8 +129,7 @@ data UITreatmentVariant
   = UITreatmentVariant
       { _uiTreatmentVariantTitle :: !Text,
         _uiTreatmentSku :: !Sku,
-        _uiTreatmentVariantPrice :: !Price,
-        _uiTreatmentVariantCurrency :: !Text
+        _uiTreatmentVariantPrice :: !FormattedPrice
       }
   deriving (Generic, Eq, Show)
 
@@ -146,7 +145,7 @@ instance FromJSON UITreatmentVariant
 data UITreatment
   = UITreatment
       { _uiTreatmentCR :: !Double,
-        _uiTreatmentAOV :: !Double,
+        _uiTreatmentAOV :: !FormattedPrice,
         _uiTreatmentVariants :: [UITreatmentVariant]
       }
   deriving (Generic, Eq, Show)

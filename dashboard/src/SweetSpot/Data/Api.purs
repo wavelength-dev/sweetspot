@@ -82,7 +82,7 @@ uiCampaignTestTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignTestTr
 newtype UITreatment =
     UITreatment {
       _uiTreatmentCR :: Number
-    , _uiTreatmentAOV :: Number
+    , _uiTreatmentAOV :: String
     , _uiTreatmentVariants :: Array UITreatmentVariant
     }
 
@@ -91,13 +91,13 @@ derive instance genericUITreatment :: Generic UITreatment _
 derive instance newtypeUITreatment :: Newtype UITreatment _
 
 --------------------------------------------------------------------------------
-_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Number, _uiTreatmentAOV :: Number, _uiTreatmentVariants :: Array UITreatmentVariant}
+_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Number, _uiTreatmentAOV :: String, _uiTreatmentVariants :: Array UITreatmentVariant}
 _UITreatment = _Newtype
 
 uiTreatmentCR :: Lens' UITreatment Number
 uiTreatmentCR = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentCR")
 
-uiTreatmentAOV :: Lens' UITreatment Number
+uiTreatmentAOV :: Lens' UITreatment String
 uiTreatmentAOV = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentAOV")
 
 uiTreatmentVariants :: Lens' UITreatment (Array UITreatmentVariant)
@@ -108,8 +108,7 @@ newtype UITreatmentVariant =
     UITreatmentVariant {
       _uiTreatmentVariantTitle :: String
     , _uiTreatmentSku :: String
-    , _uiTreatmentVariantPrice :: Number
-    , _uiTreatmentVariantCurrency :: String
+    , _uiTreatmentVariantPrice :: String
     }
 
 derive instance eqUITreatmentVariant :: Eq UITreatmentVariant
@@ -117,7 +116,7 @@ derive instance genericUITreatmentVariant :: Generic UITreatmentVariant _
 derive instance newtypeUITreatmentVariant :: Newtype UITreatmentVariant _
 
 --------------------------------------------------------------------------------
-_UITreatmentVariant :: Iso' UITreatmentVariant { _uiTreatmentVariantTitle :: String, _uiTreatmentSku :: String, _uiTreatmentVariantPrice :: Number, _uiTreatmentVariantCurrency :: String}
+_UITreatmentVariant :: Iso' UITreatmentVariant { _uiTreatmentVariantTitle :: String, _uiTreatmentSku :: String, _uiTreatmentVariantPrice :: String}
 _UITreatmentVariant = _Newtype
 
 uiTreatmentVariantTitle :: Lens' UITreatmentVariant String
@@ -126,11 +125,8 @@ uiTreatmentVariantTitle = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentVaria
 uiTreatmentSku :: Lens' UITreatmentVariant String
 uiTreatmentSku = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentSku")
 
-uiTreatmentVariantPrice :: Lens' UITreatmentVariant Number
+uiTreatmentVariantPrice :: Lens' UITreatmentVariant String
 uiTreatmentVariantPrice = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentVariantPrice")
-
-uiTreatmentVariantCurrency :: Lens' UITreatmentVariant String
-uiTreatmentVariantCurrency = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentVariantCurrency")
 
 --------------------------------------------------------------------------------
 newtype Image =

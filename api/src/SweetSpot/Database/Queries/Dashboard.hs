@@ -193,17 +193,26 @@ enhanceCampaign conn domain cmp = do
         _uiCampaignStart = cmp ^. cmpStart,
         _uiCampaignEnd = cmp ^. cmpEnd,
         _uiCampaignLift = infResult,
+        _uiCampaignAOVChange = nanToZero $ testAOV / ctrlAOV,
         _uiCampaignCtrlTreatment =
           UITreatment
             { _uiTreatmentCR = nanToZero ctrlCR,
-              _uiTreatmentAOV = nanToZero testAOV & fromFloatDigits & Price & formatPrice moneyFormat,
+              _uiTreatmentAOV =
+                nanToZero ctrlAOV
+                  & fromFloatDigits
+                  & Price
+                  & formatPrice moneyFormat,
               _uiTreatmentVariants =
                 map toUITreatmentVariant ctrlTreatmentVariants
             },
         _uiCampaignTestTreatment =
           UITreatment
             { _uiTreatmentCR = nanToZero testCR,
-              _uiTreatmentAOV = nanToZero testAOV & fromFloatDigits & Price & formatPrice moneyFormat,
+              _uiTreatmentAOV =
+                nanToZero testAOV
+                  & fromFloatDigits
+                  & Price
+                  & formatPrice moneyFormat,
               _uiTreatmentVariants =
                 map toUITreatmentVariant testTreatmentVariants
             }

@@ -134,6 +134,7 @@ data UICampaign
         _uiCampaignStart :: !(Maybe UTCTime),
         _uiCampaignEnd :: !(Maybe UTCTime),
         _uiCampaignLift :: !InfResult,
+        _uiCampaignAOVChange :: !Double,
         _uiCampaignCtrlTreatment :: !UITreatment,
         _uiCampaignTestTreatment :: !UITreatment
       }

@@ -1,4 +1,4 @@
-FROM gcr.io/sweetspot-255522/sweetspot-build AS build-api
+FROM fpco/stack-build:lts-14.27 AS build
 WORKDIR /opt/build
 
 # Copy code and build our binary

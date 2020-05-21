@@ -1,0 +1,20 @@
+steps:
+  # build the image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - gcr.io/$PROJECT_ID/sweetspot-build
+      - --target
+      - build
+      - .
+  # push the container image to Container Registry
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/sweetspot-build
+images:
+  - gcr.io/$PROJECT_ID/sweetspot-build
+timeout: 1800s
+options:
+  machineType: N1_HIGHCPU_8

@@ -1,10 +1,18 @@
 steps:
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker pull gcr.io/$PROJECT_ID/sweetspot-build:latest || exit 0
   # build the container image
   - name: gcr.io/cloud-builders/docker
     args:
       - build
       - --tag
       - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+      - --cache-from
+      - gcr.io/$PROJECT_ID/sweetspot-build:latest
       - .
   # push the container image to Container Registry
   - name: gcr.io/cloud-builders/docker

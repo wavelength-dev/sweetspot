@@ -10,7 +10,6 @@ import Data.Maybe (Maybe, Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
 import Prim (Array, Number, String)
-import SweetSpot.Data.Common (Price)
 
 import Prelude
 
@@ -237,7 +236,7 @@ cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 newtype CreateExperiment =
     CreateExperiment {
       _createExperimentProductId :: String
-    , _createExperimentPrice :: Price
+    , _createExperimentPrice :: Number
     }
 
 derive instance eqCreateExperiment :: Eq CreateExperiment
@@ -245,13 +244,13 @@ derive instance genericCreateExperiment :: Generic CreateExperiment _
 derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
 
 --------------------------------------------------------------------------------
-_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Price}
+_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Number}
 _CreateExperiment = _Newtype
 
 createExperimentProductId :: Lens' CreateExperiment String
 createExperimentProductId = _Newtype <<< prop (SProxy :: SProxy "_createExperimentProductId")
 
-createExperimentPrice :: Lens' CreateExperiment Price
+createExperimentPrice :: Lens' CreateExperiment Number
 createExperimentPrice = _Newtype <<< prop (SProxy :: SProxy "_createExperimentPrice")
 
 --------------------------------------------------------------------------------

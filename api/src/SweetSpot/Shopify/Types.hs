@@ -128,11 +128,15 @@ data RedactShop
       }
   deriving (Generic, Show)
 
+makeLenses ''RedactShop
+
 instance FromJSON RedactShop where
   parseJSON = withObject "RedactShop" $ \v ->
     RedactShop
       <$> v .: "shop_id"
       <*> v .: "shop_domain"
+
+instance ToJSON RedactShop
 
 -- | ---------------------------------------------------------------------------
 -- | Customer
@@ -143,7 +147,7 @@ data Customer
         _customerEmail :: Text,
         _customerPhone :: Text
       }
-  deriving (Show)
+  deriving (Show, Generic)
 
 instance FromJSON Customer where
   parseJSON = withObject "Customer" $ \v ->
@@ -151,6 +155,8 @@ instance FromJSON Customer where
       <$> v .: "id"
       <*> v .: "email"
       <*> v .: "phone"
+
+instance ToJSON Customer
 
 -- | ---------------------------------------------------------------------------
 -- | RedactCustomer
@@ -162,7 +168,9 @@ data RedactCustomer
         _redactCustomerCustomer :: Customer,
         _redactCustomerOrders :: [Int]
       }
-  deriving (Show)
+  deriving (Show, Generic)
+
+makeLenses ''RedactCustomer
 
 instance FromJSON RedactCustomer where
   parseJSON = withObject "RedactCustomer" $ \v ->
@@ -171,6 +179,8 @@ instance FromJSON RedactCustomer where
       <*> v .: "shop_domain"
       <*> v .: "customer"
       <*> v .: "orders_to_redact"
+
+instance ToJSON RedactCustomer
 
 -- | ---------------------------------------------------------------------------
 -- | RequestData
@@ -182,7 +192,9 @@ data RequestData
         _dataRequestCustomer :: Customer,
         _dataRequestOrders :: [Int]
       }
-  deriving (Show)
+  deriving (Show, Generic)
+
+makeLenses ''RequestData
 
 instance FromJSON RequestData where
   parseJSON = withObject "RequestData" $ \v ->
@@ -191,6 +203,8 @@ instance FromJSON RequestData where
       <*> v .: "shop_domain"
       <*> v .: "customer"
       <*> v .: "orders_requested"
+
+instance ToJSON RequestData
 
 -- | ---------------------------------------------------------------------------
 -- | WebhookTopic

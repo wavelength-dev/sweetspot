@@ -427,3 +427,17 @@ instance HasSqlValueSyntax be Text => HasSqlValueSyntax be MoneyFormat where
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be MoneyFormat where
   fromBackendRow = MoneyFormat <$> fromBackendRow
+
+-- | ---------------------------------------------------------------------------
+-- | ActionRequestType
+-- | ---------------------------------------------------------------------------
+data ActionRequestType
+  = RedactShopType
+  | RedactCustomerType
+  | DataRequestType
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be ActionRequestType where
+  sqlValueSyntax = sqlValueSyntax . \case
+    RedactShopType -> "redact_shop" :: Text
+    RedactCustomerType -> "redact_customer" :: Text
+    DataRequestType -> "request_data" :: Text

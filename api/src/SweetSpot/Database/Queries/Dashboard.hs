@@ -24,6 +24,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
   ( matchShop,
     selectShopMoneyFormat,
+    unsafeFindShopId,
     withConn,
   )
 import SweetSpot.Database.Schema
@@ -308,12 +309,3 @@ validateSessionId' conn sessionId' =
       guard_ (_sessionShopId session `references_` shop)
       guard_ (session ^. sessionId ==. val_ sessionId')
       pure $ shop ^. shopDomain
-
-unsafeFindShopId :: Connection -> ShopDomain -> IO ShopId
-unsafeFindShopId conn domain =
-  fromJust
-    <$> ( runBeamPostgres conn
-            $ runSelectReturningOne
-            $ select
-            $ view shopId <$> matchShop domain
-        )

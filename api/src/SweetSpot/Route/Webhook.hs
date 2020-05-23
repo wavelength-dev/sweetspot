@@ -8,12 +8,14 @@ module SweetSpot.Route.Webhook
   )
 where
 
+import Data.Aeson (toJSON)
 import RIO
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
+import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
-import qualified SweetSpot.Logger as L
+import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
 import SweetSpot.Shopify.Types
 
 type OrderRoute =
@@ -53,17 +55,26 @@ orderHandler order = runAppM $ do
 
 redactShopHandler :: RedactShop -> ServerM OkResponse
 redactShopHandler payload = runAppM $ do
-  L.info $ "**Action required** " <> tshow payload
+  insertActionRequest
+    (payload ^. redactShopDomain)
+    RedactShopType
+    (toJSON payload)
   return OkResponse {message = "Request received"}
 
 redactCustomerHandler :: RedactCustomer -> ServerM OkResponse
 redactCustomerHandler payload = runAppM $ do
-  L.info $ "**Action required** " <> tshow payload
+  insertActionRequest
+    (payload ^. redactCustomerShopDomain)
+    RedactCustomerType
+    (toJSON payload)
   return OkResponse {message = "Request received"}
 
 requestDataHandler :: RequestData -> ServerM OkResponse
 requestDataHandler payload = runAppM $ do
-  L.info $ "**Action required** " <> tshow payload
+  insertActionRequest
+    (payload ^. dataRequestShopDomain)
+    DataRequestType
+    (toJSON payload)
   return OkResponse {message = "Request received"}
 
 webhookHandler =

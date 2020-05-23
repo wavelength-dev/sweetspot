@@ -343,6 +343,30 @@ instance Table UserCartTokenT where
 UserCartToken (LensFor cartTokenId) (UserKey (LensFor cartTokenUser)) = tableLenses
 
 -- | ---------------------------------------------------------------------------
+-- | ActionRequest
+-- | ---------------------------------------------------------------------------
+data ActionRequestT f
+  = ActionRequest
+      { _actionRequestId :: Columnar f UUID,
+        _actionRequestShopId :: PrimaryKey ShopT f,
+        _actionRequestType :: Columnar f ActionRequestType,
+        _actionRequestPayload :: Columnar f (PgJSONB Value)
+      }
+  deriving (Generic, Beamable)
+
+type ActionRequest = ActionRequestT Identity
+
+type ActionRequestKey = PrimaryKey ActionRequestT Identity
+
+instance Table ActionRequestT where
+  data PrimaryKey ActionRequestT f
+    = ActionRequestKey (Columnar f UUID)
+    deriving (Generic, Beamable)
+  primaryKey = ActionRequestKey . _actionRequestId
+
+ActionRequest (LensFor actionRequestId) (ShopKey (LensFor actionRequestShopId)) (LensFor actionRequestType) (LensFor actionRequestPayload) = tableLenses
+
+-- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f
@@ -359,13 +383,14 @@ data SweetSpotDb f
         _events :: f (TableEntity EventT),
         _sessions :: f (TableEntity SessionT),
         _userCartTokens :: f (TableEntity UserCartTokenT),
+        _actionRequests :: f (TableEntity ActionRequestT),
         _cryptoExtension :: f (PgExtensionEntity PgCrypto)
       }
   deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens cryptoExtension) =
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens cryptoExtension) =
   dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -479,5 +504,13 @@ migration () =
       UserCartToken
         { _cartTokenId = field "cart_token" (DataType pgTextType) notNull,
           _cartTokenUser = UserKey (field "user_id" (DataType pgTextType))
+        }
+    <*> createTable
+      "action_requests"
+      ActionRequest
+        { _actionRequestId = field "id" (DataType pgUuidType) notNull,
+          _actionRequestShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _actionRequestType = field "request_type" (DataType pgTextType) notNull,
+          _actionRequestPayload = field "payload" jsonb notNull
         }
     <*> pgCreateExtension

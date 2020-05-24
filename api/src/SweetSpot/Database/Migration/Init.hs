@@ -315,7 +315,7 @@ instance Table SessionT where
     deriving (Generic, Beamable)
   primaryKey = SessionKey . _sessionId
 
-Session (LensFor sessionId) (ShopKey (LensFor sessionShopDomain)) = tableLenses
+Session (LensFor sessionId) (ShopKey (LensFor sessionShopId)) = tableLenses
 
 sessionIdType :: DataType Postgres SessionId
 sessionIdType = DataType pgTextType

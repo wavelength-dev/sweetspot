@@ -3,6 +3,7 @@ module SweetSpot.Route.Webhook
     RedactShopRoute,
     RedactCustomerRoute,
     RequestDataRoute,
+    AppUninstalledRoute,
     WebhookAPI,
     webhookHandler,
   )
@@ -38,11 +39,17 @@ type RequestDataRoute =
     :> ReqBody '[JSON] RequestData
     :> Post '[JSON] OkResponse
 
+type AppUninstalledRoute =
+  "webhook" :> "app" :> "uninstalled"
+    :> ReqBody '[JSON] AppUninstalledReq
+    :> Post '[JSON] OkResponse
+
 type WebhookAPI =
   OrderRoute
     :<|> RedactShopRoute
     :<|> RedactCustomerRoute
     :<|> RequestDataRoute
+    :<|> AppUninstalledRoute
 
 orderHandler :: Order -> ServerM OkResponse
 orderHandler order = runAppM $ do
@@ -77,8 +84,14 @@ requestDataHandler payload = runAppM $ do
     (toJSON payload)
   return OkResponse {message = "Request received"}
 
+appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse
+appUninstalledHandler (AppUninstalledReq domain) =
+  runAppM $
+    uninstallShop domain >> return OkResponse {message = "Shop successfully uninstalled"}
+
 webhookHandler =
   orderHandler
     :<|> redactShopHandler
     :<|> redactCustomerHandler
     :<|> requestDataHandler
+    :<|> appUninstalledHandler

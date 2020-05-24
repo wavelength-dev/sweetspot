@@ -132,8 +132,9 @@ instance MonadShopify AppM where
       shopRes <- registerWebhook ShopRedact
       customerRes <- registerWebhook CustomersRedact
       requestRes <- registerWebhook CustomersDataRequest
-      case (orderRes, shopRes, customerRes, requestRes) of
-        (Right _, Right _, Right _, Right _) -> do
+      uninstallRes <- registerWebhook AppUninstalled
+      case (orderRes, shopRes, customerRes, requestRes, uninstallRes) of
+        (Right _, Right _, Right _, Right _, Right _) -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()
         _ -> pure $ Left "Error while trying to register webhooks"
@@ -152,6 +153,9 @@ instance MonadShopify AppM where
       requestDataPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
+      appUninstalledPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy AppUninstalledRoute)
       getRequest :: WebhookTopic -> CreateWebhookReq
       getRequest topic =
         CreateWebhookReq $
@@ -164,6 +168,7 @@ instance MonadShopify AppM where
                          ShopRedact -> redactShopPath
                          CustomersRedact -> redactCustomerPath
                          CustomersDataRequest -> requestDataPath
+                         AppUninstalled -> appUninstalledPath
                      ),
               format = "json"
             }

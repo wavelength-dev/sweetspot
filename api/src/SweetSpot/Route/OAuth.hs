@@ -37,7 +37,6 @@ type RedirectRoute =
 
 type OAuthAPI = InstallRoute :<|> RedirectRoute
 
--- https://82c0c5ae.ngrok.io/api/oauth/install?shop=libertyprice.myshopify.com&timestamp=12345&hmac=lol
 getAuthUri ::
   ShopDomain ->
   Text ->

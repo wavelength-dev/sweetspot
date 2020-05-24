@@ -214,6 +214,7 @@ data WebhookTopic
   | ShopRedact
   | CustomersRedact
   | CustomersDataRequest
+  | AppUninstalled
 
 instance Show WebhookTopic where
   show = \case
@@ -221,6 +222,7 @@ instance Show WebhookTopic where
     ShopRedact -> "shop/redact"
     CustomersRedact -> "customers/redact"
     CustomersDataRequest -> "customers/data_request"
+    AppUninstalled -> "app/uninstalled"
 
 -- | ---------------------------------------------------------------------------
 -- | ShopInfo
@@ -335,3 +337,14 @@ instance FromJSON ShopProduct where
           _shopProductVariants = variants,
           _shopProductImage = image
         }
+
+-- | ---------------------------------------------------------------------------
+-- | AppUninstalledReq
+-- | ---------------------------------------------------------------------------
+newtype AppUninstalledReq
+  = AppUninstalledReq
+      {_appUninstalledReqShopDomain :: ShopDomain}
+
+instance FromJSON AppUninstalledReq where
+  parseJSON = withObject "AppUninstalledReq" $ \v ->
+    AppUninstalledReq <$> v .: "domain"

@@ -25,6 +25,7 @@ storewide10Campaign =
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-06-04T06:15:41Z"
     , _uiCampaignName: "Store-wide +10%"
     , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
+    , _uiCampaignAOVChange: 1.2
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2
@@ -59,6 +60,7 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-02-26T06:15:41Z"
     , _uiCampaignName: "Expensive Jackets, Cheap Monkeys"
     , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
+    , _uiCampaignAOVChange: 1.2
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2

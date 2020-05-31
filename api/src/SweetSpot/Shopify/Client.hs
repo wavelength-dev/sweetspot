@@ -140,11 +140,15 @@ instance MonadShopify AppM where
       customerRes <- registerWebhook CustomersRedact
       requestRes <- registerWebhook CustomersDataRequest
       uninstallRes <- registerWebhook AppUninstalled
-      case (orderRes, shopRes, customerRes, requestRes, uninstallRes) of
-        (Right _, Right _, Right _, Right _, Right _) -> do
+      case partitionEithers [orderRes, shopRes, customerRes, requestRes, uninstallRes] of
+        ([], _) -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()
-        _ -> pure $ Left "Error while trying to register webhooks"
+        (errs, _) ->
+          map tshow errs
+            & T.intercalate "\n"
+            & Left
+            & pure
     where
       createWebhookClient = client (Proxy :: Proxy RegisterWebhookRoute)
       webhookAPI = Proxy :: Proxy WebhookAPI

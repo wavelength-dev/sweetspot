@@ -97,6 +97,7 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
             throwError internalServerErr
           Right _ -> do
             L.info $ "Successfully installed app for " <> showText shopDomain
+            deleteInstallNonce shopDomain
             pure $ addHeader adminUrl NoContent
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"

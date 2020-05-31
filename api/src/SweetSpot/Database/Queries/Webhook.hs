@@ -46,6 +46,7 @@ instance WebhookDB AppM where
       deleteUserCartTokens users
       deleteUsers users
       deleteCampaigns shopId
+      deleteAppCharge shopId
       deleteShop shopId
 
 deleteProductVariants :: ShopId -> Pg [PVariantId]
@@ -115,6 +116,13 @@ deleteUsers :: [UserId] -> Pg ()
 deleteUsers userIds =
   runDelete $
     delete (db ^. users) (\u -> u ^. usrId `in_` map val_ userIds)
+
+deleteAppCharge :: ShopId -> Pg ()
+deleteAppCharge shopId' =
+  runDelete $
+    delete
+      (db ^. appCharges)
+      (\c -> c ^. appChargeShopId ==. val_ shopId')
 
 deleteShop :: ShopId -> Pg ()
 deleteShop shopId' =

@@ -4,22 +4,35 @@ const {
   Button,
   Card,
   DataTable,
+  DatePicker,
   EmptyState,
+  Form,
+  FormLayout,
   Heading,
+  Modal,
+  OptionList,
   Page,
   ResourceList,
   Subheading,
   TextContainer,
+  TextField,
 } = require('@shopify/polaris')
 
 exports.appProvider = AppProvider
 exports.button = Button
 exports.card = Card
+exports.dataTable = DataTable
+exports.datePicker = DatePicker
 exports.emptyState = EmptyState
 exports.enTranslations = enTranslations
+exports.form = Form
+exports.formLayout = FormLayout
 exports.heading = Heading
+exports.modal = Modal
+exports.modalSection = Modal.Section
+exports.optionList = OptionList
 exports.page = Page
 exports.resourceList = ResourceList
 exports.subheading = Subheading
 exports.textContainer = TextContainer
-exports.dataTable = DataTable
+exports.textField = TextField

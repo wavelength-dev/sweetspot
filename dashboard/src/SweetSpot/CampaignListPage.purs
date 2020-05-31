@@ -1,7 +1,6 @@
 module SweetSpot.CampaignListPage where
 
 import Prelude
-
 import Data.Array (fold, intercalate)
 import Data.DateTime (DateTime)
 import Data.Formatter.DateTime (FormatterCommand(..))
@@ -10,6 +9,7 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Tuple.Nested ((/\))
+import Effect.Aff.Compat (mkEffectFn1)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Effect.Now (nowDateTime) as Now
 import Effect.Timer (clearInterval, setInterval) as Timer
@@ -18,7 +18,9 @@ import React.Basic.DOM (css, div, li, text, ul_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useEffect, useState)
 import React.Basic.Hooks (bind, discard) as React
 import SweetSpot.Data.Api (UICampaign(..))
-import SweetSpot.Shopify (button, heading, page) as Shopify
+import SweetSpot.Shopify (button, page) as Shopify
+import SweetSpot.ShopifyHelper (ElementTag(..))
+import SweetSpot.ShopifyHelper (heading) as SH
 import SweetSpot.Spacing as Spacing
 
 type Now
@@ -119,7 +121,7 @@ campaignCard { status, title, campaignId } =
                   , justifyContent: "space-between"
                   }
             , children:
-                [ element Shopify.heading { element: "h2", children: R.text title }
+                [ SH.heading H2 title
                 , Spacing.small
                 , R.div
                     { style: R.css { display: "flex", alignItems: "center" }
@@ -129,7 +131,15 @@ campaignCard { status, title, campaignId } =
             }
         , R.div
             { style: R.css { display: "flex", alignItems: "center" }
-            , children: [ element Shopify.button { url: notNull ("#/campaign/" <> campaignId), onClick: null, children: R.text "View" } ]
+            , children:
+                [ element Shopify.button
+                    { url: notNull $ "#/view/" <> campaignId
+                    , children: [ R.text "View" ]
+                    , submit: false
+                    , primary: false
+                    , onClick: null
+                    }
+                ]
             }
         ]
     }
@@ -150,12 +160,12 @@ mkCampaignListPage =
       pure $ Timer.clearInterval intervalId
     pure
       $ element Shopify.page
-          { title: "Price Experiment List"
+          { title: notNull "Price Experiment List"
           , subtitle: notNull "All tests currently running, or finished."
-          , primaryAction: { content: "Create Price Experiment", url: "#/campaign" }
-          , breadcrumbs: []
+          , primaryAction: notNull { content: "Create Price Experiment", url: "#/create" }
+          , breadcrumbs: null
           , children:
-              R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ]
+              [ R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ] ]
           }
   where
   toCard now (UICampaign campaign) =

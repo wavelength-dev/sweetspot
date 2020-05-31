@@ -7,7 +7,7 @@ import Data.Maybe (fromJust) as Maybe
 import Effect.Unsafe (unsafePerformEffect)
 import Partial.Unsafe (unsafePartial)
 import Prelude (pure, ($), (>>=), (>>>))
-import SweetSpot.Data.Api (InfResult(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..))
+import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 
 unsafeToDateTime :: String -> DateTime
 unsafeToDateTime str =
@@ -25,7 +25,8 @@ storewide10Campaign =
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-06-04T06:15:41Z"
     , _uiCampaignName: "Store-wide +10%"
     , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
-    , _uiCampaignAOVChange: 1.2
+    , _uiCampaignAOVChange: 0.9531
+    , _uiCampaignCRChange: 1.074074074
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2
@@ -60,7 +61,8 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-02-26T06:15:41Z"
     , _uiCampaignName: "Expensive Jackets, Cheap Monkeys"
     , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
-    , _uiCampaignAOVChange: 1.2
+    , _uiCampaignAOVChange: 0.9531
+    , _uiCampaignCRChange: 1.074074074
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: 6.4e-2
@@ -95,4 +97,21 @@ expensiveJacketsCheapMonkeysCampaign =
                   }
               ]
           }
+    }
+
+bonoboHat :: Product
+bonoboHat =
+  Product
+    { _productId: "bonobo-shopify-product-id"
+    , _productTitle: "Bonobo"
+    , _productImage: Image { _imageSrc: "aoeusnth" }
+    , _productVariants:
+        [ Variant
+            { _variantId: "bonobo-shopify-variant-id"
+            , _variantPrice: "$34.99"
+            , _variantProductId: "bonobo-shopify-product-id"
+            , _variantSku: "bonobo-6153"
+            , _variantTitle: "Bonobo hat"
+            }
+        ]
     }

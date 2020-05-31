@@ -1,25 +1,29 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array (find)
 import Data.Array (null) as Array
 import Data.Either (Either, either)
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Aff (parallel, sequential) as Aff
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM (text) as R
-import React.Basic.Hooks (Component, component, element, empty, useEffectOnce, useState, (/\))
+import React.Basic.Hooks (Component, component, element, empty, useEffectOnce, useState', (/\))
 import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
+import SweetSpot.CampaignCreatePage (mkCampaignCreatePage)
 import SweetSpot.CampaignListPage (mkCampaignListPage)
 import SweetSpot.CampaignViewPage (mkCampaignViewPage)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Route (Route(..), useRouter)
-import SweetSpot.Service (fetchCampaigns) as Service
+import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
 import SweetSpot.Session (SessionId)
 import SweetSpot.Session (getSessionId) as Session
 import SweetSpot.Shopify as Shopify
@@ -43,43 +47,53 @@ mkApp :: Component { sessionId :: SessionId }
 mkApp = do
   campaignListPage <- mkCampaignListPage
   campaignViewPage <- mkCampaignViewPage
+  campaignCreatePage <- mkCampaignCreatePage
   component "App" \props -> React.do
-    route /\ setRoute <- useState CampaignList
-    let
-      setRoute' = const >>> setRoute
-    useEffectOnce (useRouter setRoute')
-    campaignsResource /\ setCampaignsResource <- useState Empty
-    let
-      setCampaignsResource' = const >>> setCampaignsResource
+    route /\ setRoute <- useState' CampaignList
+    useEffectOnce (useRouter setRoute)
+    campaignsResource /\ setCampaignsResource <- useState' Empty
+    productsResource /\ setProductsResource <- useState' Empty
     useAff props.sessionId do
-      liftEffect $ setCampaignsResource $ const Loading
-      eCampaigns <- Service.fetchCampaigns props.sessionId
+      liftEffect $ setCampaignsResource Loading
+      eProducts /\ eCampaigns <-
+        Aff.sequential
+          $ Tuple
+          <$> Aff.parallel (Service.fetchProducts props.sessionId)
+          <*> Aff.parallel (Service.fetchCampaigns props.sessionId)
       eitherToResource eCampaigns
-        # setCampaignsResource'
+        # setCampaignsResource
+        >>> liftEffect
+      eitherToResource eProducts
+        # setProductsResource
         >>> liftEffect
       pure unit
     pure
       $ element Shopify.appProvider
           { i18n: Shopify.enTranslations
           , children:
-              case route of
-                CampaignList -> case campaignsResource of
-                  Empty -> R.text "EMPTY"
-                  Loading -> R.text "LOADING"
-                  Error err -> R.text ("ERROR: " <> err)
-                  Resource campaigns ->
-                    if Array.null campaigns then
-                      gettingStartedPage
-                    else
-                      campaignListPage { campaigns }
-                CampaignCreate -> R.text "Campaign Create Page"
-                CampaignView rawCampaignId -> case campaignsResource of
-                  Empty -> empty
-                  Loading -> R.text "LOADING"
-                  Error err -> R.text ("ERROR: " <> err)
-                  Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of
-                    Nothing -> R.text ("ERROR: campaign not found")
-                    Just campaign -> campaignViewPage { campaign: campaign }
+              [ case route of
+                  CampaignList -> case campaignsResource of
+                    Empty -> R.text "EMPTY"
+                    Loading -> R.text "LOADING"
+                    Error err -> R.text ("ERROR: " <> err)
+                    Resource campaigns ->
+                      if Array.null campaigns then
+                        gettingStartedPage
+                      else
+                        campaignListPage { campaigns }
+                  CampaignCreate -> case productsResource of
+                    Empty -> R.text "EMPTY"
+                    Loading -> R.text "LOADING"
+                    Error err -> R.text ("ERROR: " <> err)
+                    Resource products -> campaignCreatePage { products }
+                  CampaignView rawCampaignId -> case campaignsResource of
+                    Empty -> empty
+                    Loading -> R.text "LOADING"
+                    Error err -> R.text ("ERROR: " <> err)
+                    Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of
+                      Nothing -> R.text ("ERROR: campaign not found")
+                      Just campaign -> campaignViewPage { campaign: campaign }
+              ]
           }
   where
   getCampaignById targetId (UICampaign campaign) = targetId == campaign._uiCampaignId

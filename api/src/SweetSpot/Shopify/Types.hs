@@ -384,7 +384,7 @@ makeLenses ''CreateAppChargeRes
 
 instance FromJSON CreateAppChargeRes where
   parseJSON = withObject "CreateAppChargeRes" $ \v -> do
-    o <- v .: "application_charge"
+    o <- v .: "recurring_application_charge"
     id <- o .: "id"
     name <- o .: "name"
     price <- o .: "price"

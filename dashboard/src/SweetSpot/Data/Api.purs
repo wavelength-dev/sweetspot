@@ -3,10 +3,10 @@ module SweetSpot.Data.Api where
 
 import Data.DateTime (DateTime)
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Iso', Lens', Prism', lens, prism')
+import Data.Lens (Iso', Lens')
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
-import Data.Maybe (Maybe, Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
 import Prim (Array, Number, String)
@@ -46,6 +46,7 @@ newtype UICampaign =
     , _uiCampaignEnd :: Maybe DateTime
     , _uiCampaignLift :: InfResult
     , _uiCampaignAOVChange :: Number
+    , _uiCampaignCRChange :: Number
     , _uiCampaignCtrlTreatment :: UITreatment
     , _uiCampaignTestTreatment :: UITreatment
     }
@@ -55,7 +56,7 @@ derive instance genericUICampaign :: Generic UICampaign _
 derive instance newtypeUICampaign :: Newtype UICampaign _
 
 --------------------------------------------------------------------------------
-_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: InfResult, _uiCampaignAOVChange :: Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
+_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: InfResult, _uiCampaignAOVChange :: Number, _uiCampaignCRChange :: Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
 _UICampaign = _Newtype
 
 uiCampaignId :: Lens' UICampaign String
@@ -75,6 +76,9 @@ uiCampaignLift = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignLift")
 
 uiCampaignAOVChange :: Lens' UICampaign Number
 uiCampaignAOVChange = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignAOVChange")
+
+uiCampaignCRChange :: Lens' UICampaign Number
+uiCampaignCRChange = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignCRChange")
 
 uiCampaignCtrlTreatment :: Lens' UICampaign UITreatment
 uiCampaignCtrlTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignCtrlTreatment")

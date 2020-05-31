@@ -464,6 +464,17 @@ instance Show AppChargeStatus where
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be AppChargeStatus where
   sqlValueSyntax = sqlValueSyntax . tshow
 
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be AppChargeStatus where
+  fromBackendRow = do
+    val <- fromBackendRow
+    case val :: Text of
+      "pending" -> pure Pending
+      "accepted" -> pure Accepted
+      "active" -> pure Active
+      "declined" -> pure Declined
+      "expired" -> pure Expired
+      _ -> fail $ "Invalid database value for AppChargeStatus: " ++ T.unpack val
+
 instance FromJSON AppChargeStatus where
   parseJSON = withText "AppChargeStatus" $ \case
     "pending" -> pure Pending
@@ -471,4 +482,4 @@ instance FromJSON AppChargeStatus where
     "active" -> pure Active
     "declined" -> pure Declined
     "expired" -> pure Expired
-    _ -> fail "Got invalid AppChargeStatus"
+    val -> fail $ "Invalid json for AppChargeStatus: " ++ T.unpack val

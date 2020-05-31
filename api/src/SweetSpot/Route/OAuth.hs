@@ -16,24 +16,25 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install
   ( InstallDB (..),
   )
+import SweetSpot.Database.Schema
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 import SweetSpot.Shopify.Client (MonadShopify (..))
 
 type InstallRoute =
   "oauth" :> "install"
-    :> QueryParam "shop" ShopDomain
-    :> QueryParam "timestamp" Timestamp
-    :> QueryParam "hmac" HMAC'
+    :> QueryParam' '[Required, Strict] "shop" ShopDomain
+    :> QueryParam' '[Required, Strict] "timestamp" Timestamp
+    :> QueryParam' '[Required, Strict] "hmac" HMAC'
     :> Get303 '[PlainText] NoContent
 
 type RedirectRoute =
   "oauth" :> "redirect"
-    :> QueryParam "code" Code
-    :> QueryParam "hmac" HMAC'
-    :> QueryParam "timestamp" Timestamp
-    :> QueryParam "state" Nonce
-    :> QueryParam "shop" ShopDomain
+    :> QueryParam' '[Required, Strict] "code" Code
+    :> QueryParam' '[Required, Strict] "hmac" HMAC'
+    :> QueryParam' '[Required, Strict] "timestamp" Timestamp
+    :> QueryParam' '[Required, Strict] "state" Nonce
+    :> QueryParam' '[Required, Strict] "shop" ShopDomain
     :> Get303 '[PlainText] NoContent
 
 type OAuthAPI = InstallRoute :<|> RedirectRoute
@@ -58,27 +59,26 @@ getAuthUri shopDomain clientId redirectUri nonce =
     scopes = "write_products,read_orders,read_analytics"
 
 installHandler ::
-  Maybe ShopDomain ->
-  Maybe Timestamp ->
-  Maybe HMAC' ->
+  ShopDomain ->
+  Timestamp ->
+  HMAC' ->
   ServerM (Headers '[Header "Location" Text] NoContent)
-installHandler (Just shopDomain) (Just _) (Just hmac) = runAppM $ do
+installHandler shopDomain ts hmac = runAppM $ do
   config <- asks (^. ctxConfig)
   nonce <- generateInstallNonce shopDomain
   let clientId = config ^. configShopifyClientId
       redirectUri = config ^. configShopifyOAuthRedirectUri
       authUri = getAuthUri shopDomain clientId redirectUri nonce
-  return $ addHeader authUri NoContent
-installHandler _ _ _ = throwError badRequestErr
+  pure $ addHeader authUri NoContent
 
 redirectHandler ::
-  Maybe Code ->
-  Maybe HMAC' ->
-  Maybe Timestamp ->
-  Maybe Nonce ->
-  Maybe ShopDomain ->
+  Code ->
+  HMAC' ->
+  Timestamp ->
+  Nonce ->
+  ShopDomain ->
   ServerM (Headers '[Header "Location" Text] NoContent)
-redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopDomain) =
+redirectHandler (Code code) hmac _ nonce shopDomain =
   runAppM $ do
     mDbNonce <- getInstallNonce shopDomain
     case (== nonce) <$> mDbNonce of
@@ -95,15 +95,12 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
             L.error $ err
             deleteInstallNonce shopDomain
             throwError internalServerErr
-          Right _ -> do
+          Right appCharge -> do
             L.info $ "Successfully installed app for " <> showText shopDomain
             deleteInstallNonce shopDomain
-            pure $ addHeader adminUrl NoContent
+            pure $ addHeader (appCharge ^. appChargeConfirmationUrl) NoContent
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"
         throwError badRequestErr
-  where
-    adminUrl = "https://" <> showText shopDomain <> "/admin"
-redirectHandler _ _ _ _ _ = throwError badRequestErr
 
 oauthHandler = installHandler :<|> redirectHandler

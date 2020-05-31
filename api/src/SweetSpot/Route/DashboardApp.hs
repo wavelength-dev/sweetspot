@@ -64,7 +64,7 @@ indexHandler (Just domain) (Just ts) (Just hmac) (Just sessionId) =
           redirectPath =
             encodeUtf8
               $ toUrlPiece
-              $ safeLink redirectApi redirectHandler (Just domain) (Just ts) (Just hmac)
+              $ safeLink redirectApi redirectHandler domain ts hmac
 indexHandler _ _ _ _ = throwError badRequestErr
 
 dashboardStaticHandler =

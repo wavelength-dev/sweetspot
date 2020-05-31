@@ -19,7 +19,7 @@ class Monad m => InstallDB m where
   deleteInstallNonce :: ShopDomain -> m ()
   createShop :: ShopDomain -> ShopInfo -> Text -> m ()
   getOAuthToken :: ShopDomain -> m (Maybe Text)
-  insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m ()
+  insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m AppCharge
 
 instance InstallDB AppM where
   generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -77,18 +77,20 @@ instance InstallDB AppM where
 
   insertAppCharge domain charge = withConn $ \conn -> do
     shopId' <- unsafeFindShopId conn domain
-    runBeamPostgres conn
-      $ runInsert
-      $ insert (db ^. appCharges)
-      $ insertExpressions
-        [ AppCharge
-            { _appChargeId = pgGenUUID_,
-              _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
-              _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
-              _appChargeShopId = val_ $ (ShopKey shopId'),
-              _appChargeName = val_ $ charge ^. createAppChargeResName,
-              _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
-              _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
-              _appChargeConfirmationUrl = val_ $ charge ^. createAppChargeResConfirmationUrl
-            }
-        ]
+    [row] <-
+      runBeamPostgres conn
+        $ BeamExt.runInsertReturningList
+        $ insert (db ^. appCharges)
+        $ insertExpressions
+          [ AppCharge
+              { _appChargeId = pgGenUUID_,
+                _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
+                _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
+                _appChargeShopId = val_ $ (ShopKey shopId'),
+                _appChargeName = val_ $ charge ^. createAppChargeResName,
+                _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
+                _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
+                _appChargeConfirmationUrl = val_ $ charge ^. createAppChargeResConfirmationUrl
+              }
+          ]
+    pure row

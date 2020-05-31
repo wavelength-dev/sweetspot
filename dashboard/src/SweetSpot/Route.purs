@@ -10,13 +10,13 @@ import Routing.Hash (matchesWith)
 
 data Route
   = CampaignList
-  | CampaignView String
   | CampaignCreate
+  | CampaignView String
 
 instance showRoute :: Show Route where
   show (CampaignList) = "Experiment List"
-  show (CampaignView campaignId) = "Experiment View: " <> campaignId
   show (CampaignCreate) = "Experiment Create"
+  show (CampaignView campaignId) = "Experiment View: " <> campaignId
 
 derive instance genericRoute :: Generic Route _
 
@@ -27,8 +27,8 @@ routeCodec =
   root
     $ sum
         { "CampaignList": noArgs
-        , "CampaignCreate": "campaign" / noArgs
-        , "CampaignView": "campaign" / segment
+        , "CampaignCreate": "create" / noArgs
+        , "CampaignView": "view" / segment
         }
 
 useRouter :: (Route -> Effect Unit) -> Effect (Effect Unit)

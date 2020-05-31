@@ -211,17 +211,11 @@ instance ToJSON RequestData
 -- | ---------------------------------------------------------------------------
 data WebhookTopic
   = OrdersCreate
-  | ShopRedact
-  | CustomersRedact
-  | CustomersDataRequest
   | AppUninstalled
 
 instance Show WebhookTopic where
   show = \case
     OrdersCreate -> "orders/create"
-    ShopRedact -> "shop/redact"
-    CustomersRedact -> "customers/redact"
-    CustomersDataRequest -> "customers/data_request"
     AppUninstalled -> "app/uninstalled"
 
 -- | ---------------------------------------------------------------------------

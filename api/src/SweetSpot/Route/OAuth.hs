@@ -8,6 +8,7 @@ module SweetSpot.Route.OAuth
 where
 
 import Control.Monad.Reader.Class (asks)
+import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import RIO
 import Servant
 import SweetSpot.AppM
@@ -82,24 +83,21 @@ redirectHandler (Just (Code code)) (Just hmac) (Just _) (Just nonce) (Just shopD
     mDbNonce <- getInstallNonce shopDomain
     case (== nonce) <$> mDbNonce of
       Just True -> do
-        mPermCode <- exchangeAccessToken shopDomain code
-        case mPermCode of
-          Right permCode -> do
-            deleteInstallNonce shopDomain
-            eShopInfo <- fetchShopInfo permCode shopDomain
-            case eShopInfo of
-              Left err -> do
-                L.error $ "Failed to fetch shopInfo, installation failed: " <> err
-                throwError internalServerErr
-              Right shopInfo -> do
-                createShop shopDomain shopInfo permCode
-                registerWebhooks shopDomain
-                L.info $ "Successfully installed app for " <> showText shopDomain
-                return $ addHeader adminUrl NoContent
+        result <- runExceptT $ do
+          permCode <- ExceptT $ exchangeAccessToken shopDomain code
+          shopInfo <- ExceptT $ fetchShopInfo permCode shopDomain
+          lift $ createShop shopDomain shopInfo permCode
+          ExceptT $ registerWebhooks shopDomain
+          charge <- ExceptT $ createAppCharge shopDomain
+          lift $ insertAppCharge shopDomain charge
+        case result of
           Left err -> do
+            L.error $ err
             deleteInstallNonce shopDomain
-            L.error $ "Failed to exchange oauth token"
             throwError internalServerErr
+          Right _ -> do
+            L.info $ "Successfully installed app for " <> showText shopDomain
+            pure $ addHeader adminUrl NoContent
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"
         throwError badRequestErr

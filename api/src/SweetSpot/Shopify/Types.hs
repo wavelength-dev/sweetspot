@@ -3,7 +3,7 @@
 
 module SweetSpot.Shopify.Types where
 
-import Control.Lens
+import Control.Lens (makeLenses)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Scientific
@@ -348,3 +348,61 @@ newtype AppUninstalledReq
 instance FromJSON AppUninstalledReq where
   parseJSON = withObject "AppUninstalledReq" $ \v ->
     AppUninstalledReq <$> v .: "domain"
+
+-- | ---------------------------------------------------------------------------
+-- | CreateAppCharge
+-- | ---------------------------------------------------------------------------
+data CreateAppCharge
+  = CreateAppCharge
+      { _createAppChargeName :: !Text,
+        _createAppChargePrice :: !Price,
+        _createAppChargeReturnUrl :: !Text
+      }
+
+makeLenses ''CreateAppCharge
+
+instance ToJSON CreateAppCharge where
+  toJSON charge =
+    object
+      [ "recurring_application_charge"
+          .= object
+            [ "name" .= toJSON (charge ^. createAppChargeName),
+              "price" .= toJSON (charge ^. createAppChargePrice),
+              "return_url" .= toJSON (charge ^. createAppChargeReturnUrl),
+              "test" .= toJSON True
+            ]
+      ]
+
+-- | ---------------------------------------------------------------------------
+-- | CreateAppChargeRes
+-- | ---------------------------------------------------------------------------
+data CreateAppChargeRes
+  = CreateAppChargeRes
+      { _createAppChargeResId :: !Text,
+        _createAppChargeResName :: !Text,
+        _createAppChargeResPrice :: !Text,
+        _createAppChargeResStatus :: !AppChargeStatus,
+        _createAppChargeResReturnUrl :: !Text,
+        _createAppChargeResConfirmationUrl :: !Text
+      }
+
+makeLenses ''CreateAppChargeRes
+
+instance FromJSON CreateAppChargeRes where
+  parseJSON = withObject "CreateAppChargeRes" $ \v -> do
+    o <- v .: "application_charge"
+    id <- o .: "id"
+    name <- o .: "name"
+    price <- o .: "price"
+    status <- o .: "status"
+    returnUrl <- o .: "decorated_return_url"
+    confirmationUrl <- o .: "confirmation_url"
+    return
+      CreateAppChargeRes
+        { _createAppChargeResId = tshow @Int id,
+          _createAppChargeResName = name,
+          _createAppChargeResPrice = price,
+          _createAppChargeResStatus = status,
+          _createAppChargeResReturnUrl = returnUrl,
+          _createAppChargeResConfirmationUrl = confirmationUrl
+        }

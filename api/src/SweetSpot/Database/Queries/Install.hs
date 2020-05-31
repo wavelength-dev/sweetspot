@@ -7,7 +7,8 @@ import RIO
 import SweetSpot.AppM (AppM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
-  ( withConn,
+  ( unsafeFindShopId,
+    withConn,
   )
 import SweetSpot.Database.Schema
 import SweetSpot.Shopify.Types
@@ -18,6 +19,7 @@ class Monad m => InstallDB m where
   deleteInstallNonce :: ShopDomain -> m ()
   createShop :: ShopDomain -> ShopInfo -> Text -> m ()
   getOAuthToken :: ShopDomain -> m (Maybe Text)
+  insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m ()
 
 instance InstallDB AppM where
   generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -72,3 +74,21 @@ instance InstallDB AppM where
           ((==. val_ domain) . (^. shopDomain))
           (all_ (db ^. shops))
       pure $ rows ^. shopOAuthToken
+
+  insertAppCharge domain charge = withConn $ \conn -> do
+    shopId' <- unsafeFindShopId conn domain
+    runBeamPostgres conn
+      $ runInsert
+      $ insert (db ^. appCharges)
+      $ insertExpressions
+        [ AppCharge
+            { _appChargeId = pgGenUUID_,
+              _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
+              _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
+              _appChargeShopId = val_ $ (ShopKey shopId'),
+              _appChargeName = val_ $ charge ^. createAppChargeResName,
+              _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
+              _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
+              _appChargeConfirmationUrl = val_ $ charge ^. createAppChargeResConfirmationUrl
+            }
+        ]

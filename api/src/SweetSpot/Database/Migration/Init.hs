@@ -367,6 +367,34 @@ instance Table ActionRequestT where
 ActionRequest (LensFor actionRequestId) (ShopKey (LensFor actionRequestShopId)) (LensFor actionRequestType) (LensFor actionRequestPayload) = tableLenses
 
 -- | ---------------------------------------------------------------------------
+-- | AppCharge
+-- | ---------------------------------------------------------------------------
+data AppChargeT f
+  = AppCharge
+      { _appChargeId :: Columnar f UUID,
+        _appChargeShopifyId :: Columnar f Text,
+        _appChargeStatus :: Columnar f AppChargeStatus,
+        _appChargeShopId :: PrimaryKey ShopT f,
+        _appChargeName :: Columnar f Text,
+        _appChargePrice :: Columnar f Text,
+        _appChargeReturnUrl :: Columnar f Text,
+        _appChargeConfirmationUrl :: Columnar f Text
+      }
+  deriving (Generic, Beamable)
+
+type AppCharge = AppChargeT Identity
+
+type AppChargeKey = PrimaryKey AppChargeT Identity
+
+instance Table AppChargeT where
+  data PrimaryKey AppChargeT f
+    = AppChargeKey (Columnar f UUID)
+    deriving (Generic, Beamable)
+  primaryKey = AppChargeKey . _appChargeId
+
+AppCharge (LensFor appChargeId) (LensFor appChargeStatus) (LensFor appChargeShopifyId) (ShopKey (LensFor appChargeShopId)) (LensFor appChargeName) (LensFor appChargePrice) (LensFor appChargeReturnUrl) (LensFor appChargeConfirmationUrl) = tableLenses
+
+-- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f
@@ -384,13 +412,14 @@ data SweetSpotDb f
         _sessions :: f (TableEntity SessionT),
         _userCartTokens :: f (TableEntity UserCartTokenT),
         _actionRequests :: f (TableEntity ActionRequestT),
+        _appCharges :: f (TableEntity AppChargeT),
         _cryptoExtension :: f (PgExtensionEntity PgCrypto)
       }
   deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens cryptoExtension) =
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens appCharges) (TableLens cryptoExtension) =
   dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -512,5 +541,17 @@ migration () =
           _actionRequestShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
           _actionRequestType = field "request_type" (DataType pgTextType) notNull,
           _actionRequestPayload = field "payload" jsonb notNull
+        }
+    <*> createTable
+      "app_charges"
+      AppCharge
+        { _appChargeId = field "id" (DataType pgUuidType) notNull,
+          _appChargeStatus = field "status" (DataType pgTextType) notNull,
+          _appChargeShopifyId = field "shopify_charge_id" text notNull,
+          _appChargeShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _appChargeName = field "name" text notNull,
+          _appChargePrice = field "price" text notNull,
+          _appChargeReturnUrl = field "return_url" text notNull,
+          _appChargeConfirmationUrl = field "confirmation_url" text notNull
         }
     <*> pgCreateExtension

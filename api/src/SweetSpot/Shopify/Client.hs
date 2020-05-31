@@ -57,6 +57,12 @@ type GetShopInfoRoute =
     :> Header "X-Shopify-Access-Token" Text
     :> Get '[JSON] ShopInfoResponse
 
+type CreateAppChargeRoute =
+  "admin" :> "api" :> ApiVersion :> "recurring_application_charges.json"
+    :> ReqBody '[JSON] CreateAppCharge
+    :> Header "X-Shopify-Access-Token" Text
+    :> Post '[JSON] CreateAppChargeRes
+
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
@@ -64,6 +70,7 @@ class Monad m => MonadShopify m where
   createProduct :: ShopDomain -> Value -> m (Either Text ShopProduct)
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
+  createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -172,6 +179,20 @@ instance MonadShopify AppM where
                      ),
               format = "json"
             }
+
+  createAppCharge domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let body =
+            CreateAppCharge
+              { _createAppChargeName = "SweetSpot Price Optimization",
+                _createAppChargePrice = Price 99.90,
+                _createAppChargeReturnUrl = "https://libertyprice.myshopify.com/admin"
+              }
+          createAppChargeClient = client (Proxy :: Proxy CreateAppChargeRoute)
+      res <- liftIO $ runClientM (createAppChargeClient body (Just token)) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
+        Right appChargeRes -> Right appChargeRes
 
 withClientEnvAndToken ::
   ShopDomain ->

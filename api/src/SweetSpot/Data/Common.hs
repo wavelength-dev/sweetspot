@@ -6,6 +6,7 @@ import Data.Aeson
   ( FromJSON (..),
     ToJSON,
     withScientific,
+    withText,
   )
 import Data.Scientific
   ( FPFormat (..),
@@ -441,3 +442,33 @@ instance HasSqlValueSyntax be Text => HasSqlValueSyntax be ActionRequestType whe
     RedactShopType -> "redact_shop" :: Text
     RedactCustomerType -> "redact_customer" :: Text
     DataRequestType -> "request_data" :: Text
+
+-- | ---------------------------------------------------------------------------
+-- | AppChargeStatus
+-- | ---------------------------------------------------------------------------
+data AppChargeStatus
+  = Pending
+  | Accepted
+  | Active
+  | Declined
+  | Expired
+
+instance Show AppChargeStatus where
+  show = \case
+    Pending -> "pending"
+    Accepted -> "accepted"
+    Active -> "active"
+    Declined -> "declined"
+    Expired -> "expired"
+
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be AppChargeStatus where
+  sqlValueSyntax = sqlValueSyntax . tshow
+
+instance FromJSON AppChargeStatus where
+  parseJSON = withText "AppChargeStatus" $ \case
+    "pending" -> pure Pending
+    "accepted" -> pure Accepted
+    "active" -> pure Active
+    "declined" -> pure Declined
+    "expired" -> pure Expired
+    _ -> fail "Got invalid AppChargeStatus"

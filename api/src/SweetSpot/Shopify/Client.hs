@@ -136,11 +136,8 @@ instance MonadShopify AppM where
             liftIO $
               runClientM (createWebhookClient (getRequest topic) (Just token)) clientEnv
       orderRes <- registerWebhook OrdersCreate
-      shopRes <- registerWebhook ShopRedact
-      customerRes <- registerWebhook CustomersRedact
-      requestRes <- registerWebhook CustomersDataRequest
       uninstallRes <- registerWebhook AppUninstalled
-      case partitionEithers [orderRes, shopRes, customerRes, requestRes, uninstallRes] of
+      case partitionEithers [orderRes, uninstallRes] of
         ([], _) -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()
@@ -155,15 +152,6 @@ instance MonadShopify AppM where
       orderPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy OrderRoute)
-      redactShopPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RedactShopRoute)
-      redactCustomerPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RedactCustomerRoute)
-      requestDataPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
       appUninstalledPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy AppUninstalledRoute)
@@ -176,9 +164,6 @@ instance MonadShopify AppM where
                 "https://app-staging.sweetspot.dev/api/"
                   <> ( case topic of
                          OrdersCreate -> orderPath
-                         ShopRedact -> redactShopPath
-                         CustomersRedact -> redactCustomerPath
-                         CustomersDataRequest -> requestDataPath
                          AppUninstalled -> appUninstalledPath
                      ),
               format = "json"

@@ -2,7 +2,7 @@ module SweetSpot.CampaignCreatePage where
 
 import Prelude
 
-import Data.Array (cons, find, foldMap, null) as Array
+import Data.Array (find, foldMap, null) as Array
 import Data.Array (find, mapWithIndex)
 import Data.Lens (view, (^.))
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -18,14 +18,14 @@ import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
-import React.Basic.DOM (div, p_, table, table_, tbody_, td_, text, th_, thead_, tr_) as R
+import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
 import SweetSpot.ShopifyHelper (formLayout) as SH
-import SweetSpot.Spacing (large, medium) as Spacing
+import SweetSpot.Spacing (large) as Spacing
 
 foreign import styles :: forall a. Record a
 

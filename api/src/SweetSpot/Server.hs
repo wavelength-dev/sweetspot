@@ -27,6 +27,7 @@ import SweetSpot.Database
 import qualified SweetSpot.Env as Env
 import qualified SweetSpot.Logger as L
 import SweetSpot.Middleware (getMiddleware)
+import SweetSpot.Route.AppCharge (AppChargeAPI, appChargeHandler)
 import SweetSpot.Route.Dashboard (DashboardAPI, dashboardHandler)
 import SweetSpot.Route.DashboardApp (DashboardApp, dashboardAppHandler)
 import SweetSpot.Route.Fulcrum (FulcrumAPI, fulcrumHandler)
@@ -42,6 +43,7 @@ type RootAPI =
            :<|> DashboardAPI
            :<|> OAuthAPI
            :<|> WebhookAPI
+           :<|> AppChargeAPI
        )
     :<|> DashboardApp
     :<|> HealthAPI
@@ -51,7 +53,12 @@ rootAPI :: Proxy RootAPI
 rootAPI = Proxy
 
 server =
-  (fulcrumHandler :<|> dashboardHandler :<|> oauthHandler :<|> webhookHandler)
+  ( fulcrumHandler
+      :<|> dashboardHandler
+      :<|> oauthHandler
+      :<|> webhookHandler
+      :<|> appChargeHandler
+  )
     :<|> dashboardAppHandler
     :<|> healthHandler
     :<|> fulcrumAppHandler
@@ -66,13 +73,13 @@ runServer :: IO ()
 runServer = do
   mEnvConfig <- Env.getEnvConfig
   let envConfig = either error id mEnvConfig
-  let dbConfig =
+      dbConfig =
         DbConfig
           { host = Env.dbHost envConfig,
             name = Env.dbName envConfig,
             password = Env.dbPassword envConfig
           }
-  let config =
+      config =
         AppConfig
           { _configEnvironment = Env.environment envConfig,
             _configShopifyClientId = Env.shopifyClientId envConfig,

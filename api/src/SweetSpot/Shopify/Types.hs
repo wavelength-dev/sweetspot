@@ -389,7 +389,7 @@ instance FromJSON CreateAppChargeRes where
     name <- o .: "name"
     price <- o .: "price"
     status <- o .: "status"
-    returnUrl <- o .: "decorated_return_url"
+    returnUrl <- o .: "return_url"
     confirmationUrl <- o .: "confirmation_url"
     return
       CreateAppChargeRes

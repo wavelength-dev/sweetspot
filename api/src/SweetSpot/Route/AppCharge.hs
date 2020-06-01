@@ -33,8 +33,8 @@ activateAppChargeHandler domain = runAppM $ do
     status <- ExceptT $ fetchAppChargeStatus domain chargeId
     case status of
       Accepted -> do
-        updated <- ExceptT $ activateAppCharge domain chargeId
-        lift $ updateAppChargeStatus chargeId status
+        updatedStatus <- ExceptT $ activateAppCharge domain chargeId
+        lift $ updateAppChargeStatus chargeId updatedStatus
         pure $ Right ()
       _ -> pure $ Left "App charge not accepted"
   case result of

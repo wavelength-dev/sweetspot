@@ -34,7 +34,7 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
   combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
 serviceUrl :: String
-serviceUrl = "//localhost:8082/api/dashboard/"
+serviceUrl = "/api/dashboard/"
 
 data Resource
   = Campaigns

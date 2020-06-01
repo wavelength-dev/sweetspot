@@ -40,6 +40,10 @@ data Resource
   = Campaigns
   | Products
 
+instance showResource :: Show Resource where
+  show Campaigns = "campaigns"
+  show Products = "products"
+
 getResourceRoute :: Resource -> String
 getResourceRoute Campaigns = serviceUrl <> "campaigns"
 
@@ -49,7 +53,7 @@ fetchResource :: Resource -> SessionId -> Aff (Either String Json)
 fetchResource resource (SessionId sessionId) =
   Aff.attempt (getJson (route <> queryString) {})
     >>= case _ of
-        Left requestErrMsg -> requestErrMsg # show >>> Left >>> pure
+        Left requestErrMsg -> "Failed to fetch: " <> show resource <> ", " <> (show requestErrMsg) # Left >>> pure
         Right res -> do
           bodyText <- Milkis.text res
           pure
@@ -86,13 +90,15 @@ encodeCreateExperiment createExperiment =
     price = view createExperimentPrice createExperiment
   in
     "_createExperimentProductId" := productId
-    ~> "_createExperimentPrice" := price
-    ~> jsonEmptyObject
+      ~> "_createExperimentPrice"
+      := price
+      ~> jsonEmptyObject
 
 encodeCreateCampaign :: CreateCampaign -> Json
 encodeCreateCampaign createCampaign =
   "_createCampaignName" := (view createCampaignName createCampaign)
-    ~> "_createCampaignExperiments" := map encodeCreateExperiment (view createCampaignExperiments createCampaign)
+    ~> "_createCampaignExperiments"
+    := map encodeCreateExperiment (view createCampaignExperiments createCampaign)
     ~> jsonEmptyObject
 
 makeCampaign :: CreateCampaign -> Aff (Either String Unit)

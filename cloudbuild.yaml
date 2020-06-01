@@ -1,26 +1,9 @@
 steps:
-  - name: gcr.io/cloud-builders/docker
-    entrypoint: bash
+  - name: 'gcr.io/kaniko-project/executor:latest'
     args:
-      - -c
-      - |
-        docker pull gcr.io/$PROJECT_ID/sweetspot:latest || exit 0
-  # build the container image
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - build
-      - --tag
-      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
-      - --cache-from
-      - gcr.io/$PROJECT_ID/sweetspot:latest
-      - --build-arg
-      - BUILDKIT_INLINE_CACHE=1
-      - .
-  # push the container image to Container Registry
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+    - --destination=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+    - --cache=true
+    - --cache-ttl=168h
   # Deploy container image to Cloud Run
   - name: gcr.io/cloud-builders/gcloud
     args:
@@ -33,8 +16,6 @@ steps:
       - europe-west1
       - --platform
       - managed
-images:
-  - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
 timeout: 1800s
 options:
   machineType: N1_HIGHCPU_32

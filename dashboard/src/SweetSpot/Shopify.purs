@@ -22,7 +22,7 @@ foreign import page ::
     { children :: Array JSX
     , subtitle :: Nullable String
     , title :: Nullable String
-    , breadcrumbs :: Nullable (Array Breadcrum)
+    , breadcrumbs :: Array Breadcrum
     , primaryAction :: Nullable (Action)
     }
 

@@ -163,7 +163,7 @@ mkCampaignListPage =
           { title: notNull "Price Experiment List"
           , subtitle: notNull "All tests currently running, or finished."
           , primaryAction: notNull { content: "Create Price Experiment", url: "#/create" }
-          , breadcrumbs: null
+          , breadcrumbs: []
           , children:
               [ R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ] ]
           }

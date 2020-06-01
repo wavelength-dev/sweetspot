@@ -94,7 +94,7 @@ mkCampaignViewPage =
       $ element Shopify.page
           { title: notNull name
           , subtitle: null
-          , breadcrumbs: notNull [ { content: "campaign list", url: "#/" } ]
+          , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
           , primaryAction: null
           , children:
               [ R.div

@@ -2,7 +2,7 @@ module SweetSpot.CampaignCreatePage where
 
 import Prelude
 
-import Data.Array (find, foldMap, null) as Array
+import Data.Array (cons, find, foldMap, null) as Array
 import Data.Array (find, mapWithIndex)
 import Data.Lens (view, (^.))
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -18,14 +18,14 @@ import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
-import React.Basic.DOM (div, p_, text) as R
+import React.Basic.DOM (div, p_, table, table_, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
 import SweetSpot.ShopifyHelper (formLayout) as SH
-import SweetSpot.Spacing (large) as Spacing
+import SweetSpot.Spacing (large, medium) as Spacing
 
 foreign import styles :: forall a. Record a
 
@@ -86,21 +86,20 @@ variantToVariantRow variant =
 
 renderVariantRow :: (String -> Effect Unit) -> VariantRow -> JSX
 renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice } =
-  R.div
-    { className: styles.variantRow
-    , children:
-        [ R.p_ [ R.text title ]
-        , R.p_ [ R.text sku ]
-        , R.p_ [ R.text controlPrice ]
-        , element Shopify.textField
+  R.tr_
+    [ R.td_ [ R.text title ]
+    , R.td_ [ R.text sku ]
+    , R.td_ [ R.text controlPrice ]
+    , R.td_
+        [ element Shopify.textField
             { label: "test price"
-            , labelHidden: false
+            , labelHidden: true
             , children: mempty
             , onChange: (mkEffectFn1 onTestPriceChange)
             , value: testPrice
             }
         ]
-    }
+    ]
 
 variantRowToCreateExperiment :: VariantRow -> CreateExperiment
 variantRowToCreateExperiment variantRow =
@@ -162,7 +161,7 @@ mkCampaignCreatePage = do
       $ element Shopify.page
           { title: notNull "Create experiment"
           , subtitle: null
-          , breadcrumbs: notNull [ { content: "campaign list", url: "#/" } ]
+          , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
           , primaryAction: null
           , children:
               [ element Shopify.modal
@@ -219,9 +218,29 @@ mkCampaignCreatePage = do
                                   if (Array.null variantRows) then
                                     [ R.text "No products selected" ]
                                   else
-                                    map
-                                      (\variantRow -> renderVariantRow (mkSetVariantTestPrice variantRow) variantRow)
-                                      variantRows
+                                    [ R.table
+                                        { className: styles.productTable
+                                        , children:
+                                            [ R.thead_
+                                                [ R.tr_
+                                                    [ R.th_ [ R.text "Name" ]
+                                                    , R.th_ [ R.text "Sku" ]
+                                                    , R.th_ [ R.text "Control Price" ]
+                                                    , R.th_ [ R.text "Test Price" ]
+                                                    ]
+                                                ]
+                                            , R.tbody_
+                                                ( map
+                                                    ( \variantRow ->
+                                                        renderVariantRow
+                                                          (mkSetVariantTestPrice variantRow)
+                                                          variantRow
+                                                    )
+                                                    variantRows
+                                                )
+                                            ]
+                                        }
+                                    ]
                               }
                           , Spacing.large
                           , element Shopify.button

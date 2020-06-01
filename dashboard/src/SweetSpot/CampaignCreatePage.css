@@ -3,3 +3,9 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.productTable {
+  box-sizing: border-box;
+  width: 100%;
+  text-align: left;
+}

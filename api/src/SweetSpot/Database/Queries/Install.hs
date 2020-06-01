@@ -22,7 +22,7 @@ class Monad m => InstallDB m where
   getOAuthToken :: ShopDomain -> m (Maybe Text)
   insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m AppCharge
   getAppCharge :: ShopDomain -> m AppCharge
-  updateAppChargeStatus :: CreateAppChargeRes -> m ()
+  updateAppChargeStatus :: Text -> AppChargeStatus -> m ()
 
 instance InstallDB AppM where
   generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -109,10 +109,10 @@ instance InstallDB AppM where
                 (all_ (db ^. appCharges))
           )
 
-  updateAppChargeStatus charge = withConn $ \conn -> do
+  updateAppChargeStatus chargeId status = withConn $ \conn -> do
     runBeamPostgres conn
       $ runUpdate
       $ update
         (db ^. appCharges)
-        (\c -> c ^. appChargeStatus <-. val_ (charge ^. createAppChargeResStatus))
-        (\c -> c ^. appChargeShopifyId ==. val_ (charge ^. createAppChargeResId))
+        (\c -> c ^. appChargeStatus <-. val_ status)
+        (\c -> c ^. appChargeShopifyId ==. val_ chargeId)

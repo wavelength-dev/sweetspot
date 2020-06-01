@@ -160,7 +160,6 @@ validateShopDomain ctx app req sendResponse = do
         L.find ((== "shop") . fst) params
           >>= snd
           & fmap (ShopDomain . decodeUtf8Lenient)
-  L.info' appLogger $ T.pack . show $ params
   case mSuppliedDomain of
     Just domain -> do
       mShopDomain <- withConnIO pool $ \conn -> validateDomain conn domain
@@ -182,7 +181,6 @@ validateSession ctx app req sendResponse = do
         L.find ((== "session") . fst) params
           >>= snd
           & fmap (SessionId . decodeUtf8Lenient)
-  L.info' appLogger $ tshow params
   case mSuppliedId of
     Just id -> do
       mShopDomain <- withConnIO pool $ \conn -> validateSessionId' conn id

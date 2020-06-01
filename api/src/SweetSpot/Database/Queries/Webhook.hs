@@ -7,7 +7,11 @@ import Database.Beam.Postgres.Full (deleteReturning, runPgDeleteReturningList)
 import RIO
 import SweetSpot.AppM (AppM (..))
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Util (unsafeFindShopId, withConn)
+import SweetSpot.Database.Queries.Util
+  ( findShopId,
+    unsafeFindShopId,
+    withConn,
+  )
 import SweetSpot.Database.Schema
 
 class Monad m => WebhookDB m where
@@ -32,22 +36,25 @@ instance WebhookDB AppM where
         ]
 
   uninstallShop domain = withConn $ \conn -> do
-    shopId <- unsafeFindShopId conn domain
-    runBeamPostgres conn $ do
-      users <- selectShopUsers shopId
-      campaigns <- selectShopCampaigns shopId
-      deleteSessions shopId
-      deleteTreatments campaigns
-      deleteProductVariants shopId
-      deleteCheckoutItems shopId
-      deleteCheckoutEvents shopId
-      deleteUserExperiments campaigns
-      deleteTreatments campaigns
-      deleteUserCartTokens users
-      deleteUsers users
-      deleteCampaigns shopId
-      deleteAppCharge shopId
-      deleteShop shopId
+    mShopId <- findShopId conn domain
+    case mShopId of
+      Nothing -> mempty
+      Just shopId ->
+        runBeamPostgres conn $ do
+          users <- selectShopUsers shopId
+          campaigns <- selectShopCampaigns shopId
+          deleteSessions shopId
+          deleteTreatments campaigns
+          deleteProductVariants shopId
+          deleteCheckoutItems shopId
+          deleteCheckoutEvents shopId
+          deleteUserExperiments campaigns
+          deleteTreatments campaigns
+          deleteUserCartTokens users
+          deleteUsers users
+          deleteCampaigns shopId
+          deleteAppCharge shopId
+          deleteShop shopId
 
 deleteProductVariants :: ShopId -> Pg [PVariantId]
 deleteProductVariants shopId =

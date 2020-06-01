@@ -4,7 +4,7 @@ steps:
     args:
       - -c
       - |
-        docker pull gcr.io/$PROJECT_ID/sweetspot-build:latest || exit 0
+        docker pull gcr.io/$PROJECT_ID/sweetspot:latest || exit 0
   # build the container image
   - name: gcr.io/cloud-builders/docker
     args:

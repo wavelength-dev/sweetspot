@@ -1,7 +1,6 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Data.Array (find)
 import Data.Array (null) as Array
 import Data.Either (Either, either)

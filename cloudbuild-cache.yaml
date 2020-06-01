@@ -6,7 +6,7 @@ steps:
       - --tag
       - gcr.io/$PROJECT_ID/sweetspot-build
       - --target
-      - build
+      - build-api
       - .
   # push the container image to Container Registry
   - name: gcr.io/cloud-builders/docker

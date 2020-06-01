@@ -206,7 +206,11 @@ instance MonadShopify AppM where
   fetchAppChargeStatus domain chargeId =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let getAppChargeClient = client (Proxy :: Proxy GetAppChargeStatusRoute)
-      res <- liftIO $ runClientM (getAppChargeClient chargeId token) clientEnv
+      res <-
+        liftIO $
+          runClientM
+            (getAppChargeClient (chargeId <> ".json") token)
+            clientEnv
       pure $ case res of
         Left err -> Left $ "Error fetching AppCharge: " <> tshow err
         Right body ->
@@ -217,7 +221,7 @@ instance MonadShopify AppM where
   activateAppCharge domain chargeId =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let c = client (Proxy :: Proxy ActivateAppChargeRoute)
-      res <- liftIO $ runClientM (c (chargeId <> ".json") token) clientEnv
+      res <- liftIO $ runClientM (c chargeId token) clientEnv
       pure $ case res of
         Left err -> Left $ "Error activating AppCharge: " <> tshow err
         Right body ->

@@ -889,10 +889,10 @@
     hsluv "^0.1.0"
     tslib "^1.10.0"
 
-"@shopify/polaris@~4.22.0":
-  version "4.22.0"
-  resolved "https://registry.yarnpkg.com/@shopify/polaris/-/polaris-4.22.0.tgz#d5c27e4f268634f4eeca67b1a8769ab55eb3f32d"
-  integrity sha512-lv5BXl6WbfpDeleVT730NF+/dHBGLI2nrOvLGt9DnvLNgTL9BpQhvBWkQXRvxhPscRJX+5u26VahIVboMp7L6A==
+"@shopify/polaris@^4.22.0":
+  version "4.24.0"
+  resolved "https://registry.yarnpkg.com/@shopify/polaris/-/polaris-4.24.0.tgz#d0ee98495e720c733c4f892ad163791a85a47a57"
+  integrity sha512-3K958gIUSsi9q5o+PlJichnp/LsojbOBO64DPIk+Ab9oPy7G5dRfuI7cBH9au/PQF5W5YhuYXAE8EvD21xL0ew==
   dependencies:
     "@babel/runtime" "^7.1.6"
     "@material-ui/react-transition-group" "^4.2.0"

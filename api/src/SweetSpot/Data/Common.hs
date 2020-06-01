@@ -4,7 +4,7 @@ module SweetSpot.Data.Common where
 
 import Data.Aeson
   ( FromJSON (..),
-    ToJSON,
+    ToJSON (..),
     withScientific,
     withText,
   )
@@ -488,3 +488,11 @@ instance FromJSON AppChargeStatus where
     "declined" -> pure Declined
     "expired" -> pure Expired
     val -> fail $ "Invalid json for AppChargeStatus: " ++ T.unpack val
+
+instance ToJSON AppChargeStatus where
+  toJSON = \case
+    Pending -> "pending"
+    Accepted -> "accepted"
+    Active -> "active"
+    Declined -> "declined"
+    Expired -> "expired"

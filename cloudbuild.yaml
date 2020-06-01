@@ -13,6 +13,8 @@ steps:
       - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - --cache-from
       - gcr.io/$PROJECT_ID/sweetspot:latest
+      - --build-arg
+      - BUILDKIT_INLINE_CACHE=1
       - .
   # push the container image to Container Registry
   - name: gcr.io/cloud-builders/docker

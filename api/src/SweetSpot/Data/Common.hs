@@ -462,7 +462,12 @@ instance Show AppChargeStatus where
     Expired -> "expired"
 
 instance HasSqlValueSyntax be Text => HasSqlValueSyntax be AppChargeStatus where
-  sqlValueSyntax = sqlValueSyntax . tshow
+  sqlValueSyntax = sqlValueSyntax . \case
+    Pending -> "pending" :: Text
+    Accepted -> "accepted" :: Text
+    Active -> "active" :: Text
+    Declined -> "declined" :: Text
+    Expired -> "expired" :: Text
 
 instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be AppChargeStatus where
   fromBackendRow = do

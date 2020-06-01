@@ -16,8 +16,9 @@ import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..))
 import SweetSpot.Database.Queries.Install (InstallDB (..))
+import SweetSpot.Database.Schema
+import qualified SweetSpot.Logger as L
 import SweetSpot.Route.OAuth (InstallRoute, OAuthAPI)
-import SweetSpot.Route.Util (badRequestErr)
 import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 import WaiAppStatic.Types (MaxAge (..), ssMaxAge)
 
@@ -33,10 +34,10 @@ instance Accept HTML where
 
 type IndexRoute =
   "dashboard" :> "index.html"
-    :> QueryParam "shop" ShopDomain
-    :> QueryParam "timestamp" Timestamp
-    :> QueryParam "hmac" HMAC'
-    :> QueryParam "session" SessionId
+    :> QueryParam' '[Required, Strict] "shop" ShopDomain
+    :> QueryParam' '[Required, Strict] "timestamp" Timestamp
+    :> QueryParam' '[Required, Strict] "hmac" HMAC'
+    :> QueryParam' '[Required, Strict] "session" SessionId
     :> Get '[HTML] RawHTML
 
 type DashboardStatic = "dashboard" :> Raw
@@ -44,19 +45,28 @@ type DashboardStatic = "dashboard" :> Raw
 type DashboardApp = IndexRoute :<|> DashboardStatic
 
 indexHandler ::
-  Maybe ShopDomain ->
-  Maybe Timestamp ->
-  Maybe HMAC' ->
-  Maybe SessionId ->
+  ShopDomain ->
+  Timestamp ->
+  HMAC' ->
+  SessionId ->
   ServerM RawHTML
-indexHandler (Just domain) (Just ts) (Just hmac) (Just sessionId) =
+indexHandler domain ts hmac sessionId =
   runAppM $ do
     mToken <- getOAuthToken domain
     let ShopDomain txtDomain = domain
     case mToken of
       Just _ -> do
         createSession domain sessionId
-        RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
+        appCharge <- getAppCharge domain
+        case _appChargeStatus appCharge of
+          Active -> RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
+          status -> do
+            L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
+            throwError $
+              err302
+                { errHeaders =
+                    [("Location", encodeUtf8 (_appChargeConfirmationUrl appCharge))]
+                }
       Nothing -> throwError $ err302 {errHeaders = [("Location", "/api/" <> redirectPath)]}
         where
           redirectApi = Proxy :: Proxy OAuthAPI
@@ -65,7 +75,6 @@ indexHandler (Just domain) (Just ts) (Just hmac) (Just sessionId) =
             encodeUtf8
               $ toUrlPiece
               $ safeLink redirectApi redirectHandler domain ts hmac
-indexHandler _ _ _ _ = throwError badRequestErr
 
 dashboardStaticHandler =
   serveDirectoryWith

@@ -4,6 +4,7 @@ import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
 import RIO
+import RIO.Partial (fromJust)
 import SweetSpot.AppM (AppM)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
@@ -20,6 +21,8 @@ class Monad m => InstallDB m where
   createShop :: ShopDomain -> ShopInfo -> Text -> m ()
   getOAuthToken :: ShopDomain -> m (Maybe Text)
   insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m AppCharge
+  getAppCharge :: ShopDomain -> m AppCharge
+  updateAppChargeStatus :: CreateAppChargeRes -> m ()
 
 instance InstallDB AppM where
   generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -94,3 +97,22 @@ instance InstallDB AppM where
               }
           ]
     pure row
+
+  getAppCharge domain = withConn $ \conn -> do
+    shopId' <- unsafeFindShopId conn domain
+    fromJust
+      <$> ( runBeamPostgres conn
+              $ runSelectReturningOne
+              $ select
+              $ filter_
+                ((==. val_ shopId') . (^. appChargeShopId))
+                (all_ (db ^. appCharges))
+          )
+
+  updateAppChargeStatus charge = withConn $ \conn -> do
+    runBeamPostgres conn
+      $ runUpdate
+      $ update
+        (db ^. appCharges)
+        (\c -> c ^. appChargeStatus <-. val_ (charge ^. createAppChargeResStatus))
+        (\c -> c ^. appChargeShopifyId ==. val_ (charge ^. createAppChargeResId))

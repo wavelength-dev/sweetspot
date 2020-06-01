@@ -31,36 +31,49 @@ type TokenExchangeRoute =
 
 type GetProductsRoute =
   "admin" :> "api" :> ApiVersion :> "products.json"
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Get '[JSON] Value
 
 type GetProductJsonRoute =
   "admin" :> "api" :> ApiVersion :> "products"
     :> Capture "productId" Pid
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Get '[JSON] Value
 
 type CreateProductRoute =
   "admin" :> "api" :> ApiVersion :> "products.json"
     :> ReqBody '[JSON] Value
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
 type RegisterWebhookRoute =
   "admin" :> "api" :> ApiVersion :> "webhooks.json"
     :> ReqBody '[JSON] CreateWebhookReq
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
 type GetShopInfoRoute =
   "admin" :> "api" :> ApiVersion :> "shop.json"
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Get '[JSON] ShopInfoResponse
 
 type CreateAppChargeRoute =
   "admin" :> "api" :> ApiVersion :> "recurring_application_charges.json"
     :> ReqBody '[JSON] CreateAppCharge
-    :> Header "X-Shopify-Access-Token" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Post '[JSON] CreateAppChargeRes
+
+type GetAppChargeRoute =
+  "admin" :> "api" :> ApiVersion :> "recurring_application_charges"
+    :> Capture "appChargeId" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Get '[JSON] CreateAppChargeRes
+
+type ActivateAppChargeRoute =
+  "admin" :> "api" :> ApiVersion :> "recurring_application_charges"
+    :> Capture "appChargeId" Text
+    :> "activate.json"
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] CreateAppChargeRes
 
 class Monad m => MonadShopify m where
@@ -71,6 +84,8 @@ class Monad m => MonadShopify m where
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
   createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
+  fetchAppCharge :: ShopDomain -> Text -> m (Either Text CreateAppChargeRes)
+  activateAppCharge :: ShopDomain -> Text -> m (Either Text CreateAppChargeRes)
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -91,7 +106,7 @@ instance MonadShopify AppM where
   fetchProducts domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
-      res <- liftIO $ runClientM (getProductsClient (Just token)) clientEnv
+      res <- liftIO $ runClientM (getProductsClient token) clientEnv
       return $ case res of
         Left err -> Left $ "Error getting products: " <> tshow err
         Right body -> do
@@ -106,7 +121,7 @@ instance MonadShopify AppM where
   fetchProductJson domain productId =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
-      res <- liftIO $ runClientM (getProductJsonClient productId (Just token)) clientEnv
+      res <- liftIO $ runClientM (getProductJsonClient productId token) clientEnv
       return $ case res of
         Left err -> Left $ "Error fetching product json: " <> tshow err
         Right body -> Right body
@@ -114,7 +129,7 @@ instance MonadShopify AppM where
   createProduct domain json =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let createProductClient = client (Proxy :: Proxy CreateProductRoute)
-      res <- liftIO $ runClientM (createProductClient json (Just token)) clientEnv
+      res <- liftIO $ runClientM (createProductClient json token) clientEnv
       return $ case res of
         Left err -> Left $ "Error creating product: " <> tshow err
         Right body -> case parse parseJSON (body ^?! key "product") of
@@ -124,7 +139,7 @@ instance MonadShopify AppM where
   fetchShopInfo token domain = do
     let fetchShopInfoClient = client (Proxy :: Proxy GetShopInfoRoute)
     clientEnv <- getClientEnv domain
-    res <- liftIO $ runClientM (fetchShopInfoClient (Just token)) clientEnv
+    res <- liftIO $ runClientM (fetchShopInfoClient token) clientEnv
     return $ case res of
       Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
       Right shopInfoRes -> Right $ _shopInfoResponseShop shopInfoRes
@@ -134,7 +149,7 @@ instance MonadShopify AppM where
       let registerWebhook :: WebhookTopic -> AppM (Either ClientError Value)
           registerWebhook topic =
             liftIO $
-              runClientM (createWebhookClient (getRequest topic) (Just token)) clientEnv
+              runClientM (createWebhookClient (getRequest topic) token) clientEnv
       orderRes <- registerWebhook OrdersCreate
       uninstallRes <- registerWebhook AppUninstalled
       case partitionEithers [orderRes, uninstallRes] of
@@ -175,13 +190,32 @@ instance MonadShopify AppM where
             CreateAppCharge
               { _createAppChargeName = "SweetSpot Price Optimization",
                 _createAppChargePrice = Price 99.90,
-                _createAppChargeReturnUrl = "https://libertyprice.myshopify.com/admin"
+                _createAppChargeReturnUrl =
+                  "https://app-staging.sweetspot.dev/api"
+                    <> "/charge/activate?shop="
+                    <> showText domain
               }
           createAppChargeClient = client (Proxy :: Proxy CreateAppChargeRoute)
-      res <- liftIO $ runClientM (createAppChargeClient body (Just token)) clientEnv
+      res <- liftIO $ runClientM (createAppChargeClient body token) clientEnv
       return $ case res of
         Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
         Right appChargeRes -> Right appChargeRes
+
+  fetchAppCharge domain chargeId =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let getAppChargeClient = client (Proxy :: Proxy GetAppChargeRoute)
+      res <- liftIO $ runClientM (getAppChargeClient chargeId token) clientEnv
+      pure $ case res of
+        Left err -> Left $ "Error fetching AppCharge: " <> tshow err
+        Right appChargeRes -> Right $ appChargeRes
+
+  activateAppCharge domain chargeId =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let c = client (Proxy :: Proxy ActivateAppChargeRoute)
+      res <- liftIO $ runClientM (c (chargeId <> ".json") token) clientEnv
+      pure $ case res of
+        Left err -> Left $ "Error activating AppCharge: " <> tshow err
+        Right appChargeRes -> Right $ appChargeRes
 
 withClientEnvAndToken ::
   ShopDomain ->

@@ -392,7 +392,7 @@ instance Table AppChargeT where
     deriving (Generic, Beamable)
   primaryKey = AppChargeKey . _appChargeId
 
-AppCharge (LensFor appChargeId) (LensFor appChargeStatus) (LensFor appChargeShopifyId) (ShopKey (LensFor appChargeShopId)) (LensFor appChargeName) (LensFor appChargePrice) (LensFor appChargeReturnUrl) (LensFor appChargeConfirmationUrl) = tableLenses
+AppCharge (LensFor appChargeId) (LensFor appChargeShopifyId) (LensFor appChargeStatus) (ShopKey (LensFor appChargeShopId)) (LensFor appChargeName) (LensFor appChargePrice) (LensFor appChargeReturnUrl) (LensFor appChargeConfirmationUrl) = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Database

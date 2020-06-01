@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d1b17b1d8c544647ed226cebaed6f962c64776a89b84f7aa2ca385b84b797d9c
+-- hash: 12e7c136fc2256592bcacac29fd152b92a63c17b2fa322b8fe96aa4a22e92d59
 
 name:           sweetspot
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       SweetSpot.Env
       SweetSpot.Logger
       SweetSpot.Middleware
+      SweetSpot.Route.AppCharge
       SweetSpot.Route.Dashboard
       SweetSpot.Route.DashboardApp
       SweetSpot.Route.Fulcrum

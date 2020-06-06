@@ -1,6 +1,7 @@
 module SweetSpot.Main where
 
 import Prelude
+
 import Data.Array (find)
 import Data.Array (null) as Array
 import Data.Either (Either, either)
@@ -22,6 +23,7 @@ import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (logInfo) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
+import SweetSpot.Mock (bonoboHat, expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
 import SweetSpot.Session (SessionId)
@@ -64,6 +66,12 @@ mkApp = do
         # setCampaignsResource
         >>> liftEffect
       eitherToResource eProducts
+        # setProductsResource
+        >>> liftEffect
+      Resource [ expensiveJacketsCheapMonkeysCampaign, storewide10Campaign ]
+        # setCampaignsResource
+        >>> liftEffect
+      Resource [ bonoboHat ]
         # setProductsResource
         >>> liftEffect
       pure unit

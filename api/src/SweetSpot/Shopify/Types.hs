@@ -400,3 +400,24 @@ instance FromJSON CreateAppChargeRes where
           _createAppChargeResReturnUrl = returnUrl,
           _createAppChargeResConfirmationUrl = confirmationUrl
         }
+
+-- | ---------------------------------------------------------------------------
+-- | CreateScript
+-- | ---------------------------------------------------------------------------
+data CreateScript
+  = CreateScript
+      { _createScriptEvent :: Text,
+        _createScriptSrc :: Text
+      }
+
+makeLenses ''CreateScript
+
+instance ToJSON CreateScript where
+  toJSON cs =
+    object
+      [ "script_tag"
+          .= object
+            [ "event" .= (cs ^. createScriptEvent),
+              "src" .= (cs ^. createScriptSrc)
+            ]
+      ]

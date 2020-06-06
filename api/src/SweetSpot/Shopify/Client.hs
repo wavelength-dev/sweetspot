@@ -78,6 +78,12 @@ type ActivateAppChargeRoute =
     :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
+type CreateScriptRoute =
+  "admin" :> "api" :> ApiVersion :> "script_tags.json"
+    :> ReqBody '[JSON] CreateScript
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Post '[JSON] Value
+
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
@@ -88,6 +94,7 @@ class Monad m => MonadShopify m where
   createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
   fetchAppChargeStatus :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
   activateAppCharge :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
+  createScript :: ShopDomain -> m (Either Text ())
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -228,6 +235,19 @@ instance MonadShopify AppM where
           case parseAppChargeStatus body of
             Just status -> Right status
             Nothing -> Left "Unable to parse AppChargeStatus from ActivateAppChargeRoute"
+
+  createScript domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let c = client (Proxy :: Proxy CreateScriptRoute)
+          body =
+            CreateScript
+              { _createScriptEvent = "onload",
+                _createScriptSrc = "https://" <> showText domain <> "/apps/sweetspot/fulcrum/fulcrum.js"
+              }
+      res <- liftIO $ runClientM (c body token) clientEnv
+      pure $ case res of
+        Left err -> Left $ "Error creating script: " <> tshow err
+        Right _ -> Right ()
 
 withClientEnvAndToken ::
   ShopDomain ->

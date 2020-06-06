@@ -44,7 +44,6 @@ import Network.Wai.Middleware.Routed (routedMiddleware)
 import RIO
 import qualified RIO.ByteString as BS
 import qualified RIO.ByteString.Lazy as BSL
-import qualified RIO.Text as T
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (validateSessionId')

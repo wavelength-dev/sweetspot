@@ -16,6 +16,7 @@ import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentPrice, createExperimentProductId)
 import SweetSpot.Data.Codec (decodeProducts, decodeUICampaigns) as Codec
+import SweetSpot.Env (apiUrl) as Env
 import SweetSpot.QueryString (buildQueryString) as QueryString
 import SweetSpot.Session (SessionId(..))
 
@@ -34,7 +35,7 @@ getJson url options = fetch (Milkis.URL url) combinedOptions
   combinedOptions = RecordUnsafe.unsafeUnion options defaults
 
 serviceUrl :: String
-serviceUrl = "/api/dashboard/"
+serviceUrl = Env.apiUrl <> "/api/dashboard/"
 
 data Resource
   = Campaigns

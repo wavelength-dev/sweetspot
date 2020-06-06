@@ -2,16 +2,23 @@ module SweetSpot.Env where
 
 import Partial.Unsafe (unsafeCrashWith)
 
-foreign import appEnv :: String
+foreign import rawAppEnv :: String
+
+data AppEnv = Local | Remote
+
+appEnv :: AppEnv
+appEnv = case rawAppEnv of
+  "local" -> Local
+  "remote" -> Remote
+  _ -> unsafeCrashWith "Unrecognized App Environment"
 
 type Config
   = { apiUrl :: String }
 
 config :: Config
 config = case appEnv of
-  "local" -> { apiUrl: "//localhost:8082" }
-  "remote" -> { apiUrl: "/apps/sweetspot" }
-  _ -> unsafeCrashWith "Unrecognized App Environment"
+  Local -> { apiUrl: "//localhost:8082" }
+  Remote -> { apiUrl: "/apps/sweetspot" }
 
 apiUrl :: String
 apiUrl = config.apiUrl

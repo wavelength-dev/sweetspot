@@ -792,6 +792,21 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
+"@datadog/browser-core@1.12.1":
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-1.12.1.tgz#588b9c11743bce68434da29b25743123868afa67"
+  integrity sha512-bC+fC2GNRCTNxNJDM9+RJLT6dHfC0fb4LB7gAtUitKyJ1qCo1TXTXw/TOBN7MbOHb7jd0CqXIyofAM7VhVC3Eg==
+  dependencies:
+    tslib "1.10.0"
+
+"@datadog/browser-logs@^1.12.1":
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-logs/-/browser-logs-1.12.1.tgz#2cbc8541368d850ac6ecee94832272328396fca5"
+  integrity sha512-YVFzn1V0x/MgjMNhRhcqda2Pd3ffqz7xy49Pi3ryALOofAKv5UNwaaqFcYGsupc3QQn+j6VpZ0CVFGxMjBRY1Q==
+  dependencies:
+    "@datadog/browser-core" "1.12.1"
+    tslib "1.10.0"
+
 "@iarna/toml@^2.2.0":
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/@iarna/toml/-/toml-2.2.5.tgz#b32366c89b43c6f8cefbdefac778b9c828e3ba8c"
@@ -5257,6 +5272,11 @@ tr46@^1.0.1:
   integrity sha1-qLE/1r/SSJUZZ0zN5VujaTtwbQk=
   dependencies:
     punycode "^2.1.0"
+
+tslib@1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.10.0.tgz#c3c19f95973fb0a62973fb09d90d961ee43e5c8a"
+  integrity sha512-qOebF53frne81cf0S9B41ByenJ3/IuH8yJKngAX35CmiZySA0khhkovshKK+jGCaMnVomla7gVlIcc3EvKPbTQ==
 
 tslib@^1.10.0, tslib@^1.7.1, tslib@^1.9.3:
   version "1.11.1"

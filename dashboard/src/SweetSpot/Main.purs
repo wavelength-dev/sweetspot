@@ -20,6 +20,7 @@ import SweetSpot.CampaignListPage (mkCampaignListPage)
 import SweetSpot.CampaignViewPage (mkCampaignViewPage)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
+import SweetSpot.Logger (logInfo) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
@@ -99,6 +100,7 @@ mkApp = do
 
 main :: Effect Unit
 main = do
+  Logger.logInfo "SweetSpot Dashboard Started!"
   mSessionId <- Session.getSessionId
   documentNode <- HTML.window >>= Window.document >>= toNonElementParentNode >>> pure
   mAppElement <- getElementById "app" documentNode

@@ -45,9 +45,6 @@ COPY ./dashboard/spago.dhall ./
 COPY ./dashboard/packages.dhall ./
 COPY ./dashboard/package.json ./
 COPY ./dashboard/yarn.lock ./
-# TODO: TEST IF BUILD IS FASTER WITHOUT COPYING CACHES
-COPY --from=build-fulcrum /root/.cache/spago /root/.cache/
-COPY --from=build-fulcrum /usr/local/share/.config/yarn/global /usr/local/share/.config/yarn/global
 RUN spago install
 RUN yarn install
 

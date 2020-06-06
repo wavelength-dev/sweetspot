@@ -42,8 +42,7 @@ ghc-options:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- git: https://github.com/eskimor/purescript-bridge.git
-  commit: 890aa7e8520df3ae6fdeb717f95d5d0e406fdb7b
+- purescript-bridge-0.14.0.0
 - load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
 - git: https://github.com/blombern/beam.git
   commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f

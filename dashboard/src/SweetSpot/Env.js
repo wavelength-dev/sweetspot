@@ -1,1 +1,1 @@
-exports.appEnv = process.env.APP_ENV
+exports.rawAppEnv = process.env.APP_ENV

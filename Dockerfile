@@ -3,6 +3,7 @@ WORKDIR /opt/build
 
 # Install deps first for improved caching
 COPY ./api/stack.yaml .
+COPY ./api/stack.yaml.lock .
 COPY ./api/sweetspot.cabal .
 RUN stack build --only-dependencies --verbosity warn
 

@@ -29,6 +29,4 @@ if (module.hot) {
   });
 }
 
-console.log('Starting app');
-
 main();

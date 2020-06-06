@@ -15,13 +15,13 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 
 type UserTestRoute =
-  "bucket" :> QueryParam "shop" ShopDomain
+  "bucket" :> QueryParam' '[Required] "shop" ShopDomain
     :> QueryParam "sscid" CampaignId
-    :> QueryParam "uid" UserId
+    :> QueryParam' '[Required] "uid" UserId
     :> Get '[JSON] [TestMap]
 
 type UserCartTokenRoute =
-  "cart-token" :> QueryParam "shop" ShopDomain
+  "cart-token" :> QueryParam' '[Required] "shop" ShopDomain
     :> ReqBody '[JSON] CartTokenReq
     :> Put '[JSON] OkResponse
 
@@ -32,8 +32,8 @@ type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute) -- :<|> L
 -- originProtectedRoutes :: [Text]
 -- originProtectedRoutes = ["bucket", "event", "log"]
 
-getUserTestHandler :: Maybe ShopDomain -> Maybe CampaignId -> Maybe UserId -> ServerM [TestMap]
-getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
+getUserTestHandler :: ShopDomain -> Maybe CampaignId -> UserId -> ServerM [TestMap]
+getUserTestHandler shopDomain mCmpId uid = runAppM $ do
   res <- getUserTestMaps shopDomain uid
   case (mCmpId, res) of
     (_, testMaps@(m : ms)) -> do
@@ -49,15 +49,11 @@ getUserTestHandler (Just shopDomain) mCmpId (Just uid) = runAppM $ do
         else do
           L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
           throwError notFoundErr
-getUserTestHandler _ _ _ = throwError badRequestErr
 
-userCartTokenHandler :: Maybe ShopDomain -> CartTokenReq -> ServerM OkResponse
-userCartTokenHandler (Just _) req = runAppM $ do
+userCartTokenHandler :: ShopDomain -> CartTokenReq -> ServerM OkResponse
+userCartTokenHandler _ req = runAppM $ do
   insertUserCartToken req
   return OkResponse {message = "Cart token received"}
-userCartTokenHandler Nothing _ = runAppM $ do
-  L.error "Missing shopDomain, cannot insert cart token"
-  throwError badRequestErr
 
 -- trackLogMessageHandler :: Value -> ServerM OkResponse
 -- trackLogMessageHandler val = runAppM $ do

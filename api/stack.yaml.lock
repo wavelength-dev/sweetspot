@@ -5,9 +5,6 @@
 
 packages:
 - completed:
-    cabal-file:
-      size: 3219
-      sha256: c2d455a64f2fad7e42866e254528d89bd85ebf99ce85c8e871b6e508b8c7d76d
     name: purescript-bridge
     version: 0.13.0.0
     git: https://github.com/eskimor/purescript-bridge.git
@@ -19,26 +16,51 @@ packages:
     git: https://github.com/eskimor/purescript-bridge.git
     commit: cb00f5e746a05d06eb32001e4579af64c29d567b
 - completed:
-    hackage: beam-postgres-0.4.0.0@sha256:a01443ce503cfc58cbe28f476252672282347579444b65f2925a12ba6a2c13f5,4173
-    pantry-tree:
-      size: 1519
-      sha256: 43e16080098e8f673005723a0ca208850c88dced527030341f919859a54cde91
-  original:
-    hackage: beam-postgres-0.4.0.0@sha256:a01443ce503cfc58cbe28f476252672282347579444b65f2925a12ba6a2c13f5
-- completed:
-    hackage: beam-migrate-0.4.0.1@sha256:c53948a84972f67e97ba9c56f3dda9abfed556ba2f1672dc3070eb2512791efb,4920
-    pantry-tree:
-      size: 1720
-      sha256: 7ab124f3ac3c74bf5b342d2ef73c9ef3c13ddd7b0804aea340423ceb1baf72a1
-  original:
-    hackage: beam-migrate-0.4.0.1@sha256:c53948a84972f67e97ba9c56f3dda9abfed556ba2f1672dc3070eb2512791efb
-- completed:
     hackage: load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
     pantry-tree:
       size: 601
       sha256: 12947042909a99d32d10cb72865db781867f34c0bd28c430091c2b80db1f1109
   original:
     hackage: load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
+- completed:
+    subdir: beam-core
+    name: beam-core
+    version: 0.8.1.0
+    git: https://github.com/blombern/beam.git
+    pantry-tree:
+      size: 2838
+      sha256: 0ef645dc54fb4a60ed7147ebf4bd4eeabe03051c27dd70981b39533583968e92
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+  original:
+    subdir: beam-core
+    git: https://github.com/blombern/beam.git
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+- completed:
+    subdir: beam-postgres
+    name: beam-postgres
+    version: 0.4.1.0
+    git: https://github.com/blombern/beam.git
+    pantry-tree:
+      size: 2508
+      sha256: 6f0cca4aac73e237cb4e1e0c1555d6992398836c6ca9ca79f5f65a91d53dd186
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+  original:
+    subdir: beam-postgres
+    git: https://github.com/blombern/beam.git
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+- completed:
+    subdir: beam-migrate
+    name: beam-migrate
+    version: 0.4.0.1
+    git: https://github.com/blombern/beam.git
+    pantry-tree:
+      size: 1898
+      sha256: cfbc972287f4c8f3c8ee1181a29b68323d153b29a9d9a8c452de3e691a563b76
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+  original:
+    subdir: beam-migrate
+    git: https://github.com/blombern/beam.git
+    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
 snapshots:
 - completed:
     size: 524996

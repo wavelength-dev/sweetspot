@@ -5,16 +5,12 @@
 
 packages:
 - completed:
-    name: purescript-bridge
-    version: 0.13.0.0
-    git: https://github.com/eskimor/purescript-bridge.git
+    hackage: purescript-bridge-0.14.0.0@sha256:f4597cb0e5ca83890a642bc35dc2df503fda720a600d2a4782b4e737ebf6fcae,3219
     pantry-tree:
-      size: 1562
-      sha256: 7b83f3587ddb147d80a775f10c01052db6fda5ddfd73be08960719ed6c345f12
-    commit: cb00f5e746a05d06eb32001e4579af64c29d567b
+      size: 1150
+      sha256: 7135d65b43e07df2ec8006432a74bc603c63bea00242ec21a814c49cbffc48fc
   original:
-    git: https://github.com/eskimor/purescript-bridge.git
-    commit: cb00f5e746a05d06eb32001e4579af64c29d567b
+    hackage: purescript-bridge-0.14.0.0
 - completed:
     hackage: load-env-0.2.1.0@sha256:17628d397cf7ba6af9bf103c2c3592bb246e2ad58bd019cc5071c654887b1083,1866
     pantry-tree:

@@ -8,6 +8,6 @@ datadogLogs.init({
   service: "sweetspot-dashboard"
 })
 
-exports.logInfoImpl = datadogLogs.logger.info
-exports.logWarnImpl = datadogLogs.logger.warn
-exports.logErrorImpl = datadogLogs.logger.error
+exports.logInfoImpl = datadogLogs.logger.info.bind(datadogLogs.logger)
+exports.logWarnImpl = datadogLogs.logger.warn.bind(datadogLogs.logger)
+exports.logErrorImpl = datadogLogs.logger.error.bind(datadogLogs.logger)

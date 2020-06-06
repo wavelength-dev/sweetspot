@@ -1,10 +1,9 @@
 module SweetSpot.Logger where
 
 import Datadog (logError, logErrorContext, logInfo, logInfoContext, logWarn, logWarnContext) as Datadog
-import Debug.Trace as Trace
 import Effect (Effect)
 import Effect.Console as Console
-import Prelude (Unit, (*>))
+import Prelude (Unit)
 import SweetSpot.Env (AppEnv(..))
 import SweetSpot.Env as Env
 
@@ -25,15 +24,15 @@ logError = case Env.appEnv of
 
 logInfoContext :: forall a. String -> Record a -> Effect Unit
 logInfoContext msg context = case Env.appEnv of
-  Local -> Console.info msg *> Trace.traceM context
+  Local -> Console.info msg
   Remote -> Datadog.logInfoContext msg context
 
 logWarnContext :: forall a. String -> Record a -> Effect Unit
 logWarnContext msg context = case Env.appEnv of
-  Local -> Console.info msg *> Trace.traceM context
+  Local -> Console.info msg
   Remote -> Datadog.logWarnContext msg context
 
 logErrorContext :: forall a. String -> Record a -> Effect Unit
 logErrorContext msg context = case Env.appEnv of
-  Local -> Console.info msg *> Trace.traceM context
+  Local -> Console.info msg
   Remote -> Datadog.logErrorContext msg context

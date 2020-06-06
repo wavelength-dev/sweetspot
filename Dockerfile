@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-14.27 AS build-api
+FROM haskell AS build-api
 WORKDIR /opt/build
 
 # Install deps first for improved caching

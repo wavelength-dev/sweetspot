@@ -49,6 +49,9 @@ RUN spago install
 RUN yarn install
 
 # Compile, test, bundle and uglify our scripts
+
+# Use the remote .env file because builds are for use with shopify
+COPY ./dashboard/.env.remote ./.env
 COPY ./dashboard/src ./src
 COPY ./dashboard/test ./test
 RUN spago test

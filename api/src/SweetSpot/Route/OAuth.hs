@@ -56,7 +56,7 @@ getAuthUri shopDomain clientId redirectUri nonce =
     <> "&state="
     <> showText nonce
   where
-    scopes = "write_products,read_orders,read_analytics"
+    scopes = "write_products,write_script_tags,read_orders,read_analytics"
 
 installHandler ::
   ShopDomain ->

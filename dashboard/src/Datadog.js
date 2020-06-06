@@ -1,7 +1,7 @@
 const { datadogLogs } = require("@datadog/browser-logs")
 
 datadogLogs.init({
-  clientToken: "06e25fedcf0488ca790add8d23f534f7",
+  clientToken: "puba47c091de0204f10ec39b3e889b7cf0e",
   datacenter: 'eu',
   forwardErrorsToLogs: true,
   sampleRate: 100,

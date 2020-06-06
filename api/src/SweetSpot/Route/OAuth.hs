@@ -87,6 +87,7 @@ redirectHandler (Code code) hmac _ nonce shopDomain =
           permCode <- ExceptT $ exchangeAccessToken shopDomain code
           shopInfo <- ExceptT $ fetchShopInfo permCode shopDomain
           lift $ createShop shopDomain shopInfo permCode
+          ExceptT $ createScript shopDomain
           ExceptT $ registerWebhooks shopDomain
           charge <- ExceptT $ createAppCharge shopDomain
           lift $ insertAppCharge shopDomain charge

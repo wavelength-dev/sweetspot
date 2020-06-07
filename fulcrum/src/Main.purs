@@ -35,7 +35,8 @@ import Web.DOM.Node as Node
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
 import Web.HTML.HTMLElement as HTMLElement
-import Web.HTML.Window (document) as Window
+import Web.HTML.Location as Location
+import Web.HTML.Window (document, location) as Window
 
 type TestMapByVariant
   = Map VariantId TestMap
@@ -49,7 +50,8 @@ getTestMap :: UserId -> ExceptT String Aff TestMapByVariant
 getTestMap userId = do
   isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
   when (not isRuntimeAdequate) (throwError inadequateRuntimeError)
-  let payload = OnlyUserId userId
+  let
+    payload = OnlyUserId userId
   eTestMaps <- lift $ Service.fetchTestMaps payload
   case eTestMaps of
     Left msg -> throwError msg
@@ -95,8 +97,7 @@ insertPrice testMap element = do
   rawVariantToEither rawVariantId = note "Missing variant id" rawVariantId <#> VariantId
 
   setNodePrice :: TestMap -> Effect Unit
-  setNodePrice { swapPrice } =
-    Node.setTextContent swapPrice (Element.toNode element)
+  setNodePrice { swapPrice } = Node.setTextContent swapPrice (Element.toNode element)
 
   revealPrice :: Effect Unit
   revealPrice = case HTMLElement.fromElement element of

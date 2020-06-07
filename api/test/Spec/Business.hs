@@ -1,12 +1,11 @@
 module Spec.Business (businessLogicSpec) where
 
-import Data.List (find, nub)
-import Data.Maybe (isJust)
 import Database (reset)
 import Mock.Shopify
 import Network.HTTP.Client hiding (Proxy, responseHeaders)
 import Network.HTTP.Types hiding (Header, responseHeaders)
 import RIO
+import RIO.List (nub)
 import RIO.List.Partial (head)
 import Servant
 import Servant.Client
@@ -32,59 +31,53 @@ businessLogicSpec =
     let clientEnv = mkClientEnv manager baseUrl
     describe "GET /api/bucket" $ do
       it "should get buckets for an existing user" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
+        result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right tms -> (userId . head $ tms) `shouldBe` user1
       it "should create a new user when given a valid campaign id" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
+        result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right _ -> return ()
       it "should not return buckets for invalid campaign ids" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) (Just unknownUser)) clientEnv
+        result <- runClientM (getTest shopDomain unknownUser) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should return buckets for invalid campaign ids for known users" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) (Just user1)) clientEnv
+        result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right _ -> return ()
       it "should not return buckets for unknown user ids" $ do
-        result <- runClientM (getTest (Just shopDomain) Nothing (Just unknownUser)) clientEnv
+        result <- runClientM (getTest shopDomain unknownUser) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should not return buckets for expired campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign2) (Just user2)) clientEnv
+        result <- runClientM (getTest shopDomain user2) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should not return buckets for not yet active campaign" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign3) (Just user2)) clientEnv
+        result <- runClientM (getTest shopDomain user2) clientEnv
         case result of
           Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
           Left err -> error (show err)
           Right _ -> expectationFailure "expected request to fail"
       it "should keep the same user id when given a valid campaignId and userId" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user1)) clientEnv
+        result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right tms -> uniqUserIds `shouldBe` 1
             where
               uniqUserIds = length . nub $ filter (== user1) $ fmap userId tms
-      it "should assign existing user to new campaign when old campaigns have expired" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just campaign1) (Just user2)) clientEnv
-        case result of
-          Left err -> error (show err)
-          Right tms ->
-            isJust (find ((== Sku "black_wb_sku") . sku) tms) `shouldBe` True
       it "should not assign existing user to new campaign when old one is still running" $ do
-        result <- runClientM (getTest (Just shopDomain) (Just unknownCampaign) (Just user1)) clientEnv
+        result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right tms -> (sku . head $ tms) `shouldBe` Sku "black_wb_sku"
@@ -95,7 +88,7 @@ businessLogicSpec =
                 { _cartTokenReqToken = CartToken "lol-some-cart-token123",
                   _cartTokenReqUser = user1
                 }
-        result <- runClientM (putCartToken (Just shopDomain) payload) clientEnv
+        result <- runClientM (putCartToken shopDomain payload) clientEnv
         case result of
           Left err -> error $ show err
           Right _ -> return ()

@@ -16,7 +16,6 @@ import SweetSpot.Route.Util
 
 type UserTestRoute =
   "bucket" :> QueryParam' '[Required] "shop" ShopDomain
-    :> QueryParam "sscid" CampaignId
     :> QueryParam' '[Required] "uid" UserId
     :> Get '[JSON] [TestMap]
 
@@ -25,41 +24,23 @@ type UserCartTokenRoute =
     :> ReqBody '[JSON] CartTokenReq
     :> Put '[JSON] OkResponse
 
--- type LogEventRoute = "log" :> ReqBody '[ JSON] Value :> Post '[ JSON] OkResponse
+type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute)
 
-type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute) -- :<|> LogEventRoute
-
--- originProtectedRoutes :: [Text]
--- originProtectedRoutes = ["bucket", "event", "log"]
-
-getUserTestHandler :: ShopDomain -> Maybe CampaignId -> UserId -> ServerM [TestMap]
-getUserTestHandler shopDomain mCmpId uid = runAppM $ do
+getUserTestHandler :: ShopDomain -> UserId -> ServerM [TestMap]
+getUserTestHandler shopDomain uid = runAppM $ do
   res <- getUserTestMaps shopDomain uid
-  case (mCmpId, res) of
-    (_, testMaps@(m : ms)) -> do
-      L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> tshow uid
-      return testMaps
-    (Nothing, []) -> do
+  case res of
+    [] -> do
       L.info $ "Could not find bucket(s) for userId: " <> tshow uid
       throwError notFoundErr
-    (Just newCmpId, []) -> do
-      isValidCampaign <- validateCampaign newCmpId
-      if isValidCampaign
-        then getNewCampaignTestMaps shopDomain newCmpId uid
-        else do
-          L.info $ "Got invalid campaign id for existing user: " <> showText newCmpId
-          throwError notFoundErr
+    testMaps -> do
+      L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> tshow uid
+      pure testMaps
 
 userCartTokenHandler :: ShopDomain -> CartTokenReq -> ServerM OkResponse
 userCartTokenHandler _ req = runAppM $ do
   insertUserCartToken req
   return OkResponse {message = "Cart token received"}
 
--- trackLogMessageHandler :: Value -> ServerM OkResponse
--- trackLogMessageHandler val = runAppM $ do
---   insertEvent (Log, val)
---   return OkResponse {message = "Event received"}
-
 fulcrumHandler =
   getUserTestHandler :<|> userCartTokenHandler
--- :<|> trackLogMessageHandler

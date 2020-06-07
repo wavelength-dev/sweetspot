@@ -28,7 +28,6 @@ import SweetSpot.Util (formatPrice)
 import System.Random (randomRIO)
 
 class Monad m => FulcrumDB m where
-  getNewCampaignTestMaps :: ShopDomain -> CampaignId -> UserId -> m [TestMap]
   getUserTestMaps :: ShopDomain -> UserId -> m [TestMap]
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
@@ -37,15 +36,16 @@ class Monad m => FulcrumDB m where
   insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
 
 instance FulcrumDB AppM where
-  getNewCampaignTestMaps domain cmpId userId = do
-    randTreatment <- liftIO $ randomRIO (0 :: Int, 1 :: Int)
-    withConn $ \conn -> do
-      uid <- insertUser conn userId
-      assignUserToCampaign conn (uid, cmpId, randTreatment)
-      getUserTestMaps' conn domain uid
-
-  getUserTestMaps domain uid = withConn $ \conn ->
-    getUserTestMaps' conn domain uid
+  getUserTestMaps domain uid = withConn $ \conn -> do
+    maps <- getUserTestMaps' conn domain uid
+    if length maps > 0
+      then pure maps
+      else do
+        mCampaignId <- getLatestCampaign conn domain
+        maybe
+          (pure [])
+          (\cid -> getNewCampaignTestMaps conn domain cid uid)
+          mCampaignId
 
   validateCampaign cmpId = withConn $ \conn -> do
     res <-
@@ -108,6 +108,22 @@ insertUser conn uid = do
           $ insert (db ^. users)
           $ insertExpressions [User (val_ uid) nowUTC_]
       return $ user ^. usrId
+
+getLatestCampaign :: Connection -> ShopDomain -> IO (Maybe CampaignId)
+getLatestCampaign conn domain =
+  runBeamPostgres conn
+    $ runSelectReturningOne
+    $ select
+    $ do
+      shop <-
+        all_ (db ^. shops)
+          & filter_ ((==. val_ domain) . view shopDomain)
+      campaign <-
+        (all_ (db ^. campaigns))
+          & orderBy_ (nullsLast_ . desc_ . view cmpStart)
+          & limit_ 1
+      guard_ (view cmpShopId campaign ==. view shopId shop)
+      pure $ campaign ^. cmpId
 
 assignUserToCampaign :: Connection -> (UserId, CampaignId, Int) -> IO CampaignId
 assignUserToCampaign conn (usrId, campaignId, treatment) = do
@@ -236,3 +252,15 @@ insertOrder' sid cid uid order = withConn $ \conn -> do
   traverse_
     (insertLineItem conn (event ^. cevId))
     (order ^. orderLineItems)
+
+getNewCampaignTestMaps ::
+  Connection ->
+  ShopDomain ->
+  CampaignId ->
+  UserId ->
+  IO [TestMap]
+getNewCampaignTestMaps conn domain cmpId userId = do
+  randTreatment <- randomRIO (0 :: Int, 1 :: Int)
+  uid <- insertUser conn userId
+  assignUserToCampaign conn (uid, cmpId, randTreatment)
+  getUserTestMaps' conn domain uid

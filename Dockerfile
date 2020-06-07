@@ -7,14 +7,14 @@ RUN apt-get --quiet update \
   libpq-dev
 
 # Install deps first for improved caching
-COPY ./api/stack.yaml .
-COPY ./api/stack.yaml.lock .
-COPY ./api/sweetspot.cabal .
+COPY api/stack.yaml .
+COPY api/stack.yaml.lock .
+COPY api/sweetspot.cabal .
 RUN stack setup
 RUN stack build --only-dependencies --verbosity warn
 
 # Copy code and build our binary
-COPY ./api /opt/build
+COPY api /opt/build
 RUN stack build --verbosity warn --copy-bins
 
 # Build Fulcrum
@@ -31,8 +31,8 @@ RUN yarn install --frozen-lockfile
 RUN spago install --global-cache=skip
 
 # Compile, test, bundle and uglify our scripts
-COPY ./fulcrum/src ./src
-COPY ./fulcrum/test ./test
+COPY fulcrum/src src
+COPY fulcrum/test test
 RUN spago test
 RUN spago bundle-app --main Fulcrum.Main --to fulcrum.js
 RUN parcel build fulcrum.js
@@ -48,19 +48,19 @@ RUN apt update && apt install --yes libncurses5
 
 # Install build dependencies
 RUN yarn global add purescript spago parcel-bundler
-COPY ./dashboard/spago.dhall ./
-COPY ./dashboard/packages.dhall ./
-COPY ./dashboard/package.json ./
-COPY ./dashboard/yarn.lock ./
+COPY dashboard/spago.dhall .
+COPY dashboard/packages.dhall .
+COPY dashboard/package.json .
+COPY dashboard/yarn.lock .
 RUN spago install --global-cache=skip
 RUN yarn install
 
 # Compile, test, bundle and uglify our scripts
 
 # Use the remote .env file because builds are for use with shopify
-COPY ./dashboard/.env.remote ./.env
-COPY ./dashboard/src ./src
-COPY ./dashboard/test ./test
+COPY dashboard/.env.remote .env
+COPY dashboard/src src
+COPY dashboard/test test
 RUN spago test
 RUN spago build
 RUN parcel build --public-url /dashboard src/index.html

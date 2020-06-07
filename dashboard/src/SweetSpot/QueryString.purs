@@ -69,5 +69,5 @@ buildQueryString :: Array (Tuple Key Value) -> Either String QueryString
 buildQueryString =
   Traversable.traverse encodePair
     >=> String.joinWith "&"
-    >>> (<>) "?"
+    >>> ("?" <> _)
     >>> pure

@@ -9,7 +9,6 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff.Compat (mkEffectFn1)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Effect.Now (nowDateTime) as Now
 import Effect.Timer (clearInterval, setInterval) as Timer
@@ -44,7 +43,7 @@ toStatus :: Now -> Maybe CampaignEnd -> Maybe CampaignStart -> CampaignStatus
 toStatus now mEndDateTime mStartDateTime = case mEndDateTime, mStartDateTime of
   -- TODO: update UICampaign to always have start and end
   _, Nothing -> unsafeThrow "Campaign missing start datetime"
-  Nothing, _ -> unsafeThrow "Campaign missing end datetime"
+  Nothing, Just start -> Running start
   Just end, Just start
     | end < now -> Finished end
     | otherwise -> Running start

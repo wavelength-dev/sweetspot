@@ -51,7 +51,7 @@ productToOptions product = map variantToOption (product ^. productVariants)
 
       price = variant ^. variantPrice
 
-      label = title <> " - " <> sku <> " - " <> price
+      label = "title: " <> title <> ", " <> "sku: " <> sku
     in
       { value: id, label }
 

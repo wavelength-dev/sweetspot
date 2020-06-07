@@ -54,7 +54,7 @@ parseDateTime :: Maybe String -> Either String (Maybe DateTime)
 parseDateTime Nothing = Right Nothing
 
 parseDateTime (Just encodedDateTime) =
-  Formatter.unformatDateTime "YYYY-MM-DDTHH:mm:ssZ" encodedDateTime
+  Formatter.unformatDateTime "YYYY-MM-DDTHH:mm:ss.SSSSSSZ" encodedDateTime
     <#> Just
 
 decodeUICampaign :: Json -> Either String UICampaign

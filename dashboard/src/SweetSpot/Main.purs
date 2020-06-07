@@ -4,16 +4,16 @@ import Prelude
 
 import Data.Array (find)
 import Data.Array (null) as Array
-import Data.Either (Either, either)
+import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (parallel, sequential) as Aff
+import Effect.Aff (attempt, parallel, sequential) as Aff
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM (text) as R
-import React.Basic.Hooks (Component, component, element, empty, useEffectOnce, useState', (/\))
+import React.Basic.Hooks (Component, component, element, useEffectOnce, useState', (/\))
 import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.CampaignCreatePage (mkCampaignCreatePage)
@@ -22,6 +22,7 @@ import SweetSpot.CampaignViewPage (mkCampaignViewPage)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (logInfo) as Logger
+import SweetSpot.Logger as Logging
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
@@ -57,17 +58,21 @@ mkApp = do
     productsResource /\ setProductsResource <- useState' Empty
     useAff props.sessionId do
       liftEffect $ setCampaignsResource Loading
-      eProducts /\ eCampaigns <-
+      eCampaigns /\ eProducts <-
         Aff.sequential
           $ Tuple
-          <$> Aff.parallel (Service.fetchProducts props.sessionId)
-          <*> Aff.parallel (Service.fetchCampaigns props.sessionId)
-      eitherToResource eCampaigns
-        # setCampaignsResource
-        >>> liftEffect
-      eitherToResource eProducts
-        # setProductsResource
-        >>> liftEffect
+          <$> Aff.parallel (Aff.attempt $ Service.fetchCampaigns props.sessionId)
+          <*> Aff.parallel (Aff.attempt $ Service.fetchProducts props.sessionId)
+      liftEffect case eCampaigns of
+           Left error -> do
+              Logging.logErrorContext "failed to fetch campaigns" { error }
+              setCampaignsResource (Error $ show error)
+           Right products -> setCampaignsResource $ Resource products
+      liftEffect case eProducts of
+           Left error -> do
+              Logging.logErrorContext "failed to fetch products" { error }
+              setProductsResource (Error $ show error)
+           Right products -> setProductsResource $ Resource products
       pure unit
     pure
       $ element Shopify.appProvider
@@ -89,11 +94,11 @@ mkApp = do
                     Error err -> R.text ("ERROR: " <> err)
                     Resource products -> campaignCreatePage { products, sessionId: props.sessionId }
                   CampaignView rawCampaignId -> case campaignsResource of
-                    Empty -> empty
+                    Empty -> R.text "EMPTY"
                     Loading -> R.text "LOADING"
                     Error err -> R.text ("ERROR: " <> err)
                     Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of
-                      Nothing -> R.text ("ERROR: campaign not found")
+                      Nothing -> R.text "ERROR: campaign not found"
                       Just campaign -> campaignViewPage { campaign: campaign }
               ]
           }

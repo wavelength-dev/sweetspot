@@ -2,12 +2,14 @@ module SweetSpot.Service where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow)
+import Control.Monad.Except (throwError)
 import Data.Argonaut (Json, jsonEmptyObject, jsonParser, (:=), (~>))
 import Data.Argonaut (stringify) as Argonaut
 import Data.Either (Either(..))
 import Data.Lens (view)
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Error, error)
 import Effect.Aff (attempt) as Aff
 import Effect.Exception.Unsafe (unsafeThrow) as Unsafe
 import Milkis (Options, Response, Fetch)
@@ -50,25 +52,21 @@ getResourceRoute Campaigns = serviceUrl <> "campaigns"
 
 getResourceRoute Products = serviceUrl <> "products"
 
-fetchResource :: Resource -> SessionId -> Aff (Either String Json)
-fetchResource resource (SessionId sessionId) =
-  Aff.attempt (getJson (route <> queryString) {})
-    >>= case _ of
-        Left requestErrMsg -> "Failed to fetch: " <> show resource <> ", " <> (show requestErrMsg) # Left >>> pure
-        Right res -> do
-          bodyText <- Milkis.text res
-          pure
-            if status == 200 || status == 201 then
-              jsonParser bodyText
-            else
-              Left (show status <> " - " <> textToMessage bodyText)
-          where
-          status = Milkis.statusCode res
-
-          textToMessage "" = "Empty body"
-
-          textToMessage str = "Body: " <> str
+fetchResource :: Resource -> SessionId -> Aff Json
+fetchResource resource (SessionId sessionId) = do
+  res <- getJson (route <> queryString) {}
+  let status = Milkis.statusCode res
+  bodyText <- Milkis.text res
+  when (not (status == 200 || status == 201)) do
+     throwError $ error $ show status <> " - " <> textToMessage bodyText
+  case jsonParser bodyText of
+    Left parseErrorMessage -> throwError $ error $ parseErrorMessage
+    Right json -> pure json
   where
+
+  textToMessage "" = "Empty body"
+
+  textToMessage str = "Body: " <> str
   route = getResourceRoute resource
 
   queryString =
@@ -77,11 +75,16 @@ fetchResource resource (SessionId sessionId) =
           Left errMsg -> Unsafe.unsafeThrow errMsg
           Right qs -> qs
 
-fetchCampaigns :: SessionId -> Aff (Either String (Array UICampaign))
-fetchCampaigns sessionId = fetchResource Campaigns sessionId <#> \eCampaigns -> eCampaigns >>= Codec.decodeUICampaigns
+decodeOrThrow :: forall m b. MonadThrow Error m => Either String b -> m b
+decodeOrThrow = case _ of
+  Left decodeErrorMessage -> throwError $ error decodeErrorMessage
+  Right result -> pure result
 
-fetchProducts :: SessionId -> Aff (Either String (Array Product))
-fetchProducts sessionId = fetchResource Products sessionId <#> \eProducts -> eProducts >>= Codec.decodeProducts
+fetchCampaigns :: SessionId -> Aff (Array UICampaign)
+fetchCampaigns sessionId = fetchResource Campaigns sessionId >>= Codec.decodeUICampaigns >>> decodeOrThrow
+
+fetchProducts :: SessionId -> Aff (Array Product)
+fetchProducts sessionId = fetchResource Products sessionId >>= Codec.decodeProducts >>> decodeOrThrow
 
 encodeCreateExperiment :: CreateExperiment -> Json
 encodeCreateExperiment createExperiment =

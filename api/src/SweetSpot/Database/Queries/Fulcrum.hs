@@ -119,7 +119,8 @@ getLatestCampaign conn domain =
         all_ (db ^. shops)
           & filter_ ((==. val_ domain) . view shopDomain)
       campaign <-
-        (all_ (db ^. campaigns))
+        all_ (db ^. campaigns)
+          & filter_ isCampaignActive
           & orderBy_ (nullsLast_ . desc_ . view cmpStart)
           & limit_ 1
       guard_ (view cmpShopId campaign ==. view shopId shop)

@@ -1,4 +1,4 @@
-module Main where
+module Fulcrum.Main where
 
 import Prelude
 import Control.Monad.Cont (lift)

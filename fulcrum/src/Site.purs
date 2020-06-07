@@ -6,8 +6,8 @@ import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
-import Fulcrum.QueryString (QueryParam(..))
-import Fulcrum.QueryString (parseQueryString) as QueryString
+import QueryString (QueryParam(..))
+import QueryString (parseQueryString) as QueryString
 import Web.DOM (Document)
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener) as EventTarget
 import Web.HTML (window) as HTML

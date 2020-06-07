@@ -93,7 +93,7 @@ mkApp = do
                     Empty -> R.text "EMPTY"
                     Loading -> R.text "LOADING"
                     Error err -> R.text ("ERROR: " <> err)
-                    Resource products -> campaignCreatePage { products }
+                    Resource products -> campaignCreatePage { products, sessionId: props.sessionId }
                   CampaignView rawCampaignId -> case campaignsResource of
                     Empty -> empty
                     Loading -> R.text "LOADING"

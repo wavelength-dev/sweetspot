@@ -45,9 +45,5 @@ getUrlParam targetKey = do
   where
   matchQueryParam :: Either String QueryParam -> Maybe String
   matchQueryParam = case _ of
-    Right (QueryParam key (Just value)) ->
-      if key == targetKey then
-        Just value
-      else
-        Nothing
+    Right (QueryParam key (Just value)) | key == targetKey -> Just value
     _ -> Nothing

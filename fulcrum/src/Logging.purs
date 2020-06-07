@@ -1,15 +1,13 @@
-module Fulcrum.Logging (log, buildLog, LogLevel(..)) where
+module Fulcrum.Logging (log, LogLevel(..)) where
 
 import Prelude
-import Data.Argonaut (class EncodeJson, Json, (:=), (~>))
-import Data.Argonaut (encodeJson, jsonEmptyObject, stringify) as Argonaut
-import Data.Either (Either(..))
-import Data.Maybe (maybe)
+
+import Data.Argonaut (class EncodeJson)
+import Data.Argonaut (encodeJson) as Argonaut
+import Data.Maybe as Maybe
 import Effect (Effect)
-import Effect.Aff (launchAff_) as Aff
-import Effect.Class (liftEffect)
+import Datadog (logError, logInfo, logWarn) as Datadog
 import Effect.Console (error, info, warn) as Console
-import Fulcrum.Service (sendLog) as Service
 import Fulcrum.Site (getUrlParam) as Site
 
 data LogLevel
@@ -27,34 +25,19 @@ instance encodeJsonLogLevel :: EncodeJson LogLevel where
   encodeJson Warn = Argonaut.encodeJson "warn"
   encodeJson Error = Argonaut.encodeJson "error"
 
-log :: forall a. EncodeJson a => LogLevel -> a -> Effect Unit
+log :: forall a. Show a => LogLevel -> a -> Effect Unit
 log level message = do
+  -- for convenience one can add a query parameter ssdebug to see logs
+  -- in console
   isDebugging <- getIsDebugging
   when isDebugging case level of
-    Info -> message # argonautShow >>> Console.info
-    Warn -> message # argonautShow >>> Console.warn
-    Error -> message # argonautShow >>> Console.error
-  Aff.launchAff_ do
-    eSendLogResult <- Service.sendLog (buildLog level message)
-    case eSendLogResult of
-      Right _ -> pure unit
-      Left sendLogError ->
-        liftEffect do
-          Console.info $ "failed to send log message, falling back to console."
-          Console.error $ "send log error: " <> sendLogError
-          Console.error $ "app log, level: "
-            <> show level
-            <> ", message: "
-            <> argonautShow message
-  where
-  argonautShow = Argonaut.encodeJson >>> Argonaut.stringify
-
-buildLog :: forall a. EncodeJson a => LogLevel -> a -> Json
-buildLog level message =
-  "message" := message
-    ~> "level"
-    := level
-    ~> Argonaut.jsonEmptyObject
+    Info -> message # show >>> Console.info
+    Warn -> message # show >>> Console.warn
+    Error -> message # show >>> Console.error
+  case level of
+       Info -> message # show >>> Datadog.logInfo
+       Warn -> message # show >>> Datadog.logWarn
+       Error -> message # show >>> Datadog.logError
 
 getIsDebugging :: Effect Boolean
-getIsDebugging = Site.getUrlParam "ssdebug" >>= maybe false ((==) "true") >>> pure
+getIsDebugging = Site.getUrlParam "ssdebug" >>= Maybe.isJust >>> pure

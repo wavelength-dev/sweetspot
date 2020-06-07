@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@datadog/browser-logs": "^1.12.1"
+  }
+}

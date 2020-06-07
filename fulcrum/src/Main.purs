@@ -17,14 +17,13 @@ import Effect.Class (liftEffect)
 import Effect.Console (error, log, logShow) as Console
 import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
-import Fulcrum.Data (TestMap, VariantId(..), CampaignId(..))
+import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
 import Fulcrum.Logging (log) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
-import Fulcrum.Site as Site
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 import Web.DOM (Element)
@@ -50,13 +49,7 @@ getTestMap :: UserId -> ExceptT String Aff TestMapByVariant
 getTestMap userId = do
   isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
   when (not isRuntimeAdequate) (throwError inadequateRuntimeError)
-  -- Fetch the list of TestMaps
-  -- TODO: add cache control header
-  mCmpId <- liftEffect $ Site.getUrlParam "sscid"
-  let
-    payload = case mCmpId of
-      Just cmpId -> UserAndCampaignId userId (CampaignId cmpId)
-      Nothing -> OnlyUserId userId
+  let payload = OnlyUserId userId
   eTestMaps <- lift $ Service.fetchTestMaps payload
   case eTestMaps of
     Left msg -> throwError msg

@@ -33,7 +33,7 @@ RUN spago install --global-cache=skip
 COPY ./fulcrum/src ./src
 COPY ./fulcrum/test ./test
 RUN spago test
-RUN spago bundle-app --to fulcrum.js
+RUN spago bundle-app --main Fulcrum.Main --to fulcrum.js
 RUN parcel build fulcrum.js
 RUN mv dist/fulcrum.js dist/fulcrum.min.js
 RUN mv fulcrum.js dist/fulcrum.js

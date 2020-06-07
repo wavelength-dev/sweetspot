@@ -15,9 +15,9 @@ echo "=> Finished building fulcrum"
 
 # To include node modules in our bundle we need a bundler
 yarn parcel build fulcrum.js --no-source-maps
-# mv dist/fulcrum.pre.js dist/fulcrum.min.js
 mv dist/fulcrum.js dist/fulcrum.min.js
-mv fulcrum.js dist/fulcrum.js
+yarn parcel build fulcrum.js --no-minify --no-source-maps
+rm fulcrum.js
 echo "=> Finished bundling dependencies"
 
 gzip --keep --force dist/fulcrum.min.js

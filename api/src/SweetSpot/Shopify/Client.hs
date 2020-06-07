@@ -38,7 +38,7 @@ type GetProductsRoute =
 
 type GetProductJsonRoute =
   "admin" :> "api" :> ApiVersion :> "products"
-    :> Capture "productId" Pid
+    :> Capture "productId" Text
     :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Get '[JSON] Value
 
@@ -130,7 +130,11 @@ instance MonadShopify AppM where
   fetchProductJson domain productId =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let getProductJsonClient = client (Proxy :: Proxy GetProductJsonRoute)
-      res <- liftIO $ runClientM (getProductJsonClient productId token) clientEnv
+      res <-
+        liftIO $
+          runClientM
+            (getProductJsonClient ((toQueryParam productId) <> ".json") token)
+            clientEnv
       return $ case res of
         Left err -> Left $ "Error fetching product json: " <> tshow err
         Right body -> Right body

@@ -1,6 +1,11 @@
 FROM haskell AS build-api
 WORKDIR /opt/build
 
+# We depend on libpq to build
+RUN apt-get --quiet update \
+  && apt-get --quiet install --yes \
+  libpq-dev
+
 # Install deps first for improved caching
 COPY ./api/stack.yaml .
 COPY ./api/stack.yaml.lock .

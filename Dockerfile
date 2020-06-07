@@ -1,10 +1,11 @@
-FROM fpco/stack-build:lts-14.27 AS build-api
+FROM haskell AS build-api
 WORKDIR /opt/build
 
 # Install deps first for improved caching
 COPY ./api/stack.yaml .
 COPY ./api/stack.yaml.lock .
 COPY ./api/sweetspot.cabal .
+RUN stack setup
 RUN stack build --only-dependencies --verbosity warn
 
 # Copy code and build our binary

@@ -27,7 +27,7 @@ RUN apt update && apt install --yes libncurses5
 # Install build dependencies
 RUN yarn global add purescript spago terser
 COPY ./fulcrum/spago.dhall ./fulcrum/packages.dhall ./
-RUN spago install
+RUN spago install --global-cache=skip
 
 # Compile, test, bundle and uglify our scripts
 COPY ./fulcrum/src ./src
@@ -51,7 +51,7 @@ COPY ./dashboard/spago.dhall ./
 COPY ./dashboard/packages.dhall ./
 COPY ./dashboard/package.json ./
 COPY ./dashboard/yarn.lock ./
-RUN spago install
+RUN spago install --global-cache=skip
 RUN yarn install
 
 # Compile, test, bundle and uglify our scripts

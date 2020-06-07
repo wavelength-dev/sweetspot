@@ -68,12 +68,6 @@ mkApp = do
       eitherToResource eProducts
         # setProductsResource
         >>> liftEffect
-      Resource [ expensiveJacketsCheapMonkeysCampaign, storewide10Campaign ]
-        # setCampaignsResource
-        >>> liftEffect
-      Resource [ bonoboHat ]
-        # setProductsResource
-        >>> liftEffect
       pure unit
     pure
       $ element Shopify.appProvider

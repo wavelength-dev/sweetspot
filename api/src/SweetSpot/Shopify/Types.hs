@@ -350,7 +350,8 @@ data CreateAppCharge
   = CreateAppCharge
       { _createAppChargeName :: !Text,
         _createAppChargePrice :: !Price,
-        _createAppChargeReturnUrl :: !Text
+        _createAppChargeReturnUrl :: !Text,
+        _createAppChargeIsTest :: !Bool
       }
 
 makeLenses ''CreateAppCharge
@@ -360,10 +361,10 @@ instance ToJSON CreateAppCharge where
     object
       [ "recurring_application_charge"
           .= object
-            [ "name" .= toJSON (charge ^. createAppChargeName),
-              "price" .= toJSON (charge ^. createAppChargePrice),
-              "return_url" .= toJSON (charge ^. createAppChargeReturnUrl),
-              "test" .= toJSON True
+            [ "name" .= (charge ^. createAppChargeName),
+              "price" .= (charge ^. createAppChargePrice),
+              "return_url" .= (charge ^. createAppChargeReturnUrl),
+              "test" .= (charge ^. createAppChargeIsTest)
             ]
       ]
 

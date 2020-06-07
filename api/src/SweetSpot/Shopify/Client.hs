@@ -10,7 +10,7 @@ import Data.Aeson.Lens
 import Data.Aeson.Types (Result (..), parse, parseJSON)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import RIO hiding ((^.))
+import RIO hiding ((^.), view)
 import qualified RIO.Text as T
 import Servant
 import Servant.API (toUrlPiece)
@@ -199,6 +199,7 @@ instance MonadShopify AppM where
 
   createAppCharge domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
+      env <- asks (view configEnvironment . view ctxConfig)
       let body =
             CreateAppCharge
               { _createAppChargeName = "SweetSpot Price Optimization",
@@ -206,7 +207,8 @@ instance MonadShopify AppM where
                 _createAppChargeReturnUrl =
                   "https://app-staging.sweetspot.dev/api"
                     <> "/charge/activate?shop="
-                    <> showText domain
+                    <> showText domain,
+                _createAppChargeIsTest = env /= Prod
               }
           createAppChargeClient = client (Proxy :: Proxy CreateAppChargeRoute)
       res <- liftIO $ runClientM (createAppChargeClient body token) clientEnv

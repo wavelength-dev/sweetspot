@@ -63,7 +63,9 @@ handleExit = case _ of
   Right _ -> mempty
 
 main :: Effect Unit
-main =
+main = do
+  hostname <- HTML.window >>= Window.location >>= Location.hostname
+  Logging.log LogLevel.Info ("Running Fulcrum on " <> hostname)
   withUserId
     $ \userId -> do
         startCartTokenInterval userId

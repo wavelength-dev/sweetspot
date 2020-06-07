@@ -6,7 +6,7 @@ import Data.Argonaut (class EncodeJson, Json)
 import Data.Argonaut (encodeJson, jsonParser, stringify) as Argonaut
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error, throwError)
 import Effect.Aff (attempt) as Aff
 import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
@@ -44,10 +44,18 @@ getTestMapQueryString = case _ of
 fetchTestMaps :: TestMapProvisions -> Aff (Either String (Array TestMap))
 fetchTestMaps provisions = do
   res <- getJson (testMapEndpoint <> qs) {}
-  text <- Milkis.text res
-  pure (Argonaut.jsonParser text >>= decodeTestMaps)
+  let
+    status = Milkis.statusCode res
+  bodyText <- Milkis.text res
+  when (not (status == 200 || status == 201)) do
+    throwError $ error $ show status <> " - " <> textToMessage bodyText
+  pure (Argonaut.jsonParser bodyText >>= decodeTestMaps)
   where
   qs = getTestMapQueryString provisions
+
+  textToMessage "" = "Empty body"
+
+  textToMessage str = "Body: " <> str
 
 getJson :: forall options. String -> Record options -> Aff Response
 getJson url options = fetch (Milkis.URL url) combinedOptions

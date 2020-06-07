@@ -1,8 +1,9 @@
 {
+  "private": true,
   "dependencies": {
     "@datadog/browser-logs": "^1.12.1"
   },
   "devDependencies": {
-    "terser": "^4.7.0"
+    "parcel": "^2.0.0-alpha.3.2"
   }
 }

@@ -3,10 +3,10 @@ module SweetSpot.Data.Api where
 
 import Data.DateTime (DateTime)
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Iso', Lens')
+import Data.Lens (Iso', Lens', Prism', lens, prism')
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
 import Prim (Array, Number, String)

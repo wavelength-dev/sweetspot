@@ -220,6 +220,7 @@ enhanceCampaign conn domain cmp = do
         _uiCampaignEnd = cmp ^. cmpEnd,
         _uiCampaignLift = infResult,
         _uiCampaignAOVChange = nanToZero $ testAOV / ctrlAOV,
+        _uiCampaignCRChange = nanToZero $ testCR / ctrlCR,
         _uiCampaignCtrlTreatment =
           UITreatment
             { _uiTreatmentCR = nanToZero ctrlCR,

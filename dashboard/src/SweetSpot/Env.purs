@@ -18,7 +18,7 @@ type Config
 config :: Config
 config = case appEnv of
   Local -> { apiUrl: "//localhost:8082" }
-  Remote -> { apiUrl: "/apps/sweetspot" }
+  Remote -> { apiUrl: "" }
 
 apiUrl :: String
 apiUrl = config.apiUrl

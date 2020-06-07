@@ -32,7 +32,9 @@ import SweetSpot.Shopify as Shopify
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toNonElementParentNode)
-import Web.HTML.Window (document) as Window
+import Web.HTML.Location (Location)
+import Web.HTML.Location as Location
+import Web.HTML.Window (document, location) as Window
 
 data RemoteResource a
   = Empty
@@ -102,7 +104,8 @@ mkApp = do
 
 main :: Effect Unit
 main = do
-  Logger.logInfo "SweetSpot Dashboard Started!"
+  hostname <- HTML.window >>= Window.location >>= Location.hostname
+  Logger.logInfo "Dashboard opened on " <> hostname
   mSessionId <- Session.getSessionId
   documentNode <- HTML.window >>= Window.document >>= toNonElementParentNode >>> pure
   mAppElement <- getElementById "app" documentNode

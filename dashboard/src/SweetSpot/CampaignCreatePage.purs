@@ -23,6 +23,7 @@ import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle)
 import SweetSpot.Service (makeCampaign)
+import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
 import SweetSpot.ShopifyHelper (formLayout) as SH
 import SweetSpot.Spacing (large) as Spacing
@@ -108,7 +109,7 @@ variantRowToCreateExperiment variantRow =
     , _createExperimentPrice: readFloat variantRow.testPrice
     }
 
-mkCampaignCreatePage :: Component { products :: Array Product }
+mkCampaignCreatePage :: Component { products :: Array Product, sessionId :: SessionId }
 mkCampaignCreatePage = do
   now <- nowDateTime
   component "CampaignCreatePage" \props -> React.do
@@ -127,7 +128,7 @@ mkCampaignCreatePage = do
 
       onNameChange = mkEffectFn1 setName
 
-      onSubmit = mkEffectFn1 (\_ -> Aff.launchAff_ (makeCampaign createCampaign))
+      onSubmit = mkEffectFn1 (\_ -> Aff.launchAff_ (makeCampaign props.sessionId createCampaign))
 
       unsafeGetVariantById :: String -> Variant
       unsafeGetVariantById id = find (unwrap >>> _._variantId >>> eq id) variants # unsafePartial Maybe.fromJust

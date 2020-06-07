@@ -102,8 +102,8 @@ encodeCreateCampaign createCampaign =
     := map encodeCreateExperiment (view createCampaignExperiments createCampaign)
     ~> jsonEmptyObject
 
-makeCampaign :: CreateCampaign -> Aff (Either String Unit)
-makeCampaign createCampaign =
+makeCampaign :: SessionId -> CreateCampaign -> Aff (Either String Unit)
+makeCampaign (SessionId id) createCampaign =
   let
     options =
       { method: Milkis.postMethod
@@ -112,7 +112,7 @@ makeCampaign createCampaign =
       }
   in
     Aff.attempt
-      (fetch (Milkis.URL (serviceUrl <> "campaigns")) options)
+      (fetch (Milkis.URL (serviceUrl <> "campaigns?session=" <> id)) options)
       >>= case _ of
           Left requestErrMsg -> requestErrMsg # show >>> Left >>> pure
           Right res -> pure $ pure unit

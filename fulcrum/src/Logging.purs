@@ -12,7 +12,7 @@ data LogLevel
   | Warn
   | Error
 
-log :: forall a. Show a => LogLevel -> a -> Effect Unit
+log :: LogLevel -> String -> Effect Unit
 log level message = do
   -- for convenience one can add a query parameter ssdebug to see logs
   -- in console

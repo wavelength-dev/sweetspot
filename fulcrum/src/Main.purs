@@ -19,7 +19,7 @@ import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
-import Fulcrum.Logging (log) as Logging
+import Fulcrum.Logging (LogLevel(..), log, logWithContext) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
@@ -72,12 +72,16 @@ main = do
     $ \userId -> do
         startCartTokenInterval userId
         RunState.initRunQueue
-        Aff.runAff_ Console.logShow do
+        Aff.runAff_ logResult do
           eTestContext <- runExceptT $ getTestMap userId
           case eTestContext of
             Left msg -> throwError (error msg)
             -- We do nothing here as our only goal is to cache the test maps
             Right testContext -> liftEffect $ applyTestMaps testContext
+  where
+  logResult (Left error) = Logging.logWithContext LogLevel.Error "Main failed" { error }
+
+  logResult (Right result) = mempty
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do

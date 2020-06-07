@@ -1,29 +1,27 @@
 #!/bin/bash
 
+set -e
+
 print_filesize() {
   FILE_SIZE=$(du -k ./dist/$1 | cut -f1)
   echo "${FILE_SIZE}K -- $2"
 }
 
-exit_on_fail() {
-  if [ $? -ne 0 ]; then
-    echo $1
-    exit 1
-  fi
-}
-
 echo "=> Building fulcrum"
 START=$(date +%s)
 
-spago bundle-app --to ./dist/fulcrum.js
-exit_on_fail "=> Failed to build fulcrum"
+spago bundle-app --main Fulcrum.Main --to ./fulcrum.js
 echo "=> Finished building fulcrum"
 
-yarn terser --compress --mangle --output ./dist/fulcrum.min.js -- ./dist/fulcrum.js
-exit_on_fail "=> Failed to minify fulcrum"
+# To include node modules in our bundle we need a bundler
+yarn parcel build ./fulcrum.js --no-source-maps
+# mv dist/fulcrum.pre.js dist/fulcrum.min.js
+mv dist/fulcrum.js dist/fulcrum.min.js
+mv fulcrum.js dist/fulcrum.js
+echo "=> Finished bundling dependencies"
 
 gzip --keep --force ./dist/fulcrum.min.js
-exit_on_fail "=> Failed to gzip fulcrum"
+echo "=> Finished compressing"
 
 END=$(date +%s)
 BUILD_TIME=$(( $END - $START ))

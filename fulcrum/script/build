@@ -19,7 +19,7 @@ spago bundle-app --to ./dist/fulcrum.js
 exit_on_fail "=> Failed to build fulcrum"
 echo "=> Finished building fulcrum"
 
-npx uglifyjs --compress --mangle --output ./dist/fulcrum.min.js ./dist/fulcrum.js
+yarn terser --compress --mangle --output ./dist/fulcrum.min.js -- ./dist/fulcrum.js
 exit_on_fail "=> Failed to minify fulcrum"
 
 gzip --keep --force ./dist/fulcrum.min.js

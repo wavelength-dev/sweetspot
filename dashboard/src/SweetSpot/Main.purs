@@ -23,7 +23,6 @@ import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (logInfo) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
-import SweetSpot.Mock (bonoboHat, expensiveJacketsCheapMonkeysCampaign, storewide10Campaign)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
 import SweetSpot.Session (SessionId)
@@ -32,7 +31,6 @@ import SweetSpot.Shopify as Shopify
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toNonElementParentNode)
-import Web.HTML.Location (Location)
 import Web.HTML.Location as Location
 import Web.HTML.Window (document, location) as Window
 
@@ -105,7 +103,7 @@ mkApp = do
 main :: Effect Unit
 main = do
   hostname <- HTML.window >>= Window.location >>= Location.hostname
-  Logger.logInfo "Dashboard opened on " <> hostname
+  Logger.logInfo $ "Dashboard opened on " <> hostname
   mSessionId <- Session.getSessionId
   documentNode <- HTML.window >>= Window.document >>= toNonElementParentNode >>> pure
   mAppElement <- getElementById "app" documentNode

@@ -59,6 +59,7 @@ RUN yarn install
 
 # Use the remote .env file because builds are for use with shopify
 COPY dashboard/.env.remote .env
+COPY dashboard/.postcssrc.js
 COPY dashboard/src src
 COPY dashboard/test test
 RUN spago test

@@ -13,7 +13,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (throw)
 import React.Basic.DOM (render)
 import React.Basic.DOM (text) as R
-import React.Basic.Hooks (Component, component, element, useEffectOnce, useState', (/\))
+import React.Basic.Hooks (Component, component, element, useEffectAlways, useEffectOnce, useState', (/\))
 import React.Basic.Hooks (bind, discard) as React
 import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.CampaignCreatePage (mkCampaignCreatePage)
@@ -33,7 +33,7 @@ import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.Location as Location
-import Web.HTML.Window (document, location) as Window
+import Web.HTML.Window (document, history, location) as Window
 
 data RemoteResource a
   = Empty
@@ -46,12 +46,22 @@ derive instance eqRemoteResource :: Eq a => Eq (RemoteResource a)
 eitherToResource :: Either String ~> RemoteResource
 eitherToResource = either Error Resource
 
+ensureRootHash :: Effect (Effect Unit)
+ensureRootHash = do
+  window <- HTML.window
+  currentHash <- HTML.window >>= Window.location >>= Location.hash
+  history <- HTML.window >>= Window.history
+  when (currentHash == "") do
+     HTML.window >>= Window.location >>= Location.setHash "#/"
+  pure mempty
+
 mkApp :: Component { sessionId :: SessionId }
 mkApp = do
   campaignListPage <- mkCampaignListPage
   campaignViewPage <- mkCampaignViewPage
   campaignCreatePage <- mkCampaignCreatePage
   component "App" \props -> React.do
+    useEffectAlways ensureRootHash
     route /\ setRoute <- useState' CampaignList
     useEffectOnce (useRouter setRoute)
     campaignsResource /\ setCampaignsResource <- useState' Empty

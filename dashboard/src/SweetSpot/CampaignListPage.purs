@@ -70,7 +70,6 @@ campaignStatus status =
                 Finished _ -> "#BBE5B3"
           , border: "0.125em solid #FFFFFF"
           , borderRadius: "6.25em"
-          , fontFamily: "SF Pro Text"
           , fontColor: "#212B36"
           , fontStyle: "normal"
           , fontWeight: "normal"

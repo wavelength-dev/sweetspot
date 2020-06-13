@@ -5,16 +5,6 @@
   --colorRed: #de3618;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p {
-  font-family: SF Pro Text;
-}
-
 .status {
   display: flex;
   justify-content: space-around;
@@ -74,7 +64,6 @@ p {
 }
 
 .resultAmount {
-  font-family: SF Pro Display;
   font-weight: 600;
   font-size: 28px;
   line-height: 32px;
@@ -82,7 +71,6 @@ p {
 }
 
 .resultAmount__big {
-  font-family: SF Pro Display;
   font-weight: 600;
   font-size: 42px;
   line-height: 32px;
@@ -90,7 +78,6 @@ p {
 }
 
 .resultLabel {
-  font-family: SF Pro Text;
   font-style: normal;
   font-weight: normal;
   font-size: 14px;

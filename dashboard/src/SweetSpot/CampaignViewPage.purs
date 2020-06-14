@@ -106,7 +106,7 @@ mkCampaignViewPage =
                   , children:
                       [ SH.textContainer
                           [ SH.heading H2 "Revenue per visitor"
-                          , R.p_ [ R.text "The percentage of users that buy one of your products under test." ]
+                          , R.p_ [ R.text "The answer to the most important question: if you were to switch to your new prices, what would the effect be on the revenue per visitor." ]
                           ]
                       , Spacing.large
                       , R.div

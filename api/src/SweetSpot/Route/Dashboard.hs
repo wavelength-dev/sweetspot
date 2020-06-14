@@ -132,9 +132,14 @@ createCampaignExperiment domain cmpId ce = do
 stopCampaignHandler :: CampaignId -> SessionId -> ServerM OkResponse
 stopCampaignHandler campaignId sessionId = runAppM $ do
   authorized <- campaignBelongsToShop sessionId campaignId
-  if authorized
-    then stopCampaign campaignId >> pure OkResponse {message = "Campaign stopped"}
-    else throwError unauthorizedErr
+  shopDomain <- validateSessionId sessionId
+  case (authorized, shopDomain) of
+    (True, Just domain) ->
+      stopCampaign campaignId
+        >> getTestVariantIds campaignId
+        >>= traverse_ (deleteProduct domain)
+        >> pure OkResponse {message = "Campaign stopped"}
+    _ -> throwError unauthorizedErr
 
 dashboardHandler =
   getProductsHandler

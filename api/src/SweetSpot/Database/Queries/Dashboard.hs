@@ -53,6 +53,7 @@ class Monad m => DashboardDB m where
   unsafeGetShopMoneyFormat :: ShopDomain -> m MoneyFormat
   campaignBelongsToShop :: SessionId -> CampaignId -> m Bool
   stopCampaign :: CampaignId -> m ()
+  getTestVariantIds :: CampaignId -> m [Pid]
 
 instance DashboardDB AppM where
   createCampaign domain cc = withConn $ \conn -> do
@@ -176,6 +177,12 @@ instance DashboardDB AppM where
         (\cmp -> cmp ^. cmpEnd <-. just_ nowUTC_)
         (\cmp -> cmp ^. cmpId ==. val_ cmpId')
 
+  getTestVariantIds cmpId' = withConn $ \conn ->
+     runBeamPostgres conn
+      $ runSelectReturningList
+      $ select
+      $ view pvProductId <$> selectUITreatmentVariants cmpId' 1
+
 enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
 enhanceCampaign conn domain cmp = do
   let cmpId' = cmp ^. cmpId
@@ -192,11 +199,11 @@ enhanceCampaign conn domain cmp = do
       testConvLen = V.length testRevs
       testCR = fromIntegral testConvLen / fromIntegral (testConvLen + testNils)
       testAOV = mean testRevs
-      toUITreatmentVariant (title, sku, price) =
+      toUITreatmentVariant v =
         UITreatmentVariant
-          { _uiTreatmentVariantTitle = title,
-            _uiTreatmentSku = sku,
-            _uiTreatmentVariantPrice = formatPrice moneyFormat price
+          { _uiTreatmentVariantTitle = v ^. pvTitle,
+            _uiTreatmentSku = v ^. pvSku,
+            _uiTreatmentVariantPrice = formatPrice moneyFormat $ v ^. pvPrice
           }
   infResult <-
     runInference
@@ -251,7 +258,8 @@ selectUITreatmentVariants cmpId' treat' = do
   guard_ (_trProductVariantId treatment `references_` variant)
   guard_ (treatment ^. trCmpId ==. val_ cmpId')
   guard_ (treatment ^. trTreatment ==. val_ treat')
-  pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
+  pure variant
+  --pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
 
 selectShopCampaigns domain = do
   shop <- matchShop domain

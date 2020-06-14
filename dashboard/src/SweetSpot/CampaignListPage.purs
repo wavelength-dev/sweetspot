@@ -160,7 +160,13 @@ mkCampaignListPage =
       $ element Shopify.page
           { title: notNull "Price Experiment List"
           , subtitle: notNull "All tests currently running, or finished."
-          , primaryAction: notNull { content: "Create Price Experiment", url: "#/create" }
+          , primaryAction:
+              notNull
+                { content: "Create Price Experiment"
+                , url: notNull "#/create"
+                , primary: true
+                , onAction: null
+                }
           , breadcrumbs: []
           , children:
               [ R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ] ]

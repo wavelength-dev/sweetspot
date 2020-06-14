@@ -1,7 +1,6 @@
 module SweetSpot.Main where
 
 import Prelude
-
 import Data.Array (find)
 import Data.Array (null) as Array
 import Data.Either (Either(..), either)
@@ -51,7 +50,7 @@ ensureRootHash = do
   currentHash <- HTML.window >>= Window.location >>= Location.hash
   history <- HTML.window >>= Window.history
   when (currentHash == "") do
-     HTML.window >>= Window.location >>= Location.setHash "#/"
+    HTML.window >>= Window.location >>= Location.setHash "#/"
   pure mempty
 
 mkApp :: Component { sessionId :: SessionId }
@@ -73,15 +72,15 @@ mkApp = do
           <$> Aff.parallel (Aff.attempt $ Service.fetchCampaigns props.sessionId)
           <*> Aff.parallel (Aff.attempt $ Service.fetchProducts props.sessionId)
       liftEffect case eCampaigns of
-           Left error -> do
-              setCampaignsResource (Error "failed to fetch campaigns")
-              Logger.logError (show error)
-           Right products -> setCampaignsResource $ Resource products
+        Left error -> do
+          setCampaignsResource (Error "failed to fetch campaigns")
+          Logger.logError (show error)
+        Right products -> setCampaignsResource $ Resource products
       liftEffect case eProducts of
-           Left error -> do
-              setProductsResource (Error "failed to fetch products")
-              Logger.logError (show error)
-           Right products -> setProductsResource $ Resource products
+        Left error -> do
+          setProductsResource (Error "failed to fetch products")
+          Logger.logError (show error)
+        Right products -> setProductsResource $ Resource products
       pure unit
     pure
       $ element Shopify.appProvider

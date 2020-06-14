@@ -64,7 +64,7 @@ decodeUICampaign json = do
   _uiCampaignName <- obj .: "_uiCampaignName"
   _uiCampaignStart <- obj .: "_uiCampaignStart" >>= parseDateTime
   _uiCampaignEnd <- obj .: "_uiCampaignEnd" >>= parseDateTime
-  _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult
+  _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult <#> Just
   _uiCampaignAOVChange <- obj .: "_uiCampaignAOVChange"
   _uiCampaignCRChange <- obj .: "_uiCampaignCRChange"
   _uiCampaignCtrlTreatment <- obj .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment

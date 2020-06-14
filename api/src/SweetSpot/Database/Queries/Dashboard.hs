@@ -75,12 +75,7 @@ instance DashboardDB AppM where
 
   createExperiment args = withConn $ \conn -> do
     let domain = args ^. insertExperimentShopDomain
-    Just shopId <- runBeamPostgres conn
-      $ runSelectReturningOne
-      $ select
-      $ do
-        row <- matchShop domain
-        pure $ row ^. shopId
+    shopId <- unsafeFindShopId conn domain
     [dbVariant] <-
       runBeamPostgres conn
         $ runInsertReturningList

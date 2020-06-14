@@ -57,28 +57,27 @@ class Monad m => DashboardDB m where
 
 instance DashboardDB AppM where
   createCampaign domain cc = withConn $ \conn -> do
-    shopId <- unsafeFindShopId conn domain
     [newCmp] <-
-      runBeamPostgres conn
-        $ BeamExt.runInsertReturningList
-        $ insert (db ^. campaigns)
-        $ insertExpressions
-          [ Campaign
-              { _cmpId = campaignId_,
-                _cmpShopId = val_ $ ShopKey shopId,
-                _cmpName = val_ $ cc ^. createCampaignName,
-                _cmpStart = just_ nowUTC_,
-                _cmpEnd = val_ $ cc ^. createCampaignEnd
-              }
-          ]
+      runBeamPostgres conn $ do
+        shopId <- unsafeFindShopId domain
+        BeamExt.runInsertReturningList
+          $ insert (db ^. campaigns)
+          $ insertExpressions
+            [ Campaign
+                { _cmpId = campaignId_,
+                  _cmpShopId = val_ $ ShopKey shopId,
+                  _cmpName = val_ $ cc ^. createCampaignName,
+                  _cmpStart = just_ nowUTC_,
+                  _cmpEnd = val_ $ cc ^. createCampaignEnd
+                }
+            ]
     pure $ newCmp ^. cmpId
 
   createExperiment args = withConn $ \conn -> do
     let domain = args ^. insertExperimentShopDomain
-    shopId <- unsafeFindShopId conn domain
-    [dbVariant] <-
-      runBeamPostgres conn
-        $ runInsertReturningList
+    runBeamPostgres conn $ do
+      shopId <- unsafeFindShopId domain
+      [dbVariant] <- runInsertReturningList
         $ insert (db ^. productVariants)
         $ insertExpressions
           [ ProductVariant
@@ -92,16 +91,16 @@ instance DashboardDB AppM where
                 _pvCurrency = val_ "USD"
               }
           ]
-    runBeamPostgres conn
-      $ runInsert
-      $ insert (db ^. treatments)
-      $ insertExpressions
-        [ Treatment
-            { _trCmpId = val_ $ CampaignKey $ args ^. insertExperimentCampaignId,
-              _trTreatment = val_ $ args ^. insertExperimentTreatment,
-              _trProductVariantId = val_ $ PVariantKey $ dbVariant ^. pvId
-            }
-        ]
+
+      runInsert
+        $ insert (db ^. treatments)
+        $ insertExpressions
+          [ Treatment
+              { _trCmpId = val_ $ CampaignKey $ args ^. insertExperimentCampaignId,
+                _trTreatment = val_ $ args ^. insertExperimentTreatment,
+                _trProductVariantId = val_ $ PVariantKey $ dbVariant ^. pvId
+              }
+          ]
 
   getCampaigns domain = withConn $ \conn -> do
     cmps <-

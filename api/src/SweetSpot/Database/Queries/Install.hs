@@ -79,35 +79,33 @@ instance InstallDB AppM where
       pure $ rows ^. shopOAuthToken
 
   insertAppCharge domain charge = withConn $ \conn -> do
-    shopId' <- unsafeFindShopId conn domain
     [row] <-
-      runBeamPostgres conn
-        $ BeamExt.runInsertReturningList
-        $ insert (db ^. appCharges)
-        $ insertExpressions
-          [ AppCharge
-              { _appChargeId = pgGenUUID_,
-                _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
-                _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
-                _appChargeShopId = val_ $ ShopKey shopId',
-                _appChargeName = val_ $ charge ^. createAppChargeResName,
-                _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
-                _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
-                _appChargeConfirmationUrl = val_ $ charge ^. createAppChargeResConfirmationUrl
-              }
-          ]
+      runBeamPostgres conn $ do
+        shopId' <- unsafeFindShopId domain
+        BeamExt.runInsertReturningList
+          $ insert (db ^. appCharges)
+          $ insertExpressions
+            [ AppCharge
+                { _appChargeId = pgGenUUID_,
+                  _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
+                  _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
+                  _appChargeShopId = val_ $ ShopKey shopId',
+                  _appChargeName = val_ $ charge ^. createAppChargeResName,
+                  _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
+                  _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
+                  _appChargeConfirmationUrl = val_ $ charge ^. createAppChargeResConfirmationUrl
+                }
+            ]
     pure row
 
-  getAppCharge domain = withConn $ \conn -> do
-    shopId' <- unsafeFindShopId conn domain
-    fromJust
-      <$> ( runBeamPostgres conn
-              $ runSelectReturningOne
-              $ select
-              $ filter_
-                ((==. val_ shopId') . (^. appChargeShopId))
-                (all_ (db ^. appCharges))
-          )
+  getAppCharge domain = withConn $ \conn ->
+    runBeamPostgres conn $ do
+      shopId' <- unsafeFindShopId domain
+      fromJust <$> (runSelectReturningOne
+        $ select
+        $ filter_
+          ((==. val_ shopId') . (^. appChargeShopId))
+          (all_ (db ^. appCharges)))
 
   updateAppChargeStatus chargeId status = withConn $ \conn ->
     runBeamPostgres conn

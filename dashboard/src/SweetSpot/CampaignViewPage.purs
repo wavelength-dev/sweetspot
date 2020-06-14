@@ -6,10 +6,12 @@ import Data.Array (zip) as Array
 import Data.DateTime (DateTime)
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
-import Data.Lens (view)
+import Data.Lens (_Just, view, (^.), (^?))
 import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe as Maybe
 import Data.Nullable (notNull, null)
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_) as Aff
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
@@ -61,33 +63,40 @@ data Direction
 numberToDirection :: Number -> Direction
 numberToDirection num = if num >= 0.0 then Up else Down
 
-getIndicatorArrow :: Boolean -> Direction -> JSX
-getIndicatorArrow big direction = case direction, big of
-  Up, true -> R.div { className: styles.arrowUpBig }
-  Down, true -> R.div { className: styles.arrowDownBig }
-  Up, false -> R.div { className: styles.arrowUp }
-  Down, false -> R.div { className: styles.arrowDown }
+data Size
+  = Normal
+  | Big
 
-resultIndicator :: String -> String -> Maybe Direction -> JSX
-resultIndicator amount label directionIndicator =
-  R.div
-    { className: styles.resultIndicator
-    , children:
-        [ maybe empty (getIndicatorArrow false) directionIndicator
-        , R.div { className: styles.resultAmount, children: [ R.text amount ] }
-        , R.div { className: styles.resultLabel, children: [ R.text label ] }
-        ]
-    }
+getIndicatorArrow :: Size -> Direction -> JSX
+getIndicatorArrow big direction = case direction, big of
+  Up, Big -> R.div { className: styles.arrowUpBig }
+  Down, Big -> R.div { className: styles.arrowDownBig }
+  Up, Normal -> R.div { className: styles.arrowUp }
+  Down, Normal -> R.div { className: styles.arrowDown }
+
+resultIndicator :: Maybe String -> String -> Maybe Direction -> JSX
+resultIndicator mAmount label directionIndicator =
+  let
+    amount = Maybe.fromMaybe "--" mAmount
+  in
+    R.div
+      { className: styles.resultIndicator
+      , children:
+          [ maybe empty (getIndicatorArrow Normal) directionIndicator
+          , R.div { className: styles.resultAmount, children: [ R.text amount ] }
+          , R.div { className: styles.resultLabel, children: [ R.text label ] }
+          ]
+      }
 
 mkCampaignViewPage :: Component { campaign :: UICampaign, sessionId :: SessionId }
 mkCampaignViewPage =
   component "CampaignViewPage" \{ campaign, sessionId } -> React.do
     let
-      campaignId = view uiCampaignId campaign
+      campaignId = campaign ^. uiCampaignId
 
-      name = view uiCampaignName campaign
+      name = campaign ^. uiCampaignName
 
-      start = view uiCampaignStart campaign
+      start = campaign ^. uiCampaignStart
 
       controlConversion = view (uiCampaignCtrlTreatment <<< uiTreatmentCR) campaign
 
@@ -127,15 +136,12 @@ mkCampaignViewPage =
                           { className: styles.revenueResults
                           , children:
                               [ resultIndicator
-                                  (getLowerBound campaign)
+                                  (campaign ^? _lowerBound <#> formatPercentage)
                                   "lower"
                                   Nothing
-                              , meanIndicator
-                                  (getMean campaign)
-                                  "mean"
-                                  (getDirection campaign)
+                              , meanIndicator campaign
                               , resultIndicator
-                                  (getUpperBound campaign)
+                                  (campaign ^? _upperBound <#> formatPercentage)
                                   "upper"
                                   Nothing
                               ]
@@ -155,17 +161,17 @@ mkCampaignViewPage =
                           { className: styles.revenueResults
                           , children:
                               [ resultIndicator
-                                  (controlConversion # toPercentage >>> formatPercentage)
+                                  (controlConversion <#> fractionToPercentage >>> formatPercentage)
                                   "control"
                                   Nothing
                               , resultIndicator
-                                  (testConversion # toPercentage >>> formatPercentage)
+                                  (testConversion <#> fractionToPercentage >>> formatPercentage)
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (conversionChange # factorToPercent >>> formatPercentage)
+                                  (conversionChange <#> factorToPercent >>> formatPercentage)
                                   "change"
-                                  (conversionChange # factorToPercent >>> numberToDirection >>> Just)
+                                  (conversionChange <#> factorToPercent >>> numberToDirection)
                               ]
                           }
                       ]
@@ -183,17 +189,17 @@ mkCampaignViewPage =
                           { className: styles.revenueResults
                           , children:
                               [ resultIndicator
-                                  (campaign # view controlAverageOrderValueOptic)
+                                  (campaign ^. _controlAverageOrderValue # Just)
                                   "control"
                                   Nothing
                               , resultIndicator
-                                  (campaign # view testAverageOrderValueOptic)
+                                  (campaign ^. _testAverageOrderValue # Just)
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (campaign # getAverageOrderValueChange)
+                                  (campaign # getAverageOrderValueChange >>> Just)
                                   "change"
-                                  (averageOrderValueChange # numberToDirection >>> Just)
+                                  (averageOrderValueChange <#> numberToDirection)
                               ]
                           }
                       ]
@@ -215,15 +221,23 @@ mkCampaignViewPage =
   where
   factorToPercent = (sub 1.0) >>> (mul 100.0)
 
-  controlVariantsOptic = uiCampaignCtrlTreatment <<< uiTreatmentVariants
+  _controlVariants = uiCampaignCtrlTreatment <<< uiTreatmentVariants
 
-  testVariantsOptic = uiCampaignTestTreatment <<< uiTreatmentVariants
+  _testVariants = uiCampaignTestTreatment <<< uiTreatmentVariants
+
+  _controlAverageOrderValue = uiCampaignCtrlTreatment <<< uiTreatmentAOV
+
+  _testAverageOrderValue = uiCampaignTestTreatment <<< uiTreatmentAOV
+
+  _lowerBound = uiCampaignLift <<< _Just <<< lowerBound
+
+  _upperBound = uiCampaignLift <<< _Just <<< upperBound
 
   campaignToProductRows campaign =
     let
-      controlVariants = view controlVariantsOptic campaign
+      controlVariants = view _controlVariants campaign
 
-      testVariants = view testVariantsOptic campaign
+      testVariants = view _testVariants campaign
 
       variantPairToRow (Tuple controlVariant testVariant) =
         [ view uiTreatmentVariantTitle controlVariant
@@ -234,46 +248,43 @@ mkCampaignViewPage =
     in
       map variantPairToRow (Array.zip controlVariants testVariants)
 
-  controlAverageOrderValueOptic = uiCampaignCtrlTreatment <<< uiTreatmentAOV
-
-  testAverageOrderValueOptic = uiCampaignTestTreatment <<< uiTreatmentAOV
-
   getAverageOrderValueChange campaign =
-    let
-      controlAverageOrderValue = view controlAverageOrderValueOptic campaign
-
-      testAverageOrderValue = view testAverageOrderValueOptic campaign
-    in
-      (view controlAverageOrderValueOptic campaign) <> " / " <> (view testAverageOrderValueOptic campaign)
-
-  getMean = view (uiCampaignLift <<< mean) >>> formatPercentage
-
-  getLowerBound = view (uiCampaignLift <<< lowerBound) >>> formatPercentage
-
-  getUpperBound = view (uiCampaignLift <<< upperBound) >>> formatPercentage
-
-  getDirection = view (uiCampaignLift <<< mean) >>> numberToDirection
+      (campaign ^. _controlAverageOrderValue) <> " / " <> (campaign ^. _testAverageOrderValue)
 
   formatPercentage =
     Formatter.format
       (Formatter { abbreviations: false, after: 1, before: 1, comma: false, sign: true })
       >>> (_ <> "%")
 
-  toPercentage num = num * 100.0
+  fractionToPercentage = mul 100.0
 
-  meanIndicator amount label direction =
-    R.div
-      { className: styles.resultIndicator
-      , children:
-          [ getIndicatorArrow true direction
-          , Spacing.small
-          , R.div
-              { className: styles.resultAmount__big
-              , children: [ R.text amount ]
-              }
-          , R.div
-              { className: styles.resultLabel
-              , children: [ R.text label ]
-              }
-          ]
-      }
+  meanIndicator campaign =
+    let
+      mMean = campaign ^? uiCampaignLift <<< _Just <<< mean :: Maybe Number
+
+      mDirection = mMean <#> numberToDirection
+
+      meanAmount /\ arrow = case mMean of
+        Just meanAmount ->
+          let
+            direction = numberToDirection meanAmount
+
+            arrow = getIndicatorArrow Big direction
+          in
+            show meanAmount /\ arrow
+        Nothing -> "--" /\ mempty
+    in
+      R.div
+        { className: styles.resultIndicator
+        , children:
+            [ maybe empty (\dir -> getIndicatorArrow Big dir <> Spacing.small) mDirection
+            , R.div
+                { className: styles.resultAmount__big
+                , children: [ R.text meanAmount ]
+                }
+            , R.div
+                { className: styles.resultLabel
+                , children: [ R.text "mean" ]
+                }
+            ]
+        }

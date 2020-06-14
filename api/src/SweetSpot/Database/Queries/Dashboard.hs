@@ -28,7 +28,7 @@ import SweetSpot.Database.Queries.Util
     withConn,
   )
 import SweetSpot.Database.Schema
-import SweetSpot.Util (formatPrice, nanToZero)
+import SweetSpot.Util (formatPrice, nanToNothing, nanToZero)
 
 data InsertExperiment
   = InsertExperiment
@@ -226,11 +226,11 @@ enhanceCampaign conn domain cmp = do
         _uiCampaignStart = cmp ^. cmpStart,
         _uiCampaignEnd = cmp ^. cmpEnd,
         _uiCampaignLift = infResult,
-        _uiCampaignAOVChange = nanToZero $ testAOV / ctrlAOV,
-        _uiCampaignCRChange = nanToZero $ testCR / ctrlCR,
+        _uiCampaignAOVChange = nanToNothing $ testAOV / ctrlAOV,
+        _uiCampaignCRChange = nanToNothing $ testCR / ctrlCR,
         _uiCampaignCtrlTreatment =
           UITreatment
-            { _uiTreatmentCR = nanToZero ctrlCR,
+            { _uiTreatmentCR = nanToNothing ctrlCR,
               _uiTreatmentAOV =
                 nanToZero ctrlAOV
                   & fromFloatDigits
@@ -241,7 +241,7 @@ enhanceCampaign conn domain cmp = do
             },
         _uiCampaignTestTreatment =
           UITreatment
-            { _uiTreatmentCR = nanToZero testCR,
+            { _uiTreatmentCR = nanToNothing testCR,
               _uiTreatmentAOV =
                 nanToZero testAOV
                   & fromFloatDigits

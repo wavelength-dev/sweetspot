@@ -44,9 +44,9 @@ newtype UICampaign =
     , _uiCampaignName :: String
     , _uiCampaignStart :: Maybe DateTime
     , _uiCampaignEnd :: Maybe DateTime
-    , _uiCampaignLift :: InfResult
-    , _uiCampaignAOVChange :: Number
-    , _uiCampaignCRChange :: Number
+    , _uiCampaignLift :: Maybe InfResult
+    , _uiCampaignAOVChange :: Maybe Number
+    , _uiCampaignCRChange :: Maybe Number
     , _uiCampaignCtrlTreatment :: UITreatment
     , _uiCampaignTestTreatment :: UITreatment
     }
@@ -56,7 +56,7 @@ derive instance genericUICampaign :: Generic UICampaign _
 derive instance newtypeUICampaign :: Newtype UICampaign _
 
 --------------------------------------------------------------------------------
-_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: InfResult, _uiCampaignAOVChange :: Number, _uiCampaignCRChange :: Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
+_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: Maybe InfResult, _uiCampaignAOVChange :: Maybe Number, _uiCampaignCRChange :: Maybe Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment}
 _UICampaign = _Newtype
 
 uiCampaignId :: Lens' UICampaign String
@@ -71,13 +71,13 @@ uiCampaignStart = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignStart")
 uiCampaignEnd :: Lens' UICampaign (Maybe DateTime)
 uiCampaignEnd = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignEnd")
 
-uiCampaignLift :: Lens' UICampaign InfResult
+uiCampaignLift :: Lens' UICampaign (Maybe InfResult)
 uiCampaignLift = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignLift")
 
-uiCampaignAOVChange :: Lens' UICampaign Number
+uiCampaignAOVChange :: Lens' UICampaign (Maybe Number)
 uiCampaignAOVChange = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignAOVChange")
 
-uiCampaignCRChange :: Lens' UICampaign Number
+uiCampaignCRChange :: Lens' UICampaign (Maybe Number)
 uiCampaignCRChange = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignCRChange")
 
 uiCampaignCtrlTreatment :: Lens' UICampaign UITreatment
@@ -89,7 +89,7 @@ uiCampaignTestTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignTestTr
 --------------------------------------------------------------------------------
 newtype UITreatment =
     UITreatment {
-      _uiTreatmentCR :: Number
+      _uiTreatmentCR :: Maybe Number
     , _uiTreatmentAOV :: String
     , _uiTreatmentVariants :: Array UITreatmentVariant
     }
@@ -99,10 +99,10 @@ derive instance genericUITreatment :: Generic UITreatment _
 derive instance newtypeUITreatment :: Newtype UITreatment _
 
 --------------------------------------------------------------------------------
-_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Number, _uiTreatmentAOV :: String, _uiTreatmentVariants :: Array UITreatmentVariant}
+_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Maybe Number, _uiTreatmentAOV :: String, _uiTreatmentVariants :: Array UITreatmentVariant}
 _UITreatment = _Newtype
 
-uiTreatmentCR :: Lens' UITreatment Number
+uiTreatmentCR :: Lens' UITreatment (Maybe Number)
 uiTreatmentCR = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentCR")
 
 uiTreatmentAOV :: Lens' UITreatment String

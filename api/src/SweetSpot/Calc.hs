@@ -13,7 +13,7 @@ import RIO.Vector.Unboxed.Partial as VP
 import Statistics.Resampling
 import Statistics.Sample (mean)
 import SweetSpot.Data.Api (InfResult (..))
-import SweetSpot.Util (nanToZero)
+import SweetSpot.Util (nanToNothing)
 import System.Random.MWC (GenIO, createSystemRandom, uniformR)
 
 data InfParams
@@ -30,7 +30,7 @@ getSample (InfParams cs nils) = cs <> V.replicate nils 0.0
 
 randomElement :: GenIO -> Vector Double -> IO Double
 randomElement gen v = do
-  idx <- uniformR (0, (V.length v) - 1) gen
+  idx <- uniformR (0, V.length v - 1) gen
   return $ v ! idx
 
 compareRandomPair :: GenIO -> Vector Double -> Vector Double -> IO Double
@@ -39,7 +39,7 @@ compareRandomPair gen cMeans tMeans = do
   tMean <- randomElement gen tMeans
   return $ tMean / cMean
 
-runInference :: InfParams -> InfParams -> IO InfResult
+runInference :: InfParams -> InfParams -> IO (Maybe InfResult)
 runInference cParams tParams = do
   gen <- createSystemRandom
   cMeans <- resample' gen (getSample cParams)
@@ -49,12 +49,17 @@ runInference cParams tParams = do
       len = V.length sorted
       nTails = floor $ fromIntegral len * 0.05
       middle90 = V.slice nTails (len - nTails) sorted
-  return
-    InfResult
-      { _mean = nanToZero $ mean sorted,
-        _lowerBound = nanToZero $ VP.head middle90,
-        _upperBound = nanToZero $ VP.last middle90
-      }
+
+  pure $ case (nanToNothing (mean sorted),
+        nanToNothing (VP.head middle90),
+        nanToNothing (VP.last middle90)) of
+    (Just mean, Just lowerBound, Just upperBound) ->
+      Just $ InfResult
+        { _mean = mean,
+          _lowerBound = lowerBound,
+          _upperBound = upperBound
+        }
+    _ -> Nothing
   where
     resample' gen s =
       resamples . snd . L.head <$> resample gen [Mean] 1000 s

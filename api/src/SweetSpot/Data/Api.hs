@@ -80,9 +80,9 @@ instance FromJSON Product
 -- | ---------------------------------------------------------------------------
 data InfResult
   = InfResult
-      { _lowerBound :: Double,
-        _upperBound :: Double,
-        _mean :: Double
+      { _lowerBound :: !Double,
+        _upperBound :: !Double,
+        _mean :: !Double
       }
   deriving (Eq, Show, Generic)
 
@@ -112,7 +112,7 @@ instance FromJSON UITreatmentVariant
 -- | ---------------------------------------------------------------------------
 data UITreatment
   = UITreatment
-      { _uiTreatmentCR :: !Double,
+      { _uiTreatmentCR :: !(Maybe Double),
         _uiTreatmentAOV :: !FormattedPrice,
         _uiTreatmentVariants :: [UITreatmentVariant]
       }
@@ -133,9 +133,9 @@ data UICampaign
         _uiCampaignName :: !Text,
         _uiCampaignStart :: !(Maybe UTCTime),
         _uiCampaignEnd :: !(Maybe UTCTime),
-        _uiCampaignLift :: !InfResult,
-        _uiCampaignAOVChange :: !Double,
-        _uiCampaignCRChange :: !Double,
+        _uiCampaignLift :: !(Maybe InfResult),
+        _uiCampaignAOVChange :: !(Maybe Double),
+        _uiCampaignCRChange :: !(Maybe Double),
         _uiCampaignCtrlTreatment :: !UITreatment,
         _uiCampaignTestTreatment :: !UITreatment
       }

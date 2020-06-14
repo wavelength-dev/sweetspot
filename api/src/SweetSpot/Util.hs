@@ -1,5 +1,6 @@
 module SweetSpot.Util
-  ( nanToZero,
+  ( nanToNothing,
+    nanToZero,
     formatPrice,
   )
 where
@@ -10,6 +11,9 @@ import qualified RIO.List as L
 import qualified RIO.Text as T
 import qualified RIO.Text.Partial as T
 import SweetSpot.Data.Common
+
+nanToNothing :: Double -> Maybe Double
+nanToNothing double = if isNaN double then Nothing else Just double
 
 nanToZero :: Double -> Double
 nanToZero double = if isNaN double then 0 else double

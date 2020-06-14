@@ -108,7 +108,7 @@ mkApp = do
                     Error err -> R.text ("ERROR: " <> err)
                     Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of
                       Nothing -> R.text "ERROR: campaign not found"
-                      Just campaign -> campaignViewPage { campaign: campaign }
+                      Just campaign -> campaignViewPage { campaign: campaign, sessionId: props.sessionId }
               ]
           }
   where

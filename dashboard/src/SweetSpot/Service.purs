@@ -1,7 +1,6 @@
 module SweetSpot.Service where
 
 import Prelude
-
 import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (throwError)
 import Data.Argonaut (Json, jsonEmptyObject, jsonParser, (:=), (~>))
@@ -11,14 +10,17 @@ import Data.Lens (view)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, Error, error)
 import Effect.Aff (attempt) as Aff
+import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow) as Unsafe
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
+import SweetSpot.CampaignListPage (CampaignId)
 import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentPrice, createExperimentProductId)
 import SweetSpot.Data.Codec (decodeProducts, decodeUICampaigns) as Codec
 import SweetSpot.Env (apiUrl) as Env
+import SweetSpot.Logger as Logger
 import SweetSpot.QueryString (buildQueryString) as QueryString
 import SweetSpot.Session (SessionId(..))
 
@@ -117,3 +119,24 @@ makeCampaign (SessionId id) createCampaign =
       >>= case _ of
           Left requestErrMsg -> requestErrMsg # show >>> Left >>> pure
           Right res -> pure $ pure unit
+
+stopCampaign :: SessionId -> CampaignId -> Aff Unit
+stopCampaign (SessionId sessionId) campaignId = do
+  let
+    options = { method: Milkis.postMethod }
+
+    url =
+      Milkis.URL
+        ( serviceUrl
+            <> "campaigns/"
+            <> campaignId
+            <> "/stop"
+            <> "?session="
+            <> sessionId
+        )
+  res <- fetch url options
+  let
+    status = Milkis.statusCode res
+  body <- Milkis.text res
+  unless (status == 200) do
+    liftEffect $ Logger.logErrorContext "failed to stop experiment" { body }

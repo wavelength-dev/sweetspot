@@ -1,6 +1,7 @@
 module SweetSpot.CampaignViewPage where
 
 import Prelude
+
 import Data.Array (zip) as Array
 import Data.DateTime (DateTime)
 import Data.Formatter.Number (Formatter(..))
@@ -9,10 +10,13 @@ import Data.Lens (view)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (notNull, null)
 import Data.Tuple (Tuple(..))
+import Effect.Aff (launchAff_) as Aff
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty)
-import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
+import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
+import SweetSpot.Service (stopCampaign) as Service
+import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (card, dataTable, page) as Shopify
 import SweetSpot.ShopifyHelper (ElementTag(..))
 import SweetSpot.ShopifyHelper (heading, textContainer) as SH
@@ -75,10 +79,12 @@ resultIndicator amount label directionIndicator =
         ]
     }
 
-mkCampaignViewPage :: Component { campaign :: UICampaign }
+mkCampaignViewPage :: Component { campaign :: UICampaign, sessionId :: SessionId }
 mkCampaignViewPage =
-  component "CampaignViewPage" \{ campaign } -> React.do
+  component "CampaignViewPage" \{ campaign, sessionId } -> React.do
     let
+      campaignId = view uiCampaignId campaign
+
       name = view uiCampaignName campaign
 
       start = view uiCampaignStart campaign
@@ -90,12 +96,20 @@ mkCampaignViewPage =
       averageOrderValueChange = view uiCampaignAOVChange campaign
 
       conversionChange = view uiCampaignCRChange campaign
+
+      onStopCampaign = Service.stopCampaign sessionId campaignId # Aff.launchAff_
     pure
       $ element Shopify.page
           { title: notNull name
           , subtitle: null
           , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
-          , primaryAction: null
+          , primaryAction:
+              notNull
+                { content: "Stop Experiment"
+                , url: null
+                , primary: false
+                , onAction: notNull onStopCampaign
+                }
           , children:
               [ R.div
                   { className: styles.status

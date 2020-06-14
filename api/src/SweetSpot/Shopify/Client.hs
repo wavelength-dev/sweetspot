@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module SweetSpot.Shopify.Client where
 
 import Control.Lens
@@ -48,6 +46,12 @@ type CreateProductRoute =
     :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
+type DeleteProductRoute =
+  "admin" :> "api" :> ApiVersion :> "products"
+    :> Capture "productId" Text
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Delete '[JSON] NoContent
+
 type RegisterWebhookRoute =
   "admin" :> "api" :> ApiVersion :> "webhooks.json"
     :> ReqBody '[JSON] CreateWebhookReq
@@ -89,6 +93,7 @@ class Monad m => MonadShopify m where
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text ShopProduct)
+  deleteProduct :: ShopDomain -> Pid -> m (Either  Text ())
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
   createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
@@ -133,7 +138,7 @@ instance MonadShopify AppM where
       res <-
         liftIO $
           runClientM
-            (getProductJsonClient ((toQueryParam productId) <> ".json") token)
+            (getProductJsonClient (toQueryParam productId <> ".json") token)
             clientEnv
       return $ case res of
         Left err -> Left $ "Error fetching product json: " <> tshow err
@@ -148,6 +153,14 @@ instance MonadShopify AppM where
         Right body -> case parse parseJSON (body ^?! key "product") of
           Success product -> Right product
           Error err -> Left . T.pack $ err
+
+  deleteProduct domain (Pid pid) =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let deleteProductClient = client (Proxy :: Proxy DeleteProductRoute)
+      res <- liftIO $ runClientM (deleteProductClient (pid <> ".json") token) clientEnv
+      return $ case res of
+        Left err -> Left $ "Error deleting product: " <> tshow err
+        Right _ -> Right ()
 
   fetchShopInfo token domain = do
     let fetchShopInfoClient = client (Proxy :: Proxy GetShopInfoRoute)

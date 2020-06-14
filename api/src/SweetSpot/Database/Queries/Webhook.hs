@@ -19,28 +19,28 @@ class Monad m => WebhookDB m where
   uninstallShop :: ShopDomain -> m ()
 
 instance WebhookDB AppM where
-  insertActionRequest domain requestType payload = withConn $ \conn -> do
+  insertActionRequest domain requestType payload = withConn $ \conn ->
     -- This query is called through webhook which means there will
     -- be an install
-    shopId <- unsafeFindShopId conn domain
-    runBeamPostgres conn
-      $ runInsert
-      $ insert (db ^. actionRequests)
-      $ insertExpressions
-        [ ActionRequest
-            { _actionRequestId = pgGenUUID_,
-              _actionRequestShopId = val_ (ShopKey shopId),
-              _actionRequestType = val_ requestType,
-              _actionRequestPayload = val_ (PgJSONB payload)
-            }
-        ]
+    runBeamPostgres conn $ do
+      shopId <- unsafeFindShopId domain
+      runInsert
+        $ insert (db ^. actionRequests)
+        $ insertExpressions
+          [ ActionRequest
+              { _actionRequestId = pgGenUUID_,
+                _actionRequestShopId = val_ (ShopKey shopId),
+                _actionRequestType = val_ requestType,
+                _actionRequestPayload = val_ (PgJSONB payload)
+              }
+          ]
 
-  uninstallShop domain = withConn $ \conn -> do
-    mShopId <- findShopId conn domain
-    case mShopId of
-      Nothing -> mempty
-      Just shopId ->
-        runBeamPostgres conn $ do
+  uninstallShop domain = withConn $ \conn ->
+    runBeamPostgres conn $ do
+      mShopId <- findShopId domain
+      case mShopId of
+        Nothing -> pure ()
+        Just shopId -> do
           users <- selectShopUsers shopId
           campaigns <- selectShopCampaigns shopId
           deleteSessions shopId

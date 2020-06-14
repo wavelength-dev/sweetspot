@@ -25,11 +25,10 @@ selectShopMoneyFormat domain =
   (^. shopMoneyFormat)
     <$> filter_ ((==. val_ domain) . (^. shopDomain)) (all_ (db ^. shops))
 
-findShopId :: Connection -> ShopDomain -> IO (Maybe ShopId)
-findShopId conn domain =
-  runBeamPostgres conn
-    $ runSelectReturningOne
+findShopId :: ShopDomain -> Pg (Maybe ShopId)
+findShopId domain =
+  runSelectReturningOne
     $ select
     $ view shopId <$> matchShop domain
 
-unsafeFindShopId conn domain = fromJust <$> findShopId conn domain
+unsafeFindShopId domain = fromJust <$> findShopId domain

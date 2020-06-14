@@ -21,8 +21,7 @@ import SweetSpot.CampaignListPage (mkCampaignListPage)
 import SweetSpot.CampaignViewPage (mkCampaignViewPage)
 import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
-import SweetSpot.Logger (logInfo) as Logger
-import SweetSpot.Logger as Logging
+import SweetSpot.Logger (logError, logInfo) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service

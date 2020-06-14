@@ -89,7 +89,7 @@ instance InstallDB AppM where
               { _appChargeId = pgGenUUID_,
                 _appChargeShopifyId = val_ $ charge ^. createAppChargeResId,
                 _appChargeStatus = val_ $ charge ^. createAppChargeResStatus,
-                _appChargeShopId = val_ $ (ShopKey shopId'),
+                _appChargeShopId = val_ $ ShopKey shopId',
                 _appChargeName = val_ $ charge ^. createAppChargeResName,
                 _appChargePrice = val_ $ charge ^. createAppChargeResPrice,
                 _appChargeReturnUrl = val_ $ charge ^. createAppChargeResReturnUrl,
@@ -109,7 +109,7 @@ instance InstallDB AppM where
                 (all_ (db ^. appCharges))
           )
 
-  updateAppChargeStatus chargeId status = withConn $ \conn -> do
+  updateAppChargeStatus chargeId status = withConn $ \conn ->
     runBeamPostgres conn
       $ runUpdate
       $ update

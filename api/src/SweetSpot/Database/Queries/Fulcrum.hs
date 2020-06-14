@@ -38,7 +38,7 @@ class Monad m => FulcrumDB m where
 instance FulcrumDB AppM where
   getUserTestMaps domain uid = withConn $ \conn -> do
     maps <- getUserTestMaps' conn domain uid
-    if length maps > 0
+    if not (null maps)
       then pure maps
       else do
         mCampaignId <- getLatestCampaign conn domain

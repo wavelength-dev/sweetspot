@@ -24,12 +24,12 @@ storewide10Campaign =
     , _uiCampaignStart: Just $ unsafeToDateTime "2020-02-23T06:15:41Z"
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-06-04T06:15:41Z"
     , _uiCampaignName: "Store-wide +10%"
-    , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
-    , _uiCampaignAOVChange: 0.9531
-    , _uiCampaignCRChange: 1.074074074
+    , _uiCampaignLift: Just $ InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
+    , _uiCampaignAOVChange: Just 0.9531
+    , _uiCampaignCRChange: Just 1.074074074
     , _uiCampaignCtrlTreatment:
         UITreatment
-          { _uiTreatmentCR: 6.4e-2
+          { _uiTreatmentCR: Just 6.4e-2
           , _uiTreatmentAOV: "$324"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
@@ -41,7 +41,7 @@ storewide10Campaign =
           }
     , _uiCampaignTestTreatment:
         UITreatment
-          { _uiTreatmentCR: 6.1e-2
+          { _uiTreatmentCR: Just 6.1e-2
           , _uiTreatmentAOV: "$348"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
@@ -60,12 +60,12 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignStart: Just $ unsafeToDateTime "2020-02-23T06:15:41Z"
     , _uiCampaignEnd: Just $ unsafeToDateTime "2020-02-26T06:15:41Z"
     , _uiCampaignName: "Expensive Jackets, Cheap Monkeys"
-    , _uiCampaignLift: InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
-    , _uiCampaignAOVChange: 0.9531
-    , _uiCampaignCRChange: 1.074074074
+    , _uiCampaignLift: Just $ InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
+    , _uiCampaignAOVChange: Just $ 0.9531
+    , _uiCampaignCRChange:  Just $1.074074074
     , _uiCampaignCtrlTreatment:
         UITreatment
-          { _uiTreatmentCR: 6.4e-2
+          { _uiTreatmentCR: Just $ 6.4e-2
           , _uiTreatmentAOV: "$324"
           , _uiTreatmentVariants:
               [ UITreatmentVariant
@@ -82,7 +82,7 @@ expensiveJacketsCheapMonkeysCampaign =
           }
     , _uiCampaignTestTreatment:
         UITreatment
-          { _uiTreatmentCR: 6.1e-2
+          { _uiTreatmentCR: Just $ 6.1e-2
           , _uiTreatmentAOV: "$348.0"
           , _uiTreatmentVariants:
               [ UITreatmentVariant

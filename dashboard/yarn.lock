@@ -792,19 +792,19 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@datadog/browser-core@1.12.1":
-  version "1.12.1"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-1.12.1.tgz#588b9c11743bce68434da29b25743123868afa67"
-  integrity sha512-bC+fC2GNRCTNxNJDM9+RJLT6dHfC0fb4LB7gAtUitKyJ1qCo1TXTXw/TOBN7MbOHb7jd0CqXIyofAM7VhVC3Eg==
+"@datadog/browser-core@1.12.4":
+  version "1.12.4"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-1.12.4.tgz#83b33e3b1bc2e3cae3d4b6337c3d2216d18998e9"
+  integrity sha512-LB0Vn+M0YGwDCBzZ60it7DpnIgiMUNVSDJDIBIWN4FfXHJcNsHBLWCm9FjvkaKdP8AfabUkYH/cKVd4AnHLgcQ==
   dependencies:
     tslib "1.10.0"
 
-"@datadog/browser-logs@^1.12.1":
-  version "1.12.1"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-logs/-/browser-logs-1.12.1.tgz#2cbc8541368d850ac6ecee94832272328396fca5"
-  integrity sha512-YVFzn1V0x/MgjMNhRhcqda2Pd3ffqz7xy49Pi3ryALOofAKv5UNwaaqFcYGsupc3QQn+j6VpZ0CVFGxMjBRY1Q==
+"@datadog/browser-logs@^1.12.4":
+  version "1.12.4"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-logs/-/browser-logs-1.12.4.tgz#47faa0f1829bffb258bedb2493a11520cf32d95d"
+  integrity sha512-J40dxi7CzVpdiEMmCsX5JR6xa9Mrl8aQakaCc3Kw8xk/sHC+lbgVk4vy+t0yjfBgovBkGok0uT27IP1b7KagRg==
   dependencies:
-    "@datadog/browser-core" "1.12.1"
+    "@datadog/browser-core" "1.12.4"
     tslib "1.10.0"
 
 "@iarna/toml@^2.2.0":
@@ -904,10 +904,10 @@
     hsluv "^0.1.0"
     tslib "^1.10.0"
 
-"@shopify/polaris@^4.22.0":
-  version "4.24.0"
-  resolved "https://registry.yarnpkg.com/@shopify/polaris/-/polaris-4.24.0.tgz#d0ee98495e720c733c4f892ad163791a85a47a57"
-  integrity sha512-3K958gIUSsi9q5o+PlJichnp/LsojbOBO64DPIk+Ab9oPy7G5dRfuI7cBH9au/PQF5W5YhuYXAE8EvD21xL0ew==
+"@shopify/polaris@^4.25.1":
+  version "4.25.1"
+  resolved "https://registry.yarnpkg.com/@shopify/polaris/-/polaris-4.25.1.tgz#16db36ed371b213b71dcbb0b4d95b16d49985fb0"
+  integrity sha512-3DIFUloagaNk3WHOYm1oxZap8yAcV1zAUS338oG7a97jvzTsbWljTZ8HIBxoLqrHqAUaZW+YHzAQiwG6DqDgUw==
   dependencies:
     "@babel/runtime" "^7.1.6"
     "@material-ui/react-transition-group" "^4.2.0"

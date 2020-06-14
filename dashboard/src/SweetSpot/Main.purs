@@ -75,13 +75,13 @@ mkApp = do
           <*> Aff.parallel (Aff.attempt $ Service.fetchProducts props.sessionId)
       liftEffect case eCampaigns of
            Left error -> do
-              Logging.logErrorContext "failed to fetch campaigns" { error }
-              setCampaignsResource (Error $ show error)
+              setCampaignsResource (Error "failed to fetch campaigns")
+              Logger.logError (show error)
            Right products -> setCampaignsResource $ Resource products
       liftEffect case eProducts of
            Left error -> do
-              Logging.logErrorContext "failed to fetch products" { error }
-              setProductsResource (Error $ show error)
+              setProductsResource (Error "failed to fetch products")
+              Logger.logError (show error)
            Right products -> setProductsResource $ Resource products
       pure unit
     pure

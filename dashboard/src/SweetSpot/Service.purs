@@ -55,18 +55,16 @@ getResourceRoute Products = serviceUrl <> "products"
 fetchResource :: Resource -> SessionId -> Aff Json
 fetchResource resource (SessionId sessionId) = do
   res <- getJson (route <> queryString) {}
-  let status = Milkis.statusCode res
-  bodyText <- Milkis.text res
-  when (not (status == 200 || status == 201)) do
-     throwError $ error $ show status <> " - " <> textToMessage bodyText
-  case jsonParser bodyText of
+  let
+    status = Milkis.statusCode res
+  body <- Milkis.text res
+  unless (status == 200) do
+    Logger.logErrorContext "failed to fetch resource" { status: show status, body } # liftEffect
+    "failed to fetch resource " <> show resource # error >>> throwError
+  case jsonParser body of
     Left parseErrorMessage -> throwError $ error $ parseErrorMessage
     Right json -> pure json
   where
-
-  textToMessage "" = "Empty body"
-
-  textToMessage str = "Body: " <> str
   route = getResourceRoute resource
 
   queryString =

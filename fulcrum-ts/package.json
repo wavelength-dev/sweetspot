@@ -1,0 +1,22 @@
+{
+  "name": "fulcrum",
+  "version": "1.0.0",
+  "description": "sweetspot client dealing with dynamic pricing on the browser side.",
+  "main": "index.js",
+  "repository": "git@github.com:wavelength-dev/sweetspot",
+  "author": "alexander tesfamichael <alex.tesfamichael@gmail.com>",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^1.19.1",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "@types/ramda": "^0.26.36",
+    "delay": "^4.3.0",
+    "fp-ts": "^2.2.0",
+    "p-limit": "^2.2.1",
+    "ramda": "^0.26.1",
+    "when-dom-ready": "^1.2.12"
+  }
+}

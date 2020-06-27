@@ -15,7 +15,7 @@ import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
 import RIO hiding (Vector, (^.), view)
 import RIO.Partial (fromJust)
-import RIO.Vector as V hiding (map)
+import qualified RIO.Vector as V
 import Statistics.Sample (mean)
 import SweetSpot.AppM (AppM)
 import SweetSpot.Calc (InfParams (..), runInference)
@@ -77,21 +77,21 @@ instance DashboardDB AppM where
     let domain = args ^. insertExperimentShopDomain
     runBeamPostgres conn $ do
       shopId <- unsafeFindShopId domain
-      [dbVariant] <- runInsertReturningList
-        $ insert (db ^. productVariants)
-        $ insertExpressions
-          [ ProductVariant
-              { _pvId = productVariant_,
-                _pvShopId = val_ $ ShopKey shopId,
-                _pvTitle = val_ $ args ^. insertExperimentProductName,
-                _pvSku = val_ $ args ^. insertExperimentSku,
-                _pvProductId = val_ $ args ^. insertExperimentProductId,
-                _pvVariantId = val_ $ args ^. insertExperimentSvid,
-                _pvPrice = val_ $ args ^. insertExperimentPrice,
-                _pvCurrency = val_ "USD"
-              }
-          ]
-
+      [dbVariant] <-
+        runInsertReturningList
+          $ insert (db ^. productVariants)
+          $ insertExpressions
+            [ ProductVariant
+                { _pvId = productVariant_,
+                  _pvShopId = val_ $ ShopKey shopId,
+                  _pvTitle = val_ $ args ^. insertExperimentProductName,
+                  _pvSku = val_ $ args ^. insertExperimentSku,
+                  _pvProductId = val_ $ args ^. insertExperimentProductId,
+                  _pvVariantId = val_ $ args ^. insertExperimentSvid,
+                  _pvPrice = val_ $ args ^. insertExperimentPrice,
+                  _pvCurrency = val_ "USD"
+                }
+            ]
       runInsert
         $ insert (db ^. treatments)
         $ insertExpressions
@@ -158,6 +158,7 @@ instance DashboardDB AppM where
                 shop <- all_ (db ^. shops)
                 campaign <- all_ (db ^. campaigns)
                 guard_ (session ^. sessionId ==. val_ sessionId')
+                guard_ (campaign ^. cmpId ==. val_ cmpId')
                 guard_ (_sessionShopId session `references_` shop)
                 guard_ (_cmpShopId campaign `references_` shop)
                 pure $ campaign ^. cmpId
@@ -172,7 +173,7 @@ instance DashboardDB AppM where
         (\cmp -> cmp ^. cmpId ==. val_ cmpId')
 
   getTestVariantIds cmpId' = withConn $ \conn ->
-     runBeamPostgres conn
+    runBeamPostgres conn
       $ runSelectReturningList
       $ select
       $ view pvProductId <$> selectUITreatmentVariants cmpId' 1
@@ -253,7 +254,8 @@ selectUITreatmentVariants cmpId' treat' = do
   guard_ (treatment ^. trCmpId ==. val_ cmpId')
   guard_ (treatment ^. trTreatment ==. val_ treat')
   pure variant
-  --pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
+
+--pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
 
 selectShopCampaigns domain = do
   shop <- matchShop domain

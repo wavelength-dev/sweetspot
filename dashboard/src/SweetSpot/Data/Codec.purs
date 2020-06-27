@@ -1,6 +1,8 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
+
+import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:))
 import Data.DateTime (DateTime)
@@ -10,18 +12,21 @@ import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 
-decodeInfResult :: Json -> Either String InfResult
-decodeInfResult json = do
-  o <- decodeJson json
-  lb <- o .: "_lowerBound"
-  ub <- o .: "_upperBound"
-  mean <- o .: "_mean"
-  pure
-    $ InfResult
-        { _lowerBound: lb
-        , _upperBound: ub
-        , _mean: mean
-        }
+decodeInfResult :: Json -> Either String (Maybe InfResult)
+decodeInfResult json =
+  (
+    do
+      o <- decodeJson json
+      lb <- o .: "_lowerBound"
+      ub <- o .: "_upperBound"
+      mean <- o .: "_mean"
+      pure $ Just $
+        InfResult
+            { _lowerBound: lb
+            , _upperBound: ub
+            , _mean: mean
+            }
+  ) <|> pure Nothing
 
 decodeUITreatmentVariant :: Json -> Either String UITreatmentVariant
 decodeUITreatmentVariant json = do
@@ -64,7 +69,7 @@ decodeUICampaign json = do
   _uiCampaignName <- obj .: "_uiCampaignName"
   _uiCampaignStart <- obj .: "_uiCampaignStart" >>= parseDateTime
   _uiCampaignEnd <- obj .: "_uiCampaignEnd" >>= parseDateTime
-  _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult <#> Just
+  _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult
   _uiCampaignAOVChange <- obj .: "_uiCampaignAOVChange"
   _uiCampaignCRChange <- obj .: "_uiCampaignCRChange"
   _uiCampaignCtrlTreatment <- obj .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment

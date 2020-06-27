@@ -118,3 +118,5 @@ foreign import optionList ::
     , selected :: Array String
     , allowMultiple :: Boolean
     }
+
+foreign import link :: ReactComponent { url :: String, children :: Array JSX }

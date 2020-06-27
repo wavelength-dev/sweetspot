@@ -9,6 +9,7 @@ const {
   Form,
   FormLayout,
   Heading,
+  Link,
   Modal,
   OptionList,
   Page,
@@ -28,6 +29,7 @@ exports.enTranslations = enTranslations
 exports.form = Form
 exports.formLayout = FormLayout
 exports.heading = Heading
+exports.link = Link
 exports.modal = Modal
 exports.modalSection = Modal.Section
 exports.optionList = OptionList

@@ -1,7 +1,6 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
-
 import Data.Array (find, foldMap, null) as Array
 import Data.Array (find, mapWithIndex)
 import Data.Lens (view, (^.))
@@ -181,13 +180,6 @@ mkCampaignCreatePage = do
                                     , allowMultiple: true
                                     }
                                 , Spacing.large
-                                , element Shopify.button
-                                    { primary: true
-                                    , children: [ R.text "Done" ]
-                                    , onClick: notNull $ mkEffectFn1 $ const $ setIsProductPickerVisible false
-                                    , url: null
-                                    , submit: false
-                                    }
                                 ]
                             }
                       )

@@ -9,7 +9,7 @@ gettingStartedPage :: JSX
 gettingStartedPage =
   element Shopify.emptyState
     { heading: "Discover more profitable prices for your products"
-    , action: { content: "Create Price Experiment", url: "#/campaign/create" }
+    , action: { content: "Create Price Experiment", url: "#/create" }
     , image: Assets.mountainCode
     , children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]
     }

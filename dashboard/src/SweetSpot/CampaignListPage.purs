@@ -2,22 +2,26 @@ module SweetSpot.CampaignListPage where
 
 import Prelude
 import Data.Array (fold, intercalate)
+import Data.Array as Array
 import Data.DateTime (DateTime)
 import Data.Formatter.DateTime (FormatterCommand(..))
 import Data.Formatter.DateTime (format) as Formatter
+import Data.Lens (view)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Tuple.Nested ((/\))
+import Effect.Aff.Compat (mkEffectFn1)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Effect.Now (nowDateTime) as Now
 import Effect.Timer (clearInterval, setInterval) as Timer
 import Effect.Unsafe (unsafePerformEffect)
 import React.Basic.DOM (css, div, li, text, ul_) as R
-import React.Basic.Hooks (Component, JSX, component, element, useEffect, useState)
+import React.Basic.Hooks (Component, JSX, component, element, useEffect, useState')
 import React.Basic.Hooks (bind, discard) as React
-import SweetSpot.Data.Api (UICampaign(..))
-import SweetSpot.Shopify (button, page) as Shopify
+import Routing.Hash as Hash
+import SweetSpot.Data.Api (UICampaign(..), uiCampaignEnd)
+import SweetSpot.Shopify (button, link, modal, modalSection, page) as Shopify
 import SweetSpot.ShopifyHelper (ElementTag(..))
 import SweetSpot.ShopifyHelper (heading) as SH
 import SweetSpot.Spacing as Spacing
@@ -142,19 +146,33 @@ campaignCard { status, title, campaignId } =
         ]
     }
 
+checkIsCampaignActive :: DateTime -> UICampaign -> Boolean
+checkIsCampaignActive now =
+  view uiCampaignEnd
+    >>> case _ of
+        Nothing -> true
+        Just end -> end > now
+
 type CampaignListPageProps
   = { campaigns :: Array UICampaign }
 
 mkCampaignListPage :: Component CampaignListPageProps
 mkCampaignListPage =
   component "CampaignListPage" \props -> React.do
-    now /\ setNow <- useState (unsafePerformEffect Now.nowDateTime)
+    now /\ setNow <- useState' (unsafePerformEffect Now.nowDateTime)
+    isSingleCampaignWarningVisible /\ setIsSingleCampaignWarningVisible <- useState' false
     let
       campaigns = map (campaignToCardProps now) props.campaigns
 
-      setNow' = const >>> setNow
+      checkIsCampaignActiveNow = checkIsCampaignActive now
+
+      navigateToCreateOrWarn =
+        if Array.any checkIsCampaignActiveNow props.campaigns then
+          setIsSingleCampaignWarningVisible true
+        else do
+          Hash.setHash "/create"
     useEffect unit do
-      intervalId <- Timer.setInterval 1000 (Now.nowDateTime >>= setNow')
+      intervalId <- Timer.setInterval 1000 (Now.nowDateTime >>= setNow)
       pure $ Timer.clearInterval intervalId
     pure
       $ element Shopify.page
@@ -163,13 +181,32 @@ mkCampaignListPage =
           , primaryAction:
               notNull
                 { content: "Create Price Experiment"
-                , url: notNull "#/create"
+                , url: null
                 , primary: true
-                , onAction: null
+                , onAction: notNull navigateToCreateOrWarn
                 }
           , breadcrumbs: []
           , children:
-              [ R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ] ]
+              [ element Shopify.modal
+                  { title: "Not yet!"
+                  , open: isSingleCampaignWarningVisible
+                  , onClose: setIsSingleCampaignWarningVisible false # const >>> mkEffectFn1
+                  , children:
+                      [ element Shopify.modalSection
+                          { key: "warning-section"
+                          , children:
+                              [ R.text
+                                  "Currently, SweetSpot only supports running a single campaign at a time. Either wait for the running experiment to end, or stop it. If you'd like to run multiple campaigns at the same time, let us know: "
+                              , element Shopify.link
+                                  { url: "mailto:hello@wavelength.dev"
+                                  , children: [ R.text "hello@wavelength.dev" ]
+                                  }
+                              ]
+                          }
+                      ]
+                  }
+              , R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ]
+              ]
           }
   where
   toCard now (UICampaign campaign) =

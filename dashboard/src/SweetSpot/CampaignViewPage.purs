@@ -13,9 +13,11 @@ import Data.Nullable (notNull, null)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_) as Aff
+import Effect.Class (liftEffect)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
-import React.Basic.Hooks (Component, component, element, empty)
+import React.Basic.Hooks (Component, component, element, empty, useState')
+import React.Basic.Hooks (bind) as React
 import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignEnd, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
 import SweetSpot.Service (stopCampaign) as Service
 import SweetSpot.Session (SessionId)
@@ -89,8 +91,9 @@ resultIndicator mAmount label directionIndicator =
       }
 
 mkCampaignViewPage :: Component { campaign :: UICampaign, sessionId :: SessionId }
-mkCampaignViewPage =
+mkCampaignViewPage = do
   component "CampaignViewPage" \{ campaign, sessionId } -> React.do
+    loading /\ setLoading <- useState' false
     let
       campaignId = campaign ^. uiCampaignId
 
@@ -106,7 +109,10 @@ mkCampaignViewPage =
 
       conversionChange = view uiCampaignCRChange campaign
 
-      onStopCampaign = Service.stopCampaign sessionId campaignId # Aff.launchAff_
+      onStopCampaign = liftEffect (setLoading true)
+                        *> Service.stopCampaign sessionId campaignId
+                        $> setLoading false
+                        # Aff.launchAff_
     pure
       $ element Shopify.page
           { title: notNull name
@@ -121,6 +127,7 @@ mkCampaignViewPage =
                     , url: null
                     , primary: false
                     , onAction: notNull onStopCampaign
+                    , loading: false
                     }
           , children:
               [ R.div

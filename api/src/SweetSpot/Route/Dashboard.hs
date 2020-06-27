@@ -136,6 +136,7 @@ stopCampaignHandler :: CampaignId -> SessionId -> ServerM OkResponse
 stopCampaignHandler campaignId sessionId = runAppM $ do
   authorized <- campaignBelongsToShop sessionId campaignId
   shopDomain <- validateSessionId sessionId
+  Log.info $ "Stop campaign " <> tshow authorized <> " " <> tshow shopDomain
   case (authorized, shopDomain) of
     (True, Just domain) ->
       stopCampaign campaignId

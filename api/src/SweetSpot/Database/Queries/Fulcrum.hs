@@ -192,9 +192,10 @@ getUserTestMaps' conn domain uid = do
 
 isCampaignActive cmp =
   maybe_ false_ (<. nowUTC_) (cmp ^. cmpStart)
-    &&. maybe_ false_ (>. nowUTC_) (cmp ^. cmpEnd)
+    &&. maybe_ true_ (>. nowUTC_) (cmp ^. cmpEnd)
   where
     false_ = val_ False
+    true_ = val_ True
 
 validateDomain :: Connection -> ShopDomain -> IO (Maybe ShopDomain)
 validateDomain conn domain =

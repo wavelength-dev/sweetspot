@@ -21,6 +21,7 @@ type Action
     , url :: Nullable String
     , primary :: Boolean
     , onAction :: Nullable (Effect Unit)
+    , loading :: Boolean
     }
 
 foreign import page ::

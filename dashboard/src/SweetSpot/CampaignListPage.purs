@@ -184,6 +184,7 @@ mkCampaignListPage =
                 , url: null
                 , primary: true
                 , onAction: notNull navigateToCreateOrWarn
+                , loading: false
                 }
           , breadcrumbs: []
           , children:

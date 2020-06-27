@@ -56,7 +56,10 @@ getProductsHandler id = runAppM $ do
       case mProducts of
         Right ps -> do
           moneyFormat <- unsafeGetShopMoneyFormat domain
-          return $ L.map (fromShopProduct moneyFormat) ps
+          return $
+            ps
+              & L.filter ((/= "sweetspot-variant") . (^. shopProductType))
+              & L.map (fromShopProduct moneyFormat)
         Left err -> do
           Log.error err
           throwError internalServerErr

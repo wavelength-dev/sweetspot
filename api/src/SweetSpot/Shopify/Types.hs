@@ -310,7 +310,8 @@ data ShopProduct
       { _shopProductId :: !Pid,
         _shopProductTitle :: !Text,
         _shopProductVariants :: ![ShopVariant],
-        _shopProductImage :: !ShopImage
+        _shopProductImage :: !ShopImage,
+        _shopProductType :: !Text
       }
   deriving (Eq, Generic, Show)
 
@@ -324,12 +325,14 @@ instance FromJSON ShopProduct where
     title <- v .: "title"
     variants <- v .: "variants" >>= traverse parseJSON
     image <- v .: "image" >>= parseJSON
+    productType <- v .: "product_type"
     return
       ShopProduct
         { _shopProductId = id & showText @Int & Pid,
           _shopProductTitle = title,
           _shopProductVariants = variants,
-          _shopProductImage = image
+          _shopProductImage = image,
+          _shopProductType = productType
         }
 
 -- | ---------------------------------------------------------------------------

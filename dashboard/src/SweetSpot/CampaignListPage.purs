@@ -177,7 +177,7 @@ mkCampaignListPage =
     pure
       $ element Shopify.page
           { title: notNull "Price Experiment List"
-          , subtitle: notNull "All tests currently running, or finished."
+          , subtitle: notNull "All price experiments currently running, or previously finished."
           , primaryAction:
               notNull
                 { content: "Create Price Experiment"

@@ -21,7 +21,7 @@ import Partial.Unsafe (unsafePartial)
 import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle)
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle, productTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
@@ -45,7 +45,7 @@ productToOptions product = map variantToOption (product ^. productVariants)
     let
       id = variant ^. variantId
 
-      title = variant ^. variantTitle
+      title = product ^. productTitle
 
       sku = variant ^. variantSku
 

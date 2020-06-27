@@ -41,7 +41,7 @@ type CreateCampaignRoute =
 type StopCampaignRoute =
   "campaigns" :> Capture "campaignId" CampaignId :> "stop"
     :> QueryParam' '[Required, Strict] "session" SessionId
-    :> Get '[JSON] OkResponse
+    :> Post '[JSON] OkResponse
 
 type DashboardAPI =
   "dashboard"

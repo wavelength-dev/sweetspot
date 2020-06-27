@@ -127,7 +127,7 @@ mkCampaignViewPage = do
                     , url: null
                     , primary: false
                     , onAction: notNull onStopCampaign
-                    , loading: false
+                    , loading: loading
                     }
           , children:
               [ R.div

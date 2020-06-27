@@ -7,7 +7,7 @@ import Data.DateTime (DateTime)
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
 import Data.Lens (_Just, view, (^.), (^?))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Maybe as Maybe
 import Data.Nullable (notNull, null)
 import Data.Tuple (Tuple(..))
@@ -16,7 +16,7 @@ import Effect.Aff (launchAff_) as Aff
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty)
-import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
+import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignEnd, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
 import SweetSpot.Service (stopCampaign) as Service
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (card, dataTable, page) as Shopify
@@ -111,14 +111,17 @@ mkCampaignViewPage =
       $ element Shopify.page
           { title: notNull name
           , subtitle: null
-          , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
+          , breadcrumbs: [ { content: "Campaign list", url: "#/" } ]
           , primaryAction:
-              notNull
-                { content: "Stop Experiment"
-                , url: null
-                , primary: false
-                , onAction: notNull onStopCampaign
-                }
+              if isJust (campaign ^. uiCampaignEnd)
+                 then null
+                 else
+                  notNull
+                    { content: "Stop Experiment"
+                    , url: null
+                    , primary: false
+                    , onAction: notNull onStopCampaign
+                    }
           , children:
               [ R.div
                   { className: styles.status

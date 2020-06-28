@@ -4,30 +4,34 @@ import Prelude
 
 import Data.Array (zip) as Array
 import Data.DateTime (DateTime)
+import Data.DateTime as DateTime
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
 import Data.Lens (_Just, view, (^.), (^?))
-import Data.Maybe (Maybe(..), maybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Maybe as Maybe
 import Data.Nullable (notNull, null)
+import Data.Time.Duration (Days(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_) as Aff
 import Effect.Class (liftEffect)
+import Effect.Now (nowDateTime)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty, useState')
 import React.Basic.Hooks (bind) as React
-import Web.HTML (window)
-import Web.HTML.Window (location)
-import Web.HTML.Location (reload)
 import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignEnd, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
+import SweetSpot.Date (formatDate)
 import SweetSpot.Service (stopCampaign) as Service
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (card, dataTable, page) as Shopify
 import SweetSpot.ShopifyHelper (ElementTag(..))
 import SweetSpot.ShopifyHelper (heading, textContainer) as SH
 import SweetSpot.Spacing (large, small) as Spacing
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (location)
 
 foreign import styles :: forall a. Record a
 
@@ -44,22 +48,24 @@ startingDate dateTime status =
   R.div
     { className: styles.statusItem
     , children:
-        [ R.p { className: styles.statusItem__title, children: [ R.text "Jan 23rd" ] }
+      [ R.p { className: styles.statusItem__title, children: [ R.text $ formatDate <$> dateTime # fromMaybe "-" ] }
         , Spacing.small
         , R.p { className: styles.statusItem__subtitle, children: [ R.text "started" ] }
         ]
     }
 
-age :: JSX
-age =
+age :: DateTime -> Maybe CampaignStart -> JSX
+age now mStart =
   R.div
     { className: styles.statusItem
     , children:
-        [ R.p { className: styles.statusItem__title, children: [ R.text "22 days" ] }
+        [ R.p { className: styles.statusItem__title, children: [ R.text $ (fromMaybe "0" mDaysActive) <> " days" ] }
         , Spacing.small
         , R.p { className: styles.statusItem__subtitle, children: [ R.text "age" ] }
         ]
     }
+  where
+    mDaysActive = (flip DateTime.diff now <$> mStart :: Maybe Days) <#> \(Days d) -> show d
 
 data Direction
   = Up
@@ -95,6 +101,7 @@ resultIndicator mAmount label directionIndicator =
 
 mkCampaignViewPage :: Component { campaign :: UICampaign, sessionId :: SessionId }
 mkCampaignViewPage = do
+  now <- nowDateTime
   component "CampaignViewPage" \{ campaign, sessionId } -> React.do
     loading /\ setLoading <- useState' false
     let
@@ -114,8 +121,7 @@ mkCampaignViewPage = do
 
       onStopCampaign = liftEffect (setLoading true)
                         *> Service.stopCampaign sessionId campaignId
-                        *> liftEffect (setLoading false)
-                        *> liftEffect (window >>= location >>= reload)
+                        *> liftEffect (setLoading false *> window >>= location >>= reload)
                         # Aff.launchAff_
     pure
       $ element Shopify.page
@@ -136,7 +142,7 @@ mkCampaignViewPage = do
           , children:
               [ R.div
                   { className: styles.status
-                  , children: [ startingDate start Started, age ]
+                  , children: [ startingDate start Started, age now start]
                   }
               , R.div
                   { className: styles.statusBox

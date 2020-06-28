@@ -25,6 +25,7 @@ import SweetSpot.Shopify (button, link, modal, modalSection, page) as Shopify
 import SweetSpot.ShopifyHelper (ElementTag(..))
 import SweetSpot.ShopifyHelper (heading) as SH
 import SweetSpot.Spacing as Spacing
+import SweetSpot.Date (formatDate)
 
 type Now
   = DateTime
@@ -86,13 +87,6 @@ campaignStatus status =
             Finished endDateTime -> "Finished on " <> formatDate endDateTime
         ]
     }
-  where
-  formatDate dateTime =
-    fold
-      [ Formatter.format (MonthShort : Nil) dateTime
-      , " "
-      , Formatter.format (DayOfMonth : Nil) dateTime
-      ]
 
 type CampaignCardProps
   = { title :: String

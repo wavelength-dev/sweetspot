@@ -19,11 +19,9 @@ import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
 import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
-import Web.HTML (window)
-import Web.HTML.Window (location)
-import Web.HTML.Location (reload)
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
+import Routing.Hash as Hash
 import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle, productTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
@@ -134,8 +132,7 @@ mkCampaignCreatePage = do
 
       onSubmit = mkEffectFn1 (\_ -> liftEffect (setLoading true)
                                       *> makeCampaign props.sessionId createCampaign
-                                      *> liftEffect (setLoading false)
-                                      *> liftEffect (window >>= location >>= reload)
+                                      *> liftEffect (setLoading false *> Hash.setHash "/")
                                       # Aff.launchAff_
                              )
 

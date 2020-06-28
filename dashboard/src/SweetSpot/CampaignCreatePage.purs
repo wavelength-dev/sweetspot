@@ -13,6 +13,7 @@ import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_) as Aff
+import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
@@ -116,6 +117,7 @@ mkCampaignCreatePage = do
     isProductPickerVisible /\ setIsProductPickerVisible <- useState' false
     -- Controlled by Shopify OptionList, tracks which variants the user would like to test
     variantRows /\ setVariantRows <- useState' ([] :: Array VariantRow)
+    loading /\ setLoading <- useState' false
     let
       createCampaign :: CreateCampaign
       createCampaign =
@@ -127,7 +129,11 @@ mkCampaignCreatePage = do
 
       onNameChange = mkEffectFn1 setName
 
-      onSubmit = mkEffectFn1 (\_ -> Aff.launchAff_ (makeCampaign props.sessionId createCampaign))
+      onSubmit = mkEffectFn1 (\_ -> liftEffect (setLoading true)
+                                      *> makeCampaign props.sessionId createCampaign
+                                      *> liftEffect (setLoading false)
+                                      # Aff.launchAff_
+                             )
 
       unsafeGetVariantById :: String -> Variant
       unsafeGetVariantById id = find (unwrap >>> _._variantId >>> eq id) variants # unsafePartial Maybe.fromJust
@@ -203,6 +209,7 @@ mkCampaignCreatePage = do
                               , primary: false
                               , submit: false
                               , url: null
+                              , loading: false
                               }
                           , element Shopify.card
                               { title: "Products to test"
@@ -242,6 +249,7 @@ mkCampaignCreatePage = do
                               , children: [ R.text "Create Experiment" ]
                               , url: null
                               , onClick: null
+                              , loading: loading
                               }
                           ]
                       ]

@@ -140,6 +140,7 @@ campaignCard { status, title, campaignId } =
                     , submit: false
                     , primary: false
                     , onClick: null
+                    , loading: false
                     }
                 ]
             }

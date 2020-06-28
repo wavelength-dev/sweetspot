@@ -111,7 +111,7 @@ mkCampaignViewPage = do
 
       onStopCampaign = liftEffect (setLoading true)
                         *> Service.stopCampaign sessionId campaignId
-                        $> setLoading false
+                        *> liftEffect (setLoading false)
                         # Aff.launchAff_
     pure
       $ element Shopify.page

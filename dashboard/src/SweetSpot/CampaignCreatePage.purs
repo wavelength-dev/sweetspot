@@ -18,6 +18,9 @@ import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
+import Web.HTML (window)
+import Web.HTML.Window (location)
+import Web.HTML.Location (reload)
 import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
@@ -132,7 +135,11 @@ mkCampaignCreatePage = do
 
       onSubmit = mkEffectFn1 (\_ -> liftEffect (setLoading true)
                                       *> makeCampaign props.sessionId createCampaign
-                                      *> liftEffect (setLoading false *> Hash.setHash "/")
+                                      *> liftEffect (
+                                        setLoading false
+                                          *> Hash.setHash "/"
+                                          *> window >>= location >>= reload
+                                        )
                                       # Aff.launchAff_
                              )
 

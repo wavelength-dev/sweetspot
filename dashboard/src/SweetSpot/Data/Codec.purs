@@ -6,10 +6,11 @@ import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:))
 import Data.DateTime (DateTime)
-import Data.Either (Either(..))
-import Data.Formatter.DateTime as Formatter
+import Data.Either (Either(..), note)
+import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
+import Effect.Unsafe (unsafePerformEffect)
 import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 
 decodeInfResult :: Json -> Either String (Maybe InfResult)
@@ -59,7 +60,10 @@ parseDateTime :: Maybe String -> Either String (Maybe DateTime)
 parseDateTime Nothing = Right Nothing
 
 parseDateTime (Just encodedDateTime) =
-  Formatter.unformatDateTime "YYYY-MM-DDTHH:mm:ss.SSSSSSZ" encodedDateTime
+  JSDate.parse encodedDateTime
+    # unsafePerformEffect
+    >>> JSDate.toDateTime
+    >>> note "failed to parse date"
     <#> Just
 
 decodeUICampaign :: Json -> Either String UICampaign

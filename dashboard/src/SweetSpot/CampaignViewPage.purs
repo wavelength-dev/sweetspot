@@ -18,6 +18,9 @@ import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty, useState')
 import React.Basic.Hooks (bind) as React
+import Web.HTML (window)
+import Web.HTML.Window (location)
+import Web.HTML.Location (reload)
 import SweetSpot.Data.Api (UICampaign, lowerBound, mean, uiCampaignAOVChange, uiCampaignCRChange, uiCampaignCtrlTreatment, uiCampaignEnd, uiCampaignId, uiCampaignLift, uiCampaignName, uiCampaignStart, uiCampaignTestTreatment, uiTreatmentAOV, uiTreatmentCR, uiTreatmentSku, uiTreatmentVariantPrice, uiTreatmentVariantTitle, uiTreatmentVariants, upperBound)
 import SweetSpot.Service (stopCampaign) as Service
 import SweetSpot.Session (SessionId)
@@ -112,6 +115,7 @@ mkCampaignViewPage = do
       onStopCampaign = liftEffect (setLoading true)
                         *> Service.stopCampaign sessionId campaignId
                         *> liftEffect (setLoading false)
+                        *> liftEffect (window >>= location >>= reload)
                         # Aff.launchAff_
     pure
       $ element Shopify.page

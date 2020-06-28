@@ -121,8 +121,8 @@ createCampaignExperiment domain cmpId ce = do
                         _insertExperimentProductName = controlProduct ^. shopProductTitle,
                         _insertExperimentTreatment = treatment
                       }
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0 testPrice) controlProduct
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1 controlPrice) newProduct
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0 controlPrice) controlProduct
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1 testPrice) newProduct
           Log.info "Created experiment(s)"
           return ()
         (Error err, _) -> do

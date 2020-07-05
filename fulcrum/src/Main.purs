@@ -3,7 +3,7 @@ module Fulcrum.Main where
 import Prelude
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
-import Data.Either (Either(..), note)
+import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
@@ -19,7 +19,7 @@ import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Data (TestMap, VariantId(..))
 import Fulcrum.Logging (LogLevel(..)) as LogLevel
-import Fulcrum.Logging (LogLevel(..), log, logWithContext) as Logging
+import Fulcrum.Logging (log, logWithContext) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
@@ -86,16 +86,16 @@ main = do
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do
   mVariantId <- Element.getAttribute "data-sweetspot-id" element
-  rawVariantToEither mVariantId
+  rawVariantToMaybe mVariantId
     >>= lookupF testMap
-    >>= case _ of
-          Nothing -> revealPrice
-          Just test -> setNodePrice test *> revealPrice
+    # case _ of
+        Nothing -> revealPrice
+        Just test -> setNodePrice test *> revealPrice
   where
   lookupF = flip Map.lookup
 
-  rawVariantToEither :: Maybe String -> Either String VariantId
-  rawVariantToEither rawVariantId = note "Missing variant id" rawVariantId <#> VariantId
+  rawVariantToMaybe :: Maybe String -> Maybe VariantId
+  rawVariantToMaybe rawVariantId = rawVariantId <#> VariantId
 
   setNodePrice :: TestMap -> Effect Unit
   setNodePrice { swapPrice } = Node.setTextContent swapPrice (Element.toNode element)

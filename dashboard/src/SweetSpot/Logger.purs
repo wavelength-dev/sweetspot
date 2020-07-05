@@ -5,17 +5,14 @@ import Datadog (logError, logErrorContext, logInfo, logInfoContext, logWarn, log
 import Effect (Effect)
 import Effect.Console as Console
 import Effect.Uncurried (EffectFn2, runEffectFn2)
-import Foreign.Object (Object)
-import Foreign.Object as Object
 import SweetSpot.Env (AppEnv(..))
 import SweetSpot.Env as Env
-import Type.Row.Homogeneous (class Homogeneous)
 
-foreign import jsLogInfo :: forall a. EffectFn2 String (Object a) Unit
+foreign import jsLogInfo :: forall a. EffectFn2 String a Unit
 
-foreign import jsLogWarn :: forall a. EffectFn2 String (Object a) Unit
+foreign import jsLogWarn :: forall a. EffectFn2 String a Unit
 
-foreign import jsLogError :: forall a. EffectFn2 String (Object a) Unit
+foreign import jsLogError :: forall a. EffectFn2 String a Unit
 
 logInfo :: String -> Effect Unit
 logInfo = case Env.appEnv of
@@ -32,29 +29,20 @@ logError = case Env.appEnv of
   Local -> Console.error
   Remote -> Datadog.logError
 
-logInfoContext :: forall r a. Homogeneous r a => String -> Record r -> Effect Unit
+logInfoContext :: forall a. String -> a -> Effect Unit
 logInfoContext msg context =
-  let
-    contextObj = Object.fromHomogeneous context
-  in
     case Env.appEnv of
-      Local -> runEffectFn2 jsLogInfo msg contextObj
-      Remote -> Datadog.logInfoContext msg contextObj
+      Local -> runEffectFn2 jsLogInfo msg context
+      Remote -> Datadog.logInfoContext msg context
 
-logWarnContext :: forall r a. Homogeneous r a => String -> Record r -> Effect Unit
+logWarnContext :: forall a. String -> a -> Effect Unit
 logWarnContext msg context =
-  let
-    contextObj = Object.fromHomogeneous context
-  in
     case Env.appEnv of
-      Local -> runEffectFn2 jsLogWarn msg contextObj
-      Remote -> Datadog.logWarnContext msg contextObj
+      Local -> runEffectFn2 jsLogWarn msg context
+      Remote -> Datadog.logWarnContext msg context
 
-logErrorContext :: forall r a. Homogeneous r a => String -> Record r -> Effect Unit
+logErrorContext :: forall a. String -> a -> Effect Unit
 logErrorContext msg context =
-  let
-    contextObj = Object.fromHomogeneous context
-  in
     case Env.appEnv of
-      Local -> runEffectFn2 jsLogError msg contextObj
-      Remote -> Datadog.logErrorContext msg contextObj
+      Local -> runEffectFn2 jsLogError msg context
+      Remote -> Datadog.logErrorContext msg context

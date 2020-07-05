@@ -75,7 +75,7 @@ age now mStart mEnd =
       Just _ -> "ended"
     value = case mEnd of
       Nothing -> (DateTime.diff now <$> mStart :: Maybe Days)
-                    <#> (\(Days d) -> d # abs # floor # show # append " days")
+                    <#> (\(Days d) -> d # abs >>> floor >>> show >>> (_ <> " days"))
                     # fromMaybe "-"
       Just end -> formatDate end
 

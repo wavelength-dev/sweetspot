@@ -40,6 +40,9 @@ foreign import styles :: forall a. Record a
 type CampaignStart
   = DateTime
 
+type CampaignEnd
+  = DateTime
+
 data CreatedExperimentStatus
   = Starting
   | Started
@@ -56,19 +59,25 @@ startingDate dateTime status =
         ]
     }
 
-age :: DateTime -> Maybe CampaignStart -> JSX
-age now mStart =
+age :: DateTime -> Maybe CampaignStart -> Maybe CampaignEnd -> JSX
+age now mStart mEnd =
   R.div
     { className: styles.statusItem
     , children:
-        [ R.p { className: styles.statusItem__title, children: [ R.text $ (fromMaybe "0" mDaysActive) <> " days" ] }
+        [ R.p { className: styles.statusItem__title, children: [ R.text value ] }
         , Spacing.small
-        , R.p { className: styles.statusItem__subtitle, children: [ R.text "age" ] }
+        , R.p { className: styles.statusItem__subtitle, children: [ R.text description ] }
         ]
     }
   where
-    mDaysActive = (flip DateTime.diff now <$> mStart :: Maybe Days)
-                    <#> \(Days d) -> d # abs # floor # show
+    description = case mEnd of
+      Nothing -> "age"
+      Just _ -> "ended"
+    value = case mEnd of
+      Nothing -> (DateTime.diff now <$> mStart :: Maybe Days)
+                    <#> (\(Days d) -> d # abs # floor # show)
+                    # fromMaybe "-"
+      Just end -> formatDate end
 
 data Direction
   = Up
@@ -114,6 +123,8 @@ mkCampaignViewPage = do
 
       start = campaign ^. uiCampaignStart
 
+      end = campaign ^. uiCampaignEnd
+
       controlConversion = view (uiCampaignCtrlTreatment <<< uiTreatmentCR) campaign
 
       testConversion = view (uiCampaignTestTreatment <<< uiTreatmentCR) campaign
@@ -145,7 +156,7 @@ mkCampaignViewPage = do
           , children:
               [ R.div
                   { className: styles.status
-                  , children: [ startingDate start Started, age now start]
+                  , children: [ startingDate start Started, age now start end ]
                   }
               , R.div
                   { className: styles.statusBox

@@ -11,6 +11,7 @@
   , "js-timers"
   , "milkis"
   , "now"
+  , "numbers"
   , "profunctor-lenses"
   , "psci-support"
   , "react-basic-hooks"

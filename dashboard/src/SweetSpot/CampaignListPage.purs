@@ -135,6 +135,7 @@ campaignCard { status, title, campaignId } =
                     , primary: false
                     , onClick: null
                     , loading: false
+                    , disabled: false
                     }
                 ]
             }

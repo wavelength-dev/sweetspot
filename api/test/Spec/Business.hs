@@ -3,7 +3,6 @@ module Spec.Business (businessLogicSpec) where
 import Database (reset)
 import Mock.Shopify
 import Network.HTTP.Client hiding (Proxy, responseHeaders)
-import Network.HTTP.Types hiding (Header, responseHeaders)
 import RIO
 import RIO.List (nub)
 import RIO.List.Partial (head)
@@ -40,35 +39,11 @@ businessLogicSpec =
         case result of
           Left err -> error (show err)
           Right _ -> return ()
-      it "should not return buckets for invalid campaign ids" $ do
-        result <- runClientM (getTest shopDomain unknownUser) clientEnv
-        case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
-          Left err -> error (show err)
-          Right _ -> expectationFailure "expected request to fail"
       it "should return buckets for invalid campaign ids for known users" $ do
         result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
           Right _ -> return ()
-      it "should not return buckets for unknown user ids" $ do
-        result <- runClientM (getTest shopDomain unknownUser) clientEnv
-        case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
-          Left err -> error (show err)
-          Right _ -> expectationFailure "expected request to fail"
-      it "should not return buckets for expired campaign" $ do
-        result <- runClientM (getTest shopDomain user2) clientEnv
-        case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
-          Left err -> error (show err)
-          Right _ -> expectationFailure "expected request to fail"
-      it "should not return buckets for not yet active campaign" $ do
-        result <- runClientM (getTest shopDomain user2) clientEnv
-        case result of
-          Left (FailureResponse _ res) -> responseStatusCode res `shouldBe` status404
-          Left err -> error (show err)
-          Right _ -> expectationFailure "expected request to fail"
       it "should keep the same user id when given a valid campaignId and userId" $ do
         result <- runClientM (getTest shopDomain user1) clientEnv
         case result of

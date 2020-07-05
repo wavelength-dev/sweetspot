@@ -220,7 +220,7 @@ mkCampaignViewPage = do
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (campaign # getAverageOrderValueChange >>> Just)
+                                  (campaign # getAverageOrderValueChange)
                                   "change"
                                   (averageOrderValueChange <#> numberToDirection)
                               ]
@@ -272,7 +272,10 @@ mkCampaignViewPage = do
       map variantPairToRow (Array.zip controlVariants testVariants)
 
   getAverageOrderValueChange campaign =
-      (campaign ^. _controlAverageOrderValue) <> " / " <> (campaign ^. _testAverageOrderValue)
+      campaign ^. uiCampaignAOVChange
+        <#> flip sub 1.0
+        >>> fractionToPercentage
+        >>> formatPercentage true
 
   formatPercentage displaySign =
     Formatter.format

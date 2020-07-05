@@ -253,7 +253,6 @@ mkCampaignCreatePage = do
                                     , selected: selectedVariantIds
                                     , allowMultiple: true
                                     }
-                                , Spacing.large
                                 ]
                             }
                       )

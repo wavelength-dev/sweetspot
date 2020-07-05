@@ -1,7 +1,7 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
-import Data.Array (all, find, foldMap, null) as Array
+import Data.Array (all, catMaybes, find, foldMap, null) as Array
 import Data.Array (find, mapWithIndex)
 import Data.Lens (view, (^.), over, traversed, filtered)
 import Data.Maybe (Maybe(..))
@@ -17,7 +17,6 @@ import Effect.Aff (launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
-import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
 import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
@@ -88,12 +87,12 @@ variantToVariantRow variant =
     , sku
     , controlPrice: price
     , testPrice: ""
-    , testPriceValidation: Empty
+    , testPriceValidation: Initial
     , productId
     }
 
 renderVariantRow :: (String -> Effect Unit) -> VariantRow -> JSX
-renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice } =
+renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice, testPriceValidation } =
   R.tr_
     [ R.td_ [ R.text title ]
     , R.td_ [ R.text sku ]
@@ -105,16 +104,27 @@ renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice } =
             , children: mempty
             , onChange: (mkEffectFn1 onTestPriceChange)
             , value: testPrice
+            , error:
+                case testPriceValidation of
+                  Empty -> notNull "Must enter a test price"
+                  ContainsComma -> notNull "Use period symbol '.' to delimit cents"
+                  ContainsCurrencySymbol -> notNull "Amounts are always in $, remove currency sign"
+                  OtherIssue -> notNull "Invalid amount, example: 34.99"
+                  Initial -> null
+                  ValidPrice number -> null
             }
         ]
     ]
 
-variantRowToCreateExperiment :: VariantRow -> CreateExperiment
-variantRowToCreateExperiment variantRow =
-  CreateExperiment
-    { _createExperimentProductId: variantRow.productId
-    , _createExperimentPrice: readFloat variantRow.testPrice
-    }
+variantRowToCreateExperiment :: VariantRow -> Maybe CreateExperiment
+variantRowToCreateExperiment variantRow = case variantRow.testPriceValidation of
+  ValidPrice price ->
+    Just
+      $ CreateExperiment
+          { _createExperimentProductId: variantRow.productId
+          , _createExperimentPrice: price
+          }
+  _ -> Nothing
 
 data ParsedPrice
   = ValidPrice Number
@@ -122,6 +132,7 @@ data ParsedPrice
   | ContainsCurrencySymbol
   | Empty
   | OtherIssue
+  | Initial
 
 isValidPrice :: ParsedPrice -> Boolean
 isValidPrice (ValidPrice _) = true
@@ -161,7 +172,7 @@ mkCampaignCreatePage = do
         CreateCampaign
           { _createCampaignName: name
           , _createCampaignEnd: Nothing
-          , _createCampaignExperiments: map variantRowToCreateExperiment variantRows
+          , _createCampaignExperiments: map variantRowToCreateExperiment variantRows # Array.catMaybes
           }
 
       onNameChange = mkEffectFn1 setName
@@ -258,6 +269,7 @@ mkCampaignCreatePage = do
                               , label: "Experiment name"
                               , labelHidden: false
                               , children: mempty
+                              , error: null
                               }
                           , Spacing.large
                           , element Shopify.button

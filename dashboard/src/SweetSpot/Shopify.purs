@@ -48,6 +48,7 @@ foreign import button ::
     , submit :: Boolean
     , children :: Array JSX
     , loading :: Boolean
+    , disabled :: Boolean
     }
 
 foreign import emptyState ::

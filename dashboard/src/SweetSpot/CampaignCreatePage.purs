@@ -1,13 +1,14 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
-import Data.Array (find, foldMap, null) as Array
+import Data.Array (all, find, foldMap, null) as Array
 import Data.Array (find, mapWithIndex)
-import Data.Lens (view, (^.))
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Lens (view, (^.), over, traversed, filtered)
+import Data.Maybe (Maybe(..))
 import Data.Maybe as Maybe
 import Data.Newtype (unwrap)
 import Data.Nullable (notNull, null)
+import Data.Number (fromString) as Number
 import Data.String (Pattern(..))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
@@ -18,9 +19,6 @@ import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Global (readFloat)
 import Partial.Unsafe (unsafePartial)
-import Web.HTML (window)
-import Web.HTML.Window (location)
-import Web.HTML.Location (reload)
 import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
@@ -31,6 +29,9 @@ import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
 import SweetSpot.ShopifyHelper (formLayout) as SH
 import SweetSpot.Spacing (large) as Spacing
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (location)
 
 foreign import styles :: forall a. Record a
 
@@ -65,6 +66,7 @@ type VariantRow
     , sku :: String
     , controlPrice :: String
     , testPrice :: String
+    , testPriceValidation :: ParsedPrice
     , productId :: String
     }
 
@@ -85,7 +87,8 @@ variantToVariantRow variant =
     , id
     , sku
     , controlPrice: price
-    , testPrice: fromMaybe price (String.stripPrefix (Pattern "$") price)
+    , testPrice: ""
+    , testPriceValidation: Empty
     , productId
     }
 
@@ -113,6 +116,36 @@ variantRowToCreateExperiment variantRow =
     , _createExperimentPrice: readFloat variantRow.testPrice
     }
 
+data ParsedPrice
+  = ValidPrice Number
+  | ContainsComma
+  | ContainsCurrencySymbol
+  | Empty
+  | OtherIssue
+
+isValidPrice :: ParsedPrice -> Boolean
+isValidPrice (ValidPrice _) = true
+
+isValidPrice _ = false
+
+containsComma :: String -> Boolean
+containsComma = String.contains (Pattern ",")
+
+containsCurrencySymbol :: String -> Boolean
+containsCurrencySymbol input
+  | String.contains (Pattern "$") input = true
+  | String.contains (Pattern "€") input = true
+  | otherwise = false
+
+parseTestPrice :: String -> ParsedPrice
+parseTestPrice testPrice
+  | containsComma testPrice = ContainsComma
+  | containsCurrencySymbol testPrice = ContainsCurrencySymbol
+  | String.null testPrice = Empty
+  | otherwise = case Number.fromString testPrice of
+    Nothing -> OtherIssue
+    Just number -> ValidPrice number
+
 mkCampaignCreatePage :: Component { products :: Array Product, sessionId :: SessionId }
 mkCampaignCreatePage = do
   now <- nowDateTime
@@ -133,15 +166,20 @@ mkCampaignCreatePage = do
 
       onNameChange = mkEffectFn1 setName
 
-      onSubmit = mkEffectFn1 (\_ -> liftEffect (setLoading true)
-                                      *> makeCampaign props.sessionId createCampaign
-                                      *> liftEffect (
-                                        setLoading false
-                                          *> Hash.setHash "/"
-                                          *> window >>= location >>= reload
-                                        )
-                                      # Aff.launchAff_
-                             )
+      onSubmit =
+        mkEffectFn1
+          ( \_ ->
+              liftEffect (setLoading true)
+                *> makeCampaign props.sessionId createCampaign
+                *> liftEffect
+                    ( setLoading false
+                        *> Hash.setHash "/"
+                        *> window
+                        >>= location
+                        >>= reload
+                    )
+                # Aff.launchAff_
+          )
 
       unsafeGetVariantById :: String -> Variant
       unsafeGetVariantById id = find (unwrap >>> _._variantId >>> eq id) variants # unsafePartial Maybe.fromJust
@@ -151,9 +189,13 @@ mkCampaignCreatePage = do
       -- Updates the variant rows to match the selected variants.
       -- We can't recreate variant rows because existing ones might have a modified test price.
       updateVariantRowsWithSelected :: Array String -> Array VariantRow
-      updateVariantRowsWithSelected = map \variantId -> Maybe.fromMaybe (createNewVariantRow (unsafeGetVariantById variantId)) (getExistingVariantRow variantId)
+      updateVariantRowsWithSelected =
+        map \variantId ->
+          Maybe.fromMaybe
+            (createNewVariantRow (unsafeGetVariantById variantId))
+            (getExistingVariantRow variantId)
         where
-        getExistingVariantRow id = Array.find (\vr -> vr.id == id) variantRows
+        getExistingVariantRow id = Array.find (_.id >>> eq id) variantRows
 
         createNewVariantRow = variantToVariantRow
 
@@ -164,13 +206,20 @@ mkCampaignCreatePage = do
       -- Takes a new test price and updates the variant rows with a new row with the new test price
       -- TODO: use lens
       updateVariantRowsWithTestPrice :: VariantRow -> String -> Array VariantRow
-      updateVariantRowsWithTestPrice targetVariantRow newPrice = map (\vr -> if vr.id == targetVariantRow.id then vr { testPrice = newPrice } else vr) variantRows
+      updateVariantRowsWithTestPrice targetVariantRow newPrice =
+        over
+          (traversed <<< filtered (_.id >>> eq targetVariantRow.id))
+          (_ { testPrice = newPrice, testPriceValidation = parseTestPrice newPrice })
+          variantRows
 
       mkSetVariantTestPrice :: VariantRow -> String -> Effect Unit
       mkSetVariantTestPrice targetVariantRow newPrice = updateVariantRowsWithTestPrice targetVariantRow newPrice # setVariantRows
 
       selectedVariantIds :: Array String
-      selectedVariantIds = map (\vr -> vr.id) variantRows
+      selectedVariantIds = map _.id variantRows
+
+      isValidCreateCampaign :: Boolean
+      isValidCreateCampaign = Array.all (_.testPriceValidation >>> isValidPrice) variantRows
     pure
       $ element Shopify.page
           { title: notNull "Create experiment"
@@ -218,6 +267,7 @@ mkCampaignCreatePage = do
                               , submit: false
                               , url: null
                               , loading: false
+                              , disabled: false
                               }
                           , element Shopify.card
                               { title: "Products to test"
@@ -258,6 +308,7 @@ mkCampaignCreatePage = do
                               , url: null
                               , onClick: null
                               , loading: loading
+                              , disabled: not isValidCreateCampaign || Array.null variantRows
                               }
                           ]
                       ]

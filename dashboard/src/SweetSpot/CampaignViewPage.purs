@@ -7,6 +7,7 @@ import Data.DateTime (DateTime)
 import Data.DateTime as DateTime
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
+import Data.Int (floor)
 import Data.Lens (_Just, view, (^.), (^?))
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Maybe as Maybe
@@ -17,7 +18,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
-import Math (abs, floor)
+import Math (abs)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty, useState')

@@ -86,14 +86,11 @@ main = do
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do
   mVariantId <- Element.getAttribute "data-sweetspot-id" element
-  let
-    eTestMap =
-      rawVariantToEither mVariantId
-        >>= lookupF testMap
-        >>> note "No test for read variant id"
-  case eTestMap of
-    Left msg -> Console.error msg
-    Right test -> setNodePrice test *> revealPrice
+  rawVariantToEither mVariantId
+    >>= lookupF testMap
+    >>= case _ of
+          Nothing -> revealPrice
+          Just test -> setNodePrice test *> revealPrice
   where
   lookupF = flip Map.lookup
 

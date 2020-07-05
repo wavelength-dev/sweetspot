@@ -159,12 +159,12 @@ mkCampaignViewPage = do
                           { className: styles.revenueResults
                           , children:
                               [ resultIndicator
-                                  (campaign ^? _lowerBound <#> formatPercentage)
+                                  (campaign ^? _lowerBound <#> formatPercentage true)
                                   "lower"
                                   Nothing
                               , meanIndicator campaign
                               , resultIndicator
-                                  (campaign ^? _upperBound <#> formatPercentage)
+                                  (campaign ^? _upperBound <#> formatPercentage true)
                                   "upper"
                                   Nothing
                               ]
@@ -184,15 +184,15 @@ mkCampaignViewPage = do
                           { className: styles.revenueResults
                           , children:
                               [ resultIndicator
-                                  (controlConversion <#> fractionToPercentage >>> formatPercentage)
+                                  (controlConversion <#> fractionToPercentage >>> formatPercentage false)
                                   "control"
                                   Nothing
                               , resultIndicator
-                                  (testConversion <#> fractionToPercentage >>> formatPercentage)
+                                  (testConversion <#> fractionToPercentage >>> formatPercentage false)
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (conversionChange <#> factorToPercent >>> formatPercentage)
+                                  (conversionChange <#> factorToPercent >>> formatPercentage true)
                                   "change"
                                   (conversionChange <#> factorToPercent >>> numberToDirection)
                               ]
@@ -274,9 +274,9 @@ mkCampaignViewPage = do
   getAverageOrderValueChange campaign =
       (campaign ^. _controlAverageOrderValue) <> " / " <> (campaign ^. _testAverageOrderValue)
 
-  formatPercentage =
+  formatPercentage displaySign =
     Formatter.format
-      (Formatter { abbreviations: false, after: 1, before: 1, comma: false, sign: true })
+      (Formatter { abbreviations: false, after: 1, before: 1, comma: false, sign: displaySign })
       >>> (_ <> "%")
 
   fractionToPercentage = mul 100.0

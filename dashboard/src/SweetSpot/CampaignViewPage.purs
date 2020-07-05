@@ -17,6 +17,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
+import Math (abs, floor)
 import React.Basic (JSX)
 import React.Basic.DOM (div, p, p_, text) as R
 import React.Basic.Hooks (Component, component, element, empty, useState')
@@ -65,7 +66,8 @@ age now mStart =
         ]
     }
   where
-    mDaysActive = (flip DateTime.diff now <$> mStart :: Maybe Days) <#> \(Days d) -> show d
+    mDaysActive = (flip DateTime.diff now <$> mStart :: Maybe Days)
+                    <#> \(Days d) -> d # abs # floor # show
 
 data Direction
   = Up

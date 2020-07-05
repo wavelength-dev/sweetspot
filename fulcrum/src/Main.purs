@@ -3,12 +3,14 @@ module Fulcrum.Main where
 import Prelude
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
+import Datadog as Logger
 import Effect (Effect)
 import Effect.AVar as AVar
 import Effect.Aff (Aff, error)
@@ -32,6 +34,9 @@ import Web.DOM.Document as Document
 import Web.DOM.Element as Element
 import Web.DOM.HTMLCollection as HTMLCollection
 import Web.DOM.Node as Node
+import Web.DOM.NodeList as NodeList
+import Web.DOM.ParentNode (QuerySelector(..))
+import Web.DOM.ParentNode as ParentNode
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
 import Web.HTML.HTMLElement as HTMLElement
@@ -105,8 +110,8 @@ insertPrice testMap element = do
     Just el -> HTMLElement.classList el >>= (flip DTL.remove) "sweetspot__price--hidden"
     Nothing -> Console.error "Unable to reveal price"
 
-applyTestMaps :: TestMapByVariant -> Effect Unit
-applyTestMaps testMap =
+applyTestPrices :: Map VariantId TestMap -> Effect Unit
+applyTestPrices testMap =
   HTML.window
     >>= Window.document
     >>= HTMLDocument.toDocument
@@ -114,6 +119,46 @@ applyTestMaps testMap =
     >>= Document.getElementsByClassName "sweetspot__price"
     >>= HTMLCollection.toArray
     >>= traverse_ (insertPrice testMap)
+
+queryDocument :: QuerySelector -> Effect (Array Element)
+queryDocument querySelector =
+  HTML.window
+    >>= Window.document
+    >>= HTMLDocument.toDocument
+    >>> Document.toParentNode
+    >>> pure
+    >>= ParentNode.querySelectorAll querySelector
+    >>= nodesToElements
+  where
+  -- We discard nodes that are not elements.
+  nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+
+setCheckoutVariantId :: TestMapByVariant -> Element -> Effect Unit
+setCheckoutVariantId testMap element = do
+  (eApplied :: Either String Unit) <-
+    runExceptT do
+      (mValue :: Maybe String) <- Element.getAttribute "value" element # liftEffect
+      (targetVariantId :: String) <- case mValue of
+        Nothing -> throwError "Checkout option missing value attribute" :: ExceptT String Effect String
+        Just targetVariantId -> pure targetVariantId
+      case Map.lookup (VariantId targetVariantId) testMap of
+        -- Variant is not under test
+        Nothing -> pure unit
+        Just test -> Element.setAttribute "value" test.swapId element # liftEffect
+  case eApplied of
+    Left err -> Logger.logError err
+    _ -> mempty
+
+applyTestCheckout :: TestMapByVariant -> Effect Unit
+applyTestCheckout testMap = do
+  optionElements <- queryDocument (QuerySelector "#ProductSelect-product-template option")
+  traverse_ (setCheckoutVariantId testMap) optionElements
+  where
+  -- We discard nodes that are not elements.
+  nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+
+applyTestMaps :: TestMapByVariant -> Effect Unit
+applyTestMaps testMap = applyTestPrices testMap *> applyTestCheckout testMap
 
 applyDynamicPrice :: Aff Unit
 applyDynamicPrice = liftEffect $ Console.log "Applying price things!"

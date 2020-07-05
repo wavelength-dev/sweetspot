@@ -792,19 +792,19 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@datadog/browser-core@1.12.4":
-  version "1.12.4"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-1.12.4.tgz#83b33e3b1bc2e3cae3d4b6337c3d2216d18998e9"
-  integrity sha512-LB0Vn+M0YGwDCBzZ60it7DpnIgiMUNVSDJDIBIWN4FfXHJcNsHBLWCm9FjvkaKdP8AfabUkYH/cKVd4AnHLgcQ==
+"@datadog/browser-core@1.12.8":
+  version "1.12.8"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-1.12.8.tgz#c1024b555df821eb17a7fd5b2dba44fc20a10aaf"
+  integrity sha512-PjuAGgDKjWWUj9JSA4MZdlcWLgo3IJReyXUIDBv22xQ4JcNTyXpoivEEDONmtuCYdvvUGQBZD6URyYpAfhskCQ==
   dependencies:
     tslib "1.10.0"
 
-"@datadog/browser-logs@^1.12.4":
-  version "1.12.4"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-logs/-/browser-logs-1.12.4.tgz#47faa0f1829bffb258bedb2493a11520cf32d95d"
-  integrity sha512-J40dxi7CzVpdiEMmCsX5JR6xa9Mrl8aQakaCc3Kw8xk/sHC+lbgVk4vy+t0yjfBgovBkGok0uT27IP1b7KagRg==
+"@datadog/browser-logs@^1.12.8":
+  version "1.12.8"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-logs/-/browser-logs-1.12.8.tgz#361dbf9e5dbf9fe2591d50b4e1e6312a5be62d77"
+  integrity sha512-dSaXZhY5W5uDStpG8j4oZL4m/0v5J1z07dE9EVCd13kDdzGzt8p2IDPdAw4HtnJVZxHhOJMZ2e4hU2NNxEFUHw==
   dependencies:
-    "@datadog/browser-core" "1.12.4"
+    "@datadog/browser-core" "1.12.8"
     tslib "1.10.0"
 
 "@iarna/toml@^2.2.0":

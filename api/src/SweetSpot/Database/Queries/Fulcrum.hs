@@ -145,50 +145,50 @@ getUserTestMaps' conn domain uid = do
   (Just moneyFormat) <-
     runBeamPostgres conn $ runSelectReturningOne $ select $
       selectShopMoneyFormat domain
-  mUserTreatments <-
-    runBeamPostgres conn $ runSelectReturningList $ select $ do
-      cmps <- all_ (db ^. campaigns)
-      usrExps <- all_ (db ^. userExperiments)
-      guard_ (usrExps ^. ueUserId ==. val_ uid)
-      guard_ (isCampaignActive cmps)
-      guard_ (_ueCmpId usrExps `references_` cmps)
-      pure usrExps
-  case mUserTreatments of
-    [usrTreatment] -> do
-      variants <-
-        runBeamPostgres conn
-          $ runSelectReturningList
-          $ select
-          $ do
-            usrs <- all_ (db ^. users)
-            usrExps <- all_ (db ^. userExperiments)
-            treats <- all_ (db ^. treatments)
-            prodVs <- all_ (db ^. productVariants)
-            cmps <- all_ (db ^. campaigns)
-            guard_ (_ueUserId usrExps `references_` usrs)
-            guard_ (_ueCmpId usrExps `references_` cmps)
-            guard_ (_trCmpId treats `references_` cmps)
-            guard_ (_trProductVariantId treats `references_` prodVs)
-            guard_ (usrs ^. usrId ==. val_ uid)
-            guard_ (isCampaignActive cmps)
-            pure (treats, prodVs)
-      return $
-        let treatment =
-              usrTreatment ^. ueTreatment
-            isTreatmentVariant = (== treatment) . (^. trTreatment) . fst
-            treatmentVariants = filter isTreatmentVariant variants
-            nonTreatmentVariants = filter (not . isTreatmentVariant) variants
-            findSwap v = L.find ((== v ^. pvSku) . (^. pvSku) . snd) treatmentVariants
-            toTestMap (_, v) =
-              TestMap
+  userTreatment <-
+    fromJust
+      <$> ( runBeamPostgres conn
+              $ runSelectReturningOne
+              $ select
+                ( all_ (db ^. userExperiments)
+                    & filter_ (\ue -> ue ^. ueUserId ==. val_ uid)
+                    & limit_ 1
+                    & fmap (view ueTreatment)
+                )
+          )
+  variants <- runBeamPostgres conn
+    $ runSelectReturningList
+    $ select
+    $ do
+      experiment <- all_ (db ^. userExperiments)
+      treatment <- all_ (db ^. treatments)
+      variant <- all_ (db ^. productVariants)
+      campaign <- all_ (db ^. campaigns)
+      guard_ (experiment ^. ueUserId ==. val_ uid)
+      guard_ (experiment ^. ueCmpId ==. campaign ^. cmpId)
+      guard_ (isCampaignActive campaign)
+      guard_ (treatment ^. trCmpId ==. campaign ^. cmpId)
+      guard_ (treatment ^. trProductVariantId ==. variant ^. pvId)
+      pure (treatment, variant)
+  let ctrlVariants = L.filter (fst >>> view trTreatment >>> (== 0)) variants
+      testVariants = L.filter (fst >>> view trTreatment >>> (== 1)) variants
+  pure $
+    L.zipWith
+      ( \(cT, cV) (tT, tV) ->
+          let activeVariant =
+                if userTreatment == 0
+                  then cV
+                  else tV
+           in TestMap
                 { userId = uid,
-                  targetId = v ^. pvVariantId,
-                  sku = v ^. pvSku,
-                  swapPrice = formatPrice moneyFormat (v ^. pvPrice),
-                  swapId = (^. pvVariantId) . snd . fromJust $ findSwap v
+                  targetId = cV ^. pvVariantId,
+                  sku = cV ^. pvSku,
+                  swapPrice = formatPrice moneyFormat (activeVariant ^. pvPrice),
+                  swapId = activeVariant ^. pvVariantId
                 }
-         in L.map toTestMap nonTreatmentVariants
-    _ -> return []
+      )
+      ctrlVariants
+      testVariants
 
 isCampaignActive cmp =
   maybe_ false_ (<. nowUTC_) (cmp ^. cmpStart)

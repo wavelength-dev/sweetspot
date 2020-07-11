@@ -12,6 +12,8 @@ import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
+import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (internalServerErr)
 import SweetSpot.Shopify.Types
 
 type OrderRoute =
@@ -32,8 +34,11 @@ orderHandler order = runAppM $ do
   case result of
     Just (shopId, cmpId, userId) -> do
       insertOrder shopId cmpId userId order
+      L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
       return OkResponse {message = "Registered order"}
-    Nothing -> return OkResponse {message = ""}
+    Nothing -> do
+      L.warn $ "Unable to validate cart token " <> tshow order
+      throwError internalServerErr
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse
 appUninstalledHandler (AppUninstalledReq domain) =

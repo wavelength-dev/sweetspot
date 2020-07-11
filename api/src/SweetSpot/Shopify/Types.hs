@@ -107,6 +107,7 @@ data Order
         _orderCreatedAt :: UTCTime,
         _orderLineItems :: [LineItem]
       }
+  deriving (Show)
 
 makeLenses ''Order
 

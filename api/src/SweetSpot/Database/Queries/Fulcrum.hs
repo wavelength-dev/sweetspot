@@ -174,7 +174,7 @@ getUserTestMaps' conn domain uid = do
       testVariants = L.filter (fst >>> view trTreatment >>> (== 1)) variants
   pure $
     L.zipWith
-      ( \(cT, cV) (tT, tV) ->
+      ( \(_, cV) (_, tV) ->
           let activeVariant =
                 if userTreatment == 0
                   then cV

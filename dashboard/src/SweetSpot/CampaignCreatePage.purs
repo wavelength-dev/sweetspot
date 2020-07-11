@@ -50,7 +50,7 @@ productToOptions product = Maybe.fromMaybe [] options
     skus = product ^.. productVariants <<< folded <<< variantSku
     variantToOption variant =
       let
-        id = variant ^. variantId
+        id = product ^. productId
 
         title = variant ^. variantProductTitle
 

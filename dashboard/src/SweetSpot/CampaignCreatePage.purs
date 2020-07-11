@@ -1,9 +1,10 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
+import SweetSpot.Data.Api
 
-import Data.Array (all, catMaybes, find, foldMap, null, head, intercalate, singleton) as Array
-import Data.Array (find, mapWithIndex)
+import Data.Array (all, catMaybes, find, null, head, intercalate, singleton, unsafeIndex, filter, elem) as Array
+import Data.Array (mapWithIndex)
 import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
 import Data.Maybe (Maybe(..))
 import Data.Maybe as Maybe
@@ -23,7 +24,6 @@ import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import Routing.Hash as Hash
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantProductTitle, variantSku)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
@@ -58,7 +58,7 @@ productToOptions product = Maybe.fromMaybe [] options
 
         price = variant ^. variantPrice
 
-        label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate "," skus
+        label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate ", " skus
       in
         { value: id, label }
 
@@ -72,16 +72,20 @@ type VariantRow
     , productId :: String
     }
 
-variantToVariantRow :: Variant -> VariantRow
-variantToVariantRow variant =
+productToVariantRow :: Product -> VariantRow
+productToVariantRow product =
   let
-    id = variant ^. variantId
+    variants = product ^. productVariants
 
-    title = variant ^. variantProductTitle
+    variant = unsafePartial $ Array.unsafeIndex variants 0
 
-    sku = variant ^. variantSku
+    id = product # unwrap >>> _._productId
 
-    price = variant ^. variantPrice
+    title = product ^. productTitle
+
+    sku = product ^. productVariants # map (view variantSku) # Array.intercalate ", "
+
+    price =  variant ^. variantPrice
 
     productId = variant ^. variantProductId
   in
@@ -195,27 +199,24 @@ mkCampaignCreatePage = do
                 # Aff.launchAff_
           )
 
-      unsafeGetVariantById :: String -> Variant
-      unsafeGetVariantById id = find (unwrap >>> _._variantId >>> eq id) variants # unsafePartial Maybe.fromJust
-        where
-        variants = Array.foldMap (view productVariants) props.products
+      unsafeGetProductById :: String -> Product
+      unsafeGetProductById id = unsafePartial $ Array.unsafeIndex props.products 0
+
 
       -- Updates the variant rows to match the selected variants.
       -- We can't recreate variant rows because existing ones might have a modified test price.
-      updateVariantRowsWithSelected :: Array String -> Array VariantRow
-      updateVariantRowsWithSelected =
-        map \variantId ->
-          Maybe.fromMaybe
-            (createNewVariantRow (unsafeGetVariantById variantId))
-            (getExistingVariantRow variantId)
+      updateVariantRowsWithSelected :: Array Product -> Array VariantRow
+      updateVariantRowsWithSelected = map createNewVariantRow
         where
         getExistingVariantRow id = Array.find (_.id >>> eq id) variantRows
 
-        createNewVariantRow = variantToVariantRow
+        createNewVariantRow = productToVariantRow
 
       -- Takes a new list of variants to test and updates our variant rows
       onSelectedVariantsUpdated :: Array String -> Effect Unit
-      onSelectedVariantsUpdated newVariantIdsToTest = (updateVariantRowsWithSelected newVariantIdsToTest # setVariantRows)
+      onSelectedVariantsUpdated newVariantIdsToTest = (updateVariantRowsWithSelected products # setVariantRows)
+        where
+          products = Array.filter (view productId >>> flip Array.elem newVariantIdsToTest) props.products
 
       -- Takes a new test price and updates the variant rows with a new row with the new test price
       -- TODO: use lens

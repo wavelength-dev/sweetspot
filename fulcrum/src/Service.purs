@@ -12,7 +12,7 @@ import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
 import Fulcrum.Cart (CartToken)
 import Fulcrum.Config (apiUrl) as Config
-import Fulcrum.Data (CampaignId(..), TestMap, decodeTestMaps)
+import Fulcrum.Data (TestMap, decodeTestMaps)
 import Fulcrum.User (UserId(..))
 import Milkis (Fetch, Options, Response)
 import Milkis as Milkis

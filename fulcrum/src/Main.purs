@@ -20,8 +20,8 @@ import Effect.Console (error, log, logShow) as Console
 import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Data (TestMap, VariantId(..))
-import Fulcrum.Logging (LogLevel(..)) as LogLevel
-import Fulcrum.Logging (log, logWithContext) as Logging
+import Fulcrum.Logger (LogLevel(..)) as LogLevel
+import Fulcrum.Logger (log, logWithContext) as Logging
 import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))

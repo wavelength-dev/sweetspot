@@ -159,6 +159,7 @@ newtype Variant =
       _variantId :: String
     , _variantProductId :: String
     , _variantTitle :: String
+    , _variantProductTitle :: String
     , _variantSku :: String
     , _variantPrice :: String
     }
@@ -168,7 +169,7 @@ derive instance genericVariant :: Generic Variant _
 derive instance newtypeVariant :: Newtype Variant _
 
 --------------------------------------------------------------------------------
-_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantSku :: String, _variantPrice :: String}
+_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantProductTitle :: String, _variantSku :: String, _variantPrice :: String}
 _Variant = _Newtype
 
 variantId :: Lens' Variant String
@@ -179,6 +180,9 @@ variantProductId = _Newtype <<< prop (SProxy :: SProxy "_variantProductId")
 
 variantTitle :: Lens' Variant String
 variantTitle = _Newtype <<< prop (SProxy :: SProxy "_variantTitle")
+
+variantProductTitle :: Lens' Variant String
+variantProductTitle = _Newtype <<< prop (SProxy :: SProxy "_variantProductTitle")
 
 variantSku :: Lens' Variant String
 variantSku = _Newtype <<< prop (SProxy :: SProxy "_variantSku")

@@ -46,6 +46,7 @@ data Variant
       { _variantId :: !Svid,
         _variantProductId :: !Pid,
         _variantTitle :: !Text,
+        _variantProductTitle :: !Text,
         _variantSku :: !Sku,
         _variantPrice :: !FormattedPrice
       }

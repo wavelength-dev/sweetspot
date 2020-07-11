@@ -1,9 +1,10 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
-import Data.Array (all, catMaybes, find, foldMap, null) as Array
+
+import Data.Array (all, catMaybes, find, foldMap, null, head, intercalate, singleton) as Array
 import Data.Array (find, mapWithIndex)
-import Data.Lens (view, (^.), over, traversed, filtered)
+import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
 import Data.Maybe (Maybe(..))
 import Data.Maybe as Maybe
 import Data.Newtype (unwrap)
@@ -22,7 +23,7 @@ import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import Routing.Hash as Hash
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle, productTitle)
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, Variant, productVariants, variantId, variantPrice, variantProductId, variantProductTitle, variantSku)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
@@ -43,21 +44,23 @@ mkProductPicker =
     pure mempty
 
 productToOptions :: Product -> Array { value :: String, label :: String }
-productToOptions product = map variantToOption (product ^. productVariants)
+productToOptions product = Maybe.fromMaybe [] options
   where
-  variantToOption variant =
-    let
-      id = variant ^. variantId
+    options = product ^. productVariants # Array.head <#> variantToOption >>> Array.singleton
+    skus = product ^.. productVariants <<< folded <<< variantSku
+    variantToOption variant =
+      let
+        id = variant ^. variantId
 
-      title = product ^. productTitle
+        title = variant ^. variantProductTitle
 
-      sku = variant ^. variantSku
+        sku = variant ^. variantSku
 
-      price = variant ^. variantPrice
+        price = variant ^. variantPrice
 
-      label = "title: " <> title <> ", " <> "sku: " <> sku
-    in
-      { value: id, label }
+        label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate "," skus
+      in
+        { value: id, label }
 
 type VariantRow
   = { title :: String
@@ -74,7 +77,7 @@ variantToVariantRow variant =
   let
     id = variant ^. variantId
 
-    title = variant ^. variantTitle
+    title = variant ^. variantProductTitle
 
     sku = variant ^. variantSku
 

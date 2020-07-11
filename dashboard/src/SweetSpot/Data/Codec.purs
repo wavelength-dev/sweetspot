@@ -107,6 +107,7 @@ decodeVariant json = do
   vid <- o .: "_variantId"
   pid <- o .: "_variantProductId"
   title <- o .: "_variantTitle"
+  pTitle <- o .: "_variantProductTitle"
   sku <- o .: "_variantSku"
   price <- o .: "_variantPrice"
   pure
@@ -114,6 +115,7 @@ decodeVariant json = do
         { _variantId: vid
         , _variantProductId: pid
         , _variantTitle: title
+        , _variantProductTitle: pTitle
         , _variantSku: sku
         , _variantPrice: price
         }

@@ -112,6 +112,7 @@ bonoboHat =
             , _variantProductId: "bonobo-shopify-product-id"
             , _variantSku: "bonobo-6153"
             , _variantTitle: "Bonobo hat"
+            , _variantProductTitle: "Bonobo hat"
             }
         ]
     }

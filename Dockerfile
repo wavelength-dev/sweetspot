@@ -26,7 +26,7 @@ RUN apt update && apt install --yes libncurses5
 
 # Install build dependencies
 RUN yarn global add purescript spago terser parcel@next
-COPY fulcrum/spago.dhall fulcrum/packages.dhall fulcrum/package.json fulcrum/yarn.lock .
+COPY fulcrum/spago.dhall fulcrum/packages.dhall fulcrum/package.json fulcrum/yarn.lock ./
 RUN yarn install --frozen-lockfile
 RUN spago install --global-cache=skip
 

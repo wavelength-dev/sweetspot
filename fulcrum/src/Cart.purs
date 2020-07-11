@@ -31,7 +31,7 @@ instance encodeJsonCartToken :: EncodeJson CartToken where
   encodeJson = unwrap >>> Argonaut.encodeJson
 
 instance decodeJsonCartToken :: DecodeJson CartToken where
-  decodeJson json = CartToken <$> Argonaut.decodeJson json
+  decodeJson = Argonaut.decodeJson >>> map CartToken
 
 foreign import readCookies :: Effect String
 

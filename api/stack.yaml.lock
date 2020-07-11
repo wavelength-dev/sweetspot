@@ -21,42 +21,42 @@ packages:
 - completed:
     subdir: beam-core
     name: beam-core
-    version: 0.8.1.0
+    version: 0.9.0.0
     git: https://github.com/blombern/beam.git
     pantry-tree:
-      size: 2838
-      sha256: 0ef645dc54fb4a60ed7147ebf4bd4eeabe03051c27dd70981b39533583968e92
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+      size: 2623
+      sha256: 1ee40afc20341fa803dab7fe22b40d1c5bf83aebf35fedfe18b5c372d729228b
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
   original:
     subdir: beam-core
     git: https://github.com/blombern/beam.git
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
 - completed:
     subdir: beam-postgres
     name: beam-postgres
-    version: 0.4.1.0
+    version: 0.5.0.0
     git: https://github.com/blombern/beam.git
     pantry-tree:
-      size: 2508
-      sha256: 6f0cca4aac73e237cb4e1e0c1555d6992398836c6ca9ca79f5f65a91d53dd186
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+      size: 2507
+      sha256: 2e56f2ddc2cda09c212466c096705a8efc9a61a8dfd8a4c68196b590753604fd
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
   original:
     subdir: beam-postgres
     git: https://github.com/blombern/beam.git
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
 - completed:
     subdir: beam-migrate
     name: beam-migrate
-    version: 0.4.0.1
+    version: 0.5.0.0
     git: https://github.com/blombern/beam.git
     pantry-tree:
-      size: 1898
-      sha256: cfbc972287f4c8f3c8ee1181a29b68323d153b29a9d9a8c452de3e691a563b76
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+      size: 1825
+      sha256: 3ef904145e6e05e2f1cf6558e40f109f2751f08d2f8ce446f4e43ab70675936b
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
   original:
     subdir: beam-migrate
     git: https://github.com/blombern/beam.git
-    commit: b88999c49b5a4b0dac6e5e1ec6c8c07d1dad257f
+    commit: b7c0c035d751bbb643af8c2eb2371f719ee4af6e
 snapshots:
 - completed:
     size: 524996

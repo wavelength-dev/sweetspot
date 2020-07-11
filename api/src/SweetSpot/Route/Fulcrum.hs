@@ -12,7 +12,6 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util
 
 type UserTestRoute =
   "bucket" :> QueryParam' '[Required] "shop" ShopDomain
@@ -32,7 +31,7 @@ getUserTestHandler shopDomain uid = runAppM $ do
   case res of
     [] -> do
       L.info $ "Could not find bucket(s) for userId: " <> tshow uid
-      throwError notFoundErr
+      pure []
     testMaps -> do
       L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> tshow uid
       pure testMaps

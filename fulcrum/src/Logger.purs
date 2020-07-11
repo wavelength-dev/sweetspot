@@ -40,9 +40,9 @@ log level message = do
   -- in console
   isDebugging <- getIsDebugging
   when isDebugging case level of
-    Info -> message # show >>> Console.info
-    Warn -> message # show >>> Console.warn
-    Error -> message # show >>> Console.error
+    Info -> Console.info message
+    Warn -> Console.warn message
+    Error -> Console.error message
   case level of
     Info -> Datadog.logInfo message
     Warn -> Datadog.logWarn message

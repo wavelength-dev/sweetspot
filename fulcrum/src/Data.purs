@@ -4,7 +4,10 @@ import Prelude
 import Data.Argonaut (caseJsonString, decodeJson) as Argonaut
 import Data.Argonaut (class DecodeJson, Json)
 import Data.Either (Either(..))
+import Data.Map (Map)
+import Data.Map (fromFoldable) as Map
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
 
 -- | Id which corresponds to a SweetSpot campaign. Campaigns are time bound events within which price tests take place.
 newtype CampaignId
@@ -42,3 +45,11 @@ type TestMap
 
 decodeTestMaps :: Json -> Either String (Array TestMap)
 decodeTestMaps = Argonaut.decodeJson >=> traverse Argonaut.decodeJson
+
+type TestMapByVariant
+  = Map VariantId TestMap
+
+hashMapFromTestMaps :: Array TestMap -> Map VariantId TestMap
+hashMapFromTestMaps = map toKeyValuePair >>> Map.fromFoldable
+  where
+  toKeyValuePair testMap = Tuple (VariantId testMap.variantId) testMap

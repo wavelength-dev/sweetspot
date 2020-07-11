@@ -1,7 +1,6 @@
 module Fulcrum.Logger where
 
 import Prelude
-
 import Data.Maybe as Maybe
 import Datadog (logError, logErrorContext, logInfo, logInfoContext, logWarn, logWarnContext) as Datadog
 import Effect (Effect)
@@ -49,4 +48,4 @@ log level message = do
     Error -> Datadog.logError message
 
 getIsDebugging :: Effect Boolean
-getIsDebugging = Site.getUrlParam "ssdebug" >>= Maybe.isJust >>> pure
+getIsDebugging = Site.getUrlParam "ssdebug" <#> Maybe.isJust

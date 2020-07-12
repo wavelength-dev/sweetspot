@@ -302,7 +302,7 @@ mkCampaignViewPage = do
 
             arrow = getIndicatorArrow Big direction
           in
-            show meanAmount /\ arrow
+            formatPercentage true meanAmount /\ arrow
         Nothing -> "--" /\ mempty
     in
       R.div

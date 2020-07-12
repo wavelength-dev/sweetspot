@@ -54,7 +54,7 @@ foreign import button ::
 foreign import emptyState ::
   ReactComponent
     { heading :: String
-    , action :: { url :: String, content :: String }
+    , action :: Nullable { url :: String, content :: String }
     , image :: String
     , children :: Array JSX
     }

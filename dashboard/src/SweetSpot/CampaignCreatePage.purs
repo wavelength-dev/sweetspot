@@ -1,8 +1,7 @@
 module SweetSpot.CampaignCreatePage where
 
-import Prelude
-import SweetSpot.Data.Api
-
+import Prelude (Unit, bind, const, eq, flip, map, mempty, not, otherwise, pure, show, (#), ($), (*>), (<#>), (<<<), (<>), (>>=), (>>>), (||))
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, productId, productTitle, productVariants, variantPrice, variantProductId, variantProductTitle, variantSku)
 import Data.Array (all, catMaybes, find, null, head, intercalate, singleton, unsafeIndex, filter, elem) as Array
 import Data.Array (mapWithIndex)
 import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
@@ -46,21 +45,23 @@ mkProductPicker =
 productToOptions :: Product -> Array { value :: String, label :: String }
 productToOptions product = Maybe.fromMaybe [] options
   where
-    options = product ^. productVariants # Array.head <#> variantToOption >>> Array.singleton
-    skus = product ^.. productVariants <<< folded <<< variantSku
-    variantToOption variant =
-      let
-        id = product ^. productId
+  options = product ^. productVariants # Array.head <#> variantToOption >>> Array.singleton
 
-        title = variant ^. variantProductTitle
+  skus = product ^.. productVariants <<< folded <<< variantSku
 
-        sku = variant ^. variantSku
+  variantToOption variant =
+    let
+      id = product ^. productId
 
-        price = variant ^. variantPrice
+      title = variant ^. variantProductTitle
 
-        label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate ", " skus
-      in
-        { value: id, label }
+      sku = variant ^. variantSku
+
+      price = variant ^. variantPrice
+
+      label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate ", " skus
+    in
+      { value: id, label }
 
 type VariantRow
   = { title :: String
@@ -85,7 +86,7 @@ productToVariantRow product =
 
     sku = product ^. productVariants # map (view variantSku) # Array.intercalate ", "
 
-    price =  variant ^. variantPrice
+    price = variant ^. variantPrice
 
     productId = variant ^. variantProductId
   in
@@ -202,7 +203,6 @@ mkCampaignCreatePage = do
       unsafeGetProductById :: String -> Product
       unsafeGetProductById id = unsafePartial $ Array.unsafeIndex props.products 0
 
-
       -- Updates the variant rows to match the selected variants.
       -- We can't recreate variant rows because existing ones might have a modified test price.
       updateVariantRowsWithSelected :: Array Product -> Array VariantRow
@@ -216,7 +216,7 @@ mkCampaignCreatePage = do
       onSelectedVariantsUpdated :: Array String -> Effect Unit
       onSelectedVariantsUpdated newVariantIdsToTest = (updateVariantRowsWithSelected products # setVariantRows)
         where
-          products = Array.filter (view productId >>> flip Array.elem newVariantIdsToTest) props.products
+        products = Array.filter (view productId >>> flip Array.elem newVariantIdsToTest) props.products
 
       -- Takes a new test price and updates the variant rows with a new row with the new test price
       -- TODO: use lens

@@ -8,7 +8,7 @@ import Data.DateTime as DateTime
 import Data.Formatter.Number (Formatter(..))
 import Data.Formatter.Number (format) as Formatter
 import Data.Int (floor)
-import Data.Lens (_Just, view, (^.), (^?))
+import Data.Lens (_Just, view, (^.), (^?), to)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Maybe as Maybe
 import Data.Nullable (notNull, null)
@@ -203,9 +203,9 @@ mkCampaignViewPage = do
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (conversionChange <#> factorToPercent >>> formatPercentage true)
+                                  (conversionChange <#> formatPercentage true)
                                   "change"
-                                  (conversionChange <#> factorToPercent >>> numberToDirection)
+                                  (conversionChange <#> numberToDirection)
                               ]
                           }
                       ]
@@ -231,7 +231,7 @@ mkCampaignViewPage = do
                                   "test"
                                   Nothing
                               , resultIndicator
-                                  (campaign # getAverageOrderValueChange)
+                                  (campaign ^? _averageOrderValueChange)
                                   "change"
                                   (averageOrderValueChange <#> numberToDirection)
                               ]
@@ -253,8 +253,6 @@ mkCampaignViewPage = do
               ]
           }
   where
-  factorToPercent = (sub 1.0) >>> (mul 100.0)
-
   _controlVariants = uiCampaignCtrlTreatment <<< uiTreatmentVariants
 
   _testVariants = uiCampaignTestTreatment <<< uiTreatmentVariants
@@ -262,6 +260,8 @@ mkCampaignViewPage = do
   _controlAverageOrderValue = uiCampaignCtrlTreatment <<< uiTreatmentAOV
 
   _testAverageOrderValue = uiCampaignTestTreatment <<< uiTreatmentAOV
+
+  _averageOrderValueChange = uiCampaignAOVChange <<< _Just <<< to (formatPercentage true)
 
   _lowerBound = uiCampaignLift <<< _Just <<< lowerBound
 
@@ -281,12 +281,6 @@ mkCampaignViewPage = do
         ]
     in
       map variantPairToRow (Array.zip controlVariants testVariants)
-
-  getAverageOrderValueChange campaign =
-      campaign ^. uiCampaignAOVChange
-        <#> flip sub 1.0
-        >>> fractionToPercentage
-        >>> formatPercentage true
 
   formatPercentage displaySign =
     Formatter.format

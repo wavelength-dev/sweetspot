@@ -28,7 +28,12 @@ import SweetSpot.Database.Queries.Util
     withConn,
   )
 import SweetSpot.Database.Schema
-import SweetSpot.Util (formatPrice, nanToNothing, nanToZero)
+import SweetSpot.Util
+  ( factorToPercentage,
+    formatPrice,
+    nanToNothing,
+    nanToZero,
+  )
 
 data InsertExperiment
   = InsertExperiment
@@ -221,8 +226,8 @@ enhanceCampaign conn domain cmp = do
         _uiCampaignStart = cmp ^. cmpStart,
         _uiCampaignEnd = cmp ^. cmpEnd,
         _uiCampaignLift = infResult,
-        _uiCampaignAOVChange = nanToNothing $ testAOV / ctrlAOV,
-        _uiCampaignCRChange = nanToNothing $ testCR / ctrlCR,
+        _uiCampaignAOVChange = nanToNothing $ factorToPercentage $ testAOV / ctrlAOV,
+        _uiCampaignCRChange = nanToNothing $ factorToPercentage $ testCR / ctrlCR,
         _uiCampaignCtrlTreatment =
           UITreatment
             { _uiTreatmentCR = nanToNothing ctrlCR,
@@ -254,8 +259,6 @@ selectUITreatmentVariants cmpId' treat' = do
   guard_ (treatment ^. trCmpId ==. val_ cmpId')
   guard_ (treatment ^. trTreatment ==. val_ treat')
   pure variant
-
---pure (variant ^. pvTitle, variant ^. pvSku, variant ^. pvPrice)
 
 selectShopCampaigns domain = do
   shop <- matchShop domain

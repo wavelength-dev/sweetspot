@@ -13,7 +13,7 @@ import RIO.Vector.Unboxed.Partial as VP
 import Statistics.Resampling
 import Statistics.Sample (mean)
 import SweetSpot.Data.Api (InfResult (..))
-import SweetSpot.Util (nanToNothing)
+import SweetSpot.Util (factorToPercentage, nanToNothing)
 import System.Random.MWC (GenIO, createSystemRandom, uniformR)
 
 data InfParams
@@ -56,15 +56,11 @@ runInference cParams tParams = do
     (Just mean, Just lowerBound, Just upperBound) ->
       Just $
         InfResult
-          { _mean = ratioToPercentage mean,
-            _lowerBound = ratioToPercentage lowerBound,
-            _upperBound = ratioToPercentage upperBound
+          { _mean = factorToPercentage mean,
+            _lowerBound = factorToPercentage lowerBound,
+            _upperBound = factorToPercentage upperBound
           }
     _ -> Nothing
   where
     resample' gen s =
       resamples . snd . L.head <$> resample gen [Mean] 1000 s
-    ratioToPercentage r =
-      if r >= 1
-        then (r - 1) * 100
-        else - (1 - r) * 100

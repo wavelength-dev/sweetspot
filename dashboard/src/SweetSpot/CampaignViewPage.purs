@@ -141,7 +141,7 @@ mkCampaignViewPage = do
       $ element Shopify.page
           { title: notNull name
           , subtitle: null
-          , breadcrumbs: [ { content: "Campaign list", url: "#/" } ]
+          , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
           , primaryAction:
               if isJust (campaign ^. uiCampaignEnd)
                  then null

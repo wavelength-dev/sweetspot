@@ -4,12 +4,13 @@ import Prelude
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.AVar as AVar
-import Effect.Aff.AVar as AAVar
 import Effect.Aff (Aff, error)
 import Effect.Aff (runAff_, launchAff_) as Aff
+import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart

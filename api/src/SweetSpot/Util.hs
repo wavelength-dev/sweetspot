@@ -2,6 +2,7 @@ module SweetSpot.Util
   ( nanToNothing,
     nanToZero,
     formatPrice,
+    factorToPercentage,
   )
 where
 
@@ -88,3 +89,9 @@ splitDecimals p = case T.split (== '.') p of
 
 joinWithDecimalSep :: Text -> (Text, Text) -> Text
 joinWithDecimalSep sep (wholes, decimals) = wholes <> sep <> decimals
+
+factorToPercentage :: Double -> Double
+factorToPercentage r =
+  if r >= 1
+    then (r - 1) * 100
+    else - (1 - r) * 100

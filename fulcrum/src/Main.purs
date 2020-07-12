@@ -7,18 +7,19 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.AVar as AVar
+import Effect.Aff.AVar as AAVar
 import Effect.Aff (Aff, error)
 import Effect.Aff (runAff_, launchAff_) as Aff
 import Effect.Class (liftEffect)
-import Effect.Console (log, logShow) as Console
 import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
+import Fulcrum.Logger (LogLevel(..))
 import Fulcrum.Logger (LogLevel(..)) as LogLevel
-import Fulcrum.Logger (log, logWithContext) as Logging
-import Fulcrum.RunState (getIsRunning, getRunQueue, initRunQueue, setIsRunning) as RunState
+import Fulcrum.Logger (log, logWithContext) as Logger
+import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue, initTestContext, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
@@ -44,32 +45,45 @@ getTestMap userId = do
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
-  Left message -> Logging.log LogLevel.Error $ show message
+  Left message -> Logger.log LogLevel.Error $ show message
   Right _ -> mempty
+
+foreign import exposeGlobals :: Effect Unit -> Effect Unit
 
 main :: Effect Unit
 main = do
+  exposeGlobals reapply
   hostname <- HTML.window >>= Window.location >>= Location.hostname
-  Logging.log LogLevel.Info ("running fulcrum on " <> hostname)
+  Logger.log LogLevel.Info ("running fulcrum on " <> hostname)
   withUserId \userId -> do
     startCartTokenInterval userId
     RunState.initRunQueue
+    RunState.initTestContext
+    sessionTestContext <- RunState.getTestContext
     Aff.runAff_ logResult do
       eTestContext <- runExceptT $ getTestMap userId
       case eTestContext of
         Left msg -> throwError (error msg)
-        -- We do nothing here as our only goal is to cache the test maps
-        Right testContext -> liftEffect $ applyTestMaps testContext
+        -- we cache the test maps and apply them
+        Right testContext -> do
+          -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+          _ <- AAVar.tryPut testContext sessionTestContext
+          applyTestMaps testContext # liftEffect
   where
-  logResult (Left error) = Logging.logWithContext LogLevel.Error "main failed" { error }
+  logResult (Left error) = Logger.logWithContext Error "main failed" { error }
 
-  logResult (Right result) = mempty
+  logResult (Right result) = Logger.log Info "succesfully ran sweetspot main loop"
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap
 
 applyDynamicPrice :: Aff Unit
-applyDynamicPrice = liftEffect $ Console.log "Applying price things!"
+applyDynamicPrice = do
+  testContext <- RunState.getTestContext # liftEffect >>= AAVar.read
+  mUserId <- User.findUserId # liftEffect
+  case mUserId of
+    Nothing -> Logger.log Warn "tried to apply prices before userId available" # liftEffect
+    Just userId -> applyTestMaps testContext # liftEffect
 
 consumeQueue :: Aff Unit -> Aff Unit
 consumeQueue fn = do
@@ -90,10 +104,14 @@ queueNext fn = do
   isRunning <- RunState.getIsRunning
   if not isRunning then
     -- Nothing queued, start running
-    Aff.runAff_ Console.logShow $ consumeQueue fn
+    Aff.runAff_ logResult $ consumeQueue fn
   else
     -- When there is space on the queue, queue. If not, that's fine too, there is no point in queueing more than one run.
     AVar.tryPut (consumeQueue fn) queue # void
+  where
+  logResult (Left error) = Logger.logWithContext Error "apply failed" { error }
+
+  logResult (Right result) = Logger.log Info "successfully reapplied prices"
 
 reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice

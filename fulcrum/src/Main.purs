@@ -66,9 +66,10 @@ main = do
         Left msg -> throwError (error msg)
         -- we cache the test maps and apply them
         Right testContext -> do
-          -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
-          _ <- AAVar.tryPut testContext sessionTestContext
-          applyTestMaps testContext # liftEffect
+          unless (Map.isEmpty testContext) do
+            -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+            _ <- AAVar.tryPut testContext sessionTestContext
+            applyTestMaps testContext # liftEffect
   where
   logResult (Left error) = Logger.logWithContext Error "main failed" { error }
 

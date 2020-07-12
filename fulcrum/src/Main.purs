@@ -99,7 +99,7 @@ reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
 
 startCartTokenInterval :: UserId -> Effect Unit
-startCartTokenInterval userId = setInterval (1000 * 3) cb *> mempty
+startCartTokenInterval userId = setInterval 500 cb *> mempty
   where
   cb :: Effect Unit
   cb = do

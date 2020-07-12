@@ -216,7 +216,7 @@ mkCampaignViewPage = do
                   , children:
                       [ SH.textContainer
                           [ SH.heading H2 "Average order value"
-                          , R.p_ [ R.text "The size of the average basket users are checking out." ]
+                          , R.p_ [ R.text "The average value of orders users are placing. Excludes products not under test in calculating order value." ]
                           ]
                       , Spacing.large
                       , R.div

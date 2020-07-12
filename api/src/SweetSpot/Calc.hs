@@ -49,17 +49,22 @@ runInference cParams tParams = do
       len = V.length sorted
       nTails = floor $ fromIntegral len * 0.05
       middle90 = V.slice nTails (len - nTails) sorted
-
-  pure $ case (nanToNothing (mean sorted),
-        nanToNothing (VP.head middle90),
-        nanToNothing (VP.last middle90)) of
+  pure $ case ( nanToNothing (mean sorted),
+                nanToNothing (VP.head middle90),
+                nanToNothing (VP.last middle90)
+              ) of
     (Just mean, Just lowerBound, Just upperBound) ->
-      Just $ InfResult
-        { _mean = mean,
-          _lowerBound = lowerBound,
-          _upperBound = upperBound
-        }
+      Just $
+        InfResult
+          { _mean = ratioToPercentage mean,
+            _lowerBound = ratioToPercentage lowerBound,
+            _upperBound = ratioToPercentage upperBound
+          }
     _ -> Nothing
   where
     resample' gen s =
       resamples . snd . L.head <$> resample gen [Mean] 1000 s
+    ratioToPercentage r =
+      if r >= 1
+        then (r - 1) * 100
+        else - (1 - r) * 100

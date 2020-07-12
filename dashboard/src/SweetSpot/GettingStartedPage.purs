@@ -1,6 +1,7 @@
 module SweetSpot.GettingStartedPage where
 
 import Assets (mountainCode) as Assets
+import Data.Nullable (notNull)
 import React.Basic.DOM (text) as R
 import React.Basic.Hooks (JSX, element)
 import SweetSpot.Shopify (emptyState) as Shopify

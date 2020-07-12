@@ -94,7 +94,7 @@
   border-right: 7px solid transparent;
 
   border-bottom: 12px solid var(--colorGreen);
-  opacity: 40%;
+  opacity: 0.4;
 }
 
 .arrowDown {
@@ -107,7 +107,7 @@
   border-right: 7px solid transparent;
 
   border-top: 12px solid var(--colorRed);
-  opacity: 40%;
+  opacity: 0.4;
 }
 
 .arrowUpBig {
@@ -120,7 +120,7 @@
   border-right: 9px solid transparent;
 
   border-bottom: 14px solid var(--colorGreen);
-  opacity: 40%;
+  opacity: 0.4;
 }
 
 .arrowDownBig {
@@ -133,7 +133,7 @@
   border-right: 9px solid transparent;
 
   border-top: 14px solid var(--colorRed);
-  opacity: 40%;
+  opacity: 0.4;
 }
 
 @media (min-width: 30.625em) {

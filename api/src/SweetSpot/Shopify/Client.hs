@@ -93,7 +93,7 @@ class Monad m => MonadShopify m where
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text ShopProduct)
-  deleteProduct :: ShopDomain -> Pid -> m (Either  Text ())
+  deleteProduct :: ShopDomain -> Pid -> m (Either Text ())
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
   createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
@@ -196,6 +196,15 @@ instance MonadShopify AppM where
       appUninstalledPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy AppUninstalledRoute)
+      redactShopPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RedactShopRoute)
+      redactCustomerPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RedactCustomerRoute)
+      requestDataPath =
+        toUrlPiece $
+          safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
       getRequest :: WebhookTopic -> CreateWebhookReq
       getRequest topic =
         CreateWebhookReq $
@@ -206,6 +215,9 @@ instance MonadShopify AppM where
                   <> ( case topic of
                          OrdersCreate -> orderPath
                          AppUninstalled -> appUninstalledPath
+                         ShopRedact -> redactShopPath
+                         CustomersRedact -> redactCustomerPath
+                         CustomersDataRequest -> requestDataPath
                      ),
               format = "json"
             }

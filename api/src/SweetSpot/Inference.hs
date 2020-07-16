@@ -1,4 +1,4 @@
-module SweetSpot.Calc
+module SweetSpot.Inference
   ( InfParams (..),
     InfResult,
     runInference,

@@ -18,7 +18,6 @@ import RIO.Partial (fromJust)
 import qualified RIO.Vector as V
 import Statistics.Sample (mean)
 import SweetSpot.AppM (AppM)
-import SweetSpot.Calc (InfParams (..), runInference)
 import SweetSpot.Data.Api hiding (productVariants)
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
@@ -28,6 +27,7 @@ import SweetSpot.Database.Queries.Util
     withConn,
   )
 import SweetSpot.Database.Schema
+import SweetSpot.Inference (InfParams (..), runInference)
 import SweetSpot.Util
   ( factorToPercentage,
     formatPrice,

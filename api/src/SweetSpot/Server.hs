@@ -79,13 +79,17 @@ runServer = do
             name = Env.dbName envConfig,
             password = Env.dbPassword envConfig
           }
+      environment = Env.environment envConfig
       config =
         AppConfig
-          { _configEnvironment = Env.environment envConfig,
+          { _configEnvironment = environment,
             _configShopifyClientId = Env.shopifyClientId envConfig,
             _configShopifyClientSecret = Env.shopifyClientSecret envConfig,
             _configShopifyOAuthRedirectUri =
-              Env.shopifyOAuthRedirectUri envConfig
+              Env.shopifyOAuthRedirectUri envConfig,
+            _configSweetSpotApiRoot = case environment of
+              Env.Prod -> "https://app.sweetspot.dev/api/"
+              _ -> "https://app-staging.sweetspot.dev/api/"
           }
   dbPool <- getDbPool dbConfig
   appLogger <- newStdoutLoggerSet defaultBufSize

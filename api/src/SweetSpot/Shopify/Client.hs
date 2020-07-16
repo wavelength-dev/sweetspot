@@ -172,10 +172,11 @@ instance MonadShopify AppM where
 
   registerWebhooks domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
+      apiRoot <- asks (view ctxConfig >>> view configSweetSpotApiRoot)
       let registerWebhook :: WebhookTopic -> AppM (Either ClientError Value)
           registerWebhook topic =
             liftIO $
-              runClientM (createWebhookClient (getRequest topic) token) clientEnv
+              runClientM (createWebhookClient (getRequest apiRoot topic) token) clientEnv
       orderRes <- registerWebhook OrdersCreate
       uninstallRes <- registerWebhook AppUninstalled
       redactShopRes <- registerWebhook ShopRedact
@@ -208,13 +209,13 @@ instance MonadShopify AppM where
       requestDataPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
-      getRequest :: WebhookTopic -> CreateWebhookReq
-      getRequest topic =
+      getRequest :: Text -> WebhookTopic -> CreateWebhookReq
+      getRequest apiRoot topic =
         CreateWebhookReq $
           CreateWebhookData
             { topic = tshow topic,
               address =
-                "https://app-staging.sweetspot.dev/api/"
+                apiRoot
                   <> ( case topic of
                          OrdersCreate -> orderPath
                          AppUninstalled -> appUninstalledPath
@@ -227,14 +228,16 @@ instance MonadShopify AppM where
 
   createAppCharge domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
-      env <- asks (view configEnvironment . view ctxConfig)
-      let body =
+      conf <- asks (^. ctxConfig)
+      let env = conf ^. configEnvironment
+          apiRoot = conf ^. configSweetSpotApiRoot
+          body =
             CreateAppCharge
               { _createAppChargeName = "SweetSpot Price Optimization",
                 _createAppChargePrice = Price 99.90,
                 _createAppChargeReturnUrl =
-                  "https://app-staging.sweetspot.dev/api"
-                    <> "/charge/activate?shop="
+                  apiRoot
+                    <> "charge/activate?shop="
                     <> showText domain,
                 _createAppChargeIsTest = env /= Prod
               }

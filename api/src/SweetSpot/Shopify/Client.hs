@@ -178,7 +178,10 @@ instance MonadShopify AppM where
               runClientM (createWebhookClient (getRequest topic) token) clientEnv
       orderRes <- registerWebhook OrdersCreate
       uninstallRes <- registerWebhook AppUninstalled
-      case partitionEithers [orderRes, uninstallRes] of
+      redactShopRes <- registerWebhook ShopRedact
+      redactCustomerRes <- registerWebhook CustomersRedact
+      dataRequestRes <- registerWebhook CustomersDataRequest
+      case partitionEithers [orderRes, uninstallRes, redactShopRes, redactCustomerRes, dataRequestRes] of
         ([], _) -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()

@@ -23,7 +23,8 @@ data AppConfig
       { _configEnvironment :: !Environment,
         _configShopifyClientId :: !Text,
         _configShopifyClientSecret :: !Text,
-        _configShopifyOAuthRedirectUri :: !Text
+        _configShopifyOAuthRedirectUri :: !Text,
+        _configSweetSpotApiRoot :: !Text
       }
   deriving (Generic, Show)
 

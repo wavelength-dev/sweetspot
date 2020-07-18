@@ -112,6 +112,7 @@ renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice, testPr
             , children: mempty
             , onChange: (mkEffectFn1 onTestPriceChange)
             , value: testPrice
+            , type: "number"
             , error:
                 case testPriceValidation of
                   Empty -> notNull "Must enter a test price"

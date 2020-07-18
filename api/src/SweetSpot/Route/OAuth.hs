@@ -13,9 +13,8 @@ import RIO
 import Servant
 import SweetSpot.AppM
 import SweetSpot.Data.Common
-import SweetSpot.Database.Queries.Install
-  ( InstallDB (..),
-  )
+import SweetSpot.Database.Queries.Install (InstallDB (..))
+import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
 import SweetSpot.Database.Schema
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
@@ -93,8 +92,9 @@ redirectHandler (Code code) hmac _ nonce shopDomain =
           lift $ insertAppCharge shopDomain charge
         case result of
           Left err -> do
-            L.error $ err
+            L.error err
             deleteInstallNonce shopDomain
+            uninstallShop shopDomain
             throwError internalServerErr
           Right appCharge -> do
             L.info $ "Successfully installed app for " <> showText shopDomain

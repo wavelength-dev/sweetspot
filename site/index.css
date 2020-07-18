@@ -234,6 +234,7 @@ ul {
   .header-sneakpeek {
     transform: none;
     margin: 4em 4em;
+    width: 50%;
   }
 
   .soundness-pitch {

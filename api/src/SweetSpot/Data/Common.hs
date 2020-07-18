@@ -324,25 +324,23 @@ instance (BeamSqlBackend be, HasSqlEqualityCheck be Text) => HasSqlEqualityCheck
 -- | Nonce
 -- | ---------------------------------------------------------------------------
 newtype Nonce
-  = Nonce UUID
+  = Nonce Text
   deriving (Eq, Show)
 
 instance FromHttpApiData Nonce where
-  parseQueryParam qp = case fromText qp of
-    Just uuid -> Right $ Nonce uuid
-    Nothing -> Left "invalid nonce"
+  parseQueryParam = Nonce >>> Right
 
 instance ToHttpApiData Nonce where
-  toQueryParam (Nonce uuid) = toText uuid
+  toQueryParam (Nonce txt) = txt
 
-instance HasSqlValueSyntax be UUID => HasSqlValueSyntax be Nonce where
+instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Nonce where
   sqlValueSyntax = sqlValueSyntax . \(Nonce uuid) -> uuid
 
-instance (BeamSqlBackend be, FromBackendRow be UUID) => FromBackendRow be Nonce where
+instance (BeamSqlBackend be, FromBackendRow be Text) => FromBackendRow be Nonce where
   fromBackendRow = Nonce <$> fromBackendRow
 
 instance ShowText Nonce where
-  showText (Nonce uuid) = toText uuid
+  showText (Nonce uuid) = uuid
 
 -- | ---------------------------------------------------------------------------
 -- | OAuth stuff

@@ -455,7 +455,7 @@ migration () =
       "install_nonces"
       InstallNonce
         { _installShopDomain = field "shop_domain" (DataType pgTextType) notNull,
-          _installNonce = field "nonce" (DataType pgUuidType) notNull
+          _installNonce = field "nonce" (DataType pgTextType) notNull
         }
     <*> createTable
       "users"

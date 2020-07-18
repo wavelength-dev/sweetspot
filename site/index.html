@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Get SweetSpot</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style type="text/css" media="screen">
+      h1,
+      h2,
+      p,
+      span,
+      a,
+      li {
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      ul {
+        padding: 0;
+        list-style: none;
+      }
+
+      .spacing-s {
+        width: 1em;
+        height: 1em;
+      }
+
+      .spacing-m {
+        width: 2em;
+        height: 2em;
+      }
+
+      .spacing-l {
+        width: 3em;
+        height: 3em;
+      }
+
+      .header {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .header-pitch {
+        padding: 0 1em;
+        padding-top: 0.5em;
+        background: rgba(0, 0, 0, 0) url("/img/bg1.png") no-repeat scroll center
+          center / cover;
+      }
+
+      .header {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .title {
+        font-size: 2em;
+        font-weight: 600;
+        margin-top: 0;
+      }
+
+      .dart {
+        position: relative;
+        right: 31px;
+        top: 23px;
+        width: 40px;
+        height: auto;
+      }
+
+      .subtitle {
+        font-weight: 300;
+        font-size: 1.5em;
+        line-height: 1.5em;
+        margin: 0.6em 0;
+      }
+
+      .text {
+        font-weight: 300;
+        font-size: 0.875em;
+      }
+
+      .button-inner {
+        display: flex;
+      }
+
+      .add-to-store-button {
+        font-weight: 500;
+        position: relative;
+
+        color: #444;
+        border: 0 none;
+        text-decoration: none;
+
+        padding: 4px 16px;
+
+        background: transparent none repeat scroll 0 0;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+          border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+
+      .add-to-store-button:before {
+        position: absolute;
+        content: "";
+        height: calc(100% + 4px);
+        width: calc(100% + 4px);
+        top: -2px;
+        left: -2px;
+        border-radius: 100px;
+        background: rgba(0, 0, 0, 0)
+          linear-gradient(to right, #00e4e2 0%, #81ee8e 100%) repeat scroll 0 0;
+        z-index: -2;
+      }
+
+      .add-to-store-button:after {
+        position: absolute;
+        content: "";
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        border-radius: 100px;
+        background: #fff none repeat scroll 0 0;
+        z-index: -1;
+        box-sizing: border-box;
+      }
+
+      .add-to-store-button:hover {
+        color: #fff;
+        /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); */
+      }
+
+      .add-to-store-button:hover:after {
+        opacity: 0;
+        outline: none;
+      }
+
+      .header-sneakpeek {
+        position: relative;
+        width: 100%;
+        right: -18%;
+        margin: 2em 0;
+      }
+
+      .main-pitch {
+        background: rgba(0, 0, 0, 0) url("/img/bg2.png") no-repeat scroll center
+          center / cover;
+
+        padding: 0 1em;
+
+        margin: 2em 0;
+      }
+
+      .steps-title {
+        margin: 0;
+      }
+
+      .steps-list {
+        margin-top: 0;
+        padding-left: 1em;
+        list-style: decimal;
+        font-weight: 300;
+        font-size: 0.875em;
+      }
+
+      .soundness-pitch {
+        padding: 0 1em;
+        background: rgba(0, 0, 0, 0) url("/img/bg3.png") no-repeat scroll center
+          center / cover;
+      }
+
+      .soundness-text {
+        margin: 0;
+      }
+
+      .soundness-graph {
+        float: right;
+        margin-top: 2em;
+        margin-right: -2.2em;
+        margin-left: 1em;
+      }
+
+      .three-pitch {
+        padding: 0 1em;
+        background: rgba(0, 0, 0, 0) url("/img/bg4.png") no-repeat scroll center
+          center / cover;
+      }
+
+      .three-bit {
+        margin-top: 3em;
+      }
+
+      .end-activation {
+        display: flex;
+        flex-direction: column;
+        margin: 2em 0;
+        align-items: center;
+      }
+
+      .vertical-line {
+        background-color: black;
+        width: 1px;
+        height: 24px;
+      }
+
+      .end-activation-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 1em 0 3em 0;
+      }
+
+      .end-activation-text p {
+        font-family: "Poppins", sans-serif;
+        font-weight: 600;
+        font-size: 24px;
+        text-align: center;
+        margin: 0;
+      }
+
+      @media (min-width: 600px) {
+        .header {
+          flex-wrap: nowrap;
+          background: rgba(0, 0, 0, 0) url("/img/bg1-wide.png") no-repeat scroll
+            center center / cover;
+        }
+
+        .header-pitch {
+          background: none;
+        }
+
+        .header-sneakpeek {
+          width: 40%;
+          position: static;
+          margin: 4em 4em;
+        }
+
+        .soundness-pitch {
+          padding: 0 1em;
+          background: rgba(0, 0, 0, 0) url("/img/bg3-wide.png") no-repeat scroll
+            center center / cover;
+        }
+
+        .pitch-title {
+          font-size: 40px;
+        }
+
+        .soundness-graph {
+          width: 300px;
+          margin: 0 4em 0 4em;
+        }
+
+        .three-pitch {
+          clear: both;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+        }
+
+        .three-bit {
+          width: 31%;
+        }
+
+        .three-bit h2 {
+          min-height: 3em;
+        }
+
+        .end-activation-text {
+          margin: 0.5em 0 1em 0;
+        }
+
+        .end-buttons {
+          display: flex;
+          margin: auto;
+          flex-direction: row;
+        }
+
+        .main-pitch {
+          background: none;
+        }
+
+        .three-pitch {
+          background: none;
+        }
+
+        .last-two-sections {
+          padding: 1em;
+          background: rgba(0, 0, 0, 0) url("/img/bg4-wide.png") no-repeat scroll
+            center center / cover;
+        }
+
+        .end-activation-text {
+          font-size: 40px;
+        }
+
+        .end-buttons {
+          display: flex;
+        }
+
+        .title {
+          font-size: 4em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="header">
+      <div class="header-pitch">
+        <h1 class="title">
+          SweetSpot
+          <img
+            class="dart"
+            src="img/dart.svg"
+            alt="a small image of a dart, hitting the sweetspot header title in the letter 'o' "
+          />
+        </h1>
+        <p class="subtitle">
+          Discover more profitable prices for your products
+        </p>
+        <p class="text">
+          SweetSpot allows you to run statistically sound A/B tests for the
+          price of your products. It helps you find the optimal point on the
+          price elasticity curve resulting in increased profits for your
+          business.
+        </p>
+        <div class="spacing-s"></div>
+        <a
+          href="https://apps.shopify.com/videofy_make_product_videos"
+          target="_blank"
+          class="add-to-store-button"
+        >
+          add to your store
+        </a>
+      </div>
+      <div class="spacing-m"></div>
+      <img
+        class="header-sneakpeek"
+        src="/img/experiment-view.png"
+        alt="screenshot of the sweetspot dashboard on the experiment overview page"
+      />
+    </section>
+    <section class="main-pitch">
+      <div class="text-container">
+        <p class="text">
+          Most serious store-owners spend considerable effort on A/B testing
+          various landing page designs, color schemes, and checkout flows.
+          Despite this, few of us put effort into making sure our pricing is
+          equally optimized. Finding a more profitable price for a product is
+          one of the best ways to make your business stronger.
+        </p>
+        <div class="spacing-s"></div>
+        <p class="text steps-title">
+          SweetSpot works just like regular A/B testing:
+        </p>
+        <ul class="steps-list">
+          <li>
+            Select a control price and a test price for one or more products
+          </li>
+          <li>Start the experiment!</li>
+          <li>
+            Let the experiment run until it reaches a statistically significant
+            result
+          </li>
+          <li>Adjust the price accordingly</li>
+        </ul>
+      </div>
+    </section>
+    <section class="soundness-pitch">
+      <!-- <div class="text&#45;container"> -->
+      <h2 class="pitch-title">Statistically sound</h2>
+      <p class="text soundness-text">
+        When conducting any scientific experiment, it's essential to control for
+        confounding variables. For example, if you change the price of a product
+        from one week to the next, there's no way of knowing the impact of the
+        change on your profits. It might just be that more people bought more
+        the other week because it happened to be when they received their
+        salaries. In this case, you might get mislead into switching to a price
+        that may even perform worse than the original.
+      </p>
+      <!-- <img -->
+      <!--   class="soundness&#45;graph" -->
+      <!--   src="img/graph.svg" -->
+      <!--   alt="a purely decorative, colorful, abstract graph" -->
+      <!-- /> -->
+      <p class="text">
+        This is why you want to base crucial business decisions, such as the
+        price of your product, on statistically significant results. Luckily,
+        you don't need to be a Data Scientist to use SweetSpot! It has been
+        built from the ground up to deliver reliable results using an
+        easy-to-use interface.
+      </p>
+      <!-- </div> -->
+    </section>
+    <div class="spacing-m"></div>
+    <div class="last-two-sections">
+      <section class="three-pitch">
+        <div class="three-bit">
+          <h2>Built by e-commerce veterans</h2>
+          <p class="text">
+            Our team has a long track record of working on high-traffic websites
+            of some of the world's leading brands. We understand that any
+            downtime or issues can quickly add up to a lot of lost revenue.
+            That's why we built SweetSpot on state-of-the-art infrastructure
+            using high-assurance software development practices.
+          </p>
+        </div>
+        <div class="three-bit">
+          <h2>Built by e-commerce veterans</h2>
+          <p class="text">
+            Before releasing SweetSpot to the Shopify App Store, we wanted to
+            make sure that it can deliver the kind of results we're promising,
+            so we ran price experiments with early testers. In one of these
+            experiments, a 10% increase in price led to a 30% increase in
+            profit!
+          </p>
+        </div>
+        <div class="three-bit">
+          <h2>Built by e-commerce veterans</h2>
+          <p class="text">
+            Price testing is by no means a new invention. Airlines, hotels, and
+            large e-commerce companies have been doing dynamic pricing and price
+            optimization for a long time. Until now, their strategies haven't
+            been accessible to Shopify merchants, but we're here to change that.
+          </p>
+        </div>
+      </section>
+      <section class="end-activation">
+        <div class="end-activation-text">
+          <hr class="vertical-line" />
+          <p>
+            discover what you've been missing
+          </p>
+          <hr class="vertical-line" />
+        </div>
+        <div class="end-buttons">
+          <a
+            href="https://apps.shopify.com/videofy_make_product_videos"
+            target="_blank"
+            class="add-to-store-button end-button"
+          >
+            add to your store
+          </a>
+          <div class="spacing-m"></div>
+          <a
+            href="mailto:hello@wavelength.dev?subject=About Sweetspot"
+            target="_blank"
+            class="add-to-store-button end-button"
+          >
+            hello@wavelength.dev
+          </a>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

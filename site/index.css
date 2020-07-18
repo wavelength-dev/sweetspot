@@ -137,6 +137,11 @@ ul {
   transform: translateX(+24%);
 }
 
+.desktop-continuation {
+  display: hidden;
+  margin-top: 3em;
+}
+
 .main-pitch {
   background: rgba(0, 0, 0, 0) url("/img/bg2.png") no-repeat scroll center
     center / cover;
@@ -188,7 +193,7 @@ ul {
 .end-activation {
   display: flex;
   flex-direction: column;
-  margin: 4em 0;
+  margin: 2em 0;
   align-items: center;
 }
 
@@ -229,8 +234,8 @@ ul {
 
   .header-pitch {
     background: none;
-    margin-top: 4em;
-    margin-left: 4em;
+    padding-top: 4em;
+    padding-left: 4em;
   }
 
   .header-sneakpeek {
@@ -239,8 +244,17 @@ ul {
     width: 50%;
   }
 
+  .desktop-continuation {
+    display: block;
+    margin-top: 2em;
+  }
+
+  .main-pitch {
+    display: none;
+  }
+
   .soundness-pitch {
-    padding: 0 1em;
+    padding: 2em 4em;
     background: rgba(0, 0, 0, 0) url("/img/bg3-wide.png") no-repeat scroll
       center center / cover;
   }
@@ -259,10 +273,12 @@ ul {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    padding: 0 4em;
   }
 
   .three-bit {
     width: 31%;
+    margin-top: 0;
   }
 
   .three-bit h2 {
@@ -294,6 +310,7 @@ ul {
   }
 
   .end-activation {
+    margin-top: 2em;
     margin-bottom: 6em;
   }
 

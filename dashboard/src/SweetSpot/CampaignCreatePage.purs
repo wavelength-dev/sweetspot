@@ -239,7 +239,7 @@ mkCampaignCreatePage = do
       $ element Shopify.page
           { title: notNull "Create experiment"
           , subtitle: null
-          , breadcrumbs: [ { content: "campaign list", url: "#/" } ]
+          , breadcrumbs: [ { content: "Campaign list", url: "#/" } ]
           , primaryAction: null
           , children:
               [ element Shopify.modal

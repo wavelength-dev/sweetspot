@@ -179,10 +179,7 @@ instance MonadShopify AppM where
               runClientM (createWebhookClient (getRequest apiRoot topic) token) clientEnv
       orderRes <- registerWebhook OrdersCreate
       uninstallRes <- registerWebhook AppUninstalled
-      redactShopRes <- registerWebhook ShopRedact
-      redactCustomerRes <- registerWebhook CustomersRedact
-      dataRequestRes <- registerWebhook CustomersDataRequest
-      case partitionEithers [orderRes, uninstallRes, redactShopRes, redactCustomerRes, dataRequestRes] of
+      case partitionEithers [orderRes, uninstallRes] of
         ([], _) -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()
@@ -200,15 +197,6 @@ instance MonadShopify AppM where
       appUninstalledPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy AppUninstalledRoute)
-      redactShopPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RedactShopRoute)
-      redactCustomerPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RedactCustomerRoute)
-      requestDataPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy RequestDataRoute)
       getRequest :: Text -> WebhookTopic -> CreateWebhookReq
       getRequest apiRoot topic =
         CreateWebhookReq $
@@ -219,9 +207,6 @@ instance MonadShopify AppM where
                   <> ( case topic of
                          OrdersCreate -> orderPath
                          AppUninstalled -> appUninstalledPath
-                         ShopRedact -> redactShopPath
-                         CustomersRedact -> redactCustomerPath
-                         CustomersDataRequest -> requestDataPath
                      ),
               format = "json"
             }

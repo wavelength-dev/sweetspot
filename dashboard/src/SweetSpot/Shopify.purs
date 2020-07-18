@@ -93,6 +93,7 @@ foreign import textField ::
     , labelHidden :: Boolean
     , children :: Array JSX
     , error :: Nullable String
+    , type :: String
     }
 
 foreign import datePicker ::

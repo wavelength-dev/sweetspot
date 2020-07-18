@@ -188,7 +188,7 @@ ul {
 .end-activation {
   display: flex;
   flex-direction: column;
-  margin: 2em 0;
+  margin: 4em 0;
   align-items: center;
 }
 

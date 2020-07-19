@@ -224,7 +224,7 @@ instance MonadShopify AppM where
                   apiRoot
                     <> "charge/activate?shop="
                     <> showText domain,
-                _createAppChargeIsTest = env /= Prod
+                _createAppChargeIsTest = True -- env /= Prod
               }
           createAppChargeClient = client (Proxy :: Proxy CreateAppChargeRoute)
       res <- liftIO $ runClientM (createAppChargeClient body token) clientEnv

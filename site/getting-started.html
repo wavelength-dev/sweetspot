@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Getting started :: SweetSpot Price Optimization</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/index.css" type="text/css" media="screen" charset="utf-8">
+    </style>
+  </head>
+  <body>
+    <section class="soundness-pitch">
+      <h1 class="pitch-title">Getting Started with SweetSpot</h1>
+      <p class="text soundness-text">Before running your first price test, we need to make sure SweetSpot is set-up correctly.</p>
+      <h2 class="pitch-title">1. Identifying price elements</h2>
+
+      <p class="text soundness-text">SweetSpot needs to be aware of where to apply its magic. To achieve this, we need to tag a few key elements in the template to make SweetSpot aware of them. This is done by editing your theme's liquid templates.</p>
+
+      <ul>
+        <li>Every element containing a price should have a `sweetspot__price` class, and a `data-sweetspot-id` attribute containing the variant id to which the price belongs to.</li>
+        <li>Option elements in the variant selector should have a `sweetspot-option` class.</li>
+      </ul>
+
+      <h2 class="pitch-title">2. Making sure visitors see no duplicated products</h2>
+
+      <p class="text soundness-text">To enable the same product to be checked out with different prices, SweetSpot needs to duplicate products. All product variants SweetSpot creates, have `sweetspot-variant` set as product type. To make sure no duplicates show up in your collections, you can add the condition `Product type is not equal to sweetspot-variant` to your collections.</p>
+
+      <h2 class="pitch-title">3. Applying price after client-side DOM changes</h2>
+
+      <p class="text soundness-text">This step only applies if your theme manipulates price elements with client-side JavaScript. In this case, SweetSpot needs to run after any such changes for it to display the right price. To do this, you can call the `window.SweetSpot.apply()` function.</p>
+
+      <h2 class="pitch-title">Ready to test</h2>
+
+      <p class="text soundness-text">That's all there is to it. SweetSpot is now ready to run price tests! If you need further assistance with setting up, you can reach us at <a href="mailto:hello@wavelength.dev">hello@wavelength.dev</a>.</p>
+    </section>
+    <div class="spacing-m"></div>
+    <div class="last-two-sections">
+      <section class="end-activation">
+        <div class="end-activation-text">
+          <hr class="vertical-line" />
+          <p>
+            discover what you've been missing
+          </p>
+          <hr class="vertical-line" />
+        </div>
+        <div class="end-buttons">
+          <a
+            href="https://apps.shopify.com/videofy_make_product_videos"
+            target="_blank"
+            class="add-to-store-button end-button"
+          >
+            add to your store
+          </a>
+          <div class="spacing-m"></div>
+          <a
+            href="mailto:hello@wavelength.dev?subject=About Sweetspot"
+            target="_blank"
+            class="add-to-store-button end-button"
+          >
+            hello@wavelength.dev
+          </a>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

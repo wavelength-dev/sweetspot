@@ -1,15 +1,15 @@
 steps:
-  - name: 'gcr.io/kaniko-project/executor:latest'
+  - name: "gcr.io/kaniko-project/executor:latest"
     args:
-    - --destination=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
-    - --cache=true
-    - --cache-ttl=168h
+      - --destination=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
+      - --cache=true
+      - --cache-ttl=168h
   # Deploy container image to Cloud Run
   - name: gcr.io/cloud-builders/gcloud
     args:
       - run
       - deploy
-      - sweetspot
+      - sweetspot-$_RUN_ENV
       - --image
       - gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - --region

@@ -219,7 +219,7 @@ instance MonadShopify AppM where
           body =
             CreateAppCharge
               { _createAppChargeName = "SweetSpot Price Optimization",
-                _createAppChargePrice = Price 99.90,
+                _createAppChargePrice = Price 200,
                 _createAppChargeReturnUrl =
                   apiRoot
                     <> "charge/activate?shop="

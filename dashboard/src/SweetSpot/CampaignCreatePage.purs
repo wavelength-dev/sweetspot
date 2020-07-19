@@ -274,6 +274,7 @@ mkCampaignCreatePage = do
                               , labelHidden: false
                               , children: mempty
                               , error: null
+                              , type: "text"
                               }
                           , Spacing.large
                           , element Shopify.button

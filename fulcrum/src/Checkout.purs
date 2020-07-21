@@ -10,18 +10,20 @@ import Data.Traversable (traverse_)
 import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
+import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Logger (getIsDebugging)
+import Fulcrum.Site as Site
 import Web.DOM (Element)
-import Web.DOM.Document (createElement, toParentNode) as Document
+import Web.DOM.Document (createElement) as Document
 import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
 import Web.DOM.Node as Node
 import Web.DOM.NodeList (toArray) as NodeList
 import Web.DOM.ParentNode (QuerySelector(..))
-import Web.DOM.ParentNode (querySelectorAll) as ParentNode
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
-import Web.HTML.Window (document) as Window
+import Web.HTML.Window (document, localStorage) as Window
+import Web.Storage.Storage (getItem) as Storage
 
 -- Supported checkout: Shopify default product-form
 -- We target option.sweetspot__option and swap out the value attribute.
@@ -59,19 +61,6 @@ import Web.HTML.Window (document) as Window
 --   </div>
 -- </form>
 --
-queryDocument :: QuerySelector -> Effect (Array Element)
-queryDocument querySelector =
-  HTML.window
-    >>= Window.document
-    >>= HTMLDocument.toDocument
-    >>> Document.toParentNode
-    >>> pure
-    >>= ParentNode.querySelectorAll querySelector
-    >>= nodesToElements
-  where
-  -- We discard nodes that are not elements.
-  nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
-
 setCheckoutVariantId :: TestMapByVariant -> Element -> Effect Unit
 setCheckoutVariantId testMap element =
   runExceptT do
@@ -106,11 +95,13 @@ labelHighlight =
 
 highlightCheckout :: Effect Unit
 highlightCheckout = do
-  document <- HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
-  matchingElements <- queryDocument (QuerySelector "form.product-form")
+  window <- HTML.window
+  document <- Window.document window >>= HTMLDocument.toDocument >>> pure
+  matchingElements <- Site.queryDocument (QuerySelector "form.product-form")
   case Array.head matchingElements of
     Nothing -> mempty
     Just formElement -> do
+      cartToken <- HTML.window >>= Window.localStorage >>= Storage.getItem Config.tokenStashKey
       labelElement <- Document.createElement "p" document
       let
         labelNode = Element.toNode labelElement
@@ -128,7 +119,7 @@ applyTestCheckout :: TestMapByVariant -> Effect Unit
 applyTestCheckout testMap = do
   isDebugging <- getIsDebugging
   when isDebugging highlightCheckout
-  optionElements <- queryDocument (QuerySelector "option.sweetspot__option")
+  optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
   traverse_ (setCheckoutVariantId testMap) optionElements
   where
   -- We discard nodes that are not elements.

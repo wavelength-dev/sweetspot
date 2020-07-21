@@ -25,6 +25,7 @@ import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
 import Fulcrum.TestPrice (applyTestPrices) as TestPrice
+import Fulcrum.TestPrice (revealAllPrices)
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 import Web.HTML (window) as HTML
@@ -71,6 +72,8 @@ main = do
             -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
             _ <- AAVar.tryPut testContext sessionTestContext
             applyTestMaps testContext # liftEffect
+    -- regardless of whether we succeeded or failed, we need to unhide the prices so people can buy
+    revealAllPrices
   where
   logResult (Left error) = Logger.logWithContext Error "main failed" { error }
 

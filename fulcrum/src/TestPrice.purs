@@ -10,6 +10,7 @@ import Effect (Effect)
 import Fulcrum.Data (TestMapByVariant, VariantId(..), TestMap)
 import Fulcrum.Logger (LogLevel(..), getIsDebugging)
 import Fulcrum.Logger (log) as Logger
+import Fulcrum.Site as Site
 import Partial.Unsafe (unsafePartial) as Unsafe
 import Web.DOM (Element)
 import Web.DOM.DOMTokenList (remove) as DTL
@@ -17,6 +18,7 @@ import Web.DOM.Document (createElement, getElementsByClassName) as Document
 import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
 import Web.DOM.HTMLCollection (toArray) as HTMLCollection
 import Web.DOM.Node (appendChild, parentNode, setTextContent) as Node
+import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
 import Web.HTML.HTMLElement (classList, fromElement) as HTMLElement
@@ -46,10 +48,10 @@ insertPrice testMap element = do
       when isDebugging (highlightTestPrice element "error")
     Just variantId -> case Map.lookup variantId testMap of
       -- sweetspot price but price not under test
-      Nothing -> revealPrice
+      Nothing -> revealPrice element
       Just test -> do
         setNodePrice test
-        revealPrice
+        revealPrice element
         let
           highlightText = if test.variantId == test.swapId then "default price" else "test price"
         when isDebugging (highlightTestPrice element highlightText)
@@ -57,10 +59,15 @@ insertPrice testMap element = do
   setNodePrice :: TestMap -> Effect Unit
   setNodePrice { swapPrice } = Node.setTextContent swapPrice (Element.toNode element)
 
-  revealPrice :: Effect Unit
-  revealPrice = case HTMLElement.fromElement element of
-    Just el -> HTMLElement.classList el >>= (flip DTL.remove) "sweetspot__price--hidden"
-    Nothing -> Logger.log Error "unable to reveal price"
+revealPrice :: Element -> Effect Unit
+revealPrice element = case HTMLElement.fromElement element of
+  Just el -> HTMLElement.classList el >>= (flip DTL.remove) "sweetspot__price--hidden"
+  Nothing -> Logger.log Error "unable to reveal price"
+
+revealAllPrices :: Effect Unit
+revealAllPrices =
+  Site.queryDocument (QuerySelector ".sweetspot__price--hidden")
+    >>= traverse_ revealPrice
 
 applyTestPrices :: Map VariantId TestMap -> Effect Unit
 applyTestPrices testMap =

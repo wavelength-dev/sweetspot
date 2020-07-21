@@ -1,6 +1,7 @@
 module Fulcrum.Site where
 
 import Prelude
+import Data.Array (catMaybes) as Array
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
@@ -8,7 +9,12 @@ import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
 import QueryString (QueryParam(..))
 import QueryString (parseQueryString) as QueryString
-import Web.DOM (Document)
+import Web.DOM (Document, Element)
+import Web.DOM.Document (toParentNode) as Document
+import Web.DOM.Element (fromNode) as Element
+import Web.DOM.NodeList (toArray) as NodeList
+import Web.DOM.ParentNode (QuerySelector)
+import Web.DOM.ParentNode (querySelectorAll) as ParentNode
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener) as EventTarget
 import Web.HTML (window) as HTML
 import Web.HTML.Event.EventTypes (domcontentloaded) as EventTypes
@@ -45,5 +51,19 @@ getUrlParam targetKey = do
   where
   matchQueryParam :: Either String QueryParam -> Maybe String
   matchQueryParam = case _ of
-    Right (QueryParam key (Just value)) | key == targetKey -> Just value
+    Right (QueryParam key (Just value))
+      | key == targetKey -> Just value
     _ -> Nothing
+
+queryDocument :: QuerySelector -> Effect (Array Element)
+queryDocument querySelector =
+  HTML.window
+    >>= Window.document
+    >>= HTMLDocument.toDocument
+    >>> Document.toParentNode
+    >>> pure
+    >>= ParentNode.querySelectorAll querySelector
+    >>= nodesToElements
+  where
+  -- We discard nodes that are not elements.
+  nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure

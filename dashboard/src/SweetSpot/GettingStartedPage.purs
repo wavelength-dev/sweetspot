@@ -12,11 +12,10 @@ gettingStartedPage =
     { heading: "Discover more profitable prices for your products"
     , action: notNull { content: "Create Price Experiment", url: "#/create" }
     , image: Assets.mountainCode
-    , children: [
-      R.p {children: [ R.text "Here you'll create new price tests, check their progress, or their outcome." ]},
-      R.p {
-        style: R.css { marginTop: "1em"},
-        children: [ R.text "Before creating your first experiment, please make sure to read the ", R.a { target: "_blank", href: "https://getsweetspot.com/getting-started", children: [R.text "getting started guide."]} ]
-        }
-    ]
+    , children:
+        [ R.p
+            { style: R.css { marginTop: "1em" }
+            , children: [ R.text "For SweetSpot to work, minor changes need to be made to your theme first. Before creating your first experiment, please make sure to read the ", R.a { target: "_blank", href: "https://getsweetspot.com/getting-started", children: [ R.text "getting started guide." ] } ]
+            }
+        ]
     }

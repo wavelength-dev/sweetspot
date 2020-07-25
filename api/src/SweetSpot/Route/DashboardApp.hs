@@ -7,7 +7,7 @@ where
 import Control.Monad.IO.Class (liftIO)
 import Network.HTTP.Media ((//), (/:))
 import RIO
-import qualified RIO.ByteString.Lazy as BS
+import qualified RIO.ByteString.Lazy as BSL
 import Servant
 import Servant ((:>), Raw, serveDirectoryWith)
 import Servant.API (toUrlPiece)
@@ -24,7 +24,7 @@ import WaiAppStatic.Types (MaxAge (..), ssMaxAge)
 
 data HTML
 
-newtype RawHTML = RawHTML {unRaw :: BS.ByteString}
+newtype RawHTML = RawHTML {unRaw :: BSL.ByteString}
 
 instance MimeRender HTML RawHTML where
   mimeRender _ = unRaw
@@ -44,6 +44,15 @@ type DashboardStatic = "dashboard" :> Raw
 
 type DashboardApp = IndexRoute :<|> DashboardStatic
 
+appChargeRedirect :: Text -> BSL.ByteString
+appChargeRedirect url =
+  "<html><head><meta charset=\"utf=8\"><title>Redirecting...</title><script>"
+    <> "window.top.location.href = "
+    <> "\""
+    <> BSL.fromStrict (encodeUtf8 url)
+    <> "\""
+    <> "</script></head><body></body></html>"
+
 indexHandler ::
   ShopDomain ->
   Timestamp ->
@@ -58,14 +67,10 @@ indexHandler domain ts hmac mSessionId =
         createSession domain sessionId
         appCharge <- getAppCharge domain
         case _appChargeStatus appCharge of
-          Active -> RawHTML <$> liftIO (BS.readFile "./dist/dashboard/index.html")
+          Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
           status -> do
             L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
-            throwError $
-              err302
-                { errHeaders =
-                    [("Location", encodeUtf8 (_appChargeConfirmationUrl appCharge))]
-                }
+            pure $ RawHTML $ appChargeRedirect $ _appChargeConfirmationUrl appCharge
       _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
         where
           redirectApi = Proxy :: Proxy OAuthAPI

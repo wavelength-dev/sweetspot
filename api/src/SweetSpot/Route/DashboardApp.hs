@@ -53,7 +53,6 @@ indexHandler ::
 indexHandler domain ts hmac sessionId =
   runAppM $ do
     mToken <- getOAuthToken domain
-    let ShopDomain txtDomain = domain
     case mToken of
       Just _ -> do
         createSession domain sessionId
@@ -67,11 +66,11 @@ indexHandler domain ts hmac sessionId =
                 { errHeaders =
                     [("Location", encodeUtf8 (_appChargeConfirmationUrl appCharge))]
                 }
-      Nothing -> throwError $ err302 {errHeaders = [("Location", "/api/" <> redirectPath)]}
+      Nothing -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
         where
           redirectApi = Proxy :: Proxy OAuthAPI
           redirectHandler = Proxy :: Proxy InstallRoute
-          redirectPath =
+          installPath =
             encodeUtf8
               $ toUrlPiece
               $ safeLink redirectApi redirectHandler domain ts hmac

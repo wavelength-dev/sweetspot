@@ -12,6 +12,7 @@ import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Database.Schema
+import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 import SweetSpot.Shopify.Client (MonadShopify (..))
@@ -47,6 +48,11 @@ activateAppChargeHandler domain = runAppM $ do
       throwError internalServerErr
     Right _ -> do
       L.info $ "Successfully activated app charge for shop " <> showText domain
-      pure $ addHeader ("https://" <> showText domain <> "/admin/apps/sweetspot") NoContent
+      env <- asks (view ctxConfig >>> view configEnvironment)
+      let appPath =
+            case env of
+              Prod -> "/admin/apps/sweetspot"
+              _ -> "/admin/apps/sweetspot-1"
+      pure $ addHeader ("https://" <> showText domain <> appPath) NoContent
 
 appChargeHandler = activateAppChargeHandler

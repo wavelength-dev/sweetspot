@@ -3,6 +3,7 @@ module SweetSpot.Database.Queries.Install where
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
+import qualified Database.Beam.Postgres.Full as PG
 import RIO
 import RIO.Partial (fromJust)
 import SweetSpot.AppM (AppM)
@@ -29,14 +30,17 @@ instance InstallDB AppM where
     [row] <-
       runBeamPostgres conn
         $ BeamExt.runInsertReturningList
-        $ insert (db ^. installNonces)
-        $ insertExpressions
-          [ InstallNonce
-              { _installNonce = nonce_,
-                _installShopDomain =
-                  val_ shopDomain
-              }
-          ]
+        $ PG.insert
+          (db ^. installNonces)
+          ( insertExpressions
+              [ InstallNonce
+                  { _installNonce = nonce_,
+                    _installShopDomain =
+                      val_ shopDomain
+                  }
+              ]
+          )
+          (PG.onConflict PG.anyConflict PG.onConflictUpdateAll)
     pure $ row ^. installNonce
 
   getInstallNonce shopDomain = withConn $ \conn ->
@@ -101,11 +105,13 @@ instance InstallDB AppM where
   getAppCharge domain = withConn $ \conn ->
     runBeamPostgres conn $ do
       shopId' <- unsafeFindShopId domain
-      fromJust <$> (runSelectReturningOne
-        $ select
-        $ filter_
-          ((==. val_ shopId') . (^. appChargeShopId))
-          (all_ (db ^. appCharges)))
+      fromJust
+        <$> ( runSelectReturningOne
+                $ select
+                $ filter_
+                  ((==. val_ shopId') . (^. appChargeShopId))
+                  (all_ (db ^. appCharges))
+            )
 
   updateAppChargeStatus chargeId status = withConn $ \conn ->
     runBeamPostgres conn

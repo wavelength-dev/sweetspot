@@ -37,7 +37,7 @@ type IndexRoute =
     :> QueryParam' '[Required, Strict] "shop" ShopDomain
     :> QueryParam' '[Required, Strict] "timestamp" Timestamp
     :> QueryParam' '[Required, Strict] "hmac" HMAC'
-    :> QueryParam' '[Required, Strict] "session" SessionId
+    :> QueryParam "session" SessionId
     :> Get '[HTML] RawHTML
 
 type DashboardStatic = "dashboard" :> Raw
@@ -48,13 +48,13 @@ indexHandler ::
   ShopDomain ->
   Timestamp ->
   HMAC' ->
-  SessionId ->
+  Maybe SessionId ->
   ServerM RawHTML
-indexHandler domain ts hmac sessionId =
+indexHandler domain ts hmac mSessionId =
   runAppM $ do
     mToken <- getOAuthToken domain
-    case mToken of
-      Just _ -> do
+    case (mToken, mSessionId) of
+      (Just _, Just sessionId) -> do
         createSession domain sessionId
         appCharge <- getAppCharge domain
         case _appChargeStatus appCharge of
@@ -66,7 +66,7 @@ indexHandler domain ts hmac sessionId =
                 { errHeaders =
                     [("Location", encodeUtf8 (_appChargeConfirmationUrl appCharge))]
                 }
-      Nothing -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
+      _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
         where
           redirectApi = Proxy :: Proxy OAuthAPI
           redirectHandler = Proxy :: Proxy InstallRoute

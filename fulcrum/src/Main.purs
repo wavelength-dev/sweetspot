@@ -12,20 +12,19 @@ import Effect.Aff (Aff, error)
 import Effect.Aff (runAff_, launchAff_) as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
+import Effect.Exception (try)
 import Effect.Timer (setInterval, setTimeout)
 import Fulcrum.Cart as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
 import Fulcrum.Logger (LogLevel(..))
-import Fulcrum.Logger (LogLevel(..)) as LogLevel
 import Fulcrum.Logger (log, logWithContext) as Logger
 import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue, initTestContext, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
-import Fulcrum.TestPrice (applyTestPrices) as TestPrice
-import Fulcrum.TestPrice (revealAllPrices)
+import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 import Web.HTML (window) as HTML
@@ -47,33 +46,40 @@ getTestMap userId = do
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
-  Left message -> Logger.log LogLevel.Error $ show message
+  Left message -> Logger.log Error $ show message
   Right _ -> mempty
 
 foreign import exposeGlobals :: Effect Unit -> Effect Unit
 
+-- regardless of whether we succeeded or failed, we need to unhide the prices so people can buy
+withRevealPrices :: forall a. Effect a -> Effect Unit
+withRevealPrices fn =
+  try fn
+    >>= case _ of
+        Left err -> TestPrice.revealAllPrices
+        Right _ -> mempty
+
 main :: Effect Unit
-main = do
-  exposeGlobals reapply
-  hostname <- HTML.window >>= Window.location >>= Location.hostname
-  Logger.log LogLevel.Info ("running fulcrum on " <> hostname)
-  withUserId \userId -> do
-    startCartTokenInterval userId
-    RunState.initRunQueue
-    RunState.initTestContext
-    sessionTestContext <- RunState.getTestContext
-    Aff.runAff_ logResult do
-      eTestContext <- runExceptT $ getTestMap userId
-      case eTestContext of
-        Left msg -> throwError (error msg)
-        -- we cache the test maps and apply them
-        Right testContext -> do
-          unless (Map.isEmpty testContext) do
-            -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
-            _ <- AAVar.tryPut testContext sessionTestContext
-            applyTestMaps testContext # liftEffect
-    -- regardless of whether we succeeded or failed, we need to unhide the prices so people can buy
-    revealAllPrices
+main =
+  withRevealPrices do
+    exposeGlobals reapply
+    hostname <- HTML.window >>= Window.location >>= Location.hostname
+    Logger.log Info ("running fulcrum on " <> hostname)
+    withUserId \userId -> do
+      startCartTokenInterval userId
+      RunState.initRunQueue
+      RunState.initTestContext
+      sessionTestContext <- RunState.getTestContext
+      Aff.runAff_ logResult do
+        eTestContext <- runExceptT $ getTestMap userId
+        case eTestContext of
+          Left msg -> throwError (error msg)
+          -- we cache the test maps and apply them
+          Right testContext -> do
+            unless (Map.isEmpty testContext) do
+              -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+              _ <- AAVar.tryPut testContext sessionTestContext
+              applyTestMaps testContext # liftEffect
   where
   logResult (Left error) = Logger.logWithContext Error "main failed" { error }
 

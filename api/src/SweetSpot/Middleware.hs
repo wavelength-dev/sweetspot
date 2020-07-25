@@ -47,7 +47,6 @@ import qualified RIO.ByteString.Lazy as BSL
 import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (validateSessionId')
-import SweetSpot.Database.Queries.Fulcrum (validateDomain)
 import SweetSpot.Database.Queries.Util (withConnIO)
 import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
@@ -150,27 +149,6 @@ verifyWebhookSignature ctx app req sendResponse = do
         & L.find ((== "X-Shopify-Hmac-SHA256") . fst)
         & fmap snd
 
-validateShopDomain :: AppCtx -> Middleware
-validateShopDomain ctx app req sendResponse = do
-  let pool = ctx ^. ctxDbPool
-      appLogger = ctx ^. ctxLogger
-      params = queryString req
-      mSuppliedDomain =
-        L.find ((== "shop") . fst) params
-          >>= snd
-          & fmap (ShopDomain . decodeUtf8Lenient)
-  case mSuppliedDomain of
-    Just domain -> do
-      mShopDomain <- withConnIO pool $ \conn -> validateDomain conn domain
-      case mShopDomain of
-        Just _ -> app req sendResponse
-        Nothing -> do
-          L.warn' appLogger $ "Got invalid shop query parameter: " <> showText domain
-          send400 "Got invalid shop query parameter" req sendResponse
-    Nothing -> do
-      L.warn' appLogger "Missing shop query parameter"
-      send400 "Missing shop query parameter" req sendResponse
-
 validateSession :: AppCtx -> Middleware
 validateSession ctx app req sendResponse = do
   let pool = ctx ^. ctxDbPool
@@ -211,7 +189,6 @@ getMiddleware ctx =
     -- So we don't have to deal with hmac during dev
     Dev ->
       gzipStatic
-        . validateShopDomainRouted
         . enableCors
         . validateSessionRouted
     -- So we can focus on testing handlers themselves
@@ -222,7 +199,6 @@ getMiddleware ctx =
         . verifySignatureRouted
         . verifyHmacRouted
         . verifyWebhookRouted
-        . validateShopDomainRouted
         . validateSessionRouted
   where
     env = ctx ^. ctxConfig . configEnvironment
@@ -234,11 +210,6 @@ getMiddleware ctx =
     -- Authentication request for the dashboard contains an hmac.
     hmacVerifiedRoutes paths = elem "oauth" paths || matchDashboardApp paths
     webhookVerifiedRoutes = elem "webhook"
-    -- Domain verification applies to all the hmac verified routes, except
-    -- OAuth ones since shop doesn't exist yet during installation
-    domainVerifiedRoutes paths =
-      hmacVerifiedRoutes paths && notElem "oauth" paths
-    -- All dashboard APIs rely on session to identify the shop
     sessionVerifiedRoutes paths =
       elem "api" paths
         && elem "dashboard" paths
@@ -247,7 +218,5 @@ getMiddleware ctx =
       routedMiddleware hmacVerifiedRoutes (verifyHmac ctx)
     verifyWebhookRouted =
       routedMiddleware webhookVerifiedRoutes (verifyWebhookSignature ctx)
-    validateShopDomainRouted =
-      routedMiddleware domainVerifiedRoutes (validateShopDomain ctx)
     validateSessionRouted =
       routedMiddleware sessionVerifiedRoutes (validateSession ctx)

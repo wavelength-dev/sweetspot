@@ -40,7 +40,10 @@ instance InstallDB AppM where
                   }
               ]
           )
-          (PG.onConflict PG.anyConflict PG.onConflictUpdateAll)
+          ( PG.onConflict
+              (PG.conflictingConstraint "install_nonces_pkey")
+              (PG.onConflictUpdateInstead (view installNonce))
+          )
     pure $ row ^. installNonce
 
   getInstallNonce shopDomain = withConn $ \conn ->

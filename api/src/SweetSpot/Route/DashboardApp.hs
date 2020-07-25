@@ -44,8 +44,8 @@ type DashboardStatic = "dashboard" :> Raw
 
 type DashboardApp = IndexRoute :<|> DashboardStatic
 
-appChargeRedirect :: Text -> BSL.ByteString
-appChargeRedirect url =
+parentWindowRedirect :: Text -> BSL.ByteString
+parentWindowRedirect url =
   "<html><head><meta charset=\"utf=8\"><title>Redirecting...</title><script>"
     <> "window.top.location.href = "
     <> "\""
@@ -70,7 +70,7 @@ indexHandler domain ts hmac mSessionId =
           Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
           status -> do
             L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
-            pure $ RawHTML $ appChargeRedirect $ _appChargeConfirmationUrl appCharge
+            pure $ RawHTML $ parentWindowRedirect $ _appChargeConfirmationUrl appCharge
       _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
         where
           redirectApi = Proxy :: Proxy OAuthAPI

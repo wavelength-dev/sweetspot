@@ -147,10 +147,6 @@ ul {
     center / cover;
 }
 
-.soundness-text {
-  max-width: 50%;
-}
-
 .soundness-graph {
   display: none;
   float: right;
@@ -306,6 +302,10 @@ ul {
 
   .title {
     font-size: 4em;
+  }
+
+  .soundness-text {
+    max-width: 50%;
   }
 }
 

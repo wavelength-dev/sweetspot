@@ -50,9 +50,10 @@ ul {
 }
 
 .title {
-  font-size: 2em;
+  font-size: 2.5em;
   font-weight: 600;
   margin-top: 0;
+  margin-bottom: 0;
 }
 
 .dart {
@@ -64,10 +65,14 @@ ul {
 }
 
 .subtitle {
+  margin-top: -0.5em;
+}
+
+.header-title {
   font-weight: 300;
   font-size: 1.5em;
   line-height: 1.5em;
-  margin: 0.6em 0;
+  margin: 1em 0;
 }
 
 .text {
@@ -199,6 +204,10 @@ ul {
 }
 
 @media (min-width: 600px) {
+  .subtitle {
+    margin-top: -1em;
+  }
+
   .header {
     flex-wrap: nowrap;
     background: rgba(0, 0, 0, 0) url("/img/bg1-wide.png") no-repeat scroll

@@ -148,14 +148,12 @@ ul {
 }
 
 .soundness-text {
-  margin: 0;
+  max-width: 50%;
 }
 
 .soundness-graph {
+  display: none;
   float: right;
-  margin-top: 2em;
-  margin-right: -2.2em;
-  margin-left: 1em;
 }
 
 .three-pitch {
@@ -246,8 +244,10 @@ ul {
   }
 
   .soundness-graph {
-    width: 300px;
-    margin: 0 4em 0 4em;
+    display: initial;
+    width: 36%;
+    max-width: 300px;
+    margin: 2em 4em;
   }
 
   .three-pitch {
@@ -306,5 +306,11 @@ ul {
 
   .title {
     font-size: 4em;
+  }
+}
+
+@media (min-width: 1000px) {
+  .soundness-graph {
+    margin: 0;
   }
 }

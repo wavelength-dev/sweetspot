@@ -16,6 +16,10 @@ ul {
   list-style: none;
 }
 
+a {
+  color: #7FDAAB;
+}
+
 .spacing-s {
   width: 1em;
   height: 1em;
@@ -197,6 +201,16 @@ ul {
   display: flex;
 }
 
+.teammember-container {
+  display: flex;
+  flex-direction: column;
+  padding: 2em 0 2em 0;
+}
+
+.teammember-face {
+  max-width: 200px;
+}
+
 @media (min-width: 600px) {
   .subtitle {
     margin-top: -1em;
@@ -307,10 +321,22 @@ ul {
   .soundness-text {
     max-width: 50%;
   }
+
+  .teammember-container {
+    flex-direction: row;
+  }
+
+  .teammember-face {
+    margin-right: 1em;
+  }
+
+  .teammember-name {
+    margin-top: 0em;
+  }
 }
 
 @media (min-width: 1000px) {
   .soundness-graph {
     margin: 0;
   }
-}
+ }

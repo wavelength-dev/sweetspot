@@ -80,54 +80,27 @@ ul {
 }
 
 .add-to-store-button {
+  border-radius: 100em;
+  font-size: 1rem;
   font-weight: 500;
-  position: relative;
-
-  color: #444;
-  border: 0 none;
+  padding: 0.5rem 3em;
   text-decoration: none;
-
-  padding: 4px 16px;
-
-  background: transparent none repeat scroll 0 0;
+  color: black;
+  border: solid 3px transparent;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0)
+    ),
+    linear-gradient(to right, #00e4e2 0%, #81ee8e 100%);
+  background-origin: border-box;
+  box-shadow: 2px 1000px 1px #fff inset;
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.add-to-store-button:before {
-  position: absolute;
-  content: "";
-  height: calc(100% + 4px);
-  width: calc(100% + 4px);
-  top: -2px;
-  left: -2px;
-  border-radius: 100px;
-  background: rgba(0, 0, 0, 0)
-    linear-gradient(to right, #00e4e2 0%, #81ee8e 100%) repeat scroll 0 0;
-  z-index: -2;
-}
-
-.add-to-store-button:after {
-  position: absolute;
-  content: "";
-  height: 100%;
-  width: 100%;
-  top: 0;
-  left: 0;
-  border-radius: 100px;
-  background: #fff none repeat scroll 0 0;
-  z-index: -1;
-  box-sizing: border-box;
+    border-color 0.15s ease-in-out, box-shadow 0.35s ease-in-out;
 }
 
 .add-to-store-button:hover {
-  color: #fff;
-  /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); */
-}
-
-.add-to-store-button:hover:after {
-  opacity: 0;
-  outline: none;
+  box-shadow: none;
+  color: white;
 }
 
 .header-sneakpeek {

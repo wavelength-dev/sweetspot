@@ -16,6 +16,7 @@ import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 import SweetSpot.Shopify.Client (MonadShopify (..))
+import SweetSpot.Shopify.Types
 
 type ActivateAppChargeRoute =
   "charge" :> "activate"
@@ -31,7 +32,8 @@ activateAppChargeHandler domain = runAppM $ do
   charge <- getAppCharge domain
   let chargeId = charge ^. appChargeShopifyId
   result <- runExceptT $ do
-    status <- ExceptT $ fetchAppChargeStatus domain chargeId
+    appChargeRes <- ExceptT $ fetchAppChargeStatus domain chargeId
+    let status = appChargeRes ^. createAppChargeResStatus
     case status of
       Accepted -> do
         updatedStatus <- ExceptT $ activateAppCharge domain chargeId

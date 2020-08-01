@@ -87,14 +87,14 @@ indexHandler domain ts hmac mSessionId =
               status -> do
                 L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
                 pure $ RawHTML $ parentWindowRedirect $ _appChargeConfirmationUrl appCharge
-          _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
-            where
-              redirectApi = Proxy :: Proxy OAuthAPI
-              redirectHandler = Proxy :: Proxy InstallRoute
-              installPath =
-                encodeUtf8
-                  $ toUrlPiece
-                  $ safeLink redirectApi redirectHandler domain ts hmac
+      _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
+        where
+          redirectApi = Proxy :: Proxy OAuthAPI
+          redirectHandler = Proxy :: Proxy InstallRoute
+          installPath =
+            encodeUtf8
+              $ toUrlPiece
+              $ safeLink redirectApi redirectHandler domain ts hmac
 
 dashboardStaticHandler =
   serveDirectoryWith

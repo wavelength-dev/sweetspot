@@ -19,6 +19,7 @@ import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Database.Schema
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.OAuth (InstallRoute, OAuthAPI)
+import SweetSpot.Shopify.Client (MonadShopify (..))
 import WaiAppStatic.Storage.Filesystem (defaultWebAppSettings)
 import WaiAppStatic.Types (MaxAge (..), ssMaxAge)
 
@@ -68,6 +69,13 @@ indexHandler domain ts hmac mSessionId =
         appCharge <- getAppCharge domain
         case _appChargeStatus appCharge of
           Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
+          Declined -> do
+            charge <- createAppCharge domain
+            case charge of
+              Left err -> throwError err500
+              Right chargeRes -> do
+                appCharge <- insertAppCharge domain chargeRes
+                pure $ RawHTML $ parentWindowRedirect (appCharge ^. appChargeConfirmationUrl)
           status -> do
             L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
             pure $ RawHTML $ parentWindowRedirect $ _appChargeConfirmationUrl appCharge

@@ -66,27 +66,35 @@ indexHandler domain ts hmac mSessionId =
     case (mToken, mSessionId) of
       (Just _, Just sessionId) -> do
         createSession domain sessionId
-        appCharge <- getAppCharge domain
-        case _appChargeStatus appCharge of
-          Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
-          Declined -> do
-            charge <- createAppCharge domain
-            case charge of
-              Left err -> throwError err500
-              Right chargeRes -> do
-                appCharge <- insertAppCharge domain chargeRes
-                pure $ RawHTML $ parentWindowRedirect (appCharge ^. appChargeConfirmationUrl)
-          status -> do
-            L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
-            pure $ RawHTML $ parentWindowRedirect $ _appChargeConfirmationUrl appCharge
-      _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
-        where
-          redirectApi = Proxy :: Proxy OAuthAPI
-          redirectHandler = Proxy :: Proxy InstallRoute
-          installPath =
-            encodeUtf8
-              $ toUrlPiece
-              $ safeLink redirectApi redirectHandler domain ts hmac
+        oldAppCharge <- getAppCharge domain
+        eAppChargeRes <- fetchAppChargeStatus domain (oldAppCharge ^. appChargeShopifyId)
+        case eAppChargeRes of
+          Left err -> throwError err500
+          Right appChargeRes -> do
+            deleteAppCharge domain
+            insertAppCharge domain appChargeRes
+            appCharge <- getAppCharge domain
+            case _appChargeStatus appCharge of
+              Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
+              Declined -> do
+                deleteAppCharge domain
+                charge <- createAppCharge domain
+                case charge of
+                  Left err -> throwError err500
+                  Right chargeRes -> do
+                    appCharge <- insertAppCharge domain chargeRes
+                    pure $ RawHTML $ parentWindowRedirect (appCharge ^. appChargeConfirmationUrl)
+              status -> do
+                L.warn $ "Shop " <> showText domain <> " no active appCharge: " <> tshow status
+                pure $ RawHTML $ parentWindowRedirect $ _appChargeConfirmationUrl appCharge
+          _ -> throwError $ err302 {errHeaders = [("Location", "/api/" <> installPath)]}
+            where
+              redirectApi = Proxy :: Proxy OAuthAPI
+              redirectHandler = Proxy :: Proxy InstallRoute
+              installPath =
+                encodeUtf8
+                  $ toUrlPiece
+                  $ safeLink redirectApi redirectHandler domain ts hmac
 
 dashboardStaticHandler =
   serveDirectoryWith

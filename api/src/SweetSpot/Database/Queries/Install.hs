@@ -24,6 +24,7 @@ class Monad m => InstallDB m where
   insertAppCharge :: ShopDomain -> CreateAppChargeRes -> m AppCharge
   getAppCharge :: ShopDomain -> m AppCharge
   updateAppChargeStatus :: Text -> AppChargeStatus -> m ()
+  deleteAppCharge :: ShopDomain -> m ()
 
 instance InstallDB AppM where
   generateInstallNonce shopDomain = withConn $ \conn -> do
@@ -123,3 +124,18 @@ instance InstallDB AppM where
         (db ^. appCharges)
         (\c -> c ^. appChargeStatus <-. val_ status)
         (\c -> c ^. appChargeShopifyId ==. val_ chargeId)
+
+  deleteAppCharge domain = withConn $ \conn -> do
+    runBeamPostgres conn $ do
+      shopId' <- unsafeFindShopId domain
+      appCharge <- fromJust
+        <$> ( runSelectReturningOne
+                $ select
+                $ filter_
+                  ((==. val_ shopId') . (^. appChargeShopId))
+                  (all_ (db ^. appCharges))
+            )
+      runDelete
+        $ delete
+            (db ^. appCharges)
+            ((==. val_ (appCharge ^. appChargeId)) . (^. appChargeId))

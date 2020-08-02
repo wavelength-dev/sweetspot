@@ -1,0 +1,17 @@
+{
+  "name": "site",
+  "version": "1.0.0",
+  "description": "sweetspot website",
+  "main": "index.js",
+  "license": "Wavelength",
+  "private": true,
+  "scripts": {
+    "build": "eleventy"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^0.11.0",
+    "nunjucks": "^3.2.2",
+    "parcel": "^1.12.4",
+    "parcel-plugin-nunjucks": "^2.2.1"
+  }
+}

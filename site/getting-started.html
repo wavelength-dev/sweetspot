@@ -21,24 +21,42 @@
   </head>
   <body>
     <section class="soundness-pitch">
+
       <h1 class="pitch-title">Getting Started with SweetSpot</h1>
       <p class="text soundness-text">Before running your first price test, we need to make sure SweetSpot is set-up correctly.</p>
-      <h2 class="pitch-title">1. Identifying price elements</h2>
 
-      <p class="text soundness-text">SweetSpot needs to be aware of where to apply its magic. To achieve this, we need to tag a few key elements in the template to make SweetSpot aware of them. This is done by editing your theme's liquid templates.</p>
+<pre>
+## Tagging prices
+Any element with a price inside should have an identifying class and attribute. In the default theme this means:
 
-      <ul>
-        <li>Every element containing a price should have a `sweetspot__price` class, and a `data-sweetspot-id` attribute containing the variant id to which the price belongs to.</li>
-        <li>Option elements in the variant selector should have a `sweetspot-option` class.</li>
-      </ul>
+1. SweetSpot needs to identify which variant a price belongs to. On pages that show variants we find it on the `variant`, on other pages we use the `product`. Add the following snippet to `product-price.liquid` to help SweetSpot do this.
+```liquid
+{% if variant.sku %} 
+{%- assign sweetspot_id = variant.id -%}
+{% else %} 
+{%- assign sweetspot_id = product.first_available_variant.id -%}
+{% endif %}
+```
 
-      <h2 class="pitch-title">2. Making sure visitors see no duplicated products</h2>
+2. Add the class  `sweetspot__price` to the element containing the price.
+3. Add the id as a data attribute: `data-sweetspot-id={{ sweetspot_id }}`.
 
-      <p class="text soundness-text">To enable the same product to be checked out with different prices, SweetSpot needs to duplicate products. All product variants SweetSpot creates, have `sweetspot-variant` set as product type. To make sure no duplicates show up in your collections, you can add the condition `Product type is not equal to sweetspot-variant` to your collections.</p>
+## Hiding the price
+This step is optional but recommended. It ensures users don’t see prices change.
+1. Tag prices with `sweetspot__price--hidden`
+2. Add the following CSS to the theme.
+```css
+.sweetspot__price--hidden {
+  background: white;
+  color: white;
+}
+```
 
-      <h2 class="pitch-title">3. Applying price after client-side DOM changes</h2>
+## Tagging the checkout options
+The default checkout uses a form to identify which product to add to cart. SweetSpot controls the checkout by inserting the correctly priced product to check out, depending on the experiment the buying user is in.
 
-      <p class="text soundness-text">This step only applies if your theme manipulates price elements with client-side JavaScript. In this case, SweetSpot needs to run after any such changes for it to display the right price. To do this, you can call the `window.SweetSpot.apply()` function.</p>
+1. Add `sweetspot__option` to the checkout `<option>` in `product-template.liquid`.
+</pre>
 
       <h2 class="pitch-title">Ready to test</h2>
 

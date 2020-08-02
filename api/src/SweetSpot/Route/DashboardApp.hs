@@ -66,15 +66,12 @@ indexHandler domain ts hmac mSessionId =
     case (mToken, mSessionId) of
       (Just _, Just sessionId) -> do
         createSession domain sessionId
-        oldAppCharge <- getAppCharge domain
-        eAppChargeRes <- fetchAppChargeStatus domain (oldAppCharge ^. appChargeShopifyId)
-        case eAppChargeRes of
-          Left err -> do
-            L.error $ "Failed to fetch app charge " <> err
-            throwError err500
-          Right appChargeRes -> do
-            deleteAppCharge domain
-            insertAppCharge domain appChargeRes
+        appChargeId <- view appChargeShopifyId <$> getAppCharge domain
+        eAppChargeStatus <- fetchAppChargeStatus domain appChargeId
+        case eAppChargeStatus of
+          Left err -> L.error err *> throwError err500
+          Right status -> do
+            updateAppChargeStatus appChargeId status
             appCharge <- getAppCharge domain
             case _appChargeStatus appCharge of
               Active -> RawHTML <$> liftIO (BSL.readFile "./dist/dashboard/index.html")
@@ -82,9 +79,7 @@ indexHandler domain ts hmac mSessionId =
                 deleteAppCharge domain
                 charge <- createAppCharge domain
                 case charge of
-                  Left err -> do
-                    L.error $ "Failed to create app charge " <> err
-                    throwError err500
+                  Left err -> L.error err *> throwError err500
                   Right chargeRes -> do
                     appCharge <- insertAppCharge domain chargeRes
                     pure $ RawHTML $ parentWindowRedirect (appCharge ^. appChargeConfirmationUrl)

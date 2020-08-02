@@ -69,7 +69,9 @@ indexHandler domain ts hmac mSessionId =
         oldAppCharge <- getAppCharge domain
         eAppChargeRes <- fetchAppChargeStatus domain (oldAppCharge ^. appChargeShopifyId)
         case eAppChargeRes of
-          Left err -> throwError err500
+          Left err -> do
+            L.error $ "Failed to fetch app charge " <> err
+            throwError err500
           Right appChargeRes -> do
             deleteAppCharge domain
             insertAppCharge domain appChargeRes
@@ -80,7 +82,9 @@ indexHandler domain ts hmac mSessionId =
                 deleteAppCharge domain
                 charge <- createAppCharge domain
                 case charge of
-                  Left err -> throwError err500
+                  Left err -> do
+                    L.error $ "Failed to create app charge " <> err
+                    throwError err500
                   Right chargeRes -> do
                     appCharge <- insertAppCharge domain chargeRes
                     pure $ RawHTML $ parentWindowRedirect (appCharge ^. appChargeConfirmationUrl)

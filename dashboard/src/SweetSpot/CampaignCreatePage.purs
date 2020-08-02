@@ -1,7 +1,5 @@
 module SweetSpot.CampaignCreatePage where
 
-import Prelude (Unit, bind, const, eq, flip, map, mempty, not, otherwise, pure, show, (#), ($), (*>), (<#>), (<<<), (<>), (>>=), (>>>), (||))
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, productId, productTitle, productVariants, variantPrice, variantProductId, variantProductTitle, variantSku)
 import Data.Array (all, catMaybes, find, null, head, intercalate, singleton, unsafeIndex, filter, elem) as Array
 import Data.Array (mapWithIndex)
 import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
@@ -19,13 +17,15 @@ import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Partial.Unsafe (unsafePartial)
-import React.Basic.DOM (table, tbody_, td_, text, th_, thead_, tr_) as R
+import Prelude (Unit, bind, const, eq, flip, map, mempty, not, otherwise, pure, show, (#), ($), (*>), (<#>), (<<<), (<>), (>>=), (>>>), (||))
+import React.Basic.DOM as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import Routing.Hash as Hash
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, productId, productTitle, productVariants, variantPrice, variantProductId, variantProductTitle, variantSku)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
-import SweetSpot.Shopify (button, card, form, modal, modalSection, optionList, page, textField) as Shopify
+import SweetSpot.Shopify as Shopify
 import SweetSpot.ShopifyHelper (formLayout) as SH
 import SweetSpot.Spacing (large) as Spacing
 import Web.HTML (window)
@@ -175,6 +175,7 @@ mkCampaignCreatePage = do
     -- Controlled by Shopify OptionList, tracks which variants the user would like to test
     variantRows /\ setVariantRows <- useState' ([] :: Array VariantRow)
     loading /\ setLoading <- useState' false
+    modalOpen /\ setModalOpen <- useState' false
     let
       createCampaign :: CreateCampaign
       createCampaign =
@@ -220,7 +221,6 @@ mkCampaignCreatePage = do
         products = Array.filter (view productId >>> flip Array.elem newVariantIdsToTest) props.products
 
       -- Takes a new test price and updates the variant rows with a new row with the new test price
-      -- TODO: use lens
       updateVariantRowsWithTestPrice :: VariantRow -> String -> Array VariantRow
       updateVariantRowsWithTestPrice targetVariantRow newPrice =
         over
@@ -263,7 +263,7 @@ mkCampaignCreatePage = do
                       )
                   }
               , element Shopify.form
-                  { onSubmit: onSubmit
+                  { onSubmit: mkEffectFn1 (const mempty)
                   , children:
                       [ Spacing.large
                       , SH.formLayout
@@ -319,15 +319,40 @@ mkCampaignCreatePage = do
                               }
                           , Spacing.large
                           , element Shopify.button
-                              { submit: true
+                              { submit: false
                               , primary: true
                               , children: [ R.text "Create Experiment" ]
                               , url: null
-                              , onClick: null
+                              , onClick: const (setModalOpen true) # mkEffectFn1 >>> notNull
                               , loading: loading
                               , disabled: not isValidCreateCampaign || Array.null variantRows
                               }
                           ]
+                      ]
+                  }
+              , element Shopify.modal
+                  { title: "Are you sure you want to create this experiment?"
+                  , open: modalOpen
+                  , onClose: const (setModalOpen false) # mkEffectFn1
+                  , children:
+                      [ element Shopify.modalSection
+                          { key: "confirmation-section"
+                          , children:
+                              [ R.p
+                                  { className: styles.confirmText
+                                  , children: [ R.text "Confirming will start the experiment immediately." ]
+                                  }
+                              , element Shopify.button
+                                  { submit: true
+                                  , primary: true
+                                  , children: [ R.text "Confirm" ]
+                                  , url: null
+                                  , onClick: notNull onSubmit
+                                  , loading: false
+                                  , disabled: false
+                                  }
+                              ]
+                          }
                       ]
                   }
               ]

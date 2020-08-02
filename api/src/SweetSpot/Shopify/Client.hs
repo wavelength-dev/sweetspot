@@ -73,7 +73,7 @@ type GetAppChargeStatusRoute =
   "admin" :> "api" :> ApiVersion :> "recurring_application_charges"
     :> Capture "appChargeId" Text
     :> Header' '[Required] "X-Shopify-Access-Token" Text
-    :> Get '[JSON] CreateAppChargeRes
+    :> Get '[JSON] Value
 
 type ActivateAppChargeRoute =
   "admin" :> "api" :> ApiVersion :> "recurring_application_charges"
@@ -97,7 +97,7 @@ class Monad m => MonadShopify m where
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)
   createAppCharge :: ShopDomain -> m (Either Text CreateAppChargeRes)
-  fetchAppChargeStatus :: ShopDomain -> Text -> m (Either Text CreateAppChargeRes)
+  fetchAppChargeStatus :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
   activateAppCharge :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
   createScript :: ShopDomain -> m (Either Text ())
 
@@ -229,7 +229,7 @@ instance MonadShopify AppM where
           createAppChargeClient = client (Proxy :: Proxy CreateAppChargeRoute)
       res <- liftIO $ runClientM (createAppChargeClient body token) clientEnv
       return $ case res of
-        Left err -> Left $ "Error fetching ShopInfo: " <> tshow err
+        Left err -> Left $ "Error creating AppCharge: " <> tshow err
         Right appChargeRes -> Right appChargeRes
 
   fetchAppChargeStatus domain chargeId =
@@ -242,7 +242,9 @@ instance MonadShopify AppM where
             clientEnv
       pure $ case res of
         Left err -> Left $ "Error fetching AppCharge: " <> tshow err
-        Right appChargeRes -> Right appChargeRes
+        Right body -> case parseAppChargeStatus body of
+          Just status -> Right status
+          Nothing -> Left "Unable to parse AppChargeStatus from GetAppChargeStatusRoute"
 
   activateAppCharge domain chargeId =
     withClientEnvAndToken domain $ \clientEnv token -> do

@@ -125,17 +125,18 @@ instance InstallDB AppM where
         (\c -> c ^. appChargeStatus <-. val_ status)
         (\c -> c ^. appChargeShopifyId ==. val_ chargeId)
 
-  deleteAppCharge domain = withConn $ \conn -> do
+  deleteAppCharge domain = withConn $ \conn ->
     runBeamPostgres conn $ do
       shopId' <- unsafeFindShopId domain
-      appCharge <- fromJust
-        <$> ( runSelectReturningOne
-                $ select
-                $ filter_
-                  ((==. val_ shopId') . (^. appChargeShopId))
-                  (all_ (db ^. appCharges))
-            )
-      runDelete
-        $ delete
-            (db ^. appCharges)
-            ((==. val_ (appCharge ^. appChargeId)) . (^. appChargeId))
+      appCharge <-
+        fromJust
+          <$> ( runSelectReturningOne
+                  $ select
+                  $ filter_
+                    ((==. val_ shopId') . (^. appChargeShopId))
+                    (all_ (db ^. appCharges))
+              )
+      runDelete $
+        delete
+          (db ^. appCharges)
+          ((==. val_ (appCharge ^. appChargeId)) . (^. appChargeId))

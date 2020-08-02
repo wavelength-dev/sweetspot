@@ -1,6 +1,8 @@
 module Fulcrum.Main where
 
 import Prelude
+
+import Control.Alt ((<|>))
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
@@ -8,8 +10,8 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.AVar as AVar
-import Effect.Aff (Aff, error)
-import Effect.Aff (runAff_, launchAff_) as Aff
+import Effect.Aff (Aff, Error, Milliseconds(..), error, nonCanceler)
+import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (try)

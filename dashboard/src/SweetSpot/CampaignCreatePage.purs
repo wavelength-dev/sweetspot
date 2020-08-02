@@ -324,8 +324,8 @@ mkCampaignCreatePage = do
                               , children: [ R.text "Create Experiment" ]
                               , url: null
                               , onClick: const (setModalOpen true) # mkEffectFn1 >>> notNull
-                              , loading: loading
-                              , disabled: not isValidCreateCampaign || Array.null variantRows
+                              , loading: false
+                              , disabled: not isValidCreateCampaign || Array.null variantRows || modalOpen
                               }
                           ]
                       ]
@@ -348,7 +348,7 @@ mkCampaignCreatePage = do
                                   , children: [ R.text "Confirm" ]
                                   , url: null
                                   , onClick: notNull onSubmit
-                                  , loading: false
+                                  , loading: loading
                                   , disabled: false
                                   }
                               ]

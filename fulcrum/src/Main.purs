@@ -53,11 +53,7 @@ foreign import exposeGlobals :: Effect Unit -> Effect Unit
 
 -- regardless of whether we succeeded or failed, we need to unhide the prices so people can buy
 withRevealPrices :: forall a. Effect a -> Effect Unit
-withRevealPrices fn =
-  try fn
-    >>= case _ of
-        Left err -> TestPrice.revealAllPrices
-        Right _ -> mempty
+withRevealPrices fn = try fn *> TestPrice.revealAllPrices
 
 main :: Effect Unit
 main =

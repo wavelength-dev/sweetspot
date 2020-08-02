@@ -163,7 +163,7 @@ mkCampaignViewPage = do
                   , children:
                       [ SH.textContainer
                           [ SH.heading H2 "Revenue per visitor"
-                          , R.p_ [ R.text "The answer to the most important question: if you were to switch to your new prices, what would the effect be on the revenue per visitor." ]
+                          , R.p_ [ R.text "The answer to the most important question: if you were to switch to your new prices, what would the effect be on the revenue per visitor. Please note that these values will be unstable until the experiment reaches an adequate sample size." ]
                           ]
                       , Spacing.large
                       , R.div

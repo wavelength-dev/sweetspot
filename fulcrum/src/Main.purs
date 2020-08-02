@@ -55,18 +55,30 @@ foreign import exposeGlobals :: Effect Unit -> Effect Unit
 withRevealPrices :: forall a. Effect a -> Effect Unit
 withRevealPrices fn = try fn *> TestPrice.revealAllPrices
 
+wrapUp :: Either Error Unit -> Effect Unit
+wrapUp result = do
+  TestPrice.revealAllPrices
+  case result of
+    Left error -> Logger.logWithContext Error "main failed" { error }
+    Right _ -> Logger.log Info "succesfully ran sweetspot main loop"
+
 main :: Effect Unit
 main =
-  withRevealPrices do
-    exposeGlobals reapply
-    hostname <- HTML.window >>= Window.location >>= Location.hostname
-    Logger.log Info ("running fulcrum on " <> hostname)
-    withUserId \userId -> do
-      startCartTokenInterval userId
-      RunState.initRunQueue
-      RunState.initTestContext
-      sessionTestContext <- RunState.getTestContext
-      Aff.runAff_ logResult do
+  Aff.runAff_ wrapUp do
+    liftEffect do
+      exposeGlobals reapply
+      hostname <- HTML.window >>= Window.location >>= Location.hostname
+      Logger.log Info ("running fulcrum on " <> hostname)
+    eUserId <- awaitUserId
+    case eUserId of
+      Left msg -> throwError $ error msg
+      Right userId -> do
+        sessionTestContext <-
+          liftEffect do
+            startCartTokenInterval userId
+            RunState.initRunQueue
+            RunState.initTestContext
+            RunState.getTestContext
         eTestContext <- runExceptT $ getTestMap userId
         case eTestContext of
           Left msg -> throwError (error msg)
@@ -76,10 +88,6 @@ main =
               -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
               _ <- AAVar.tryPut testContext sessionTestContext
               applyTestMaps testContext # liftEffect
-  where
-  logResult (Left error) = Logger.logWithContext Error "main failed" { error }
-
-  logResult (Right result) = Logger.log Info "succesfully ran sweetspot main loop"
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap
@@ -137,6 +145,21 @@ startCartTokenInterval userId = setInterval 500 cb *> mempty
           $ Service.sendCartToken userId token
           *> liftEffect (Cart.persistSentToken token)
       Nothing -> mempty
+
+awaitUserId :: Aff (Either String UserId)
+awaitUserId =
+  let
+    userIdAff :: Aff (Either String UserId)
+    userIdAff =
+      ( Aff.makeAff \callback -> do
+          withUserId \userId -> callback (Right userId)
+          pure nonCanceler
+      )
+        <#> Right
+
+    timeoutAff = Aff.delay (Milliseconds 6000.0) $> Left "waiting too long for userId to appear on window.trekkie"
+  in
+    userIdAff <|> timeoutAff
 
 withUserId :: (UserId -> Effect Unit) -> Effect Unit
 withUserId f = check

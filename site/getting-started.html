@@ -31,11 +31,11 @@ Any element with a price inside should have an identifying class and attribute. 
 
 1. SweetSpot needs to identify which variant a price belongs to. On pages that show variants we find it on the `variant`, on other pages we use the `product`. Add the following snippet to `product-price.liquid` to help SweetSpot do this.
 ```liquid
-{% if variant.sku %} 
+{{"{% if variant.sku %} 
 {%- assign sweetspot_id = variant.id -%}
 {% else %} 
 {%- assign sweetspot_id = product.first_available_variant.id -%}
-{% endif %}
+{% endif %}" | html }}
 ```
 
 2. Add the class  `sweetspot__price` to the element containing the price.

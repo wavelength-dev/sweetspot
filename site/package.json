@@ -6,7 +6,8 @@
   "license": "Wavelength",
   "private": true,
   "scripts": {
-    "build": "eleventy"
+    "build": "eleventy",
+    "dev": "eleventy --serve"
   },
   "devDependencies": {
     "@11ty/eleventy": "^0.11.0",

@@ -211,6 +211,10 @@ a {
   max-width: 200px;
 }
 
+.getting-started-video {
+  max-width: 80%;
+}
+
 @media (min-width: 600px) {
   .subtitle {
     margin-top: -1em;

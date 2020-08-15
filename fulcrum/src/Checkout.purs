@@ -12,7 +12,6 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
-import Fulcrum.Logger (getIsDebugging)
 import Fulcrum.Site as Site
 import Web.DOM (Element)
 import Web.DOM.Document (createElement) as Document
@@ -117,7 +116,7 @@ highlightCheckout = do
 
 applyTestCheckout :: TestMapByVariant -> Effect Unit
 applyTestCheckout testMap = do
-  isDebugging <- getIsDebugging
+  isDebugging <- Site.getIsDebugging
   when isDebugging highlightCheckout
   optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
   traverse_ (setCheckoutVariantId testMap) optionElements

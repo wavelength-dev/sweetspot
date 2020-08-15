@@ -1,12 +1,15 @@
 module Fulcrum.Site where
 
 import Prelude
+
 import Data.Array (catMaybes) as Array
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
+import Data.Maybe (isJust) as Maybe
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
+import Fulcrum.Config (dryRunMap) as Config
 import QueryString (QueryParam(..))
 import QueryString (parseQueryString) as QueryString
 import Web.DOM (Document, Element)
@@ -20,7 +23,7 @@ import Web.HTML (window) as HTML
 import Web.HTML.Event.EventTypes (domcontentloaded) as EventTypes
 import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
-import Web.HTML.Location (search) as Location
+import Web.HTML.Location (hostname, search) as Location
 import Web.HTML.Window as Window
 
 getDocument :: Effect Document
@@ -67,3 +70,15 @@ queryDocument querySelector =
   where
   -- We discard nodes that are not elements.
   nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+
+getIsDebugging :: Effect Boolean
+getIsDebugging = getUrlParam "ssdebug" <#> Maybe.isJust
+
+readHostname :: Effect String
+readHostname =
+  HTML.window
+    >>= Window.location
+    >>= Location.hostname
+
+getIsDryRun :: Effect Boolean
+getIsDryRun = map Config.dryRunMap readHostname

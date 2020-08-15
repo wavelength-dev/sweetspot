@@ -1,5 +1,12 @@
 {
   "private": true,
+  "scripts": {
+    "build": "yarn build:ps && yarn build:js",
+    "build:ps": "spago bundle-app --main Fulcrum.Main --to fulcrum.js",
+    "build:js": "parcel build fulcrum.js",
+    "watch:ps": "spago bundle-app --main Fulcrum.Main --to fulcrum.js --watch",
+    "watch:js": "parcel watch fulcrum.js --no-hmr"
+  },
   "dependencies": {
     "@datadog/browser-logs": "^1.12.1"
   },

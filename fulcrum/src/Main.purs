@@ -26,12 +26,10 @@ import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
+import Fulcrum.Site (readHostname) as Site
 import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
-import Web.HTML (window) as HTML
-import Web.HTML.Location as Location
-import Web.HTML.Window (location) as Window
 
 getTestMap :: UserId -> ExceptT String Aff TestMapByVariant
 getTestMap userId = do
@@ -69,7 +67,7 @@ main =
   Aff.runAff_ wrapUp do
     liftEffect do
       exposeGlobals reapply
-      hostname <- HTML.window >>= Window.location >>= Location.hostname
+      hostname <- Site.readHostname
       Logger.log Info ("running fulcrum on " <> hostname)
     eUserId <- awaitUserId
     case eUserId of

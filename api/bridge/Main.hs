@@ -33,6 +33,8 @@ writeDashboardTypes =
          in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.CartTokenReq)
          in equal p (mkSumType p),
+        let p = (Proxy :: Proxy Api.CreateVariant)
+         in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.CreateExperiment)
          in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.CreateCampaign)

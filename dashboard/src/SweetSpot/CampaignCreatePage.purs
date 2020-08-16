@@ -1,11 +1,13 @@
 module SweetSpot.CampaignCreatePage where
 
-import Data.Array (all, catMaybes, find, null, head, intercalate, singleton, unsafeIndex, filter, elem) as Array
+import Prelude
 import Data.Array (mapWithIndex)
+import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NEA
 import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
 import Data.Maybe (Maybe(..))
 import Data.Maybe as Maybe
-import Data.Newtype (unwrap)
 import Data.Nullable (notNull, null)
 import Data.Number (fromString) as Number
 import Data.String (Pattern(..))
@@ -17,12 +19,11 @@ import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
 import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, const, eq, flip, map, mempty, not, otherwise, pure, show, (#), ($), (*>), (<#>), (<<<), (<>), (>>=), (>>>), (||))
 import React.Basic.DOM as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import Routing.Hash as Hash
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), Product, productId, productTitle, productVariants, variantPrice, variantProductId, variantProductTitle, variantSku)
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), CreateVariant(..), Product, productId, productVariants, variantId, variantPrice, variantProductId, variantProductTitle, variantSku, variantTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify as Shopify
@@ -51,7 +52,7 @@ productToOptions product = Maybe.fromMaybe [] options
 
   variantToOption variant =
     let
-      id = product ^. productId
+      id = variant ^. variantId
 
       title = variant ^. variantProductTitle
 
@@ -73,31 +74,31 @@ type VariantRow
     , productId :: String
     }
 
-productToVariantRow :: Product -> VariantRow
-productToVariantRow product =
-  let
-    variants = product ^. productVariants
+productToVariantRows :: Product -> Array VariantRow
+productToVariantRows product =
+  map
+    ( \variant ->
+        let
+          id = variant ^. variantId
 
-    variant = unsafePartial $ Array.unsafeIndex variants 0
+          title = variant ^. variantTitle
 
-    id = product # unwrap >>> _._productId
+          sku = variant ^. variantSku
 
-    title = product ^. productTitle
+          price = variant ^. variantPrice
 
-    sku = product ^. productVariants # map (view variantSku) # Array.intercalate ", "
-
-    price = variant ^. variantPrice
-
-    productId = variant ^. variantProductId
-  in
-    { title
-    , id
-    , sku
-    , controlPrice: price
-    , testPrice: ""
-    , testPriceValidation: Initial
-    , productId
-    }
+          productId = variant ^. variantProductId
+        in
+          { id
+          , title
+          , sku
+          , controlPrice: price
+          , testPrice: ""
+          , testPriceValidation: Initial
+          , productId
+          }
+    )
+    (product ^. productVariants)
 
 renderVariantRow :: (String -> Effect Unit) -> VariantRow -> JSX
 renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice, testPriceValidation } =
@@ -125,15 +126,33 @@ renderVariantRow onTestPriceChange { title, sku, controlPrice, testPrice, testPr
         ]
     ]
 
-variantRowToCreateExperiment :: VariantRow -> Maybe CreateExperiment
-variantRowToCreateExperiment variantRow = case variantRow.testPriceValidation of
-  ValidPrice price ->
-    Just
-      $ CreateExperiment
-          { _createExperimentProductId: variantRow.productId
-          , _createExperimentPrice: price
-          }
-  _ -> Nothing
+variantRowsToCreateExperiment :: Array VariantRow -> Array CreateExperiment
+variantRowsToCreateExperiment =
+  Array.sortBy compareProductId
+    >>> Array.groupBy (\a b -> a.productId == b.productId)
+    >>> map toCreateExperiment
+  where
+  compareProductId :: VariantRow -> VariantRow -> Ordering
+  compareProductId a b = compare a.productId b.productId
+
+  toCreateExperiment :: NonEmptyArray VariantRow -> CreateExperiment
+  toCreateExperiment grouped =
+    CreateExperiment
+      { _createExperimentProductId: grouped # NEA.head >>> _.productId
+      , _createExperimentVariants:
+          grouped
+            # NEA.mapMaybe
+                ( \cv -> case cv.testPriceValidation of
+                    ValidPrice price ->
+                      Just
+                        ( CreateVariant
+                            { _createVariantSvid: cv.id
+                            , _createVariantPrice: price
+                            }
+                        )
+                    _ -> Nothing
+                )
+      }
 
 data ParsedPrice
   = ValidPrice Number
@@ -182,7 +201,7 @@ mkCampaignCreatePage = do
         CreateCampaign
           { _createCampaignName: name
           , _createCampaignEnd: Nothing
-          , _createCampaignExperiments: map variantRowToCreateExperiment variantRows # Array.catMaybes
+          , _createCampaignExperiments: variantRowsToCreateExperiment variantRows
           }
 
       onNameChange = mkEffectFn1 setName
@@ -208,11 +227,11 @@ mkCampaignCreatePage = do
       -- Updates the variant rows to match the selected variants.
       -- We can't recreate variant rows because existing ones might have a modified test price.
       updateVariantRowsWithSelected :: Array Product -> Array VariantRow
-      updateVariantRowsWithSelected = map createNewVariantRow
+      updateVariantRowsWithSelected = Array.concatMap createNewVariantRow
         where
         getExistingVariantRow id = Array.find (_.id >>> eq id) variantRows
 
-        createNewVariantRow = productToVariantRow
+        createNewVariantRow = productToVariantRows
 
       -- Takes a new list of variants to test and updates our variant rows
       onSelectedVariantsUpdated :: Array String -> Effect Unit

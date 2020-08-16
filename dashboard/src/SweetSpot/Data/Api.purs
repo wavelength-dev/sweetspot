@@ -241,10 +241,31 @@ cartTokenReqUser :: Lens' CartTokenReq String
 cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 
 --------------------------------------------------------------------------------
+newtype CreateVariant =
+    CreateVariant {
+      _createVariantSvid :: String
+    , _createVariantPrice :: Number
+    }
+
+derive instance eqCreateVariant :: Eq CreateVariant
+derive instance genericCreateVariant :: Generic CreateVariant _
+derive instance newtypeCreateVariant :: Newtype CreateVariant _
+
+--------------------------------------------------------------------------------
+_CreateVariant :: Iso' CreateVariant { _createVariantSvid :: String, _createVariantPrice :: Number}
+_CreateVariant = _Newtype
+
+createVariantSvid :: Lens' CreateVariant String
+createVariantSvid = _Newtype <<< prop (SProxy :: SProxy "_createVariantSvid")
+
+createVariantPrice :: Lens' CreateVariant Number
+createVariantPrice = _Newtype <<< prop (SProxy :: SProxy "_createVariantPrice")
+
+--------------------------------------------------------------------------------
 newtype CreateExperiment =
     CreateExperiment {
       _createExperimentProductId :: String
-    , _createExperimentPrice :: Number
+    , _createExperimentVariants :: Array CreateVariant
     }
 
 derive instance eqCreateExperiment :: Eq CreateExperiment
@@ -252,14 +273,14 @@ derive instance genericCreateExperiment :: Generic CreateExperiment _
 derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
 
 --------------------------------------------------------------------------------
-_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentPrice :: Number}
+_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentVariants :: Array CreateVariant}
 _CreateExperiment = _Newtype
 
 createExperimentProductId :: Lens' CreateExperiment String
 createExperimentProductId = _Newtype <<< prop (SProxy :: SProxy "_createExperimentProductId")
 
-createExperimentPrice :: Lens' CreateExperiment Number
-createExperimentPrice = _Newtype <<< prop (SProxy :: SProxy "_createExperimentPrice")
+createExperimentVariants :: Lens' CreateExperiment (Array CreateVariant)
+createExperimentVariants = _Newtype <<< prop (SProxy :: SProxy "_createExperimentVariants")
 
 --------------------------------------------------------------------------------
 newtype CreateCampaign =

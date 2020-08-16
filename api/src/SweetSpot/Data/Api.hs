@@ -149,12 +149,28 @@ instance ToJSON UICampaign
 instance FromJSON UICampaign
 
 -- | ---------------------------------------------------------------------------
+-- | CreateVariant
+-- | ---------------------------------------------------------------------------
+data CreateVariant
+  = CreateVariant
+      { _createVariantSvid :: !Svid,
+        _createVariantPrice :: !Price
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''CreateVariant
+
+instance ToJSON CreateVariant
+
+instance FromJSON CreateVariant
+
+-- | ---------------------------------------------------------------------------
 -- | CreateExperiment
 -- | ---------------------------------------------------------------------------
 data CreateExperiment
   = CreateExperiment
       { _createExperimentProductId :: !Pid,
-        _createExperimentPrice :: !Price
+        _createExperimentVariants :: ![CreateVariant]
       }
   deriving (Eq, Generic, Show)
 

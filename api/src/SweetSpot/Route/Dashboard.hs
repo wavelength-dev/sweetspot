@@ -6,10 +6,12 @@ where
 
 import Control.Lens hiding (Strict)
 import Data.Aeson (Result (..), Value (..), parseJSON)
-import Data.Aeson.Lens (_String, key, values)
+import Data.Aeson.Lens (_Object, _String, key, values)
 import Data.Aeson.Types (parse)
-import RIO hiding ((^.))
+import RIO hiding ((^.), view)
+import qualified RIO.HashMap as HM
 import qualified RIO.List as L
+import RIO.Partial (fromJust)
 import qualified RIO.Text as T
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
@@ -91,11 +93,22 @@ createCampaignExperiment domain cmpId ce = do
       throwError internalServerErr
     Right json -> do
       let mControlProduct = parse parseJSON $ json ^?! key "product"
-          textPrice = showText $ ce ^. createExperimentPrice
-          -- Assumes all variants have the same price
+          variantPrices = ce ^. createExperimentVariants
+          newVariants =
+            json & key "product" . key "variants" . values . _Object
+              %~ ( \variant ->
+                     let variantId = variant ^?! at "id" . _Just . _String
+                         newPrice =
+                           L.find (view createVariantSvid >>> (\(Svid txt) -> txt) >>> (==) variantId) variantPrices
+                             & fromJust
+                             & view createVariantPrice
+                             & showText
+                             & String
+                      in HM.insert "price" newPrice variant
+                 )
           withNewPrice =
             json
-              & key "product" . key "variants" . values . key "price" . _String .~ textPrice
+              & key "product" . key "variants" .~ newVariants
               & key "product" . key "handle" . _String <>~ "-ssv"
               & key "product" . key "product_type" . _String .~ "sweetspot-variant"
               & key "product" . key "images" . values . key "variant_ids" .~ Null

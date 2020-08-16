@@ -17,7 +17,7 @@ import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.CampaignListPage (CampaignId)
-import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentPrice, createExperimentProductId)
+import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, CreateVariant, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentProductId, createExperimentVariants, createVariantPrice, createVariantSvid)
 import SweetSpot.Data.Codec (decodeProducts, decodeUICampaigns) as Codec
 import SweetSpot.Env (apiUrl) as Env
 import SweetSpot.Logger as Logger
@@ -86,16 +86,28 @@ fetchCampaigns sessionId = fetchResource Campaigns sessionId >>= Codec.decodeUIC
 fetchProducts :: SessionId -> Aff (Array Product)
 fetchProducts sessionId = fetchResource Products sessionId >>= Codec.decodeProducts >>> decodeOrThrow
 
+encodeCreateVariant :: CreateVariant -> Json
+encodeCreateVariant createVariant =
+  let
+    svid = view createVariantSvid createVariant
+
+    price = view createVariantPrice createVariant
+  in
+    "_createVariantSvid" := svid
+      ~> "_createVariantPrice"
+      := price
+      ~> jsonEmptyObject
+
 encodeCreateExperiment :: CreateExperiment -> Json
 encodeCreateExperiment createExperiment =
   let
     productId = view createExperimentProductId createExperiment
 
-    price = view createExperimentPrice createExperiment
+    variants = view createExperimentVariants createExperiment
   in
     "_createExperimentProductId" := productId
-      ~> "_createExperimentPrice"
-      := price
+      ~> "_createExperimentVariants"
+      := map encodeCreateVariant variants
       ~> jsonEmptyObject
 
 encodeCreateCampaign :: CreateCampaign -> Json

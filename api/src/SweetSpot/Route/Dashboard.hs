@@ -23,6 +23,7 @@ import qualified SweetSpot.Logger as Log
 import SweetSpot.Route.Util (internalServerErr, unauthorizedErr)
 import SweetSpot.Shopify.Client (MonadShopify (..))
 import SweetSpot.Shopify.Types
+import SweetSpot.Util (scientificToIntText)
 
 type ProductsRoute =
   "products"
@@ -97,7 +98,7 @@ createCampaignExperiment domain cmpId ce = do
           newVariants =
             json & key "product" . key "variants" . values . _Object
               %~ ( \variant ->
-                     let variantId = variant ^?! at "id" . _Just . _Number . to tshow
+                     let variantId = variant ^?! at "id" . _Just . _Number . to scientificToIntText
                          newPrice =
                            L.find (view createVariantSvid >>> (\(Svid txt) -> txt) >>> (==) variantId) variantPrices
                              & fromJust

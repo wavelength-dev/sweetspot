@@ -1,5 +1,6 @@
 module SweetSpot.Util
-  ( nanToNothing,
+  ( scientificToIntText,
+    nanToNothing,
     nanToZero,
     formatPrice,
     factorToPercentage,
@@ -12,6 +13,9 @@ import qualified RIO.List as L
 import qualified RIO.Text as T
 import qualified RIO.Text.Partial as T
 import SweetSpot.Data.Common
+
+scientificToIntText :: Scientific -> Text
+scientificToIntText = formatScientific Fixed (Just 0) >>> T.pack
 
 nanToNothing :: Double -> Maybe Double
 nanToNothing double = if isNaN double then Nothing else Just double

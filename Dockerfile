@@ -35,9 +35,9 @@ COPY fulcrum/src src
 COPY fulcrum/test test
 RUN spago test
 RUN spago bundle-app --main Fulcrum.Main --to fulcrum.js
-RUN yarn parcel build fulcrum.js --no-source-maps
+RUN yarn parcel build --no-source-maps fulcrum.js
 RUN mv dist/fulcrum.js dist/fulcrum.min.js
-RUN yarn parcel build fulcrum.js --no-minify --no-source-maps
+RUN yarn parcel build --no-minify --no-source-maps fulcrum.js
 
 # Build Dashboard
 FROM node:13 AS build-dashboard

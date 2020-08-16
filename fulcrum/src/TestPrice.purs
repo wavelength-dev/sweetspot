@@ -17,7 +17,7 @@ import Web.DOM (Element)
 import Web.DOM.DOMTokenList (remove) as DTL
 import Web.DOM.Document (createElement, toParentNode) as Document
 import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
-import Web.DOM.Node (appendChild, parentNode, setTextContent) as Node
+import Web.DOM.Node (appendChild, insertBefore, nextSibling, parentNode, setTextContent) as Node
 import Web.DOM.NodeList as NodeList
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode
@@ -40,7 +40,14 @@ highlightTestPrice priceElement isTest = do
     labelNode = Element.toNode labelElement
   Node.setTextContent text labelNode
   parentNode <- Node.parentNode priceNode <#> Unsafe.unsafePartial Maybe.fromJust
-  Node.appendChild labelNode parentNode *> mempty
+  mSiblingNode <- Node.nextSibling priceNode
+  case mSiblingNode of
+    Nothing ->
+      Node.appendChild labelNode parentNode
+        *> mempty
+    Just siblingNode ->
+      Node.insertBefore labelNode siblingNode parentNode
+        *> mempty
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do

@@ -119,22 +119,22 @@ createCampaignExperiment domain cmpId ce = do
               testVariant = newProduct ^?! shopProductVariants . ix 0
               controlPrice = controlVariant ^. shopVariantPrice
               testPrice = testVariant ^. shopVariantPrice
-              createDbExperiment :: Int -> Price -> ShopVariant -> AppM ()
-              createDbExperiment treatment price variant = createExperiment args
+              createDbExperiment :: Int -> ShopVariant -> AppM ()
+              createDbExperiment treatment variant = createExperiment args
                 where
                   args =
                     InsertExperiment
                       { _insertExperimentSku = variant ^. shopVariantSku,
                         _insertExperimentSvid = variant ^. shopVariantId,
                         _insertExperimentProductId = variant ^. shopVariantProductId,
-                        _insertExperimentPrice = price,
+                        _insertExperimentPrice = variant ^. shopVariantPrice,
                         _insertExperimentShopDomain = domain,
                         _insertExperimentCampaignId = cmpId,
                         _insertExperimentProductName = controlProduct ^. shopProductTitle,
                         _insertExperimentTreatment = treatment
                       }
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0 controlPrice) controlProduct
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1 testPrice) newProduct
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0) controlProduct
+          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1) newProduct
           Log.info "Created experiment(s)"
           return ()
         (Error err, _) -> do

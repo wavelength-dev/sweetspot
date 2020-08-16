@@ -1,8 +1,6 @@
 module Fulcrum.Main where
 
 import Prelude
-
-import Control.Alt ((<|>))
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Either (Either(..))
@@ -10,13 +8,13 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.AVar as AVar
-import Effect.Aff (Aff, Error, Milliseconds(..), error, nonCanceler)
+import Effect.Aff (Aff, Error, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (try)
-import Effect.Timer (setInterval, setTimeout)
-import Fulcrum.Cart as Cart
+import Effect.Timer (setInterval)
+import Fulcrum.Cart (findCartToken, hasCartTokenBeenSent, persistSentToken) as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
@@ -69,9 +67,9 @@ main =
       exposeGlobals reapply
       hostname <- Site.readHostname
       Logger.log Info ("running fulcrum on " <> hostname)
-    eUserId <- awaitUserId
+    eUserId <- findUserIdWithWaitLimit
     case eUserId of
-      Left msg -> throwError $ error msg
+      Left msg -> throwError $ Aff.error msg
       Right userId -> do
         sessionTestContext <-
           liftEffect do
@@ -81,7 +79,7 @@ main =
             RunState.getTestContext
         eTestContext <- runExceptT $ getTestMap userId
         case eTestContext of
-          Left msg -> throwError (error msg)
+          Left msg -> throwError (Aff.error msg)
           -- we cache the test maps and apply them
           Right testContext -> do
             unless (Map.isEmpty testContext) do
@@ -146,29 +144,18 @@ startCartTokenInterval userId = setInterval 500 cb *> mempty
           *> liftEffect (Cart.persistSentToken token)
       Nothing -> mempty
 
-awaitUserId :: Aff (Either String UserId)
-awaitUserId =
+findUserIdWithWaitLimit :: Aff (Either String UserId)
+findUserIdWithWaitLimit =
   let
-    userIdAff :: Aff (Either String UserId)
-    userIdAff =
-      ( Aff.makeAff \callback -> do
-          withUserId \userId -> callback (Right userId)
-          pure nonCanceler
-      )
-        <#> Right
-
-    timeoutAff = Aff.delay (Milliseconds 6000.0) $> Left "waiting too long for userId to appear on window.trekkie"
+    tryFindUserId waitTime = do
+      mUserId <- liftEffect User.findUserId
+      case mUserId of
+        Just userId -> pure $ Right userId
+        Nothing ->
+          if waitTime > 6000.0 then
+            "find user id timed out" # Left >>> pure
+          else do
+            Aff.delay (Milliseconds 50.0)
+            tryFindUserId (waitTime + 50.0)
   in
-    userIdAff <|> timeoutAff
-
-withUserId :: (UserId -> Effect Unit) -> Effect Unit
-withUserId f = check
-  where
-  timeoutMs = 100
-
-  check :: Effect Unit
-  check =
-    User.findUserId
-      >>= case _ of
-          Just uid -> f uid
-          Nothing -> setTimeout timeoutMs check *> mempty
+    tryFindUserId 0.0

@@ -23,7 +23,7 @@ import React.Basic.DOM as R
 import React.Basic.Hooks (Component, JSX, component, element, useState')
 import React.Basic.Hooks as React
 import Routing.Hash as Hash
-import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), CreateVariant(..), Product, productId, productVariants, variantId, variantPrice, variantProductId, variantProductTitle, variantSku, variantTitle)
+import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), CreateVariant(..), Product, productId, productVariants, variantId, variantPrice, variantProductId, variantSku, variantTitle, productTitle)
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Session (SessionId)
 import SweetSpot.Shopify as Shopify
@@ -43,26 +43,16 @@ mkProductPicker =
   component "ProductPicker" \props -> React.do
     pure mempty
 
-productToOptions :: Product -> Array { value :: String, label :: String }
-productToOptions product = Maybe.fromMaybe [] options
+productToOption :: Product -> { value :: String, label :: String }
+productToOption product = { value, label }
   where
-  options = product ^. productVariants # Array.head <#> variantToOption >>> Array.singleton
+  value = product ^. productId
+
+  title = product ^. productTitle
 
   skus = product ^.. productVariants <<< folded <<< variantSku
 
-  variantToOption variant =
-    let
-      id = variant ^. variantId
-
-      title = variant ^. variantProductTitle
-
-      sku = variant ^. variantSku
-
-      price = variant ^. variantPrice
-
-      label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate ", " skus
-    in
-      { value: id, label }
+  label = "title: " <> title <> ", " <> "sku: " <> Array.intercalate ", " skus
 
 type VariantRow
   = { title :: String
@@ -227,17 +217,19 @@ mkCampaignCreatePage = do
       -- Updates the variant rows to match the selected variants.
       -- We can't recreate variant rows because existing ones might have a modified test price.
       updateVariantRowsWithSelected :: Array Product -> Array VariantRow
-      updateVariantRowsWithSelected = Array.concatMap createNewVariantRow
+      updateVariantRowsWithSelected = Array.concatMap productToVariantRows >>> Array.filter (alreadySelected >>> not)
         where
-        getExistingVariantRow id = Array.find (_.id >>> eq id) variantRows
-
-        createNewVariantRow = productToVariantRows
+        alreadySelected :: VariantRow -> Boolean
+        alreadySelected vr = Array.find (_.id >>> eq vr.id) variantRows # Maybe.isJust
 
       -- Takes a new list of variants to test and updates our variant rows
       onSelectedVariantsUpdated :: Array String -> Effect Unit
-      onSelectedVariantsUpdated newVariantIdsToTest = (updateVariantRowsWithSelected products # setVariantRows)
+      onSelectedVariantsUpdated newProductIdsToTest = updateVariantRowsWithSelected products # setVariantRows
         where
-        products = Array.filter (view productId >>> flip Array.elem newVariantIdsToTest) props.products
+        products =
+          Array.filter
+            (view productId >>> flip Array.elem newProductIdsToTest)
+            props.products
 
       -- Takes a new test price and updates the variant rows with a new row with the new test price
       updateVariantRowsWithTestPrice :: VariantRow -> String -> Array VariantRow
@@ -251,7 +243,7 @@ mkCampaignCreatePage = do
       mkSetVariantTestPrice targetVariantRow newPrice = updateVariantRowsWithTestPrice targetVariantRow newPrice # setVariantRows
 
       selectedVariantIds :: Array String
-      selectedVariantIds = map _.id variantRows
+      selectedVariantIds = map _.productId variantRows
 
       isValidCreateCampaign :: Boolean
       isValidCreateCampaign = Array.all (_.testPriceValidation >>> isValidPrice) variantRows
@@ -273,7 +265,7 @@ mkCampaignCreatePage = do
                             , children:
                                 [ element Shopify.optionList
                                     { onChange: mkEffectFn1 onSelectedVariantsUpdated
-                                    , options: productToOptions product
+                                    , options: [ productToOption product ]
                                     , selected: selectedVariantIds
                                     , allowMultiple: true
                                     }

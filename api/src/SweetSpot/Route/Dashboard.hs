@@ -6,9 +6,9 @@ where
 
 import Control.Lens hiding (Strict)
 import Data.Aeson (Result (..), Value (..), parseJSON)
-import Data.Aeson.Lens (_Object, _String, key, values)
+import Data.Aeson.Lens
 import Data.Aeson.Types (parse)
-import RIO hiding ((^.), view)
+import RIO hiding ((^.), to, view)
 import qualified RIO.HashMap as HM
 import qualified RIO.List as L
 import RIO.Partial (fromJust)
@@ -97,7 +97,7 @@ createCampaignExperiment domain cmpId ce = do
           newVariants =
             json & key "product" . key "variants" . values . _Object
               %~ ( \variant ->
-                     let variantId = variant ^?! at "id" . _Just . _String
+                     let variantId = variant ^?! at "id" . _Just . _Number . to tshow
                          newPrice =
                            L.find (view createVariantSvid >>> (\(Svid txt) -> txt) >>> (==) variantId) variantPrices
                              & fromJust

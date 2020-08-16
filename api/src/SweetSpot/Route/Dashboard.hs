@@ -95,8 +95,9 @@ createCampaignExperiment domain cmpId ce = do
     Right json -> do
       let mControlProduct = parse parseJSON $ json ^?! key "product"
           variantPrices = ce ^. createExperimentVariants
-          newVariants =
-            json & key "product" . key "variants" . values . _Object
+          withNewPrice =
+            json
+              & key "product" . key "variants" . values . _Object
               %~ ( \variant ->
                      let variantId = variant ^?! at "id" . _Just . _Number . to scientificToIntText
                          newPrice =
@@ -107,9 +108,6 @@ createCampaignExperiment domain cmpId ce = do
                              & String
                       in HM.insert "price" newPrice variant
                  )
-          withNewPrice =
-            json
-              & key "product" . key "variants" .~ newVariants
               & key "product" . key "handle" . _String <>~ "-ssv"
               & key "product" . key "product_type" . _String .~ "sweetspot-variant"
               & key "product" . key "images" . values . key "variant_ids" .~ Null

@@ -7,14 +7,21 @@ import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
 import Data.Maybe (isJust) as Maybe
+import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
+import Effect.Class (liftEffect)
 import Fulcrum.Config (dryRunMap) as Config
+import Prim.Row (class Union)
 import QueryString (QueryParam(..))
 import QueryString (parseQueryString) as QueryString
 import Web.DOM (Document, Element)
 import Web.DOM.Document (toParentNode) as Document
-import Web.DOM.Element (fromNode) as Element
+import Web.DOM.Element (fromNode, toNode) as Element
+import Web.DOM.MutationObserver (MutationObserverInitFields)
+import Web.DOM.MutationObserver (mutationObserver, observe) as MutationObserver
+import Web.DOM.MutationRecord (MutationRecord)
+import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.NodeList (toArray) as NodeList
 import Web.DOM.ParentNode (QuerySelector)
 import Web.DOM.ParentNode (querySelectorAll) as ParentNode
@@ -25,7 +32,6 @@ import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.Location (hostname, search) as Location
 import Web.HTML.Window as Window
-
 getDocument :: Effect Document
 getDocument = HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
 
@@ -82,3 +88,20 @@ readHostname =
 
 getIsDryRun :: Effect Boolean
 getIsDryRun = map Config.dryRunMap readHostname
+
+onElementsMutation ::
+  forall r rx.
+  Union r rx MutationObserverInitFields =>
+  Record r -> (Array Element -> Effect Unit) -> Array Element -> Effect Unit
+onElementsMutation options callback elements = do
+  mutationObserver <- liftEffect $ MutationObserver.mutationObserver (\mrs _ -> mutationRecordsToElements mrs >>= callback)
+  let
+    observe = Element.toNode >>> \node -> MutationObserver.observe node options mutationObserver
+  traverse_ observe elements
+  where
+  -- We discard the possibilty of some observed nodes not being elements as the only nodes we watch are price elements which are necessarily Html elements.
+  mutationRecordsToElements :: Array MutationRecord -> Effect (Array Element)
+  mutationRecordsToElements mutationRecords =
+    traverse (MutationRecord.target >>> liftEffect >=> Element.fromNode >>> pure) mutationRecords
+      >>= Array.catMaybes
+      >>> pure

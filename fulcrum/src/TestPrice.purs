@@ -89,3 +89,17 @@ applyTestPrices testMap =
     <#> map Element.fromNode
     <#> Array.catMaybes
     >>= traverse_ (insertPrice testMap)
+
+observeTestPrices :: Map VariantId TestMap -> Effect Unit
+observeTestPrices testMap =
+  HTML.window
+    >>= Window.document
+    <#> HTMLDocument.toDocument
+    <#> Document.toParentNode
+    >>= ParentNode.querySelectorAll (QuerySelector "[data-sweetspot-id]")
+    >>= NodeList.toArray
+    <#> map Element.fromNode
+    <#> Array.catMaybes
+    >>= Site.onElementsMutation
+          { characterData: true }
+          (traverse_ (insertPrice testMap))

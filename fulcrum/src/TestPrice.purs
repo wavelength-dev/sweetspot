@@ -53,12 +53,17 @@ insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do
   isDebugging <- Site.getIsDebugging
   isDryRun <- Site.getIsDryRun
-  variantId <-
+  mUrlVariantId <- Site.getUrlParam "variant" <#> (map VariantId)
+  -- this id is only valid when no variant is selected
+  elementVariantId <-
     -- as we select elements by this attribute we can be sure the
     -- attribute is there
     Element.getAttribute "data-sweetspot-id" element
       <#> (Unsafe.unsafePartial Maybe.fromJust)
       >>> VariantId
+  -- if there is a variant query parameter, we're on a page with a
+  -- selected variant and we use that id
+  let variantId = Maybe.fromMaybe elementVariantId mUrlVariantId
   case Map.lookup variantId testMap of
     -- price not under test, nothing to do
     Nothing -> mempty

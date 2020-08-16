@@ -63,7 +63,8 @@ insertPrice testMap element = do
       >>> VariantId
   -- if there is a variant query parameter, we're on a page with a
   -- selected variant and we use that id
-  let variantId = Maybe.fromMaybe elementVariantId mUrlVariantId
+  let
+    variantId = Maybe.fromMaybe elementVariantId mUrlVariantId
   case Map.lookup variantId testMap of
     -- price not under test, nothing to do
     Nothing -> mempty
@@ -113,5 +114,5 @@ observeTestPrices testMap =
     <#> map Element.fromNode
     <#> Array.catMaybes
     >>= Site.onElementsMutation
-          { characterData: true }
-          (traverse_ (insertPrice testMap))
+        { characterData: true }
+        (traverse_ (insertPrice testMap))

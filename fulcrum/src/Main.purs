@@ -95,10 +95,7 @@ applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestC
 applyDynamicPrice :: Aff Unit
 applyDynamicPrice = do
   testContext <- RunState.getTestContext # liftEffect >>= AAVar.read
-  mUserId <- User.findUserId # liftEffect
-  case mUserId of
-    Nothing -> Logger.log Warn "tried to apply prices before userId available" # liftEffect
-    Just userId -> applyTestMaps testContext # liftEffect
+  applyTestMaps testContext # liftEffect
 
 consumeQueue :: Aff Unit -> Aff Unit
 consumeQueue fn = do

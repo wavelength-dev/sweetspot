@@ -26,6 +26,7 @@ import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
 import Fulcrum.Site (readHostname) as Site
 import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
+import Fulcrum.TestPrice (observeTestPrices)
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 
@@ -86,6 +87,7 @@ main =
               -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
               _ <- AAVar.tryPut testContext sessionTestContext
               applyTestMaps testContext # liftEffect
+              observeTestPrices testContext # liftEffect
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap

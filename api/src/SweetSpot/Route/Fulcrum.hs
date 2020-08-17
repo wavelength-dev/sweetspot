@@ -38,7 +38,9 @@ getUserTestHandler shopDomain uid = runAppM $ do
 
 userCartTokenHandler :: ShopDomain -> CartTokenReq -> ServerM OkResponse
 userCartTokenHandler _ req = runAppM $ do
+  L.info $ "Inserting user cart-token: " <> tshow req
   insertUserCartToken req
+  L.info "Inserted token"
   return OkResponse {message = "Cart token received"}
 
 fulcrumHandler =

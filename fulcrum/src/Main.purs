@@ -24,7 +24,7 @@ import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
-import Fulcrum.Site (readHostname) as Site
+import Fulcrum.Site (getIsDebugging, getIsDryRun, readHostname) as Site
 import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.TestPrice (observeTestPrices)
 import Fulcrum.User (UserId)
@@ -67,7 +67,9 @@ main =
     liftEffect do
       exposeGlobals reapply
       hostname <- Site.readHostname
-      Logger.log Info ("running fulcrum on " <> hostname)
+      isDryRun <- Site.getIsDryRun
+      isDebugging <- Site.getIsDebugging
+      Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging }
     eUserId <- findUserIdWithWaitLimit
     case eUserId of
       Left msg -> throwError $ Aff.error msg

@@ -2,7 +2,7 @@ module Fulcrum.Checkout where
 
 import Prelude
 import Control.Monad.Except (runExceptT, throwError)
-import Data.Array (catMaybes, head) as Array
+import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Map (lookup) as Map
 import Data.Maybe (Maybe(..))
@@ -15,9 +15,8 @@ import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
 import Web.DOM (Element)
 import Web.DOM.Document (createElement) as Document
-import Web.DOM.Element (fromNode, getAttribute, setAttribute, toNode) as Element
+import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
 import Web.DOM.Node as Node
-import Web.DOM.NodeList (toArray) as NodeList
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
@@ -117,9 +116,8 @@ highlightCheckout = do
 applyTestCheckout :: TestMapByVariant -> Effect Unit
 applyTestCheckout testMap = do
   isDebugging <- Site.getIsDebugging
+  isDryRun <- Site.getIsDryRun
   when isDebugging highlightCheckout
-  optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
-  traverse_ (setCheckoutVariantId testMap) optionElements
-  where
-  -- We discard nodes that are not elements.
-  nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+  unless isDryRun do
+    optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
+    traverse_ (setCheckoutVariantId testMap) optionElements

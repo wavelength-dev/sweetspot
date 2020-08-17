@@ -58,7 +58,6 @@ import Web.Storage.Storage (getItem) as Storage
 --      ..
 --   </div>
 -- </form>
---
 setCheckoutVariantId :: TestMapByVariant -> Element -> Effect Unit
 setCheckoutVariantId testMap element =
   runExceptT do
@@ -118,6 +117,8 @@ applyTestCheckout testMap = do
   isDebugging <- Site.getIsDebugging
   isDryRun <- Site.getIsDryRun
   when isDebugging highlightCheckout
+  optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
   unless isDryRun do
-    optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
+    traverse_ (setCheckoutVariantId testMap) optionElements
+  when (isDryRun && isDebugging) do
     traverse_ (setCheckoutVariantId testMap) optionElements

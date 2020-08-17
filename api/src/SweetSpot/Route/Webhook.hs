@@ -62,8 +62,8 @@ orderHandler order = runAppM $ do
       L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
       return OkResponse {message = "Registered order"}
     Nothing -> do
-      L.warn $ "Unable to validate cart token " <> tshow order
-      throwError internalServerErr
+      L.info $ "Unable to validate cart token " <> tshow order
+      return OkResponse {message = "Registered order"}
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse
 appUninstalledHandler (AppUninstalledReq domain) =

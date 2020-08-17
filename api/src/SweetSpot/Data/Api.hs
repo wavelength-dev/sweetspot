@@ -257,7 +257,7 @@ data CartTokenReq
       { _cartTokenReqToken :: CartToken,
         _cartTokenReqUser :: UserId
       }
-  deriving (Generic, Eq)
+  deriving (Generic, Eq, Show)
 
 makeLenses ''CartTokenReq
 

@@ -1,12 +1,10 @@
 module Fulcrum.Site where
 
 import Prelude
-
 import Data.Array (catMaybes) as Array
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
-import Data.Maybe (isJust) as Maybe
 import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff, effectCanceler, makeAff, nonCanceler)
@@ -32,6 +30,11 @@ import Web.HTML.HTMLDocument (readyState, toDocument) as HTMLDocument
 import Web.HTML.HTMLDocument.ReadyState (ReadyState(..))
 import Web.HTML.Location (hostname, search) as Location
 import Web.HTML.Window as Window
+
+foreign import getIsDebugSession :: Effect Boolean
+
+foreign import setIsDebugSession :: Boolean -> Effect Unit
+
 getDocument :: Effect Document
 getDocument = HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
 
@@ -78,7 +81,17 @@ queryDocument querySelector =
   nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
 
 getIsDebugging :: Effect Boolean
-getIsDebugging = getUrlParam "ssdebug" <#> Maybe.isJust
+getIsDebugging = do
+  mUrlDebugParam <- getUrlParam "ssdebug"
+  case mUrlDebugParam of
+    -- URL says nothing, fallback to session setting
+    Nothing -> getIsDebugSession
+    -- URL says something, store for session and use that
+    Just urlDebugParam -> do
+      let
+        shouldDebug = urlDebugParam == "true"
+      setIsDebugSession shouldDebug
+      pure shouldDebug
 
 readHostname :: Effect String
 readHostname =

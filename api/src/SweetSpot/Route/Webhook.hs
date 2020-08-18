@@ -18,7 +18,6 @@ import SweetSpot.Data.Common (ActionRequestType (..))
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (internalServerErr)
 import SweetSpot.Shopify.Types
 
 type OrderRoute =
@@ -55,14 +54,19 @@ type WebhookAPI =
 
 orderHandler :: Order -> ServerM OkResponse
 orderHandler order = runAppM $ do
-  result <- validateUserCartToken $ order ^. orderCartToken
-  case result of
-    Just (shopId, cmpId, userId) -> do
-      insertOrder shopId cmpId userId order
-      L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
-      return OkResponse {message = "Registered order"}
+  case order ^. orderCartToken of
+    Just token -> do
+      result <- validateUserCartToken token
+      case result of
+        Just (shopId, cmpId, userId) -> do
+          insertOrder shopId cmpId userId order
+          L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
+          return OkResponse {message = "Registered order"}
+        Nothing -> do
+          L.info $ "Unable to validate cart token " <> tshow order
+          return OkResponse {message = "Registered order"}
     Nothing -> do
-      L.info $ "Unable to validate cart token " <> tshow order
+      L.warn $ "Got order without cart-token: " <> tshow order
       return OkResponse {message = "Registered order"}
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse

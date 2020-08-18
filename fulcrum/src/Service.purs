@@ -25,9 +25,6 @@ testMapEndpoint = Config.apiUrl <> "/bucket"
 eventEndpoint :: String
 eventEndpoint = Config.apiUrl <> "/event"
 
-logEndpoint :: String
-logEndpoint = Config.apiUrl <> "/log"
-
 cartTokenEndpoint :: String
 cartTokenEndpoint = Config.apiUrl <> "/cart-token"
 
@@ -98,21 +95,6 @@ getServiceError response = do
         Left _ -> Nothing
         Right message -> Just message
   pure mMessage
-
-sendLog :: forall a. EncodeJson a => a -> Aff (Either String Unit)
-sendLog log = do
-  let
-    json = Argonaut.encodeJson log
-  response <- postJson logEndpoint json
-  mMessage <- getServiceError response
-  let
-    status = Milkis.statusCode response
-  pure
-    if status == 200 then
-      Right unit
-    else case mMessage of
-      Nothing -> Left $ "sending log failed, status: " <> show status <> ", no body"
-      Just message -> Left $ "sending log failed, status: " <> show status <> ", body: " <> message
 
 sendCartToken :: UserId -> CartToken -> Aff (Either String Unit)
 sendCartToken uid token = do

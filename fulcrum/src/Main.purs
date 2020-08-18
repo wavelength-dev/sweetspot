@@ -140,9 +140,11 @@ startCartTokenInterval userId = setInterval 500 cb *> mempty
       Just token -> do
         shouldSend <- not <$> Cart.hasCartTokenBeenSent token
         when shouldSend
-          $ Aff.launchAff_
-          $ Service.sendCartToken userId token
-          *> liftEffect (Cart.persistSentToken token)
+          $ Aff.launchAff_ do
+              eSuccess <- Service.sendCartToken userId token
+              liftEffect case eSuccess of
+                Left errMsg -> Logger.log Error errMsg
+                Right _ -> Cart.persistSentToken token
       Nothing -> mempty
 
 findUserIdWithWaitLimit :: Aff (Either String UserId)

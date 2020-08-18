@@ -181,8 +181,14 @@ getUserTestMaps' conn domain uid = do
       guard_ (treatment ^. trCmpId ==. campaign ^. cmpId)
       guard_ (treatment ^. trProductVariantId ==. variant ^. pvId)
       pure (treatment, variant)
-  let ctrlVariants = L.filter (fst >>> view trTreatment >>> (== 0)) variants
-      testVariants = L.filter (fst >>> view trTreatment >>> (== 1)) variants
+  let ctrlVariants =
+        variants
+          & L.filter (fst >>> view trTreatment >>> (== 0))
+          & L.sortOn (snd >>> view pvSku)
+      testVariants =
+        variants
+          & L.filter (fst >>> view trTreatment >>> (== 1))
+          & L.sortOn (snd >>> view pvSku)
   pure $
     L.zipWith
       ( \(_, cV) (_, tV) ->

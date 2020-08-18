@@ -114,5 +114,5 @@ observeTestPrices testMap =
     <#> map Element.fromNode
     <#> Array.catMaybes
     >>= Site.onElementsMutation
-        { characterData: true }
+        { characterData: true, childList: true }
         (traverse_ (insertPrice testMap))

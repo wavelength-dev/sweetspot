@@ -94,7 +94,7 @@ highlightCheckout :: Effect Unit
 highlightCheckout = do
   window <- HTML.window
   document <- Window.document window >>= HTMLDocument.toDocument >>> pure
-  matchingElements <- Site.queryDocument (QuerySelector "form.product-form")
+  matchingElements <- Site.queryDocument (QuerySelector "[data-product-form]")
   case Array.head matchingElements of
     Nothing -> mempty
     Just formElement -> do

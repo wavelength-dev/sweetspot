@@ -103,7 +103,7 @@ instance FromJSON LineItem where
 data Order
   = Order
       { _orderId :: OrderId,
-        _orderCartToken :: CartToken,
+        _orderCartToken :: Maybe CartToken,
         _orderCreatedAt :: UTCTime,
         _orderLineItems :: [LineItem]
       }

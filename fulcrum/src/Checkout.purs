@@ -88,6 +88,7 @@ labelHighlight =
   color: #5c6ac4;
   padding: 0px 8px;
   margin: -2.9rem 0px auto 5px;
+  max-width: 217px;
   """
 
 highlightCheckout :: Effect Unit

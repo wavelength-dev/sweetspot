@@ -28,25 +28,29 @@ import Web.HTML.Window (document) as Window
 
 highlightTestPrice :: Element -> Boolean -> Effect Unit
 highlightTestPrice priceElement isTest = do
-  let
-    text = if isTest then "test price" else "default price"
-  document <- HTML.window >>= Window.document >>= HTMLDocument.toDocument >>> pure
-  Element.setAttribute "style" "color: #5a31f4;" priceElement
-  labelElement <- Document.createElement "sup" document
-  Element.setAttribute "style" "color: #5a31f4;" labelElement
-  let
-    priceNode = Element.toNode priceElement
+  -- if highlight exists, skip
+  elements <- Site.queryDocument (QuerySelector ".sweetspot__price--highlight")
+  when ((Array.length elements) == 0) do
+    let
+      text = if isTest then "test price" else "default price"
+    document <- HTML.window >>= Window.document <#> HTMLDocument.toDocument
+    Element.setAttribute "style" "color: #5a31f4;" priceElement
+    labelElement <- Document.createElement "sup" document
+    Element.setAttribute "style" "color: #5a31f4;" labelElement
+    Element.setAttribute "class" "sweetspot__price--highlight" labelElement
+    let
+      priceNode = Element.toNode priceElement
 
-    labelNode = Element.toNode labelElement
-  Node.setTextContent text labelNode
-  parentNode <- Node.parentNode priceNode <#> Unsafe.unsafePartial Maybe.fromJust
-  mSiblingNode <- Node.nextSibling priceNode
-  case mSiblingNode of
-    Nothing ->
-      Node.appendChild labelNode parentNode
+      labelNode = Element.toNode labelElement
+    Node.setTextContent text labelNode
+    parentNode <- Node.parentNode priceNode <#> Unsafe.unsafePartial Maybe.fromJust
+    mSiblingNode <- Node.nextSibling priceNode
+    case mSiblingNode of
+      Nothing ->
+        Node.appendChild labelNode parentNode
         *> mempty
-    Just siblingNode ->
-      Node.insertBefore labelNode siblingNode parentNode
+      Just siblingNode ->
+        Node.insertBefore labelNode siblingNode parentNode
         *> mempty
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit

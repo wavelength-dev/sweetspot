@@ -325,7 +325,7 @@ instance FromJSON ShopProduct where
     id <- v .: "id"
     title <- v .: "title"
     variants <- v .: "variants" >>= traverse parseJSON
-    image <- v .: "image" >>= parseJSON
+    image <- (v .: "image" >>= parseJSON) <|> pure ShopImage {_shopImageSrc = "notfound.jpg"}
     productType <- v .: "product_type"
     return
       ShopProduct

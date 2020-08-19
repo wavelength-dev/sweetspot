@@ -130,8 +130,6 @@ applyTestCheckout testMap = do
 
 setCheckout :: TestMapByVariant -> Effect Unit
 setCheckout testMap = do
-  isDebugging <- Site.getIsDebugging
-  isDryRun <- Site.getIsDryRun
   mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
   let
     el = case Array.head mEls of
@@ -144,11 +142,7 @@ setCheckout testMap = do
   rawTargetId <- HTMLSelectElement.value selectEl <#> VariantId
   case Map.lookup rawTargetId testMap of
     Nothing -> unsafeThrow "variant in product select not in test map"
-    Just test -> do
-      unless isDryRun do
-        HTMLSelectElement.setValue test.swapId selectEl
-      when (isDryRun && isDebugging) do
-        HTMLSelectElement.setValue test.swapId selectEl
+    Just test -> HTMLSelectElement.setValue test.swapId selectEl
 
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react

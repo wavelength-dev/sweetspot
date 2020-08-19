@@ -245,7 +245,9 @@ validateUserCartToken' token = withConn $ \conn ->
       user <- all_ (db ^. users)
       userToken <- all_ (db ^. userCartTokens)
       userExperiment <- all_ (db ^. userExperiments)
-      campaign <- all_ (db ^. campaigns)
+      campaign <-
+        all_ (db ^. campaigns)
+          & filter_ isCampaignActive
       shop <- all_ (db ^. shops)
       guard_ (_cartTokenUser userToken `references_` user)
       guard_ (_ueUserId userExperiment `references_` user)

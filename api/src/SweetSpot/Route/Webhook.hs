@@ -14,7 +14,7 @@ import RIO
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
-import SweetSpot.Data.Common (ActionRequestType (..))
+import SweetSpot.Data.Common (ActionRequestType (..), ShopDomain)
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
 import qualified SweetSpot.Logger as L
@@ -23,6 +23,7 @@ import SweetSpot.Shopify.Types
 type OrderRoute =
   "webhook" :> "order"
     :> ReqBody '[JSON] Order
+    :> Header' '[Required] "X-Shopify-Shop-Domain" ShopDomain
     :> Post '[JSON] OkResponse
 
 type AppUninstalledRoute =
@@ -52,8 +53,8 @@ type WebhookAPI =
     :<|> RedactCustomerRoute
     :<|> RequestDataRoute
 
-orderHandler :: Order -> ServerM OkResponse
-orderHandler order = runAppM $ do
+orderHandler :: Order -> ShopDomain -> ServerM OkResponse
+orderHandler order domain = runAppM $ do
   case order ^. orderCartToken of
     Just token -> do
       result <- validateUserCartToken token
@@ -63,10 +64,12 @@ orderHandler order = runAppM $ do
           L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
           return OkResponse {message = "Registered order"}
         Nothing -> do
-          L.info $ "Unable to validate cart token " <> tshow order
+          L.info $ "Unable to validate cart token, inserting unaccounted order " <> tshow order
+          insertUnaccountedOrder domain order
           return OkResponse {message = "Registered order"}
     Nothing -> do
-      L.warn $ "Got order without cart-token: " <> tshow order
+      L.warn $ "Got order without cart-token, inserting unacconted order " <> tshow order
+      insertUnaccountedOrder domain order
       return OkResponse {message = "Registered order"}
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse

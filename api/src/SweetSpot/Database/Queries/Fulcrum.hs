@@ -4,6 +4,7 @@ module SweetSpot.Database.Queries.Fulcrum
   )
 where
 
+import Data.Aeson (toJSON)
 import Data.Foldable (traverse_)
 import qualified Data.List as L
 import Data.Maybe
@@ -20,6 +21,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Util
   ( matchShop,
     selectShopMoneyFormat,
+    unsafeFindShopId,
     withConn,
   )
 import SweetSpot.Database.Schema hiding (UserId)
@@ -34,6 +36,7 @@ class Monad m => FulcrumDB m where
   insertUserCartToken :: CartTokenReq -> m ()
   validateUserCartToken :: CartToken -> m (Maybe (ShopId, CampaignId, UserId))
   insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
+  insertUnaccountedOrder :: ShopDomain -> Order -> m ()
 
 instance FulcrumDB AppM where
   getUserTestMaps domain uid = withConn $ \conn -> do
@@ -99,6 +102,19 @@ instance FulcrumDB AppM where
   validateUserCartToken = validateUserCartToken'
 
   insertOrder = insertOrder'
+
+  insertUnaccountedOrder shopDomain order = withConn $ \conn ->
+    runBeamPostgres conn $ do
+      shopId <- unsafeFindShopId shopDomain
+      runInsert
+        $ insert (db ^. unaccountedOrders)
+        $ insertExpressions
+          [ UnaccountedOrder
+              { _unaccountedOrderId = pgGenUUID_,
+                _unaccountedOrderShopId = val_ (ShopKey shopId),
+                _unaccountedOrderPayload = val_ (PgJSONB (toJSON order))
+              }
+          ]
 
 insertUser :: Connection -> UserId -> IO UserId
 insertUser conn uid = do

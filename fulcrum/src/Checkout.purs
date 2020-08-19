@@ -10,20 +10,16 @@ import Data.Traversable (traverse_)
 import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Exception as Unsafe
-import Effect.Exception.Unsafe (unsafeThrow)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
 import Web.DOM (Element)
-import Web.DOM.Document (createElement, toParentNode) as Document
+import Web.DOM.Document (createElement) as Document
 import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
 import Web.DOM.Node as Node
 import Web.DOM.ParentNode (QuerySelector(..))
-import Web.DOM.ParentNode as ParentNode
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
-import Web.HTML.HTMLSelectElement as HTMLSelectElement
 import Web.HTML.Window (document, localStorage) as Window
 import Web.Storage.Storage (getItem) as Storage
 
@@ -127,32 +123,3 @@ applyTestCheckout testMap = do
     traverse_ (setCheckoutVariantId testMap) optionElements
   when (isDryRun && isDebugging) do
     traverse_ (setCheckoutVariantId testMap) optionElements
-
-setCheckout :: TestMapByVariant -> Effect Unit
-setCheckout testMap = do
-  mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
-  let
-    el = case Array.head mEls of
-      Nothing -> unsafeThrow "no product select found"
-      Just firstEl -> firstEl
-  let
-    selectEl = case HTMLSelectElement.fromElement el of
-      Nothing -> unsafeThrow "product select is not a select element"
-      Just narrowEl -> narrowEl
-  rawTargetId <- HTMLSelectElement.value selectEl <#> VariantId
-  case Map.lookup rawTargetId testMap of
-    Nothing -> unsafeThrow "variant in product select not in test map"
-    Just test -> HTMLSelectElement.setValue test.swapId selectEl
-
--- on established titles the #ProductSelect has its value updated through JavaScript
--- we react
-observeCheckout :: TestMapByVariant -> Effect Unit
-observeCheckout testMap =
-  HTML.window
-    >>= Window.document
-    <#> HTMLDocument.toDocument
-    <#> Document.toParentNode
-    >>= ParentNode.querySelector (QuerySelector "[data-product-form]")
-    >>= \mElement -> case mElement of
-        Nothing -> Unsafe.throw "no product form found"
-        Just el -> Site.onElementsMutation { subtree: true, childList: true } (\_ -> setCheckout testMap) [ el ]

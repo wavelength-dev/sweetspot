@@ -91,7 +91,7 @@ main =
               _ <- AAVar.tryPut testContext sessionTestContext
               applyTestMaps testContext # liftEffect
               observeTestPrices testContext # liftEffect
-              observeCheckout testContext # liftEffect
+              -- observeCheckout testContext # liftEffect
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap

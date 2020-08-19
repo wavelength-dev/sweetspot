@@ -16,7 +16,6 @@ import Effect.Exception (try)
 import Effect.Timer (setInterval)
 import Fulcrum.Cart (findCartToken, hasCartTokenBeenSent, persistSentToken) as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
-import Fulcrum.Checkout (observeCheckout)
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
 import Fulcrum.Logger (LogLevel(..))
@@ -91,7 +90,6 @@ main =
               _ <- AAVar.tryPut testContext sessionTestContext
               applyTestMaps testContext # liftEffect
               observeTestPrices testContext # liftEffect
-              observeCheckout testContext # liftEffect
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap

@@ -97,6 +97,13 @@ instance FromJSON LineItem where
           _lineItemQuantity = quantity
         }
 
+instance ToJSON LineItem where
+  toJSON li =
+    object
+      [ "variant_id" .= view lineItemVariantId li,
+        "quantity" .= view lineItemQuantity li
+      ]
+
 -- | ---------------------------------------------------------------------------
 -- | Order
 -- | ---------------------------------------------------------------------------
@@ -118,6 +125,15 @@ instance FromJSON Order where
       <*> v .: "cart_token"
       <*> v .: "created_at"
       <*> v .: "line_items"
+
+instance ToJSON Order where
+  toJSON o =
+    object
+      [ "id" .= view orderId o,
+        "cart_token" .= view orderCartToken o,
+        "created_at" .= view orderCreatedAt o,
+        "line_items" .= view orderLineItems o
+      ]
 
 -- | ---------------------------------------------------------------------------
 -- | RedactShop

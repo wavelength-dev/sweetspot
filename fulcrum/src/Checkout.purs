@@ -170,8 +170,10 @@ setCheckout testMap = do
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react
 observeCheckout :: TestMapByVariant -> Effect Unit
-observeCheckout testMap =
-  Site.queryDocument (QuerySelector ".product-form__input")
-    >>= Site.onElementsMutation
-        { subtree: true, childList: true }
-        (\_ -> setCheckout testMap)
+observeCheckout testMap = setTimeout 100 (setCheckout testMap) *> mempty
+  -- els <- Site.queryDocument (QuerySelector ".product-form__input")
+    -- >>= Site.onElementsMutation
+    --     { subtree: true, childList: true }
+    --     (\_ -> setCheckout testMap)
+
+  

@@ -48,10 +48,10 @@ highlightTestPrice priceElement isTest = do
     case mSiblingNode of
       Nothing ->
         Node.appendChild labelNode parentNode
-        *> mempty
+          *> mempty
       Just siblingNode ->
         Node.insertBefore labelNode siblingNode parentNode
-        *> mempty
+          *> mempty
 
 insertPrice :: TestMapByVariant -> Element -> Effect Unit
 insertPrice testMap element = do
@@ -92,8 +92,10 @@ revealPrice element = case HTMLElement.fromElement element of
 
 revealAllPrices :: Effect Unit
 revealAllPrices =
-  Site.queryDocument (QuerySelector ".sweetspot__price--hidden")
-    >>= traverse_ revealPrice
+  ( Site.queryDocument (QuerySelector ".sweetspot__price--hidden")
+      >>= traverse_ revealPrice
+  )
+    *> (Logger.log Info "revealed all prices")
 
 applyTestPrices :: Map VariantId TestMap -> Effect Unit
 applyTestPrices testMap =

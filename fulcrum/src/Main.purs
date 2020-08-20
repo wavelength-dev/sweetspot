@@ -51,10 +51,6 @@ handleExit = case _ of
 
 foreign import exposeGlobals :: Effect Unit -> Effect Unit
 
--- regardless of whether we succeeded or failed, we need to unhide the prices so people can buy
-withRevealPrices :: forall a. Effect a -> Effect Unit
-withRevealPrices fn = try fn *> TestPrice.revealAllPrices
-
 wrapUp :: Either Error Unit -> Effect Unit
 wrapUp result = do
   TestPrice.revealAllPrices

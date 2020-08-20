@@ -11,6 +11,7 @@ import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
+import Effect.Timer (setTimeout)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
@@ -171,9 +172,8 @@ setCheckout testMap = do
 -- we react
 observeCheckout :: TestMapByVariant -> Effect Unit
 observeCheckout testMap = setTimeout 100 (setCheckout testMap) *> mempty
-  -- els <- Site.queryDocument (QuerySelector ".product-form__input")
-    -- >>= Site.onElementsMutation
-    --     { subtree: true, childList: true }
-    --     (\_ -> setCheckout testMap)
 
-  
+-- els <- Site.queryDocument (QuerySelector ".product-form__input")
+-- >>= Site.onElementsMutation
+--     { subtree: true, childList: true }
+--     (\_ -> setCheckout testMap)

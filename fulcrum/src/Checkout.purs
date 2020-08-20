@@ -157,9 +157,15 @@ setCheckout testMap = do
     Nothing -> mempty
     Just test -> do
       unless isDryRun do
-        HTMLSelectElement.setValue test.swapId selectEl
+        -- if the value is there already we don't set it again
+        current <- HTMLSelectElement.value selectEl
+        unless (current == test.swapId) do
+          HTMLSelectElement.setValue test.swapId selectEl
       when (isDryRun && isDebugging) do
-        HTMLSelectElement.setValue test.swapId selectEl
+        -- if the value is there already we don't set it again
+        current <- HTMLSelectElement.value selectEl
+        unless (current == test.swapId) do
+          HTMLSelectElement.setValue test.swapId selectEl
 
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react
@@ -167,5 +173,5 @@ observeCheckout :: TestMapByVariant -> Effect Unit
 observeCheckout testMap =
   Site.queryDocument (QuerySelector ".product-form__input")
     >>= Site.onElementsMutation
-            { subtree: true, childList: true }
-            (\_ -> setCheckout testMap)
+        { subtree: true, childList: true }
+        (\_ -> setCheckout testMap)

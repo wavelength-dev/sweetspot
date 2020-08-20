@@ -12,7 +12,6 @@ import Effect.Aff (Aff, Error, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
-import Effect.Exception (try)
 import Effect.Timer (setInterval)
 import Fulcrum.Cart (findCartToken, hasCartTokenBeenSent, persistSentToken) as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
@@ -55,7 +54,7 @@ wrapUp :: Either Error Unit -> Effect Unit
 wrapUp result = do
   TestPrice.revealAllPrices
   case result of
-    Left error -> Logger.logWithContext Error "main failed" { err: error }
+    Left error -> Logger.logWithContext Error "main failed" { mainError: error }
     Right _ -> Logger.log Info "succesfully ran sweetspot main loop"
 
 main :: Effect Unit

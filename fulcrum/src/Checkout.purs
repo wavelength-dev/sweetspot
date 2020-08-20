@@ -140,7 +140,19 @@ setCheckout testMap = do
     selectEl = case HTMLSelectElement.fromElement el of
       Nothing -> unsafeThrow "product select is not a select element"
       Just narrowEl -> narrowEl
-  rawTargetId <- HTMLSelectElement.value selectEl <#> VariantId
+  -- the value is empty sometimes, probably because shopify tries
+  -- to set it too and as they don't recognize the options anymore
+  -- the set value fails and empties the value. So we can't use it
+  -- to determine the value selected anymore.
+  -- rawTargetId <- HTMLSelectElement.value selectEl <#> VariantId
+  -- trying to read the set variant from the URL, better would be to
+  -- read the selected options and figure out the right variant
+  -- ourselves.
+  mTargetId <- Site.getUrlParam "variant"
+  let
+    rawTargetId = case mTargetId of
+      Nothing -> unsafeThrow "failed to read variant from URL"
+      Just targetId -> VariantId targetId
   case Map.lookup rawTargetId testMap of
     -- the id may be not a sweetspot id, already swapped or unknown
     Nothing -> mempty

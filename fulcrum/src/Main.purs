@@ -59,7 +59,7 @@ wrapUp :: Either Error Unit -> Effect Unit
 wrapUp result = do
   TestPrice.revealAllPrices
   case result of
-    Left error -> Logger.logWithContext Error "main failed" { error }
+    Left error -> Logger.logWithContext Error "main failed" { err: error }
     Right _ -> Logger.log Info "succesfully ran sweetspot main loop"
 
 main :: Effect Unit

@@ -158,5 +158,9 @@ observeCheckout testMap =
   Site.queryDocument (QuerySelector "[data-product-form]")
     >>= Array.head
     >>> case _ of
-        Nothing -> Unsafe.throw "no product form found"
-        Just el -> Site.onElementsMutation { subtree: true, childList: true } (\_ -> setCheckout testMap) [ el ]
+        Nothing -> unsafeThrow "no product form found"
+        Just el ->
+          Site.onElementsMutation
+            { subtree: true, childList: true }
+            (\_ -> setCheckout testMap)
+            [ el ]

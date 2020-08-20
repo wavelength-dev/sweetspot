@@ -10,8 +10,8 @@ import Data.Traversable (traverse_)
 import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
+import Effect.Exception (throw)
 import Effect.Exception.Unsafe (unsafeThrow)
-import Effect.Timer (setTimeout)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
@@ -171,4 +171,13 @@ setCheckout testMap = do
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react
 observeCheckout :: TestMapByVariant -> Effect Unit
-observeCheckout testMap = setTimeout 100 (setCheckout testMap) *> mempty
+observeCheckout testMap =
+  Site.queryDocument (QuerySelector "[data-product-form]")
+    >>= Array.head
+    >>> case _ of
+        Nothing -> throw "no product form found"
+        Just el ->
+          Site.onElementsMutation
+            { subtree: true, childList: true }
+            (\_ -> setCheckout testMap)
+            [ el ]

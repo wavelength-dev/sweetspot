@@ -10,7 +10,6 @@ import Data.Traversable (traverse_)
 import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Exception (throw)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
@@ -166,12 +165,7 @@ setCheckout testMap = do
 -- we react
 observeCheckout :: TestMapByVariant -> Effect Unit
 observeCheckout testMap =
-  Site.queryDocument (QuerySelector "[data-product-form]")
-    >>= Array.head
-    >>> case _ of
-        Nothing -> throw "no product form found"
-        Just el ->
-          Site.onElementsMutation
+  Site.queryDocument (QuerySelector ".product-form__input")
+    >>= Site.onElementsMutation
             { subtree: true, childList: true }
             (\_ -> setCheckout testMap)
-            [ el ]

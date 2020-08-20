@@ -25,7 +25,7 @@ import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
-import Fulcrum.Site (getIsDebugging, getIsDryRun, readHostname) as Site
+import Fulcrum.Site (getIsDebugging, getIsDryRun, getIsPricePage, readHostname) as Site
 import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.TestPrice (observeTestPrices)
 import Fulcrum.User (UserId)
@@ -65,33 +65,36 @@ wrapUp result = do
 main :: Effect Unit
 main =
   Aff.runAff_ wrapUp do
-    liftEffect do
-      exposeGlobals reapply
-      hostname <- Site.readHostname
-      isDryRun <- Site.getIsDryRun
-      isDebugging <- Site.getIsDebugging
-      Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging }
-    eUserId <- findUserIdWithWaitLimit
-    case eUserId of
-      Left msg -> throwError $ Aff.error msg
-      Right userId -> do
-        sessionTestContext <-
-          liftEffect do
-            startCartTokenInterval userId
-            RunState.initRunQueue
-            RunState.initTestContext
-            RunState.getTestContext
-        eTestContext <- runExceptT $ getTestMap userId
-        case eTestContext of
-          Left msg -> throwError (Aff.error msg)
-          -- we cache the test maps and apply them
-          Right testContext -> do
-            unless (Map.isEmpty testContext) do
-              -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
-              _ <- AAVar.tryPut testContext sessionTestContext
-              applyTestMaps testContext # liftEffect
-              observeTestPrices testContext # liftEffect
-              -- observeCheckout testContext # liftEffect
+    exposeGlobals reapply # liftEffect
+    hostname <- Site.readHostname # liftEffect
+    isDryRun <- Site.getIsDryRun # liftEffect
+    isDebugging <- Site.getIsDebugging # liftEffect
+    isPricePage <- Site.getIsPricePage # liftEffect
+    case isPricePage of
+      false -> mempty
+      true -> do
+        liftEffect $ Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging }
+        eUserId <- findUserIdWithWaitLimit
+        case eUserId of
+          Left msg -> throwError $ Aff.error msg
+          Right userId -> do
+            sessionTestContext <-
+              liftEffect do
+                startCartTokenInterval userId
+                RunState.initRunQueue
+                RunState.initTestContext
+                RunState.getTestContext
+            eTestContext <- runExceptT $ getTestMap userId
+            case eTestContext of
+              Left msg -> throwError (Aff.error msg)
+              -- we cache the test maps and apply them
+              Right testContext -> do
+                unless (Map.isEmpty testContext) do
+                  -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+                  _ <- AAVar.tryPut testContext sessionTestContext
+                  applyTestMaps testContext # liftEffect
+                  observeTestPrices testContext # liftEffect
+                  observeCheckout testContext # liftEffect
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap

@@ -1,7 +1,7 @@
 module Fulcrum.Site where
 
 import Prelude
-import Data.Array (catMaybes) as Array
+import Data.Array (catMaybes, null) as Array
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
@@ -21,7 +21,7 @@ import Web.DOM.MutationObserver (mutationObserver, observe) as MutationObserver
 import Web.DOM.MutationRecord (MutationRecord)
 import Web.DOM.MutationRecord (target) as MutationRecord
 import Web.DOM.NodeList (toArray) as NodeList
-import Web.DOM.ParentNode (QuerySelector)
+import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode (querySelectorAll) as ParentNode
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener) as EventTarget
 import Web.HTML (window) as HTML
@@ -118,3 +118,9 @@ onElementsMutation options callback elements = do
     traverse (MutationRecord.target >>> liftEffect >=> Element.fromNode >>> pure) mutationRecords
       >>= Array.catMaybes
       >>> pure
+
+getIsPricePage :: Effect Boolean
+getIsPricePage =
+  queryDocument (QuerySelector "[data-sweetspot-id]")
+    <#> Array.null
+    >>> not

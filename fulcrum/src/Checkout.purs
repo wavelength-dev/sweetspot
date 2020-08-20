@@ -10,7 +10,7 @@ import Data.Traversable (traverse_)
 import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Exception as Unsafe
+import Effect.Exception (throw)
 import Effect.Exception.Unsafe (unsafeThrow)
 import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
@@ -18,7 +18,6 @@ import Fulcrum.Site as Site
 import Web.DOM (Element)
 import Web.DOM.Document (createElement) as Document
 import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
-import Web.DOM.Element (id)
 import Web.DOM.Node as Node
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window) as HTML
@@ -158,7 +157,7 @@ observeCheckout testMap =
   Site.queryDocument (QuerySelector "[data-product-form]")
     >>= Array.head
     >>> case _ of
-        Nothing -> unsafeThrow "no product form found"
+        Nothing -> throw "no product form found"
         Just el ->
           Site.onElementsMutation
             { subtree: true, childList: true }

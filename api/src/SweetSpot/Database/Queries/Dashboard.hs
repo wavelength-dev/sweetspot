@@ -14,6 +14,7 @@ import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
 import RIO hiding (Vector, (^.), view)
+import qualified RIO.List as L
 import RIO.Partial (fromJust)
 import qualified RIO.Vector as V
 import Statistics.Sample (mean)
@@ -237,7 +238,9 @@ enhanceCampaign conn domain cmp = do
                   & Price
                   & formatPrice moneyFormat,
               _uiTreatmentVariants =
-                map toUITreatmentVariant ctrlTreatmentVariants
+                ctrlTreatmentVariants
+                  & map toUITreatmentVariant
+                  & L.sortOn (view uiTreatmentSku)
             },
         _uiCampaignTestTreatment =
           UITreatment
@@ -248,7 +251,9 @@ enhanceCampaign conn domain cmp = do
                   & Price
                   & formatPrice moneyFormat,
               _uiTreatmentVariants =
-                map toUITreatmentVariant testTreatmentVariants
+                testTreatmentVariants
+                  & map toUITreatmentVariant
+                  & L.sortOn (view uiTreatmentSku)
             }
       }
 

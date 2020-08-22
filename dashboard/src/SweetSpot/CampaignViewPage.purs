@@ -284,7 +284,7 @@ mkCampaignViewPage = do
 
   formatPercentage displaySign =
     Formatter.format
-      (Formatter { abbreviations: false, after: 1, before: 1, comma: false, sign: displaySign })
+      (Formatter { abbreviations: false, after: 2, before: 1, comma: false, sign: displaySign })
       >>> (_ <> "%")
 
   fractionToPercentage = mul 100.0

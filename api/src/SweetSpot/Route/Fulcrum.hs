@@ -12,6 +12,7 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
+import SweetSpot.Route.Util (badRequestErr)
 
 type UserTestRoute =
   "bucket" :> QueryParam' '[Required] "shop" ShopDomain
@@ -23,7 +24,17 @@ type UserCartTokenRoute =
     :> ReqBody '[JSON] CartTokenReq
     :> Put '[JSON] OkResponse
 
-type FulcrumAPI = "fulcrum" :> (UserTestRoute :<|> UserCartTokenRoute)
+type UserCheckoutRoute =
+  "checkout" :> QueryParam' '[Required] "shop" ShopDomain
+    :> ReqBody '[JSON] CheckoutPayload
+    :> Post '[JSON] OkResponse
+
+type FulcrumAPI =
+  "fulcrum"
+    :> ( UserTestRoute
+           :<|> UserCartTokenRoute
+           :<|> UserCheckoutRoute
+       )
 
 getUserTestHandler :: ShopDomain -> UserId -> ServerM [TestMap]
 getUserTestHandler shopDomain uid = runAppM $ do
@@ -41,5 +52,17 @@ userCartTokenHandler _ req = runAppM $ do
   insertUserCartToken req
   return OkResponse {message = "Cart token received"}
 
+userCheckoutHandler :: ShopDomain -> CheckoutPayload -> ServerM OkResponse
+userCheckoutHandler domain payload = runAppM $ do
+  let uid = payload ^. checkoutPayloadUserId
+      order = payload ^. checkoutPayloadOrder
+  mShopId <- validateShopDomain domain
+  mCampaignId <- getUserActiveCampaign domain uid
+  case (mShopId, mCampaignId) of
+    (Just sid, Just cid) -> do
+      insertOrder sid cid uid order
+      pure OkResponse {message = "Checkout received"}
+    _ -> throwError badRequestErr
+
 fulcrumHandler =
-  getUserTestHandler :<|> userCartTokenHandler
+  getUserTestHandler :<|> userCartTokenHandler :<|> userCheckoutHandler

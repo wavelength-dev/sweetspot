@@ -54,23 +54,7 @@ type WebhookAPI =
     :<|> RequestDataRoute
 
 orderHandler :: Order -> ShopDomain -> ServerM OkResponse
-orderHandler order domain = runAppM $ do
-  case order ^. orderCartToken of
-    Just token -> do
-      result <- validateUserCartToken token
-      case result of
-        Just (shopId, campaignId, userId) -> do
-          insertOrder shopId campaignId userId order
-          L.info $ "Registered order " <> tshow shopId <> " " <> tshow campaignId <> " " <> tshow userId
-          return OkResponse {message = "Registered order"}
-        Nothing -> do
-          L.info $ "Unable to validate cart token, inserting unaccounted order " <> tshow order
-          insertUnaccountedOrder domain order
-          return OkResponse {message = "Registered order"}
-    Nothing -> do
-      L.warn $ "Got order without cart-token, inserting unacconted order " <> tshow order
-      insertUnaccountedOrder domain order
-      return OkResponse {message = "Registered order"}
+orderHandler order domain = runAppM $ return OkResponse {message = "Registered order"}
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse
 appUninstalledHandler (AppUninstalledReq domain) =

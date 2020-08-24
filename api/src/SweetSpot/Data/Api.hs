@@ -1,5 +1,4 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 
 module SweetSpot.Data.Api where
 
@@ -16,7 +15,7 @@ import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
 import SweetSpot.Data.Common
-import SweetSpot.Shopify.Types (FromShopJSON (..))
+import SweetSpot.Shopify.Types (FromShopJSON (..), Order (..))
 
 -- | ---------------------------------------------------------------------------
 -- | Image
@@ -264,3 +263,21 @@ makeLenses ''CartTokenReq
 instance FromJSON CartTokenReq
 
 instance ToJSON CartTokenReq
+
+-- | ---------------------------------------------------------------------------
+-- | CheckoutPayload
+-- | ---------------------------------------------------------------------------
+data CheckoutPayload
+  = CheckoutPayload
+      { _checkoutPayloadUserId :: !UserId,
+        _checkoutPayloadOrder :: !Order
+      }
+  deriving (Generic, Show)
+
+makeLenses ''CheckoutPayload
+
+instance FromJSON CheckoutPayload where
+  parseJSON = withObject "CheckoutPayload" $ \v ->
+    CheckoutPayload
+      <$> v .: "user_id"
+      <*> (v .: "order" >>= parseJSON)

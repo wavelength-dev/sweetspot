@@ -1,0 +1,16 @@
+{
+  "name": "checkout",
+  "version": "1.0.0",
+  "description": "script to capture checkout data",
+  "main": "index.js",
+  "license": "Wavelength",
+  "private": true,
+  "scripts": {
+    "build": "tsc && terser --compress --mangle -- checkout.js > checkout.min.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "terser": "^5.2.1",
+    "typescript": "^4.0.2"
+  }
+}

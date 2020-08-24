@@ -59,9 +59,9 @@ orderHandler order domain = runAppM $ do
     Just token -> do
       result <- validateUserCartToken token
       case result of
-        Just (shopId, cmpId, userId) -> do
-          insertOrder shopId cmpId userId order
-          L.info $ "Registered order " <> tshow shopId <> " " <> tshow cmpId <> " " <> tshow userId
+        Just (shopId, campaignId, userId) -> do
+          insertOrder shopId campaignId userId order
+          L.info $ "Registered order " <> tshow shopId <> " " <> tshow campaignId <> " " <> tshow userId
           return OkResponse {message = "Registered order"}
         Nothing -> do
           L.info $ "Unable to validate cart token, inserting unaccounted order " <> tshow order

@@ -33,7 +33,7 @@ businessLogicSpec =
         result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
-          Right tms -> (userId . head $ tms) `shouldBe` user1
+          Right tms -> (_testMapUserId . head $ tms) `shouldBe` user1
       it "should create a new user when given a valid campaign id" $ do
         result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
@@ -50,12 +50,12 @@ businessLogicSpec =
           Left err -> error (show err)
           Right tms -> uniqUserIds `shouldBe` 1
             where
-              uniqUserIds = length . nub $ filter (== user1) $ fmap userId tms
+              uniqUserIds = length . nub $ filter (== user1) $ fmap _testMapUserId tms
       it "should not assign existing user to new campaign when old one is still running" $ do
         result <- runClientM (getTest shopDomain user1) clientEnv
         case result of
           Left err -> error (show err)
-          Right tms -> (sku . head $ tms) `shouldBe` Sku "black_wb_sku"
+          Right tms -> (_testMapSku . head $ tms) `shouldBe` Sku "black_wb_sku"
     describe "PUT /api/fulcrum/cart-token" $ do
       it "should accept valid cart-token request" $ do
         let payload =

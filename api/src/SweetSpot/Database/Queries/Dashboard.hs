@@ -70,14 +70,14 @@ instance DashboardDB AppM where
           $ insert (db ^. campaigns)
           $ insertExpressions
             [ Campaign
-                { _cmpId = campaignId_,
-                  _cmpShopId = val_ $ ShopKey shopId,
-                  _cmpName = val_ $ cc ^. createCampaignName,
-                  _cmpStart = just_ nowUTC_,
-                  _cmpEnd = val_ $ cc ^. createCampaignEnd
+                { _campaignId = campaignId_,
+                  _campaignShopId = val_ $ ShopKey shopId,
+                  _campaignName = val_ $ cc ^. createCampaignName,
+                  _campaignStart = just_ nowUTC_,
+                  _campaignEnd = val_ $ cc ^. createCampaignEnd
                 }
             ]
-    pure $ newCmp ^. cmpId
+    pure $ newCmp ^. campaignId
 
   createExperiment args = withConn $ \conn -> do
     let domain = args ^. insertExperimentShopDomain
@@ -88,23 +88,26 @@ instance DashboardDB AppM where
           $ insert (db ^. productVariants)
           $ insertExpressions
             [ ProductVariant
-                { _pvId = productVariant_,
-                  _pvShopId = val_ $ ShopKey shopId,
-                  _pvTitle = val_ $ args ^. insertExperimentProductName,
-                  _pvSku = val_ $ args ^. insertExperimentSku,
-                  _pvProductId = val_ $ args ^. insertExperimentProductId,
-                  _pvVariantId = val_ $ args ^. insertExperimentSvid,
-                  _pvPrice = val_ $ args ^. insertExperimentPrice,
-                  _pvCurrency = val_ "USD"
+                { _productVariantId = productVariant_,
+                  _productVariantShopId = val_ $ ShopKey shopId,
+                  _productVariantTitle = val_ $ args ^. insertExperimentProductName,
+                  _productVariantSku = val_ $ args ^. insertExperimentSku,
+                  _productVariantProductId = val_ $ args ^. insertExperimentProductId,
+                  _productVariantVariantId = val_ $ args ^. insertExperimentSvid,
+                  _productVariantPrice = val_ $ args ^. insertExperimentPrice,
+                  _productVariantCurrency = val_ "USD"
                 }
             ]
       runInsert
         $ insert (db ^. treatments)
         $ insertExpressions
           [ Treatment
-              { _trCmpId = val_ $ CampaignKey $ args ^. insertExperimentCampaignId,
-                _trTreatment = val_ $ args ^. insertExperimentTreatment,
-                _trProductVariantId = val_ $ PVariantKey $ dbVariant ^. pvId
+              { _treatmentCampaignId = val_ $ CampaignKey $ args ^. insertExperimentCampaignId,
+                _treatmentKey = val_ $ args ^. insertExperimentTreatment,
+                _treatmentProductVariantId =
+                  val_
+                    $ PVariantKey
+                    $ dbVariant ^. productVariantId
               }
           ]
 
@@ -164,10 +167,10 @@ instance DashboardDB AppM where
                 shop <- all_ (db ^. shops)
                 campaign <- all_ (db ^. campaigns)
                 guard_ (session ^. sessionId ==. val_ sessionId')
-                guard_ (campaign ^. cmpId ==. val_ cmpId')
+                guard_ (campaign ^. campaignId ==. val_ cmpId')
                 guard_ (_sessionShopId session `references_` shop)
-                guard_ (_cmpShopId campaign `references_` shop)
-                pure $ campaign ^. cmpId
+                guard_ (_campaignShopId campaign `references_` shop)
+                pure $ campaign ^. campaignId
           )
 
   stopCampaign cmpId' = withConn $ \conn ->
@@ -175,18 +178,18 @@ instance DashboardDB AppM where
       $ runUpdate
       $ update
         (db ^. campaigns)
-        (\cmp -> cmp ^. cmpEnd <-. just_ nowUTC_)
-        (\cmp -> cmp ^. cmpId ==. val_ cmpId')
+        (\cmp -> cmp ^. campaignEnd <-. just_ nowUTC_)
+        (\cmp -> cmp ^. campaignId ==. val_ cmpId')
 
   getTestVariantIds cmpId' = withConn $ \conn ->
     runBeamPostgres conn
       $ runSelectReturningList
       $ select
-      $ view pvProductId <$> selectUITreatmentVariants cmpId' 1
+      $ view productVariantProductId <$> selectUITreatmentVariants cmpId' 1
 
 enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
 enhanceCampaign conn domain cmp = do
-  let cmpId' = cmp ^. cmpId
+  let cmpId' = cmp ^. campaignId
   (Just moneyFormat) <-
     runBeamPostgres conn $ runSelectReturningOne $ select $ selectShopMoneyFormat domain
   [(ctrlRevs, ctrlNils, testRevs, testNils)] <-
@@ -202,9 +205,9 @@ enhanceCampaign conn domain cmp = do
       testAOV = mean testRevs
       toUITreatmentVariant v =
         UITreatmentVariant
-          { _uiTreatmentVariantTitle = v ^. pvTitle,
-            _uiTreatmentSku = v ^. pvSku,
-            _uiTreatmentVariantPrice = formatPrice moneyFormat $ v ^. pvPrice
+          { _uiTreatmentVariantTitle = v ^. productVariantTitle,
+            _uiTreatmentSku = v ^. productVariantSku,
+            _uiTreatmentVariantPrice = formatPrice moneyFormat $ v ^. productVariantPrice
           }
   infResult <-
     runInference
@@ -222,10 +225,10 @@ enhanceCampaign conn domain cmp = do
       $ selectUITreatmentVariants cmpId' 1
   return
     UICampaign
-      { _uiCampaignId = cmp ^. cmpId,
-        _uiCampaignName = cmp ^. cmpName,
-        _uiCampaignStart = cmp ^. cmpStart,
-        _uiCampaignEnd = cmp ^. cmpEnd,
+      { _uiCampaignId = cmp ^. campaignId,
+        _uiCampaignName = cmp ^. campaignName,
+        _uiCampaignStart = cmp ^. campaignStart,
+        _uiCampaignEnd = cmp ^. campaignEnd,
         _uiCampaignLift = infResult,
         _uiCampaignAOVChange = nanToNothing $ factorToPercentage $ testAOV / ctrlAOV,
         _uiCampaignCRChange = nanToNothing $ factorToPercentage $ testCR / ctrlCR,
@@ -260,14 +263,14 @@ enhanceCampaign conn domain cmp = do
 selectUITreatmentVariants cmpId' treat' = do
   treatment <- all_ (db ^. treatments)
   variant <- all_ (db ^. productVariants)
-  guard_ (_trProductVariantId treatment `references_` variant)
-  guard_ (treatment ^. trCmpId ==. val_ cmpId')
-  guard_ (treatment ^. trTreatment ==. val_ treat')
+  guard_ (_treatmentProductVariantId treatment `references_` variant)
+  guard_ (treatment ^. treatmentCampaignId ==. val_ cmpId')
+  guard_ (treatment ^. treatmentKey ==. val_ treat')
   pure variant
 
 selectShopCampaigns domain = do
   shop <- matchShop domain
-  filter_ ((==. (shop ^. shopId)) . (^. cmpShopId)) $
+  filter_ ((==. (shop ^. shopId)) . (^. campaignShopId)) $
     all_ (db ^. campaigns)
 
 selectCampaignInfParams cmpId' = do
@@ -285,16 +288,16 @@ userRevenueArrForTreatment cmpId' treatment' =
       item <- all_ (db ^. checkoutItems)
       variant <- all_ (db ^. productVariants)
       treatment <- all_ (db ^. treatments)
-      guard_ (_cevUserId event `references_` user)
-      guard_ (event ^. cevCmpId ==. val_ cmpId')
-      guard_ (_ciCheckoutEventId item `references_` event)
-      guard_ (item ^. ciSvid ==. variant ^. pvVariantId)
-      guard_ (_trProductVariantId treatment `references_` variant)
-      guard_ (treatment ^. trTreatment ==. treatment')
-      let quantity = cast_ (item ^. ciQuantity) double
-          price = cast_ (variant ^. pvPrice) double
+      guard_ (_checkoutEventUserId event `references_` user)
+      guard_ (event ^. checkoutEventCampaignId ==. val_ cmpId')
+      guard_ (_checkoutItemCheckoutEventId item `references_` event)
+      guard_ (item ^. checkoutItemSvid ==. variant ^. productVariantVariantId)
+      guard_ (_treatmentProductVariantId treatment `references_` variant)
+      guard_ (treatment ^. treatmentKey ==. treatment')
+      let quantity = cast_ (item ^. checkoutItemQuantity) double
+          price = cast_ (variant ^. productVariantPrice) double
           revenue = quantity * price
-      pure (user ^. usrId, revenue)
+      pure (user ^. userId, revenue)
 
 nonConvertersForTreatment cmpId' treatment' = aggregate_ (const countAll_)
   $ filter_ (\(_, evCount) -> evCount ==. 0)
@@ -302,14 +305,14 @@ nonConvertersForTreatment cmpId' treatment' = aggregate_ (const countAll_)
   $ do
     user <- all_ (db ^. users)
     experiment <- all_ (db ^. userExperiments)
-    guard_ (_ueUserId experiment `references_` user)
-    guard_ (experiment ^. ueTreatment ==. val_ treatment')
-    guard_ (experiment ^. ueCmpId ==. val_ cmpId')
+    guard_ (_userExperimentUserId experiment `references_` user)
+    guard_ (experiment ^. userExperimentTreatment ==. val_ treatment')
+    guard_ (experiment ^. userExperimentCampaignId ==. val_ cmpId')
     event <-
       leftJoin_
         (all_ (db ^. checkoutEvents))
-        (\ce -> _cevUserId ce `references_` user)
-    pure (user ^. usrId, event ^. cevId)
+        (\ce -> _checkoutEventUserId ce `references_` user)
+    pure (user ^. userId, event ^. checkoutEventId)
 
 validateSessionId' :: Connection -> SessionId -> IO (Maybe ShopDomain)
 validateSessionId' conn sessionId' =

@@ -24,8 +24,8 @@ import SweetSpot.Database.Queries.Util
     unsafeFindShopId,
     withConn,
   )
-import SweetSpot.Database.Schema hiding (UserId)
-import SweetSpot.Shopify.Types hiding (productVariants)
+import SweetSpot.Database.Schema
+import SweetSpot.Shopify.Types
 import SweetSpot.Util (formatPrice)
 import System.Random (randomRIO)
 
@@ -57,25 +57,25 @@ instance FulcrumDB AppM where
         $ select
         $ do
           cmps <- all_ (db ^. campaigns)
-          guard_ (_cmpId cmps ==. val_ cmpId)
+          guard_ (_campaignId cmps ==. val_ cmpId)
           guard_ (isCampaignActive cmps)
           pure cmps
     return $ not (null res)
 
-  validateShopDomain shopDomain = withConn $ \conn ->
+  validateShopDomain shopDomain' = withConn $ \conn ->
     runBeamPostgres conn $ runSelectReturningOne $ select $ do
-      shop <- matchShop shopDomain
+      shop <- matchShop shopDomain'
       pure $ shop ^. shopId
 
   insertUserCartToken req = withConn $ \conn -> do
-    let userId = req ^. cartTokenReqUser
+    let uid = req ^. cartTokenReqUser
     userExists <-
       isJust
         <$> ( runBeamPostgres conn
                 $ runSelectReturningOne
                 $ select
                 $ filter_
-                  (view usrId >>> (==. val_ userId))
+                  (view userId >>> (==. val_ uid))
                   (all_ (db ^. users))
             )
     when userExists $ do
@@ -103,15 +103,15 @@ instance FulcrumDB AppM where
 
   insertOrder = insertOrder'
 
-  insertUnaccountedOrder shopDomain order = withConn $ \conn ->
+  insertUnaccountedOrder shopDomain' order = withConn $ \conn ->
     runBeamPostgres conn $ do
-      shopId <- unsafeFindShopId shopDomain
+      shopId' <- unsafeFindShopId shopDomain'
       runInsert
         $ insert (db ^. unaccountedOrders)
         $ insertExpressions
           [ UnaccountedOrder
               { _unaccountedOrderId = pgGenUUID_,
-                _unaccountedOrderShopId = val_ (ShopKey shopId),
+                _unaccountedOrderShopId = val_ (ShopKey shopId'),
                 _unaccountedOrderPayload = val_ (PgJSONB (toJSON order))
               }
           ]
@@ -124,17 +124,17 @@ insertUser conn uid = do
       $ select
       $ do
         user <- all_ (db ^. users)
-        guard_ (user ^. usrId ==. val_ uid)
-        pure $ user ^. usrId
+        guard_ (user ^. userId ==. val_ uid)
+        pure $ user ^. userId
   case mUserId of
-    Just userId -> return userId
+    Just uid' -> return uid'
     Nothing -> do
       [user] <-
         runBeamPostgres conn
           $ BeamExt.runInsertReturningList
           $ insert (db ^. users)
           $ insertExpressions [User (val_ uid) nowUTC_]
-      return $ user ^. usrId
+      return $ user ^. userId
 
 getLatestCampaign :: Connection -> ShopDomain -> IO (Maybe CampaignId)
 getLatestCampaign conn domain =
@@ -148,24 +148,24 @@ getLatestCampaign conn domain =
       campaign <-
         all_ (db ^. campaigns)
           & filter_ isCampaignActive
-          & orderBy_ (nullsLast_ . desc_ . view cmpStart)
+          & orderBy_ (nullsLast_ . desc_ . view campaignStart)
           & limit_ 1
-      guard_ (view cmpShopId campaign ==. view shopId shop)
-      pure $ campaign ^. cmpId
+      guard_ (view campaignShopId campaign ==. view shopId shop)
+      pure $ campaign ^. campaignId
 
 assignUserToCampaign :: Connection -> (UserId, CampaignId, Int) -> IO CampaignId
-assignUserToCampaign conn (usrId, campaignId, treatment) = do
-  [cmpUsr] <-
+assignUserToCampaign conn (userId', campaignId', treatment) = do
+  [campaignUser] <-
     runBeamPostgres conn
       $ BeamExt.runInsertReturningList
       $ insert (db ^. userExperiments)
       $ insertValues
         [ UserExperiment
-            (UserKey usrId)
-            (CampaignKey campaignId)
+            (UserKey userId')
+            (CampaignKey campaignId')
             treatment
         ]
-  return $ cmpUsr ^. ueCmpId
+  return $ campaignUser ^. userExperimentCampaignId
 
 getUserTestMaps' :: Connection -> ShopDomain -> UserId -> IO [TestMap]
 getUserTestMaps' conn domain uid = do
@@ -178,9 +178,9 @@ getUserTestMaps' conn domain uid = do
               $ runSelectReturningOne
               $ select
                 ( all_ (db ^. userExperiments)
-                    & filter_ (\ue -> ue ^. ueUserId ==. val_ uid)
+                    & filter_ (\ue -> ue ^. userExperimentUserId ==. val_ uid)
                     & limit_ 1
-                    & fmap (view ueTreatment)
+                    & fmap (view userExperimentTreatment)
                 )
           )
   variants <- runBeamPostgres conn
@@ -191,41 +191,41 @@ getUserTestMaps' conn domain uid = do
       treatment <- all_ (db ^. treatments)
       variant <- all_ (db ^. productVariants)
       campaign <- all_ (db ^. campaigns)
-      guard_ (experiment ^. ueUserId ==. val_ uid)
-      guard_ (experiment ^. ueCmpId ==. campaign ^. cmpId)
+      guard_ (experiment ^. userExperimentUserId ==. val_ uid)
+      guard_ (experiment ^. userExperimentCampaignId ==. campaign ^. campaignId)
       guard_ (isCampaignActive campaign)
-      guard_ (treatment ^. trCmpId ==. campaign ^. cmpId)
-      guard_ (treatment ^. trProductVariantId ==. variant ^. pvId)
+      guard_ (treatment ^. treatmentCampaignId ==. campaign ^. campaignId)
+      guard_ (treatment ^. treatmentProductVariantId ==. variant ^. productVariantId)
       pure (treatment, variant)
   let ctrlVariants =
         variants
-          & L.filter (fst >>> view trTreatment >>> (== 0))
-          & L.sortOn (snd >>> view pvSku)
+          & L.filter (fst >>> view treatmentKey >>> (== 0))
+          & L.sortOn (snd >>> view productVariantSku)
       testVariants =
         variants
-          & L.filter (fst >>> view trTreatment >>> (== 1))
-          & L.sortOn (snd >>> view pvSku)
+          & L.filter (fst >>> view treatmentKey >>> (== 1))
+          & L.sortOn (snd >>> view productVariantSku)
   pure $
     L.zipWith
-      ( \(_, cV) (_, tV) ->
+      ( \(_, controlVariant) (_, testVariant) ->
           let activeVariant =
                 if userTreatment == 0
-                  then cV
-                  else tV
+                  then controlVariant
+                  else testVariant
            in TestMap
-                { userId = uid,
-                  targetId = cV ^. pvVariantId,
-                  sku = cV ^. pvSku,
-                  swapPrice = formatPrice moneyFormat (activeVariant ^. pvPrice),
-                  swapId = activeVariant ^. pvVariantId
+                { _testMapUserId = uid,
+                  _testMapTargetId = controlVariant ^. productVariantVariantId,
+                  _testMapSku = controlVariant ^. productVariantSku,
+                  _testMapSwapPrice = formatPrice moneyFormat (activeVariant ^. productVariantPrice),
+                  _testMapSwapId = activeVariant ^. productVariantVariantId
                 }
       )
       ctrlVariants
       testVariants
 
 isCampaignActive cmp =
-  maybe_ false_ (<. nowUTC_) (cmp ^. cmpStart)
-    &&. maybe_ true_ (>. nowUTC_) (cmp ^. cmpEnd)
+  maybe_ false_ (<. nowUTC_) (cmp ^. campaignStart)
+    &&. maybe_ true_ (>. nowUTC_) (cmp ^. campaignEnd)
   where
     false_ = val_ False
     true_ = val_ True
@@ -250,11 +250,11 @@ validateUserCartToken' token = withConn $ \conn ->
           & filter_ isCampaignActive
       shop <- all_ (db ^. shops)
       guard_ (_cartTokenUser userToken `references_` user)
-      guard_ (_ueUserId userExperiment `references_` user)
-      guard_ (_ueCmpId userExperiment `references_` campaign)
-      guard_ (_cmpShopId campaign `references_` shop)
+      guard_ (_userExperimentUserId userExperiment `references_` user)
+      guard_ (_userExperimentCampaignId userExperiment `references_` campaign)
+      guard_ (_campaignShopId campaign `references_` shop)
       guard_ (userToken ^. cartTokenId ==. val_ token)
-      pure (shop ^. shopId, campaign ^. cmpId, user ^. usrId)
+      pure (shop ^. shopId, campaign ^. campaignId, user ^. userId)
 
 insertLineItem :: Connection -> EventId -> LineItem -> IO ()
 insertLineItem conn eid item =
@@ -263,10 +263,10 @@ insertLineItem conn eid item =
     $ insert (db ^. checkoutItems)
     $ insertExpressions
       [ CheckoutItem
-          { _ciId = pgGenUUID_,
-            _ciCheckoutEventId = val_ $ CheckoutEventKey eid,
-            _ciQuantity = val_ $ item ^. lineItemQuantity,
-            _ciSvid = val_ $ item ^. lineItemVariantId
+          { _checkoutItemId = pgGenUUID_,
+            _checkoutItemCheckoutEventId = val_ $ CheckoutEventKey eid,
+            _checkoutItemQuantity = val_ $ item ^. lineItemQuantity,
+            _checkoutItemSvid = val_ $ item ^. lineItemVariantId
           }
       ]
 
@@ -278,16 +278,16 @@ insertOrder' sid cid uid order = withConn $ \conn -> do
       $ insert (db ^. checkoutEvents)
       $ insertExpressions
         [ CheckoutEvent
-            { _cevId = eventId_,
-              _cevCreated = val_ $ order ^. orderCreatedAt,
-              _cevCmpId = val_ $ CampaignKey cid,
-              _cevOrderId = val_ $ order ^. orderId,
-              _cevShopId = val_ $ ShopKey sid,
-              _cevUserId = val_ $ UserKey uid
+            { _checkoutEventId = eventId_,
+              _checkoutEventCreated = val_ $ order ^. orderCreatedAt,
+              _checkoutEventCampaignId = val_ $ CampaignKey cid,
+              _checkoutEventOrderId = val_ $ order ^. orderId,
+              _checkoutEventShopId = val_ $ ShopKey sid,
+              _checkoutEventUserId = val_ $ UserKey uid
             }
         ]
   traverse_
-    (insertLineItem conn (event ^. cevId))
+    (insertLineItem conn (event ^. checkoutEventId))
     (order ^. orderLineItems)
 
 getNewCampaignTestMaps ::
@@ -296,8 +296,8 @@ getNewCampaignTestMaps ::
   CampaignId ->
   UserId ->
   IO [TestMap]
-getNewCampaignTestMaps conn domain cmpId userId = do
+getNewCampaignTestMaps conn domain cmpId uid = do
   randTreatment <- randomRIO (0 :: Int, 1 :: Int)
-  uid <- insertUser conn userId
-  assignUserToCampaign conn (uid, cmpId, randTreatment)
+  uid' <- insertUser conn uid
+  _ <- assignUserToCampaign conn (uid', cmpId, randTreatment)
   getUserTestMaps' conn domain uid

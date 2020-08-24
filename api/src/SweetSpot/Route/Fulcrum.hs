@@ -61,8 +61,11 @@ userCheckoutHandler domain payload = runAppM $ do
   case (mShopId, mCampaignId) of
     (Just sid, Just cid) -> do
       insertOrder sid cid uid order
+      L.info $ "Received checkout for " <> tshow domain <> " campaign " <> tshow cid
       pure OkResponse {message = "Checkout received"}
-    _ -> throwError badRequestErr
+    _ -> do
+      L.error $ "Unable to register checkout for " <> tshow domain
+      throwError badRequestErr
 
 fulcrumHandler =
   getUserTestHandler :<|> userCartTokenHandler :<|> userCheckoutHandler

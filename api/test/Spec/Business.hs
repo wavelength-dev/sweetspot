@@ -23,7 +23,7 @@ setup = do
 businessLogicSpec :: Spec
 businessLogicSpec =
   beforeAll_ setup . before_ reset $ do
-    let getTest :<|> putCartToken = client (Proxy :: Proxy FulcrumAPI)
+    let getTest :<|> putCartToken :<|> _ = client (Proxy :: Proxy FulcrumAPI)
     let _ :<|> getCampaigns :<|> _ = client (Proxy :: Proxy DashboardAPI)
     baseUrl <- runIO $ parseBaseUrl "http://localhost:8082/api"
     manager <- runIO $ newManager defaultManagerSettings

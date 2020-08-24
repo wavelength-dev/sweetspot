@@ -215,18 +215,18 @@ instance FromJSON OkResponse
 -- | ---------------------------------------------------------------------------
 data TestMap
   = TestMap
-      { userId :: !UserId,
-        targetId :: !Svid,
-        sku :: !Sku,
-        swapId :: !Svid,
-        swapPrice :: !FormattedPrice
+      { _testMapUserId :: !UserId,
+        _testMapTargetId :: !Svid,
+        _testMapSku :: !Sku,
+        _testMapSwapId :: !Svid,
+        _testMapSwapPrice :: !FormattedPrice
       }
   deriving (Eq, Generic, Show)
 
 instance ToJSON TestMap where
-  toJSON (TestMap (UserId userId) (Svid targetId) sku (Svid swapId) price) =
+  toJSON (TestMap (UserId uid) (Svid targetId) sku (Svid swapId) price) =
     object
-      [ "userId" .= userId,
+      [ "userId" .= uid,
         "variantId" .= targetId,
         "sku" .= sku,
         "swapId" .= swapId,
@@ -242,11 +242,11 @@ instance FromJSON TestMap where
     swapPrice <- v .: "swapPrice"
     return
       TestMap
-        { userId = UserId userId,
-          targetId = Svid targetId,
-          sku = Sku sku,
-          swapId = Svid swapId,
-          swapPrice = FormattedPrice swapPrice
+        { _testMapUserId = UserId userId,
+          _testMapTargetId = Svid targetId,
+          _testMapSku = Sku sku,
+          _testMapSwapId = Svid swapId,
+          _testMapSwapPrice = FormattedPrice swapPrice
         }
 
 -- | ---------------------------------------------------------------------------

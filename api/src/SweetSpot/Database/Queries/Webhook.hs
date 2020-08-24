@@ -61,42 +61,42 @@ deleteProductVariants shopId =
   runPgDeleteReturningList $
     deleteReturning
       (db ^. productVariants)
-      (\v -> v ^. pvShopId ==. val_ shopId)
-      (\v -> v ^. pvId)
+      (\v -> v ^. productVariantShopId ==. val_ shopId)
+      (\v -> v ^. productVariantId)
 
 deleteTreatments :: [CampaignId] -> Pg ()
 deleteTreatments cmpIds = do
   runDelete $
     delete
       (db ^. treatments)
-      (\t -> t ^. trCmpId `in_` map val_ cmpIds)
+      (\t -> t ^. treatmentCampaignId `in_` map val_ cmpIds)
 
 deleteCheckoutEvents :: ShopId -> Pg ()
 deleteCheckoutEvents shopId =
   runDelete $
     delete
       (db ^. checkoutEvents)
-      (\e -> e ^. cevShopId ==. val_ shopId)
+      (\e -> e ^. checkoutEventShopId ==. val_ shopId)
 
 deleteCheckoutItems :: ShopId -> Pg ()
 deleteCheckoutItems shopId = do
   eventIds <- runSelectReturningList $ select $ do
     event <- all_ (db ^. checkoutEvents)
     item <- all_ (db ^. checkoutItems)
-    guard_ (_ciCheckoutEventId item `references_` event)
-    guard_ (event ^. cevShopId ==. val_ shopId)
-    pure $ event ^. cevId
+    guard_ (_checkoutItemCheckoutEventId item `references_` event)
+    guard_ (event ^. checkoutEventShopId ==. val_ shopId)
+    pure $ event ^. checkoutEventId
   runDelete $
     delete
       (db ^. checkoutItems)
-      (\i -> i ^. ciCheckoutEventId `in_` map val_ eventIds)
+      (\i -> i ^. checkoutItemCheckoutEventId `in_` map val_ eventIds)
 
 deleteCampaigns :: ShopId -> Pg ()
 deleteCampaigns shopId =
   runDelete $
     delete
       (db ^. campaigns)
-      (\c -> c ^. cmpShopId ==. val_ shopId)
+      (\c -> c ^. campaignShopId ==. val_ shopId)
 
 deleteUserCartTokens :: [UserId] -> Pg ()
 deleteUserCartTokens userIds = do
@@ -110,7 +110,7 @@ deleteUserExperiments cmpIds =
   runDelete $
     delete
       (db ^. userExperiments)
-      (\e -> e ^. ueCmpId `in_` map val_ cmpIds)
+      (\e -> e ^. userExperimentCampaignId `in_` map val_ cmpIds)
 
 deleteSessions :: ShopId -> Pg ()
 deleteSessions shopId =
@@ -122,7 +122,7 @@ deleteSessions shopId =
 deleteUsers :: [UserId] -> Pg ()
 deleteUsers userIds =
   runDelete $
-    delete (db ^. users) (\u -> u ^. usrId `in_` map val_ userIds)
+    delete (db ^. users) (\u -> u ^. userId `in_` map val_ userIds)
 
 deleteAppCharge :: ShopId -> Pg ()
 deleteAppCharge shopId' =
@@ -141,13 +141,13 @@ selectShopUsers shopId =
   runSelectReturningList $ select $ do
     campaign <- all_ (db ^. campaigns)
     experiment <- all_ (db ^. userExperiments)
-    guard_ (_ueCmpId experiment `references_` campaign)
-    guard_ (campaign ^. cmpShopId ==. val_ shopId)
-    pure $ experiment ^. ueUserId
+    guard_ (_userExperimentCampaignId experiment `references_` campaign)
+    guard_ (campaign ^. campaignShopId ==. val_ shopId)
+    pure $ experiment ^. userExperimentUserId
 
 selectShopCampaigns :: ShopId -> Pg [CampaignId]
 selectShopCampaigns shopId =
   runSelectReturningList $ select $ do
     campaign <- all_ (db ^. campaigns)
-    guard_ (campaign ^. cmpShopId ==. val_ shopId)
-    pure $ campaign ^. cmpId
+    guard_ (campaign ^. campaignShopId ==. val_ shopId)
+    pure $ campaign ^. campaignId

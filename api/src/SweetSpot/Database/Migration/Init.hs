@@ -83,8 +83,8 @@ InstallNonce (LensFor installShopDomain) (LensFor installNonce) = tableLenses
 -- | ---------------------------------------------------------------------------
 data UserT f
   = User
-      { _usrId :: Columnar f UserId,
-        _usrCreated :: Columnar f UTCTime
+      { _userId :: Columnar f UserId,
+        _userCreated :: Columnar f UTCTime
       }
   deriving (Generic, Beamable)
 
@@ -100,20 +100,20 @@ instance Table UserT where
   data PrimaryKey UserT f
     = UserKey (Columnar f UserId)
     deriving (Generic, Beamable)
-  primaryKey = UserKey . _usrId
+  primaryKey = UserKey . _userId
 
-User (LensFor usrId) (LensFor usrCreated) = tableLenses
+User (LensFor userId) (LensFor userCreated) = tableLenses
 
 -- | ---------------------------------------------------------------------------
 -- | Campaign
 -- | ---------------------------------------------------------------------------
 data CampaignT f
   = Campaign
-      { _cmpId :: Columnar f CampaignId,
-        _cmpShopId :: PrimaryKey ShopT f,
-        _cmpName :: Columnar f Text,
-        _cmpStart :: Columnar f (Maybe UTCTime),
-        _cmpEnd :: Columnar f (Maybe UTCTime)
+      { _campaignId :: Columnar f CampaignId,
+        _campaignShopId :: PrimaryKey ShopT f,
+        _campaignName :: Columnar f Text,
+        _campaignStart :: Columnar f (Maybe UTCTime),
+        _campaignEnd :: Columnar f (Maybe UTCTime)
       }
   deriving (Generic, Beamable)
 
@@ -129,9 +129,9 @@ instance Table CampaignT where
   data PrimaryKey CampaignT f
     = CampaignKey (Columnar f CampaignId)
     deriving (Generic, Beamable)
-  primaryKey = CampaignKey . _cmpId
+  primaryKey = CampaignKey . _campaignId
 
-Campaign (LensFor cmpId) (ShopKey (LensFor cmpShopId)) (LensFor cmpName) (LensFor cmpStart) (LensFor cmpEnd) =
+Campaign (LensFor campaignId) (ShopKey (LensFor campaignShopId)) (LensFor campaignName) (LensFor campaignStart) (LensFor campaignEnd) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -139,14 +139,14 @@ Campaign (LensFor cmpId) (ShopKey (LensFor cmpShopId)) (LensFor cmpName) (LensFo
 -- | ---------------------------------------------------------------------------
 data ProductVariantT f
   = ProductVariant
-      { _pvId :: Columnar f PVariantId,
-        _pvShopId :: PrimaryKey ShopT f,
-        _pvTitle :: Columnar f Text,
-        _pvSku :: Columnar f Sku,
-        _pvProductId :: Columnar f Pid,
-        _pvVariantId :: Columnar f Svid,
-        _pvPrice :: Columnar f Price,
-        _pvCurrency :: Columnar f Text
+      { _productVariantId :: Columnar f PVariantId,
+        _productVariantShopId :: PrimaryKey ShopT f,
+        _productVariantTitle :: Columnar f Text,
+        _productVariantSku :: Columnar f Sku,
+        _productVariantProductId :: Columnar f Pid,
+        _productVariantVariantId :: Columnar f Svid,
+        _productVariantPrice :: Columnar f Price,
+        _productVariantCurrency :: Columnar f Text
       }
   deriving (Generic, Beamable)
 
@@ -162,9 +162,9 @@ instance Table ProductVariantT where
   data PrimaryKey ProductVariantT f
     = PVariantKey (Columnar f PVariantId)
     deriving (Generic, Beamable)
-  primaryKey = PVariantKey . _pvId
+  primaryKey = PVariantKey . _productVariantId
 
-ProductVariant (LensFor pvId) (ShopKey (LensFor pvShopId)) (LensFor pvTitle) (LensFor pvSku) (LensFor pvProductId) (LensFor pvVariantId) (LensFor pvPrice) (LensFor pvCurrency) =
+ProductVariant (LensFor productVariantId) (ShopKey (LensFor productVariantShopId)) (LensFor productVariantTitle) (LensFor productVariantSku) (LensFor productVariantProductId) (LensFor productVariantVariantId) (LensFor productVariantPrice) (LensFor productVariantCurrency) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -172,9 +172,9 @@ ProductVariant (LensFor pvId) (ShopKey (LensFor pvShopId)) (LensFor pvTitle) (Le
 -- | ---------------------------------------------------------------------------
 data TreatmentT f
   = Treatment
-      { _trCmpId :: PrimaryKey CampaignT f,
-        _trTreatment :: Columnar f Int,
-        _trProductVariantId :: PrimaryKey ProductVariantT f
+      { _treatmentCampaignId :: PrimaryKey CampaignT f,
+        _treatmentKey :: Columnar f Int,
+        _treatmentProductVariantId :: PrimaryKey ProductVariantT f
       }
   deriving (Generic, Beamable)
 
@@ -190,9 +190,9 @@ instance Table TreatmentT where
   data PrimaryKey TreatmentT f
     = PriceVariantKey (PrimaryKey CampaignT f) (PrimaryKey ProductVariantT f)
     deriving (Generic, Beamable)
-  primaryKey = PriceVariantKey <$> _trCmpId <*> _trProductVariantId
+  primaryKey = PriceVariantKey <$> _treatmentCampaignId <*> _treatmentProductVariantId
 
-Treatment (CampaignKey (LensFor trCmpId)) (LensFor trTreatment) (PVariantKey (LensFor trProductVariantId)) =
+Treatment (CampaignKey (LensFor treatmentCampaignId)) (LensFor treatmentKey) (PVariantKey (LensFor treatmentProductVariantId)) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -200,9 +200,9 @@ Treatment (CampaignKey (LensFor trCmpId)) (LensFor trTreatment) (PVariantKey (Le
 -- | ---------------------------------------------------------------------------
 data UserExperimentT f
   = UserExperiment
-      { _ueUserId :: PrimaryKey UserT f,
-        _ueCmpId :: PrimaryKey CampaignT f,
-        _ueTreatment :: Columnar f Int
+      { _userExperimentUserId :: PrimaryKey UserT f,
+        _userExperimentCampaignId :: PrimaryKey CampaignT f,
+        _userExperimentTreatment :: Columnar f Int
       }
   deriving (Generic, Beamable)
 
@@ -214,9 +214,9 @@ instance Table UserExperimentT where
   data PrimaryKey UserExperimentT f
     = UserExperimentKey (PrimaryKey UserT f) (PrimaryKey CampaignT f)
     deriving (Generic, Beamable)
-  primaryKey = UserExperimentKey <$> _ueUserId <*> _ueCmpId
+  primaryKey = UserExperimentKey <$> _userExperimentUserId <*> _userExperimentCampaignId
 
-UserExperiment (UserKey (LensFor ueUserId)) (CampaignKey (LensFor ueCmpId)) (LensFor ueTreatment) =
+UserExperiment (UserKey (LensFor userExperimentUserId)) (CampaignKey (LensFor userExperimentCampaignId)) (LensFor userExperimentTreatment) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -224,12 +224,12 @@ UserExperiment (UserKey (LensFor ueUserId)) (CampaignKey (LensFor ueCmpId)) (Len
 -- | ---------------------------------------------------------------------------
 data CheckoutEventT f
   = CheckoutEvent
-      { _cevId :: Columnar f EventId,
-        _cevCreated :: Columnar f UTCTime,
-        _cevCmpId :: PrimaryKey CampaignT f,
-        _cevOrderId :: Columnar f OrderId,
-        _cevShopId :: PrimaryKey ShopT f,
-        _cevUserId :: PrimaryKey UserT f
+      { _checkoutEventId :: Columnar f EventId,
+        _checkoutEventCreated :: Columnar f UTCTime,
+        _checkoutEventCampaignId :: PrimaryKey CampaignT f,
+        _checkoutEventOrderId :: Columnar f OrderId,
+        _checkoutEventShopId :: PrimaryKey ShopT f,
+        _checkoutEventUserId :: PrimaryKey UserT f
       }
   deriving (Generic, Beamable)
 
@@ -241,9 +241,9 @@ instance Table CheckoutEventT where
   data PrimaryKey CheckoutEventT f
     = CheckoutEventKey (Columnar f EventId)
     deriving (Generic, Beamable)
-  primaryKey = CheckoutEventKey . _cevId
+  primaryKey = CheckoutEventKey . _checkoutEventId
 
-CheckoutEvent (LensFor cevId) (LensFor cevCreated) (CampaignKey (LensFor cevCmpId)) (LensFor cevOrderId) (ShopKey (LensFor cevShopId)) (UserKey (LensFor cevUserId)) =
+CheckoutEvent (LensFor checkoutEventId) (LensFor checkoutEventCreated) (CampaignKey (LensFor checkoutEventCampaignId)) (LensFor checkoutEventOrderId) (ShopKey (LensFor checkoutEventShopId)) (UserKey (LensFor checkoutEventUserId)) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -251,10 +251,10 @@ CheckoutEvent (LensFor cevId) (LensFor cevCreated) (CampaignKey (LensFor cevCmpI
 -- | ---------------------------------------------------------------------------
 data CheckoutItemT f
   = CheckoutItem
-      { _ciId :: Columnar f UUID,
-        _ciCheckoutEventId :: PrimaryKey CheckoutEventT f,
-        _ciQuantity :: Columnar f Int,
-        _ciSvid :: Columnar f Svid
+      { _checkoutItemId :: Columnar f UUID,
+        _checkoutItemCheckoutEventId :: PrimaryKey CheckoutEventT f,
+        _checkoutItemQuantity :: Columnar f Int,
+        _checkoutItemSvid :: Columnar f Svid
       }
   deriving (Generic, Beamable)
 
@@ -266,9 +266,9 @@ instance Table CheckoutItemT where
   data PrimaryKey CheckoutItemT f
     = CheckoutItemKey (Columnar f UUID)
     deriving (Generic, Beamable)
-  primaryKey = CheckoutItemKey . _ciId
+  primaryKey = CheckoutItemKey . _checkoutItemId
 
-CheckoutItem (LensFor ciId) (CheckoutEventKey (LensFor ciCheckoutEventId)) (LensFor ciQuantity) (LensFor ciSvid) =
+CheckoutItem (LensFor checkoutItemId) (CheckoutEventKey (LensFor checkoutItemCheckoutEventId)) (LensFor checkoutItemQuantity) (LensFor checkoutItemSvid) =
   tableLenses
 
 -- | ---------------------------------------------------------------------------
@@ -276,8 +276,8 @@ CheckoutItem (LensFor ciId) (CheckoutEventKey (LensFor ciCheckoutEventId)) (Lens
 -- | ---------------------------------------------------------------------------
 data EventT f
   = Event
-      { _evId :: Columnar f EventId,
-        _evPayload :: Columnar f (PgJSONB Value)
+      { _eventId :: Columnar f EventId,
+        _eventPayload :: Columnar f (PgJSONB Value)
       }
   deriving (Generic, Beamable)
 
@@ -289,7 +289,7 @@ instance Table EventT where
   data PrimaryKey EventT f
     = EventKey (Columnar f EventId)
     deriving (Generic, Beamable)
-  primaryKey = EventKey . _evId
+  primaryKey = EventKey . _eventId
 
 -- | ---------------------------------------------------------------------------
 -- | Session
@@ -484,67 +484,67 @@ migration () =
     <*> createTable
       "users"
       User
-        { _usrId = field "id" (DataType pgTextType),
-          _usrCreated = field "created" ts notNull
+        { _userId = field "id" (DataType pgTextType),
+          _userCreated = field "created" ts notNull
         }
     <*> createTable
       "campaigns"
       Campaign
-        { _cmpId = field "id" (DataType pgUuidType) notNull,
-          _cmpShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
-          _cmpName = field "campaign_name" text notNull,
-          _cmpStart = field "start_date" (maybeType ts),
-          _cmpEnd = field "end_date" (maybeType ts)
+        { _campaignId = field "id" (DataType pgUuidType) notNull,
+          _campaignShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _campaignName = field "campaign_name" text notNull,
+          _campaignStart = field "start_date" (maybeType ts),
+          _campaignEnd = field "end_date" (maybeType ts)
         }
     <*> createTable
       "product_variants"
       ProductVariant
-        { _pvId = field "id" (DataType pgUuidType) notNull,
-          _pvShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
-          _pvTitle = field "title" text notNull,
-          _pvSku = field "sku" (DataType pgTextType) notNull,
-          _pvProductId = field "shopify_product_id" (DataType pgTextType) notNull,
-          _pvVariantId = field "shopify_variant_id" (DataType pgTextType) notNull,
-          _pvPrice = field "price" priceType notNull,
-          _pvCurrency = field "currency" text notNull
+        { _productVariantId = field "id" (DataType pgUuidType) notNull,
+          _productVariantShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _productVariantTitle = field "title" text notNull,
+          _productVariantSku = field "sku" (DataType pgTextType) notNull,
+          _productVariantProductId = field "shopify_product_id" (DataType pgTextType) notNull,
+          _productVariantVariantId = field "shopify_variant_id" (DataType pgTextType) notNull,
+          _productVariantPrice = field "price" priceType notNull,
+          _productVariantCurrency = field "currency" text notNull
         }
     <*> createTable
       "treatments"
       Treatment
-        { _trCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
-          _trTreatment = field "treatment" int notNull,
-          _trProductVariantId = PVariantKey (field "product_variant_id" (DataType pgUuidType) notNull)
+        { _treatmentCampaignId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
+          _treatmentKey = field "treatment" int notNull,
+          _treatmentProductVariantId = PVariantKey (field "product_variant_id" (DataType pgUuidType) notNull)
         }
     <*> createTable
       "user_experiments"
       UserExperiment
-        { _ueUserId = UserKey (field "user_id" (DataType pgTextType) notNull),
-          _ueCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
-          _ueTreatment = field "treatment" int notNull
+        { _userExperimentUserId = UserKey (field "user_id" (DataType pgTextType) notNull),
+          _userExperimentCampaignId = CampaignKey (field "campaign_id" (DataType pgUuidType) notNull),
+          _userExperimentTreatment = field "treatment" int notNull
         }
     <*> createTable
       "checkout_events"
       CheckoutEvent
-        { _cevId = field "id" (DataType pgUuidType) notNull,
-          _cevCreated = field "created" ts notNull,
-          _cevCmpId = CampaignKey (field "campaign_id" (DataType pgUuidType)),
-          _cevOrderId = field "order_id" (DataType pgTextType) notNull,
-          _cevShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
-          _cevUserId = UserKey (field "user_id" (DataType pgTextType))
+        { _checkoutEventId = field "id" (DataType pgUuidType) notNull,
+          _checkoutEventCreated = field "created" ts notNull,
+          _checkoutEventCampaignId = CampaignKey (field "campaign_id" (DataType pgUuidType)),
+          _checkoutEventOrderId = field "order_id" (DataType pgTextType) notNull,
+          _checkoutEventShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
+          _checkoutEventUserId = UserKey (field "user_id" (DataType pgTextType))
         }
     <*> createTable
       "checkout_items"
       CheckoutItem
-        { _ciId = field "id" (DataType pgUuidType) notNull,
-          _ciCheckoutEventId = CheckoutEventKey (field "checkout_event_id" (DataType pgUuidType)),
-          _ciQuantity = field "quantity" int notNull,
-          _ciSvid = field "shopify_variant_id" (DataType pgTextType) notNull
+        { _checkoutItemId = field "id" (DataType pgUuidType) notNull,
+          _checkoutItemCheckoutEventId = CheckoutEventKey (field "checkout_event_id" (DataType pgUuidType)),
+          _checkoutItemQuantity = field "quantity" int notNull,
+          _checkoutItemSvid = field "shopify_variant_id" (DataType pgTextType) notNull
         }
     <*> createTable
       "events"
       Event
-        { _evId = field "id" (DataType pgUuidType) notNull,
-          _evPayload = field "payload" jsonb notNull
+        { _eventId = field "id" (DataType pgUuidType) notNull,
+          _eventPayload = field "payload" jsonb notNull
         }
     <*> createTable
       "sessions"

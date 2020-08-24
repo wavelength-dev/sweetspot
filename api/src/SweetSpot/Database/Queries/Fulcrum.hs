@@ -31,6 +31,7 @@ import System.Random (randomRIO)
 
 class Monad m => FulcrumDB m where
   getUserTestMaps :: ShopDomain -> UserId -> m [TestMap]
+  getUserActiveCampaign :: ShopDomain -> UserId -> m (Maybe CampaignId)
   validateCampaign :: CampaignId -> m Bool
   validateShopDomain :: ShopDomain -> m (Maybe ShopId)
   insertUserCartToken :: CartTokenReq -> m ()
@@ -49,6 +50,21 @@ instance FulcrumDB AppM where
           (pure [])
           (\cid -> getNewCampaignTestMaps conn domain cid uid)
           mCampaignId
+
+  getUserActiveCampaign domain uid = withConn $ \conn -> do
+    mLatestCampaign <- getLatestCampaign conn domain
+    maybe
+      (pure Nothing)
+      ( \cmpId ->
+          runBeamPostgres conn
+            $ runSelectReturningOne
+            $ select
+            $ all_ (db ^. userExperiments)
+              & filter_ (view userExperimentUserId >>> (==. val_ uid))
+              & filter_ (view userExperimentCampaignId >>> (==. val_ cmpId))
+              & fmap (view userExperimentCampaignId)
+      )
+      mLatestCampaign
 
   validateCampaign cmpId = withConn $ \conn -> do
     res <-

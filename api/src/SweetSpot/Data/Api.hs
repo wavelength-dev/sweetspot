@@ -281,3 +281,10 @@ instance FromJSON CheckoutPayload where
     CheckoutPayload
       <$> v .: "user_id"
       <*> (v .: "order" >>= parseJSON)
+
+instance ToJSON CheckoutPayload where
+  toJSON (CheckoutPayload (UserId uid) order) =
+    object
+      [ "userId" .= uid,
+        "order" .= (toJSON order)
+      ]

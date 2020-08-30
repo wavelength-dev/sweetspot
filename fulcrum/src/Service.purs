@@ -10,7 +10,6 @@ import Effect.Aff (Aff, error, throwError)
 import Effect.Aff (attempt) as Aff
 import Foreign (readString) as Foreign
 import Foreign.Index (readProp) as ForeignIndex
-import Fulcrum.Cart (CartToken)
 import Fulcrum.Config (apiUrl) as Config
 import Fulcrum.Data (TestMap, decodeTestMaps)
 import Fulcrum.User (UserId(..))
@@ -95,22 +94,3 @@ getServiceError response = do
         Left _ -> Nothing
         Right message -> Just message
   pure mMessage
-
-sendCartToken :: UserId -> CartToken -> Aff (Either String Unit)
-sendCartToken uid token = do
-  response <- putJson cartTokenEndpoint reqBody
-  mMessage <- getServiceError response
-  let
-    status = Milkis.statusCode response
-  pure
-    if status == 200 then
-      Right unit
-    else case mMessage of
-      Nothing -> Left $ "sending cart token failed, status: " <> show status <> ", no body"
-      Just message -> Left $ "sending cart token failed, status: " <> show status <> ", body: " <> message
-  where
-  reqBody =
-    Argonaut.encodeJson
-      { _cartTokenReqUser: uid
-      , _cartTokenReqToken: token
-      }

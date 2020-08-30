@@ -19,11 +19,6 @@ type UserTestRoute =
     :> QueryParam' '[Required] "uid" UserId
     :> Get '[JSON] [TestMap]
 
-type UserCartTokenRoute =
-  "cart-token" :> QueryParam' '[Required] "shop" ShopDomain
-    :> ReqBody '[JSON] CartTokenReq
-    :> Put '[JSON] OkResponse
-
 type UserCheckoutRoute =
   "checkout" :> QueryParam' '[Required] "shop" ShopDomain
     :> ReqBody '[JSON] CheckoutPayload
@@ -32,7 +27,6 @@ type UserCheckoutRoute =
 type FulcrumAPI =
   "fulcrum"
     :> ( UserTestRoute
-           :<|> UserCartTokenRoute
            :<|> UserCheckoutRoute
        )
 
@@ -46,11 +40,6 @@ getUserTestHandler shopDomain uid = runAppM $ do
     testMaps -> do
       L.info $ "Got " <> showText (length testMaps) <> " test maps(s) for userId: " <> tshow uid
       pure testMaps
-
-userCartTokenHandler :: ShopDomain -> CartTokenReq -> ServerM OkResponse
-userCartTokenHandler _ req = runAppM $ do
-  insertUserCartToken req
-  return OkResponse {message = "Cart token received"}
 
 userCheckoutHandler :: ShopDomain -> CheckoutPayload -> ServerM OkResponse
 userCheckoutHandler domain payload = runAppM $ do
@@ -68,4 +57,4 @@ userCheckoutHandler domain payload = runAppM $ do
       throwError badRequestErr
 
 fulcrumHandler =
-  getUserTestHandler :<|> userCartTokenHandler :<|> userCheckoutHandler
+  getUserTestHandler :<|> userCheckoutHandler

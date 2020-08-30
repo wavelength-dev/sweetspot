@@ -177,23 +177,15 @@ instance MonadShopify AppM where
           registerWebhook topic =
             liftIO $
               runClientM (createWebhookClient (getRequest apiRoot topic) token) clientEnv
-      orderRes <- registerWebhook OrdersCreate
       uninstallRes <- registerWebhook AppUninstalled
-      case partitionEithers [orderRes, uninstallRes] of
-        ([], _) -> do
+      case uninstallRes of
+        Right _ -> do
           L.info "Succesfully registered webhooks"
           pure $ Right ()
-        (errs, _) ->
-          map tshow errs
-            & T.intercalate "\n"
-            & Left
-            & pure
+        Left err -> pure $ Left $ tshow err
     where
       createWebhookClient = client (Proxy :: Proxy RegisterWebhookRoute)
       webhookAPI = Proxy :: Proxy WebhookAPI
-      orderPath =
-        toUrlPiece $
-          safeLink webhookAPI (Proxy :: Proxy OrderRoute)
       appUninstalledPath =
         toUrlPiece $
           safeLink webhookAPI (Proxy :: Proxy AppUninstalledRoute)
@@ -205,7 +197,6 @@ instance MonadShopify AppM where
               address =
                 apiRoot
                   <> ( case topic of
-                         OrdersCreate -> orderPath
                          AppUninstalled -> appUninstalledPath
                      ),
               format = "json"

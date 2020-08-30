@@ -12,8 +12,6 @@ import Effect.Aff (Aff, Error, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
-import Effect.Timer (setInterval)
-import Fulcrum.Cart (findCartToken, hasCartTokenBeenSent, persistSentToken) as Cart
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
 import Fulcrum.Checkout (observeCheckout)
 import Fulcrum.Data (TestMapByVariant)
@@ -75,7 +73,6 @@ main =
           Right userId -> do
             sessionTestContext <-
               liftEffect do
-                startCartTokenInterval userId
                 RunState.initRunQueue
                 RunState.initTestContext
                 RunState.getTestContext
@@ -129,23 +126,6 @@ queueNext fn = do
 
 reapply :: Effect Unit
 reapply = queueNext applyDynamicPrice
-
-startCartTokenInterval :: UserId -> Effect Unit
-startCartTokenInterval userId = setInterval 500 cb *> mempty
-  where
-  cb :: Effect Unit
-  cb = do
-    mToken <- Cart.findCartToken
-    case mToken of
-      Just token -> do
-        shouldSend <- not <$> Cart.hasCartTokenBeenSent token
-        when shouldSend
-          $ Aff.launchAff_ do
-              eSuccess <- Service.sendCartToken userId token
-              liftEffect case eSuccess of
-                Left errMsg -> Logger.log Error errMsg
-                Right _ -> Cart.persistSentToken token
-      Nothing -> mempty
 
 findUserIdWithWaitLimit :: Aff (Either String UserId)
 findUserIdWithWaitLimit =

@@ -22,7 +22,6 @@ import SweetSpot.Data.Api (UICampaign(..))
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (logError, logInfo) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
-import SweetSpot.Mock (bonoboHat, storewide10Campaign)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchProducts) as Service
 import SweetSpot.Session (SessionId)
@@ -82,8 +81,6 @@ mkApp = do
           setProductsResource (Error "failed to fetch products")
           Logger.logError (show error)
         Right products -> setProductsResource $ Resource products
-      liftEffect $ setCampaignsResource $ Resource [ storewide10Campaign ]
-      liftEffect $ setProductsResource $ Resource [ bonoboHat ]
       pure unit
     pure
       $ element Shopify.appProvider

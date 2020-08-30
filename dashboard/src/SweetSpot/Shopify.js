@@ -8,12 +8,15 @@ const {
   EmptyState,
   Form,
   FormLayout,
+  Frame,
   Heading,
+  Loading,
   Link,
   Modal,
   OptionList,
   Page,
   ResourceList,
+  Spinner,
   Subheading,
   TextContainer,
   TextField,
@@ -28,13 +31,16 @@ exports.emptyState = EmptyState
 exports.enTranslations = enTranslations
 exports.form = Form
 exports.formLayout = FormLayout
+exports.frame = Frame
 exports.heading = Heading
+exports.loading = Loading
 exports.link = Link
 exports.modal = Modal
 exports.modalSection = Modal.Section
 exports.optionList = OptionList
 exports.page = Page
 exports.resourceList = ResourceList
+exports.spinner = Spinner
 exports.subheading = Subheading
 exports.textContainer = TextContainer
 exports.textField = TextField

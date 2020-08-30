@@ -1,7 +1,7 @@
 module Fulcrum.Checkout where
 
 import Prelude
-import Control.Monad.Except (runExceptT, throwError)
+import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Map (lookup) as Map
@@ -11,7 +11,6 @@ import Datadog (logError) as Logger
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
-import Effect.Exception.Unsafe (unsafeThrow)
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
 import Web.DOM (Element)
@@ -123,46 +122,49 @@ applyTestCheckout testMap = do
   when (isDryRun && isDebugging) do
     traverse_ (setCheckoutVariantId testMap) optionElements
 
+-- The select `value` attribute is empty sometimes, probably because
+-- shopify tries to set it too and as they don't recognize the options
+-- anymore the set value fails and empties the value. So we can't use
+-- it to determine the value selected anymore.
+-- Instead we read the variant from the URL, better would be to
+-- read the selected options and figure out the right variant
+-- ourselves.
 setCheckout :: TestMapByVariant -> Effect Unit
 setCheckout testMap = do
   isDebugging <- Site.getIsDebugging
   isDryRun <- Site.getIsDryRun
   mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
-  let
-    el = case Array.head mEls of
-      Nothing -> unsafeThrow "no product select found"
-      Just firstEl -> firstEl
-
-    selectEl = case HTMLSelectElement.fromElement el of
-      Nothing -> unsafeThrow "product select is not a select element"
-      Just narrowEl -> narrowEl
-  -- the value is empty sometimes, probably because shopify tries
-  -- to set it too and as they don't recognize the options anymore
-  -- the set value fails and empties the value. So we can't use it
-  -- to determine the value selected anymore.
-  -- rawTargetId <- HTMLSelectElement.value selectEl <#> VariantId
-  -- trying to read the set variant from the URL, better would be to
-  -- read the selected options and figure out the right variant
-  -- ourselves.
   mTargetId <- Site.getUrlParam "variant"
-  let
-    rawTargetId = case mTargetId of
-      Nothing -> unsafeThrow "failed to read variant from URL"
-      Just targetId -> VariantId targetId
-  case Map.lookup rawTargetId testMap of
-    -- the id may be not a sweetspot id, already swapped or unknown
-    Nothing -> mempty
-    Just test -> do
-      unless isDryRun do
-        -- if the value is there already we don't set it again
-        current <- HTMLSelectElement.value selectEl
-        unless (current == test.swapId) do
-          HTMLSelectElement.setValue test.swapId selectEl
-      when (isDryRun && isDebugging) do
-        -- if the value is there already we don't set it again
-        current <- HTMLSelectElement.value selectEl
-        unless (current == test.swapId) do
-          HTMLSelectElement.setValue test.swapId selectEl
+  eSuccess <-
+    runExceptT do
+      el <- case Array.head mEls of
+        Nothing -> throwError "no product select found"
+        Just firstEl -> pure firstEl
+      selectEl <- case HTMLSelectElement.fromElement el of
+        Nothing -> throwError "product select is not a select element"
+        Just narrowEl -> pure narrowEl
+      rawTargetId <- case mTargetId of
+        Nothing -> throwError "failed to read variant from URL"
+        Just targetId -> VariantId targetId # pure
+      case Map.lookup rawTargetId testMap of
+        -- The id may not be a sweetspot id, already swapped or unknown
+        -- Do nothing.
+        Nothing -> pure unit :: ExceptT String Effect Unit
+        Just test ->
+          liftEffect do
+            unless isDryRun do
+              -- if the value is there already we don't set it again
+              current <- HTMLSelectElement.value selectEl
+              unless (current == test.swapId) do
+                HTMLSelectElement.setValue test.swapId selectEl
+            when (isDryRun && isDebugging) do
+              -- if the value is there already we don't set it again
+              current <- HTMLSelectElement.value selectEl
+              unless (current == test.swapId) do
+                HTMLSelectElement.setValue test.swapId selectEl
+  case eSuccess of
+    Left err -> Logger.logError err
+    Right _ -> mempty
 
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react

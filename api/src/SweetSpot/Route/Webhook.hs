@@ -1,6 +1,5 @@
 module SweetSpot.Route.Webhook
-  ( OrderRoute,
-    AppUninstalledRoute,
+  ( AppUninstalledRoute,
     RedactShopRoute,
     RedactCustomerRoute,
     RequestDataRoute,
@@ -14,15 +13,9 @@ import RIO
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
-import SweetSpot.Data.Common (ActionRequestType (..), ShopDomain)
+import SweetSpot.Data.Common (ActionRequestType (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
 import SweetSpot.Shopify.Types
-
-type OrderRoute =
-  "webhook" :> "order"
-    :> ReqBody '[JSON] Order
-    :> Header' '[Required] "X-Shopify-Shop-Domain" ShopDomain
-    :> Post '[JSON] OkResponse
 
 type AppUninstalledRoute =
   "webhook" :> "app" :> "uninstalled"
@@ -45,14 +38,10 @@ type RequestDataRoute =
     :> Post '[JSON] OkResponse
 
 type WebhookAPI =
-  OrderRoute
-    :<|> AppUninstalledRoute
+  AppUninstalledRoute
     :<|> RedactShopRoute
     :<|> RedactCustomerRoute
     :<|> RequestDataRoute
-
-orderHandler :: Order -> ShopDomain -> ServerM OkResponse
-orderHandler order domain = runAppM $ return OkResponse {message = "Registered order"}
 
 appUninstalledHandler :: AppUninstalledReq -> ServerM OkResponse
 appUninstalledHandler (AppUninstalledReq domain) =
@@ -87,8 +76,7 @@ requestDataHandler payload =
       >> return OkResponse {message = "Request received"}
 
 webhookHandler =
-  orderHandler
-    :<|> appUninstalledHandler
+  appUninstalledHandler
     :<|> redactShopHandler
     :<|> redactCustomerHandler
     :<|> requestDataHandler

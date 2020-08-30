@@ -15,9 +15,7 @@ import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
 import SweetSpot.Data.Common (ActionRequestType (..), ShopDomain)
-import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
-import qualified SweetSpot.Logger as L
 import SweetSpot.Shopify.Types
 
 type OrderRoute =

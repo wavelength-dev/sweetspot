@@ -13,6 +13,7 @@ import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util (badRequestErr)
+import SweetSpot.Shopify.Types
 
 type UserTestRoute =
   "bucket" :> QueryParam' '[Required] "shop" ShopDomain
@@ -47,11 +48,13 @@ userCheckoutHandler domain payload = runAppM $ do
       order = payload ^. checkoutPayloadOrder
   mShopId <- validateShopDomain domain
   mCampaignId <- getUserActiveCampaign domain uid
-  case (mShopId, mCampaignId) of
-    (Just sid, Just cid) -> do
+  exists <- orderExists (order ^. orderId)
+  case (mShopId, mCampaignId, exists) of
+    (Just sid, Just cid, False) -> do
       insertOrder sid cid uid order
       L.info $ "Received checkout for " <> tshow domain <> " campaign " <> tshow cid
       pure OkResponse {message = "Checkout received"}
+    (_, _, True) -> pure OkResponse {message = "Checkout received"}
     _ -> do
       L.error $ "Unable to register checkout for " <> tshow domain <> ", user " <> tshow uid
       throwError badRequestErr

@@ -38,6 +38,7 @@ class Monad m => FulcrumDB m where
   validateUserCartToken :: CartToken -> m (Maybe (ShopId, CampaignId, UserId))
   insertOrder :: ShopId -> CampaignId -> UserId -> Order -> m ()
   insertUnaccountedOrder :: ShopDomain -> Order -> m ()
+  orderExists :: OrderId -> m Bool
 
 instance FulcrumDB AppM where
   getUserTestMaps domain uid = withConn $ \conn -> do
@@ -131,6 +132,15 @@ instance FulcrumDB AppM where
                 _unaccountedOrderPayload = val_ (PgJSONB (toJSON order))
               }
           ]
+
+  orderExists orderId = withConn $ \conn ->
+    isJust
+      <$> ( runBeamPostgres conn
+              $ runSelectReturningOne
+              $ select
+              $ all_ (db ^. checkoutEvents)
+                & filter_ (view checkoutEventOrderId >>> (==. val_ orderId))
+          )
 
 insertUser :: Connection -> UserId -> IO UserId
 insertUser conn uid = do

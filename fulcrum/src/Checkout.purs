@@ -12,7 +12,6 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
 import Effect.Exception.Unsafe (unsafeThrow)
-import Fulcrum.Config as Config
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.Site as Site
 import Web.DOM (Element)
@@ -23,8 +22,7 @@ import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (window) as HTML
 import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
 import Web.HTML.HTMLSelectElement as HTMLSelectElement
-import Web.HTML.Window (document, localStorage) as Window
-import Web.Storage.Storage (getItem) as Storage
+import Web.HTML.Window (document) as Window
 
 -- Supported checkout: Shopify default product-form
 -- We target option.sweetspot__option and swap out the value attribute.
@@ -96,13 +94,11 @@ labelHighlight =
 
 highlightCheckout :: Effect Unit
 highlightCheckout = do
-  window <- HTML.window
-  document <- Window.document window >>= HTMLDocument.toDocument >>> pure
+  document <- HTML.window >>= Window.document <#> HTMLDocument.toDocument
   matchingElements <- Site.queryDocument (QuerySelector "[data-product-form]")
   case Array.head matchingElements of
     Nothing -> mempty
     Just formElement -> do
-      cartToken <- HTML.window >>= Window.localStorage >>= Storage.getItem Config.tokenStashKey
       labelElement <- Document.createElement "p" document
       let
         labelNode = Element.toNode labelElement

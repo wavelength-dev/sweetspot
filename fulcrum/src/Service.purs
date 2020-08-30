@@ -2,8 +2,8 @@ module Fulcrum.Service where
 
 import Prelude
 import Control.Monad.Except (runExcept)
-import Data.Argonaut (class EncodeJson, Json)
-import Data.Argonaut (encodeJson, jsonParser, stringify) as Argonaut
+import Data.Argonaut (Json)
+import Data.Argonaut (jsonParser, stringify) as Argonaut
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, error, throwError)
@@ -23,9 +23,6 @@ testMapEndpoint = Config.apiUrl <> "/bucket"
 
 eventEndpoint :: String
 eventEndpoint = Config.apiUrl <> "/event"
-
-cartTokenEndpoint :: String
-cartTokenEndpoint = Config.apiUrl <> "/cart-token"
 
 fetch :: Fetch
 fetch = Milkis.fetch MilkisImpl.windowFetch

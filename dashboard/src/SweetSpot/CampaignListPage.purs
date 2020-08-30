@@ -1,13 +1,10 @@
 module SweetSpot.CampaignListPage where
 
 import Prelude
-import Data.Array (fold, intercalate)
+import Data.Array (intercalate)
 import Data.Array as Array
 import Data.DateTime (DateTime)
-import Data.Formatter.DateTime (FormatterCommand(..))
-import Data.Formatter.DateTime (format) as Formatter
 import Data.Lens (view)
-import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Tuple.Nested ((/\))

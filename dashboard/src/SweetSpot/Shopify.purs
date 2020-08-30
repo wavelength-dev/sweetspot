@@ -125,3 +125,9 @@ foreign import optionList ::
     }
 
 foreign import link :: ReactComponent { url :: String, children :: Array JSX }
+
+foreign import loading :: ReactComponent {}
+
+foreign import spinner :: ReactComponent {}
+
+foreign import frame :: ReactComponent { children :: Array JSX }

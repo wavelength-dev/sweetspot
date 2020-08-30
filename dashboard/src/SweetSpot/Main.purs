@@ -88,7 +88,7 @@ mkApp = do
           , children:
               [ case route of
                   CampaignList -> case campaignsResource of
-                    Empty -> R.text "EMPTY"
+                    Empty -> mempty
                     Loading -> loading
                     Error err -> R.text ("ERROR: " <> err)
                     Resource campaigns ->
@@ -97,12 +97,12 @@ mkApp = do
                       else
                         campaignListPage { campaigns }
                   CampaignCreate -> case productsResource of
-                    Empty -> R.text "EMPTY"
+                    Empty -> mempty
                     Loading -> loading
                     Error err -> R.text ("ERROR: " <> err)
                     Resource products -> campaignCreatePage { products, sessionId: props.sessionId }
                   CampaignView rawCampaignId -> case campaignsResource of
-                    Empty -> R.text "EMPTY"
+                    Empty -> mempty
                     Loading -> loading
                     Error err -> R.text ("ERROR: " <> err)
                     Resource campaigns -> case find (getCampaignById rawCampaignId) campaigns of

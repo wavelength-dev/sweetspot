@@ -13,7 +13,7 @@ import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (catchException)
-import Fulcrum.Checkout (applyTestCheckout, observeCheckout) as Checkout
+import Fulcrum.Checkout (setTestCheckout, registerOnSelectVariant) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
 import Fulcrum.Logger (LogLevel(..))
@@ -88,13 +88,13 @@ main = withHandledExceptions mainEffect
               _ <- AAVar.tryPut testContext sessionTestContext # lift
               applyTestMaps testContext # liftEffect
               TestPrice.observeTestPrices testContext # liftEffect
-              Checkout.observeCheckout testContext # liftEffect
+              Checkout.registerOnSelectVariant testContext # liftEffect
         case eSuccess of
           Left msg -> Aff.error msg # throwError
           Right _ -> mempty
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
-applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap
+applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.setTestCheckout testMap
 
 applyDynamicPrice :: Aff Unit
 applyDynamicPrice = do

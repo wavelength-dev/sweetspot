@@ -84,8 +84,8 @@ main = withHandledExceptions mainEffect
                 RunState.initTestContext
                 RunState.getTestContext
             testContext <- getTestMap userId
-            -- we cache the test maps and apply them
             unless (Map.isEmpty testContext) do
+              -- we cache the test maps and apply them
               -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
               _ <- AAVar.tryPut testContext sessionTestContext # lift
               applyTestMaps testContext # liftEffect

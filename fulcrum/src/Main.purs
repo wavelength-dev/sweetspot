@@ -23,6 +23,7 @@ import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
 import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
+import Fulcrum.Site (awaitDomReady)
 import Fulcrum.Site (getIsDebugging, getIsDryRun, getIsPricePage, readHostname) as Site
 import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.TestPrice (observeTestPrices)
@@ -70,6 +71,7 @@ main = withHandledExceptions mainEffect
       hostname <- liftEffect Site.readHostname
       isDryRun <- liftEffect Site.getIsDryRun
       isDebugging <- liftEffect Site.getIsDebugging
+      awaitDomReady
       isPricePage <- liftEffect Site.getIsPricePage
       when isPricePage do
         Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging } # liftEffect

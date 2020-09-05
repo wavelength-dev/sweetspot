@@ -68,8 +68,7 @@ setCheckoutVariantId testMap element =
     mValue <- Element.getAttribute "value" element # liftEffect
     targetVariantId <- case mValue of
       Nothing -> throwError "checkout option missing value attribute"
-      -- Just targetVariantId -> pure targetVariantId
-      Just _ -> throwError "testing sweetpot"
+      Just targetVariantId -> pure targetVariantId
     case Map.lookup (VariantId targetVariantId) testMap of
       -- variant is not under test
       Nothing -> pure unit
@@ -82,9 +81,8 @@ setTestCheckout :: TestMapByVariant -> Effect Unit
 setTestCheckout testMap = do
   isDryRun <- Site.getIsDryRun
   -- overwriting the text in the available options
-  isLibertyPrice <- readHostname <#> (==) "libertyprice.shopify.com"
+  isLibertyPrice <- readHostname <#> (==) "libertyprice.myshopify.com"
   isEstablishedTitles <- EstablishedTitles.isCurrentSite
-  when (isEstablishedTitles || isLibertyPrice) setOptionTexts
   -- logic for debug runs
   isDebugging <- Site.getIsDebugging
   when isDebugging highlightCheckout
@@ -92,7 +90,7 @@ setTestCheckout testMap = do
   let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements
-      when isEstablishedTitles setOptionTexts
+      when (isEstablishedTitles || isLibertyPrice) setOptionTexts
   unless isDryRun execute
   when (isDryRun && isDebugging) execute
 
@@ -167,14 +165,14 @@ selectTextMap =
     , Tuple "No" "No"
     , Tuple "Yes +$59" "Yes +$49"
     -- liberty price test option
-    , Tuple "Custom" "Custom +$5"
+    , Tuple "custom" "custom +$5"
     ]
 
 setOptionTexts :: Effect Unit
 setOptionTexts =
-  -- Our query selector is for option elements, we can safely
-  -- assume they are.
-  Site.queryDocument (QuerySelector ".product-form__input > option")
+      -- Our query selector is for option elements, we can safely
+      -- assume they are.
+      Site.queryDocument (QuerySelector ".product-form__input > option")
     <#> map unsafeToOption
     >>= traverse_ \optionElement -> do
         mTargetText <- HTMLOptionElement.text optionElement
@@ -185,5 +183,5 @@ setOptionTexts =
   where
   lookup = flip Map.lookup
 
-  unsafeToOption :: Element -> HTMLOptionElement
-  unsafeToOption = unsafeCoerce
+unsafeToOption :: Element -> HTMLOptionElement
+unsafeToOption = unsafeCoerce

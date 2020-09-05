@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5495cdfd1c016af7e55307ebfc1992fc53726ba26e15f9c4669cd9e318814069
+-- hash: 10eb5b4fbac2193395a3443772d600c9198f871efeb80799a86ec9afd976037f
 
 name:           sweetspot
 version:        0.1.0.0
@@ -50,6 +50,7 @@ library
       SweetSpot.Route.Webhook
       SweetSpot.Server
       SweetSpot.Shopify.Client
+      SweetSpot.Shopify.Pagination
       SweetSpot.Shopify.Types
       SweetSpot.Util
   other-modules:
@@ -231,6 +232,7 @@ test-suite sweetspot-test
       Mock.Shopify
       Spec.Business
       Spec.Http
+      Spec.Pagination
       Spec.Price
       Util
       Paths_sweetspot

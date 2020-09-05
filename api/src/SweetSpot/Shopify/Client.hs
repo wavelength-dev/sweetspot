@@ -1,6 +1,6 @@
 module SweetSpot.Shopify.Client where
 
-import Control.Lens
+import Control.Lens hiding (Strict)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader.Class (asks)
 import Data.Aeson (Value)
@@ -20,6 +20,7 @@ import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Env (Environment (..))
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Webhook
+import SweetSpot.Shopify.Pagination
 import SweetSpot.Shopify.Types
 
 type ApiVersion = "2020-04"
@@ -31,8 +32,10 @@ type TokenExchangeRoute =
 
 type GetProductsRoute =
   "admin" :> "api" :> ApiVersion :> "products.json"
+    :> QueryParam "page_info" PageInfo
+    :> QueryParam' '[Required, Strict] "limit" Int
     :> Header' '[Required] "X-Shopify-Access-Token" Text
-    :> Get '[JSON] Value
+    :> Get '[JSON] (Headers '[Header "Link" LinkHeader] Value)
 
 type GetProductJsonRoute =
   "admin" :> "api" :> ApiVersion :> "products"
@@ -120,17 +123,7 @@ instance MonadShopify AppM where
   fetchProducts domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
       let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
-      res <- liftIO $ runClientM (getProductsClient token) clientEnv
-      return $ case res of
-        Left err -> Left $ "Error getting products: " <> tshow err
-        Right body -> do
-          let result =
-                body ^? key "products"
-                  & fmap (traverse (parse parseJSON) . toListOf values)
-          case result of
-            Just (Success products) -> Right products
-            Just (Error err) -> Left $ T.pack err
-            Nothing -> Left "Missing key 'products' in products response"
+      recursivelyFetchProducts getProductsClient clientEnv token Nothing []
 
   fetchProductJson domain productId =
     withClientEnvAndToken domain $ \clientEnv token -> do
@@ -302,3 +295,37 @@ parseAppChargeStatus v =
   v ^? key "recurring_application_charge"
     . key "status"
     . _JSON
+
+recursivelyFetchProducts ::
+  (Client ClientM GetProductsRoute) ->
+  ClientEnv ->
+  Text ->
+  Maybe PageInfo ->
+  [ShopProduct] ->
+  AppM (Either Text [ShopProduct])
+recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
+  res <- liftIO $ runClientM (client mPageInfo pageLimit token) clientEnv
+  case res of
+    Left err -> Left ("Error getting products: " <> tshow err) & pure
+    Right res -> do
+      let link = lookupResponseHeader res :: ResponseHeader "Link" LinkHeader
+          (Headers body _) = res
+          eProducts = parseProducts body
+      case (link, eProducts) of
+        (Header h, Right newProducts) -> do
+          let pagination = parseLinkHeader h
+          case pagination ^. paginationNext of
+            Just pageInfo -> recursivelyFetchProducts client clientEnv token (Just pageInfo) (accumProducts <> newProducts)
+            Nothing -> Right (accumProducts <> newProducts) & pure
+        (_, Right newProducts) -> Right (accumProducts <> newProducts) & pure
+        (_, Left err) -> Left err & pure
+  where
+    pageLimit = 1
+    parseProducts body =
+      let result =
+            body ^? key "products"
+              & fmap (traverse (parse parseJSON) . toListOf values)
+       in case result of
+            Just (Success products) -> Right products
+            Just (Error err) -> Left $ T.pack err
+            Nothing -> Left "Missing key 'products' in products response"

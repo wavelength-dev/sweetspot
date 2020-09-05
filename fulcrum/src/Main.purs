@@ -13,8 +13,7 @@ import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (catchException)
-import Fulcrum.Checkout (applyTestCheckout) as Checkout
-import Fulcrum.Checkout (observeCheckout)
+import Fulcrum.Checkout (applyTestCheckout, observeCheckout) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
 import Fulcrum.Logger (LogLevel(..))
@@ -25,8 +24,7 @@ import Fulcrum.Service (TestMapProvisions(..))
 import Fulcrum.Service as Service
 import Fulcrum.Site (awaitDomReady)
 import Fulcrum.Site (getIsDebugging, getIsDryRun, getIsPricePage, readHostname) as Site
-import Fulcrum.TestPrice (applyTestPrices, revealAllPrices) as TestPrice
-import Fulcrum.TestPrice (observeTestPrices)
+import Fulcrum.TestPrice (applyTestPrices, observeTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 
@@ -89,8 +87,8 @@ main = withHandledExceptions mainEffect
               -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
               _ <- AAVar.tryPut testContext sessionTestContext # lift
               applyTestMaps testContext # liftEffect
-              observeTestPrices testContext # liftEffect
-              observeCheckout testContext # liftEffect
+              TestPrice.observeTestPrices testContext # liftEffect
+              Checkout.observeCheckout testContext # liftEffect
         case eSuccess of
           Left msg -> Aff.error msg # throwError
           Right _ -> mempty

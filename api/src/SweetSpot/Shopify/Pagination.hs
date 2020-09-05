@@ -9,7 +9,7 @@ import qualified RIO.Text as T
 import Servant
 
 newtype LinkHeader = LinkHeader Text
-  deriving (FromHttpApiData)
+  deriving (Show, FromHttpApiData)
 
 newtype PageInfo = PageInfo Text
   deriving (Eq, Show, ToHttpApiData)
@@ -33,7 +33,7 @@ parseLinkHeader (LinkHeader txt) =
     directions = T.split (== ',') txt
     pageInfoByDirection dir =
       directions
-        & L.find (T.isInfixOf ("rel=" <> dir))
+        & L.find (T.isInfixOf ("rel=\"" <> dir <> "\""))
         >>= (T.split (== ';') >>> L.headMaybe)
         >>= ( T.strip
                 >>> T.dropAround (\c -> c == '<' || c == '>')
@@ -41,4 +41,4 @@ parseLinkHeader (LinkHeader txt) =
                 >>> preview (element 1)
             )
         >>= (T.split (== '&') >>> L.find (T.isInfixOf "page_info="))
-        >>= (T.split (== '=') >>> preview (element 1) >>> fmap PageInfo)
+        >>= (T.split (== '=') >>> preview (element 1) >>> fmap (PageInfo))

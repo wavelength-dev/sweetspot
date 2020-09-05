@@ -12,6 +12,7 @@ import Effect.Aff (Aff, Error, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
+import Effect.Exception (catchException)
 import Fulcrum.Checkout (applyTestCheckout) as Checkout
 import Fulcrum.Checkout (observeCheckout)
 import Fulcrum.Data (TestMapByVariant)
@@ -51,36 +52,46 @@ wrapUp result = do
     Left error -> Logger.logWithContext Error "main failed" { mainError: error }
     Right _ -> Logger.log Info "succesfully ran sweetspot main loop"
 
+-- Sites that we run on have tons of unhandled exceptions. Becuase of
+-- this we can't catch all errors that are unhandled as many aren't
+-- ours. We turn off forwarding of all unhandled errors on the window
+-- . Instead we wrap our logic with our own unhandled handler.
+withHandledExceptions :: Effect Unit -> Effect Unit
+withHandledExceptions =
+  catchException \error ->
+    Logger.logWithContext Error "unhandled exception" error
+
 main :: Effect Unit
-main =
-  Aff.runAff_ wrapUp do
-    exposeGlobals reapply # liftEffect
-    hostname <- liftEffect Site.readHostname
-    isDryRun <- liftEffect Site.getIsDryRun
-    isDebugging <- liftEffect Site.getIsDebugging
-    awaitDomReady
-    isPricePage <- liftEffect Site.getIsPricePage
-    when isPricePage do
-      Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging } # liftEffect
-      eSuccess <-
-        runExceptT do
-          userId <- findUserIdWithWaitLimit # lift >>= except
-          sessionTestContext <-
-            liftEffect do
-              RunState.initRunQueue
-              RunState.initTestContext
-              RunState.getTestContext
-          testContext <- getTestMap userId
-          -- we cache the test maps and apply them
-          unless (Map.isEmpty testContext) do
-            -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
-            _ <- AAVar.tryPut testContext sessionTestContext # lift
-            applyTestMaps testContext # liftEffect
-            observeTestPrices testContext # liftEffect
-            observeCheckout testContext # liftEffect
-      case eSuccess of
-        Left msg -> Aff.error msg # throwError
-        Right _ -> mempty
+main = withHandledExceptions mainEffect
+  where
+  mainEffect =
+    Aff.runAff_ wrapUp do
+      exposeGlobals reapply # liftEffect
+      hostname <- liftEffect Site.readHostname
+      isDryRun <- liftEffect Site.getIsDryRun
+      isDebugging <- liftEffect Site.getIsDebugging
+      isPricePage <- liftEffect Site.getIsPricePage
+      when isPricePage do
+        Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging } # liftEffect
+        eSuccess <-
+          runExceptT do
+            userId <- findUserIdWithWaitLimit # lift >>= except
+            sessionTestContext <-
+              liftEffect do
+                RunState.initRunQueue
+                RunState.initTestContext
+                RunState.getTestContext
+            testContext <- getTestMap userId
+            -- we cache the test maps and apply them
+            unless (Map.isEmpty testContext) do
+              -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+              _ <- AAVar.tryPut testContext sessionTestContext # lift
+              applyTestMaps testContext # liftEffect
+              observeTestPrices testContext # liftEffect
+              observeCheckout testContext # liftEffect
+        case eSuccess of
+          Left msg -> Aff.error msg # throwError
+          Right _ -> mempty
 
 applyTestMaps :: TestMapByVariant -> Effect Unit
 applyTestMaps testMap = TestPrice.applyTestPrices testMap *> Checkout.applyTestCheckout testMap
@@ -119,7 +130,7 @@ queueNext fn = do
   logResult (Right result) = Logger.log Info "successfully reapplied prices"
 
 reapply :: Effect Unit
-reapply = queueNext applyDynamicPrice
+reapply = withHandledExceptions $ queueNext applyDynamicPrice
 
 findUserIdWithWaitLimit :: Aff (Either String UserId)
 findUserIdWithWaitLimit = tryFindUserId 0.0

@@ -4,24 +4,28 @@ import Prelude
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Array (head) as Array
 import Data.Either (Either(..))
-import Data.Map (lookup) as Map
+import Data.Map (Map)
+import Data.Map (fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
-import Datadog (logError) as Logger
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
+import Fulcrum.Checkout.Highlight (highlightCheckout)
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
+import Fulcrum.EstablishedTitles (isCurrentSite) as EstablishedTitles
+import Fulcrum.Logger (LogLevel(..))
+import Fulcrum.Logger (log, logWithContext) as Logger
+import Fulcrum.Site (readHostname)
 import Fulcrum.Site as Site
+import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Element)
-import Web.DOM.Document (createElement) as Document
-import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
-import Web.DOM.Node as Node
+import Web.DOM.Element (getAttribute, setAttribute) as Element
 import Web.DOM.ParentNode (QuerySelector(..))
-import Web.HTML (window) as HTML
-import Web.HTML.HTMLDocument (toDocument) as HTMLDocument
-import Web.HTML.HTMLSelectElement as HTMLSelectElement
-import Web.HTML.Window (document) as Window
+import Web.HTML (HTMLOptionElement)
+import Web.HTML.HTMLOptionElement (setText, text) as HTMLOptionElement
+import Web.HTML.HTMLSelectElement (fromElement, setValue, value) as HTMLSelectElement
 
 -- Supported checkout: Shopify default product-form
 -- We target option.sweetspot__option and swap out the value attribute.
@@ -64,63 +68,33 @@ setCheckoutVariantId testMap element =
     mValue <- Element.getAttribute "value" element # liftEffect
     targetVariantId <- case mValue of
       Nothing -> throwError "checkout option missing value attribute"
-      Just targetVariantId -> pure targetVariantId
+      -- Just targetVariantId -> pure targetVariantId
+      Just _ -> throwError "testing sweetpot"
     case Map.lookup (VariantId targetVariantId) testMap of
       -- variant is not under test
       Nothing -> pure unit
       Just test -> Element.setAttribute "value" test.swapId element # liftEffect
     >>= case _ of
-        Left err -> Logger.logError err
+        Left err -> Logger.logWithContext Error "failed to set checkout variant id" err
         _ -> mempty
 
-formHighlight :: String
-formHighlight =
-  """
-  border-style: solid;
-  border-color: #5c6ac4;
-  """
-
--- label
-labelHighlight :: String
-labelHighlight =
-  """
-  background-color: white;
-  color: #5c6ac4;
-  padding: 0px 8px;
-  margin: -2.9rem 0px auto 5px;
-  max-width: 217px;
-  """
-
-highlightCheckout :: Effect Unit
-highlightCheckout = do
-  document <- HTML.window >>= Window.document <#> HTMLDocument.toDocument
-  matchingElements <- Site.queryDocument (QuerySelector "[data-product-form]")
-  case Array.head matchingElements of
-    Nothing -> mempty
-    Just formElement -> do
-      labelElement <- Document.createElement "p" document
-      let
-        labelNode = Element.toNode labelElement
-
-        formNode = Element.toNode formElement
-      Element.setAttribute "style" labelHighlight labelElement
-      Element.setAttribute "style" formHighlight formElement
-      Node.setTextContent "sweetspot controlled checkout" labelNode
-      mFirstChild <- Node.firstChild formNode
-      case mFirstChild of
-        Nothing -> Node.appendChild labelNode formNode *> mempty
-        Just firstChild -> Node.insertBefore labelNode firstChild formNode *> mempty
-
-applyTestCheckout :: TestMapByVariant -> Effect Unit
-applyTestCheckout testMap = do
-  isDebugging <- Site.getIsDebugging
+setTestCheckout :: TestMapByVariant -> Effect Unit
+setTestCheckout testMap = do
   isDryRun <- Site.getIsDryRun
+  -- overwriting the text in the available options
+  isLibertyPrice <- readHostname <#> (==) "libertyprice.shopify.com"
+  isEstablishedTitles <- EstablishedTitles.isCurrentSite
+  when (isEstablishedTitles || isLibertyPrice) setOptionTexts
+  -- logic for debug runs
+  isDebugging <- Site.getIsDebugging
   when isDebugging highlightCheckout
   optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
-  unless isDryRun do
-    traverse_ (setCheckoutVariantId testMap) optionElements
-  when (isDryRun && isDebugging) do
-    traverse_ (setCheckoutVariantId testMap) optionElements
+  let
+    execute = do
+      traverse_ (setCheckoutVariantId testMap) optionElements
+      when isEstablishedTitles setOptionTexts
+  unless isDryRun execute
+  when (isDryRun && isDebugging) execute
 
 -- The select `value` attribute is empty sometimes, probably because
 -- shopify tries to set it too and as they don't recognize the options
@@ -129,8 +103,8 @@ applyTestCheckout testMap = do
 -- Instead we read the variant from the URL, better would be to
 -- read the selected options and figure out the right variant
 -- ourselves.
-setCheckout :: TestMapByVariant -> Effect Unit
-setCheckout testMap = do
+onSelectVariant :: TestMapByVariant -> Effect Unit
+onSelectVariant testMap = do
   isDebugging <- Site.getIsDebugging
   isDryRun <- Site.getIsDryRun
   mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
@@ -152,24 +126,22 @@ setCheckout testMap = do
         Nothing -> pure unit :: ExceptT String Effect Unit
         Just test ->
           liftEffect do
-            unless isDryRun do
-              -- if the value is there already we don't set it again
-              current <- HTMLSelectElement.value selectEl
-              unless (current == test.swapId) do
-                HTMLSelectElement.setValue test.swapId selectEl
-            when (isDryRun && isDebugging) do
-              -- if the value is there already we don't set it again
-              current <- HTMLSelectElement.value selectEl
-              unless (current == test.swapId) do
-                HTMLSelectElement.setValue test.swapId selectEl
+            let
+              execute = do
+                -- if the value is there already we don't set it again
+                current <- HTMLSelectElement.value selectEl
+                unless (current == test.swapId) do
+                  HTMLSelectElement.setValue test.swapId selectEl
+            unless isDryRun execute
+            when (isDryRun && isDebugging) execute
   case eSuccess of
-    Left err -> Logger.logError err
+    Left err -> Logger.logWithContext Error "failed to set checkout on select" err
     Right _ -> mempty
 
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react
-observeCheckout :: TestMapByVariant -> Effect Unit
-observeCheckout testMap =
+registerOnSelectVariant :: TestMapByVariant -> Effect Unit
+registerOnSelectVariant testMap =
   Site.queryDocument (QuerySelector "[data-product-form]")
     >>= Array.head
     >>> case _ of
@@ -177,5 +149,41 @@ observeCheckout testMap =
         Just el ->
           Site.onElementsMutation
             { subtree: true, childList: true }
-            (\_ -> setCheckout testMap)
+            (\_ -> onSelectVariant testMap)
             [ el ]
+
+-- Maps a form variant option text to another for Established Titles
+type VariantOptionMap
+  = Map String String
+
+selectTextMap :: VariantOptionMap
+selectTextMap =
+  Map.fromFoldable
+    [ Tuple "1 Sq Ft" "1 Sq Ft"
+    , Tuple "5 Sq Ft (+$160)" "5 Sq Ft (+$150)"
+    , Tuple "10 Sq Ft (+$300)" "10 Sq Ft (+$290)"
+    , Tuple "Digital Only" "Digital Only"
+    , Tuple "Add Print +$30" "Add Print +$20"
+    , Tuple "No" "No"
+    , Tuple "Yes +$59" "Yes +$49"
+    -- liberty price test option
+    , Tuple "Custom" "Custom +$5"
+    ]
+
+setOptionTexts :: Effect Unit
+setOptionTexts =
+  -- Our query selector is for option elements, we can safely
+  -- assume they are.
+  Site.queryDocument (QuerySelector ".product-form__input > option")
+    <#> map unsafeToOption
+    >>= traverse_ \optionElement -> do
+        mTargetText <- HTMLOptionElement.text optionElement
+        case lookup selectTextMap mTargetText of
+          -- TODO: use exceptT with logging
+          Nothing -> Logger.log Warn "unrecognized variant option"
+          Just swapText -> HTMLOptionElement.setText swapText optionElement
+  where
+  lookup = flip Map.lookup
+
+  unsafeToOption :: Element -> HTMLOptionElement
+  unsafeToOption = unsafeCoerce

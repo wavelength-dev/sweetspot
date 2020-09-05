@@ -5,5 +5,5 @@ apiUrl = "/apps/sweetspot/api/fulcrum"
 
 dryRunMap :: String -> Boolean
 dryRunMap = case _ of
-  "libertyprice.myshopify.com" -> true
+  "libertyprice.myshopify.com" -> false
   _ -> false

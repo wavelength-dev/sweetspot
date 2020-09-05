@@ -3,7 +3,7 @@ steps:
     args:
       - --destination=gcr.io/$PROJECT_ID/sweetspot:$SHORT_SHA
       - --cache=true
-      - --cache-ttl=168h
+      - --cache-ttl=240h
   # Deploy container image to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud

@@ -41,4 +41,4 @@ parseLinkHeader (LinkHeader txt) =
                 >>> preview (element 1)
             )
         >>= (T.split (== '&') >>> L.find (T.isInfixOf "page_info="))
-        >>= (T.split (== '=') >>> preview (element 1) >>> fmap (PageInfo))
+        >>= (T.split (== '=') >>> preview (element 1) >>> fmap PageInfo)

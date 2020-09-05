@@ -314,16 +314,11 @@ recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
       case (link, eProducts) of
         (Header h, Right newProducts) -> do
           let pagination = parseLinkHeader h
-          L.info $ "Got pagination " <> tshow pagination
           case pagination ^. paginationNext of
             Just pageInfo -> recursivelyFetchProducts client clientEnv token (Just pageInfo) (accumProducts <> newProducts)
             Nothing -> Right (accumProducts <> newProducts) & pure
-        (_, Right newProducts) -> do
-          L.info "No header"
-          Right (accumProducts <> newProducts) & pure
-        (_, Left err) -> do
-          L.info "Err getting product"
-          Left err & pure
+        (_, Right newProducts) -> Right (accumProducts <> newProducts) & pure
+        (_, Left err) -> Left err & pure
   where
     pageLimit = 1
     parseProducts body =

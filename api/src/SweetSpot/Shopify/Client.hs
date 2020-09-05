@@ -320,7 +320,7 @@ recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
         (_, Right newProducts) -> Right (accumProducts <> newProducts) & pure
         (_, Left err) -> Left err & pure
   where
-    pageLimit = 1
+    pageLimit = 250
     parseProducts body =
       let result =
             body ^? key "products"

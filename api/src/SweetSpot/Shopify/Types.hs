@@ -440,3 +440,23 @@ instance ToJSON CreateScript where
               "src" .= (cs ^. createScriptSrc)
             ]
       ]
+
+-- | ---------------------------------------------------------------------------
+-- | SmartCollectionRule
+-- | ---------------------------------------------------------------------------
+data SmartCollectionRule
+  = SmartCollectionRule
+      { _smartCollectionRuleColumn :: !Text,
+        _smartCollectionRuleRelation :: !Text,
+        _smartCollectionRuleCondition :: !Text
+      }
+
+makeLenses ''SmartCollectionRule
+
+instance ToJSON SmartCollectionRule where
+  toJSON rule =
+    object
+      [ "column" .= (rule ^. smartCollectionRuleColumn),
+        "relation" .= (rule ^. smartCollectionRuleRelation),
+        "condition" .= (rule ^. smartCollectionRuleCondition)
+      ]

@@ -282,7 +282,7 @@ instance MonadShopify AppM where
         Left err -> pure $ Left $ "Error fetching SmartCollections: " <> tshow err
         Right body -> do
           let updateCollectionClient = client (Proxy :: Proxy UpdateSmartCollectionRoute)
-              withUpdatedRules = body & key "smart_collections" . values . _Object . at "rules" . _Just . _Array %~ (flip V.snoc sweetspotRule)
+              withUpdatedRules = body & key "smart_collections" . values . key "rules" . _Array %~ (flip V.snoc sweetspotRule)
               updateCollection value = liftIO $ runClientM (updateCollectionClient (id <> ".json") value token) clientEnv
                 where
                   id = value ^?! key "id" . _Number . to scientificToIntText

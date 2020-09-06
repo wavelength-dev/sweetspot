@@ -395,29 +395,6 @@ instance Table AppChargeT where
 AppCharge (LensFor appChargeId) (LensFor appChargeShopifyId) (LensFor appChargeStatus) (ShopKey (LensFor appChargeShopId)) (LensFor appChargeName) (LensFor appChargePrice) (LensFor appChargeReturnUrl) (LensFor appChargeConfirmationUrl) = tableLenses
 
 -- | ---------------------------------------------------------------------------
--- | UnaccountedOrder
--- | ---------------------------------------------------------------------------
-data UnaccountedOrderT f
-  = UnaccountedOrder
-      { _unaccountedOrderId :: Columnar f UUID,
-        _unaccountedOrderShopId :: PrimaryKey ShopT f,
-        _unaccountedOrderPayload :: Columnar f (PgJSONB Value)
-      }
-  deriving (Generic, Beamable)
-
-type UnaccountedOrder = UnaccountedOrderT Identity
-
-type UnaccountedOrderKey = PrimaryKey UnaccountedOrderT Identity
-
-instance Table UnaccountedOrderT where
-  data PrimaryKey UnaccountedOrderT f
-    = UnaccountedOrderKey (Columnar f UUID)
-    deriving (Generic, Beamable)
-  primaryKey = UnaccountedOrderKey . _unaccountedOrderId
-
-UnaccountedOrder (LensFor unaccountedOrderId) (ShopKey (LensFor unaccountedOrderShopId)) (LensFor unaccountedOrderPayload) = tableLenses
-
--- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f
@@ -436,14 +413,13 @@ data SweetSpotDb f
         _userCartTokens :: f (TableEntity UserCartTokenT),
         _actionRequests :: f (TableEntity ActionRequestT),
         _appCharges :: f (TableEntity AppChargeT),
-        _unaccountedOrders :: f (TableEntity UnaccountedOrderT),
         _cryptoExtension :: f (PgExtensionEntity PgCrypto)
       }
   deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens appCharges) (TableLens unaccountedOrders) (TableLens cryptoExtension) =
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens appCharges) (TableLens cryptoExtension) =
   dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -577,12 +553,5 @@ migration () =
           _appChargePrice = field "price" text notNull,
           _appChargeReturnUrl = field "return_url" text notNull,
           _appChargeConfirmationUrl = field "confirmation_url" text notNull
-        }
-    <*> createTable
-      "unaccounted_orders"
-      UnaccountedOrder
-        { _unaccountedOrderId = field "id" (DataType pgUuidType) notNull,
-          _unaccountedOrderShopId = ShopKey (field "shop_id" (DataType pgUuidType)),
-          _unaccountedOrderPayload = field "payload" jsonb notNull
         }
     <*> pgCreateExtension

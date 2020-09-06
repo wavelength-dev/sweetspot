@@ -5,7 +5,7 @@ import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Map (Map)
-import Data.Map (fromFoldable, lookup) as Map
+import Data.Map (findMin, fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
@@ -17,8 +17,7 @@ import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.EstablishedTitles (isCurrentSite) as EstablishedTitles
 import Fulcrum.Logger (LogLevel(..))
 import Fulcrum.Logger (log, logWithContext) as Logger
-import Fulcrum.Site (readHostname)
-import Fulcrum.Site as Site
+import Fulcrum.Site (getIsDebugging, getIsDryRun, getUrlParam, onElementsMutation, queryDocument, readHostname) as Site
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Element)
 import Web.DOM.Element (getAttribute, setAttribute) as Element
@@ -81,16 +80,20 @@ setTestCheckout :: TestMapByVariant -> Effect Unit
 setTestCheckout testMap = do
   isDryRun <- Site.getIsDryRun
   -- overwriting the text in the available options
-  isLibertyPrice <- readHostname <#> (==) "libertyprice.myshopify.com"
+  isLibertyPrice <- Site.readHostname <#> (==) "libertyprice.myshopify.com"
   isEstablishedTitles <- EstablishedTitles.isCurrentSite
   -- logic for debug runs
   isDebugging <- Site.getIsDebugging
   when isDebugging highlightCheckout
   optionElements <- Site.queryDocument (QuerySelector "option.sweetspot__option")
   let
+    isTestPrice = case Map.findMin testMap of
+      Nothing -> false
+      Just { value: { variantId, swapId }} -> variantId == swapId
+  let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements
-      when (isEstablishedTitles || isLibertyPrice) setOptionTexts
+      when ((isEstablishedTitles || isLibertyPrice) && isTestPrice) setOptionTexts
   unless isDryRun execute
   when (isDryRun && isDebugging) execute
 
@@ -170,9 +173,9 @@ selectTextMap =
 
 setOptionTexts :: Effect Unit
 setOptionTexts =
-      -- Our query selector is for option elements, we can safely
-      -- assume they are.
-      Site.queryDocument (QuerySelector ".product-form__input > option")
+  -- Our query selector is for option elements, we can safely
+  -- assume they are.
+  Site.queryDocument (QuerySelector ".product-form__input > option")
     <#> map unsafeToOption
     >>= traverse_ \optionElement -> do
         mTargetText <- HTMLOptionElement.text optionElement

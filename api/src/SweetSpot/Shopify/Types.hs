@@ -460,3 +460,27 @@ instance ToJSON SmartCollectionRule where
         "relation" .= (rule ^. smartCollectionRuleRelation),
         "condition" .= (rule ^. smartCollectionRuleCondition)
       ]
+
+instance FromJSON SmartCollectionRule where
+  parseJSON = withObject "SmartCollectionRule" $ \o ->
+    SmartCollectionRule
+      <$> o .: "column"
+      <*> o .: "relation"
+      <*> o .: "condition"
+
+-- | ---------------------------------------------------------------------------
+-- | SmartCollectionRuleUpdate
+-- | ---------------------------------------------------------------------------
+newtype SmartCollectionRuleUpdate
+  = SmartCollectionRuleUpdate [SmartCollectionRule]
+
+makeLenses ''SmartCollectionRuleUpdate
+
+instance ToJSON SmartCollectionRuleUpdate where
+  toJSON (SmartCollectionRuleUpdate rules) =
+    object
+      [ "smart_collection"
+          .= object
+            [ "rules" .= (toJSON rules)
+            ]
+      ]

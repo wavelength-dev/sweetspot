@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module SweetSpot.Shopify.Client where
 
 import Control.Lens hiding (Strict)
@@ -102,7 +104,7 @@ type GetSmartCollectionsRoute =
 type UpdateSmartCollectionRoute =
   "admin" :> "api" :> ApiVersion :> "smart_collections"
     :> Capture "smartCollectionId" Text
-    :> ReqBody '[JSON] Value
+    :> ReqBody '[JSON] SmartCollectionRuleUpdate
     :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Put '[JSON] Value
 
@@ -283,9 +285,10 @@ instance MonadShopify AppM where
         Right body -> do
           let updateCollectionClient = client (Proxy :: Proxy UpdateSmartCollectionRoute)
               withUpdatedRules = body & key "smart_collections" . values . key "rules" . _Array %~ (flip V.snoc sweetspotRule)
-              updateCollection value = liftIO $ runClientM (updateCollectionClient (id <> ".json") value token) clientEnv
+              updateCollection value = liftIO $ runClientM (updateCollectionClient (id <> ".json") payload token) clientEnv
                 where
                   id = value ^?! key "id" . _Number . to scientificToIntText
+                  payload = value ^?! key "rules" . _JSON @Value @[SmartCollectionRule] & SmartCollectionRuleUpdate
           L.info $ tshow withUpdatedRules
           let updates = withUpdatedRules ^?! key "smart_collections" . _Array
           L.info $ tshow updates

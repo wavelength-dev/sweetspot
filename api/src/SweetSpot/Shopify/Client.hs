@@ -289,9 +289,7 @@ instance MonadShopify AppM where
                 where
                   id = value ^?! key "id" . _Number . to scientificToIntText
                   payload = value ^?! key "rules" . _JSON @Value @[SmartCollectionRule] & SmartCollectionRuleUpdate
-          L.info $ tshow withUpdatedRules
-          let updates = withUpdatedRules ^?! key "smart_collections" . _Array
-          L.info $ tshow updates
+              updates = withUpdatedRules ^?! key "smart_collections" . _Array
           results <- traverse updateCollection updates
           pure $ case partitionEithers (V.toList results) of
             ([], x : xs) -> Right ()

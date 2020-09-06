@@ -286,7 +286,7 @@ instance MonadShopify AppM where
               updateCollection value = liftIO $ runClientM (updateCollectionClient (id <> ".json") value token) clientEnv
                 where
                   id = value ^?! key "id" . _Number . to scientificToIntText
-          results <- traverse updateCollection (withUpdatedRules ^?! key "smart_collections" . values . _Array)
+          results <- traverse updateCollection (withUpdatedRules ^?! key "smart_collections" . _Array)
           pure $ case partitionEithers (V.toList results) of
             ([], x : xs) -> Right ()
             (errs, _) -> Left $ "Error updating SmartCollections: " <> mconcat txtErrs

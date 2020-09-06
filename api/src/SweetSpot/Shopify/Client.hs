@@ -143,8 +143,11 @@ instance MonadShopify AppM where
 
   fetchProducts domain =
     withClientEnvAndToken domain $ \clientEnv token -> do
-      let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
-      recursivelyFetchProducts getProductsClient clientEnv token Nothing []
+      if domain == ShopDomain "established-titles.myshopify.com"
+        then pure $ Right []
+        else do
+          let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
+          recursivelyFetchProducts getProductsClient clientEnv token Nothing []
 
   fetchProductJson domain productId =
     withClientEnvAndToken domain $ \clientEnv token -> do

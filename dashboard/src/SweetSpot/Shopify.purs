@@ -124,7 +124,7 @@ foreign import optionList ::
     , allowMultiple :: Boolean
     }
 
-foreign import link :: ReactComponent { url :: String, children :: Array JSX }
+foreign import link :: ReactComponent { url :: String, children :: Array JSX, external :: Boolean }
 
 foreign import loading :: ReactComponent {}
 

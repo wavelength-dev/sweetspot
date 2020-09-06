@@ -13,16 +13,16 @@ import Effect.Exception.Unsafe (unsafeThrow)
 import Effect.Now (nowDateTime) as Now
 import Effect.Timer (clearInterval, setInterval) as Timer
 import Effect.Unsafe (unsafePerformEffect)
-import React.Basic.DOM (css, div, li, text, ul_) as R
+import React.Basic.DOM (css, div, div_, li, text, ul_) as R
 import React.Basic.Hooks (Component, JSX, component, element, useEffect, useState')
 import React.Basic.Hooks (bind, discard) as React
 import Routing.Hash as Hash
 import SweetSpot.Data.Api (UICampaign(..), uiCampaignEnd)
+import SweetSpot.Date (formatDate)
 import SweetSpot.Shopify (button, link, modal, modalSection, page) as Shopify
 import SweetSpot.ShopifyHelper (ElementTag(..))
 import SweetSpot.ShopifyHelper (heading) as SH
 import SweetSpot.Spacing as Spacing
-import SweetSpot.Date (formatDate)
 
 type Now
   = DateTime
@@ -194,12 +194,18 @@ mkCampaignListPage =
                               , element Shopify.link
                                   { url: "mailto:hello@wavelength.dev"
                                   , children: [ R.text "hello@wavelength.dev" ]
+                                  , external: false
                                   }
                               ]
                           }
                       ]
                   }
               , R.ul_ [ props.campaigns # map (toCard now) >>> (intercalate Spacing.medium) ]
+              , R.div_
+                  [ R.text "Is SweetSpot properly installed? Not sure? Check out the "
+                  , element Shopify.link { url: "https://www.getsweetspot.com/getting-started/", external: true, children: [ R.text "getting started guide" ] }
+                  , R.text "."
+                  ]
               ]
           }
   where

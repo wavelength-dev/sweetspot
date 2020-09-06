@@ -18,54 +18,75 @@
     />
     <link rel="stylesheet" href="/css/index.css" type="text/css" media="screen" charset="utf-8">
     </style>
+    <style>
+img {
+  cursor: pointer;
+  transition: -webkit-transform 0.1s ease
+}
+    img:focus {
+      -webkit-transform: scale(1.5) translateX(12em);
+      -ms-transform: scale(1.5) translateX(12em);
+      transform: scale(1.5) translateX(12em);
+    }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var imgs = document.querySelectorAll('img');
+        Array.prototype.forEach.call(imgs, function(el, i) {
+          if (el.tabIndex <= 0) el.tabIndex = 10000;
+        });
+      });
+    </script>
   </head>
   <body>
     <section class="soundness-pitch">
 
       <h1 class="pitch-title">Getting Started with SweetSpot</h1>
-      <p class="text soundness-text">Before running your first price test, we need to make sure SweetSpot is set-up correctly.</p>
+      <p class="text soundness-text">Before running your first price test, we need to make sure SweetSpot is set-up correctly. Following these three steps with screenshots, setting up only takes a few minutes. Can't figure it out, reach us at hello@wavelength.dev and we'll help you set up.</p>
 
-<pre>
-## Tagging prices
-Any element with a price inside should have an identifying class and attribute. In the default theme this means:
 
-1. SweetSpot needs to identify which variant a price belongs to. On pages that show variants we find it on the `variant`, on other pages we use the `product`. Add the following snippet to `product-price.liquid` to help SweetSpot do this.
-```liquid
-{{"{% if variant.sku %} 
-{%- assign sweetspot_id = variant.id -%}
-{% else %} 
-{%- assign sweetspot_id = product.first_available_variant.id -%}
-{% endif %}" | html }}
-```
+      <p class="text soundness-text">Start by opening up your store's code editor.</p>
+      <img class="getting-started-img" src="/img/getting-started/open-editor.png" alt="screenshot of how to open the shopify code editor">
 
-2. Add the class  `sweetspot__price` to the element containing the price.
-3. Add the id as a data attribute: `data-sweetspot-id={{ sweetspot_id }}`.
+      <h2>Step 1 - displaying a dynamic price</h2>
+      <p class="text soundness-text">Tag elements containing prices by adding the class <code>sweetspot__price—hidden</code> this will hide the price until SweetSpot decides what price to offer.</p>
+      <img class="getting-started-img" src="/img/getting-started/product-price.png" alt="screenshot showing where to add the price hiding class">
 
-## Hiding the price
-This step is optional but recommended. It ensures users don’t see prices change.
-1. Tag prices with `sweetspot__price--hidden`
-2. Add the following CSS to the theme.
-```css
+      <p class="text soundness-text">Secondly, SweetSpot needs to understand what product a price belongs to, this is achieved by adding the data attribute <code>{% raw %}data-sweetspot-id={{ variant.id }}{% endraw %}</code> for normal prices and <code>{% raw %}data-sweetspot-id={{ product.variants.first.id }}{% endraw %}</code> for listing prices. In the default Debut theme that price looks something like:</p>
+      <img class="getting-started-img" src="/img/getting-started/example-product-price.png" alt="screenshot showing a product page with a product price">
+      <p class="text soundness-text">the data attribute is added as follows</p>
+      <img class="getting-started-img" src="/img/getting-started/product-price-attribute.png" alt="screenshot showing where to add the sweetspot data attribute">
+
+      <p class="text soundness-text">Then we do the same for product listing prices. Here are two examples of where you find them.</p>
+      <img class="getting-started-img" src="/img/getting-started/example-product-price-listing-1.png" alt="screenshot of places where one finds product listings prices">
+      <img class="getting-started-img" src="/img/getting-started/example-product-price-listing-2.png" alt="screenshot of places where one finds product listings prices">
+      <img class="getting-started-img" src="/img/getting-started/product-price-listing.png" alt="screenshot showing where to add the price hiding class">
+      <img class="getting-started-img" src="/img/getting-started/product-price-listing-attribute.png" alt="screenshot showing where to add the sweetspot data attribute">
+
+      <h2>Step 2 - adding the right price to cart</h2>
+      <p class="text soundness-text">SweetSpot needs to decide what product should be added to cart. We do this by adding the <code>sweetspot__option</code> class to the hidden add to cart form. Find the <code>{{ "<select>" | escape }}</code> with the attribute <code>{% raw %}id="ProductSelect-{{ section.id }}"{% endraw %}</code></p>
+      <img class="getting-started-img" src="/img/getting-started/product-option.png" alt="screenshot showing where to add the sweetspot option class">
+
+      <h2>Step 3 - hiding the price in the first milliseconds</h2>
+      <p class="text soundness-text">In order for prices to be visually hidden until SweetSpot reveals them (happens quickly) we add some CSS to the class we created earlier in <code>theme.scss.liquid</code>. We add the following snippet in the place indicated in the screenshot.</p>
+      <pre>
 .sweetspot__price--hidden {
-  background: white;
-  color: white;
+  visibility: hidden;
 }
-```
+      </pre>
+      <img class="getting-started-img" src="/img/getting-started/price-hidden-css.png" alt="screenshot showing where to add the price hiding CSS">
 
-## Tagging the checkout options
-The default checkout uses a form to identify which product to add to cart. SweetSpot controls the checkout by inserting the correctly priced product to check out, depending on the experiment the buying user is in.
+      <h2>Ready to test</h2>
 
-1. Add `sweetspot__option` to the checkout `<option>` in `product-template.liquid`.
-</pre>
+      <p class="text soundness-text">That's all there is to it. SweetSpot is now ready to run price tests! Not using a common Shopify theme? Issues setting up? Message us at <a href="mailto:hello@wavelength.dev">hello@wavelength.dev</a> and we’ll help you set-up!</p>
 
-      <h2 class="pitch-title">Ready to test</h2>
-
-      <p class="text soundness-text">That's all there is to it. SweetSpot is now ready to run price tests! If you need further assistance with setting up, you can reach us at <a href="mailto:hello@wavelength.dev">hello@wavelength.dev</a>.</p>
+      <h2>Note</h2>
+      <p class="text soundness-text">When creating experiments SweetSpot creates duplicate products with test prices for people to buy. These products can be identified by the product-type <code>sweetspot-variant</code>. On install SweetSpot adds a condition to all smart collections to filter them out. When creating collections be mindful not to add these price testing products.</p>
     </section>
     <section class="soundness-pitch">
       <h2>Getting Started Video</h2>
 <p>Not clear yet? Check out this getting started video</p>
-<video class="getting-started-video" src="/img/getting-started.mp4" controls height="" width="" preload="none" autoplay="autoplay"></video>
+<video class="getting-started-video" src="/img/getting-started-2.mp4" controls height="" width="" preload="none" autoplay="autoplay"></video>
     </section>
     <div class="spacing-m"></div>
     <div class="last-two-sections">

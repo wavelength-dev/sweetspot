@@ -3,13 +3,14 @@ module SweetSpot.Shopify.Client where
 import Control.Lens hiding (Strict)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader.Class (asks)
-import Data.Aeson (Value)
+import Data.Aeson (ToJSON (..), Value)
 import Data.Aeson.Lens
 import Data.Aeson.Types (Result (..), parse, parseJSON)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import RIO hiding ((^.), view)
+import RIO hiding ((^.), to, view)
 import qualified RIO.Text as T
+import qualified RIO.Vector as V
 import Servant
 import Servant.API (toUrlPiece)
 import Servant.Client
@@ -22,6 +23,7 @@ import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Webhook
 import SweetSpot.Shopify.Pagination
 import SweetSpot.Shopify.Types
+import SweetSpot.Util (scientificToIntText)
 
 type ApiVersion = "2020-04"
 
@@ -91,6 +93,22 @@ type CreateScriptRoute =
     :> Header' '[Required] "X-Shopify-Access-Token" Text
     :> Post '[JSON] Value
 
+type GetSmartCollectionsRoute =
+  "admin" :> "api" :> ApiVersion :> "smart_collections.json"
+    :> QueryParam' '[Required, Strict] "limit" Int
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Get '[JSON] Value
+
+type UpdateSmartCollectionRoute =
+  "admin" :> "api" :> ApiVersion :> "smart_collections"
+    :> Capture "smartCollectionId" Text
+    :> ReqBody '[JSON] Value
+    :> Header' '[Required] "X-Shopify-Access-Token" Text
+    :> Put '[JSON] Value
+
+resultsPerPage :: Int
+resultsPerPage = 250
+
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
@@ -103,6 +121,7 @@ class Monad m => MonadShopify m where
   fetchAppChargeStatus :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
   activateAppCharge :: ShopDomain -> Text -> m (Either Text AppChargeStatus)
   createScript :: ShopDomain -> m (Either Text ())
+  hideVariants :: ShopDomain -> m (Either Text ())
 
 instance MonadShopify AppM where
   exchangeAccessToken domain code = do
@@ -254,6 +273,26 @@ instance MonadShopify AppM where
         Left err -> Left $ "Error creating script: " <> tshow err
         Right _ -> Right ()
 
+  hideVariants domain =
+    withClientEnvAndToken domain $ \clientEnv token -> do
+      let sweetspotRule = toJSON $ SmartCollectionRule "type" "not_equals" "sweetspot-variant"
+          getCollections = client (Proxy :: Proxy GetSmartCollectionsRoute)
+      res <- liftIO $ runClientM (getCollections resultsPerPage token) clientEnv
+      case res of
+        Left err -> pure $ Left $ "Error fetching SmartCollections: " <> tshow err
+        Right body -> do
+          let updateCollectionClient = client (Proxy :: Proxy UpdateSmartCollectionRoute)
+              withUpdatedRules = body & key "smart_collections" . values . _Object . at "rules" . _Just . _Array %~ (flip V.snoc sweetspotRule)
+              updateCollection value = liftIO $ runClientM (updateCollectionClient (id <> ".json") value token) clientEnv
+                where
+                  id = value ^?! key "id" . _Number . to scientificToIntText
+          results <- traverse updateCollection (withUpdatedRules ^?! key "smart_collections" . values . _Array)
+          pure $ case partitionEithers (V.toList results) of
+            ([], x : xs) -> Right ()
+            (errs, _) -> Left $ "Error updating SmartCollections: " <> mconcat txtErrs
+              where
+                txtErrs = fmap tshow errs
+
 withClientEnvAndToken ::
   ShopDomain ->
   (ClientEnv -> Text -> AppM (Either Text a)) ->
@@ -304,7 +343,7 @@ recursivelyFetchProducts ::
   [ShopProduct] ->
   AppM (Either Text [ShopProduct])
 recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
-  res <- liftIO $ runClientM (client mPageInfo pageLimit token) clientEnv
+  res <- liftIO $ runClientM (client mPageInfo resultsPerPage token) clientEnv
   case res of
     Left err -> Left ("Error getting products: " <> tshow err) & pure
     Right res -> do
@@ -320,7 +359,6 @@ recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
         (_, Right newProducts) -> Right (accumProducts <> newProducts) & pure
         (_, Left err) -> Left err & pure
   where
-    pageLimit = 250
     parseProducts body =
       let result =
             body ^? key "products"

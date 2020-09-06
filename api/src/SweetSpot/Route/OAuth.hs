@@ -88,6 +88,7 @@ redirectHandler (Code code) hmac _ nonce shopDomain =
           lift $ createShop shopDomain shopInfo permCode
           ExceptT $ createScript shopDomain
           ExceptT $ registerWebhooks shopDomain
+          ExceptT $ hideVariants shopDomain
           charge <- ExceptT $ createAppCharge shopDomain
           lift $ insertAppCharge shopDomain charge
         case result of

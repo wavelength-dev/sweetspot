@@ -89,7 +89,7 @@ setTestCheckout testMap = do
   let
     isTestPrice = case Map.findMin testMap of
       Nothing -> false
-      Just { value: { variantId, swapId }} -> variantId == swapId
+      Just { value: { variantId, swapId }} -> variantId /= swapId
   let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements

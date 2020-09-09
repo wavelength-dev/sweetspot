@@ -94,7 +94,7 @@ setTestCheckout testMap = do
   let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements
-      when ((isEstablishedTitles || isLibertyPrice) && isTestPrice) setOptionTexts
+      when ((isEstablishedTitles || isLibertyPrice) && isTestPrice) setOptionTexts *> setLabelTexts
   unless isDryRun execute
   when (isDryRun && isDebugging) execute
 

@@ -7,6 +7,7 @@ import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (findMin, fromFoldable, lookup) as Map
 import Data.Maybe (Maybe(..))
+import Data.String as String
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -202,10 +203,10 @@ setLabelTexts =
   Site.queryDocument (QuerySelector "label")
     <#> map Element.toNode
     >>= traverse_ \node -> do
-        text <- Node.textContent node
+        text <- Node.textContent node <#> String.trim
         case lookup labelTextMap text of
           -- don't recoginze the element, do nothing.
-          Nothing -> pure unit
+          Nothing -> mempty
           Just swapText -> Node.setTextContent swapText node
   where
   lookup = flip Map.lookup

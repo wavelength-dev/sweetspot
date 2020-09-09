@@ -20,7 +20,8 @@ import Fulcrum.Logger (log, logWithContext) as Logger
 import Fulcrum.Site (getIsDebugging, getIsDryRun, getUrlParam, onElementsMutation, queryDocument, readHostname) as Site
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Element)
-import Web.DOM.Element (getAttribute, setAttribute) as Element
+import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
+import Web.DOM.Node as Node
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.HTML (HTMLOptionElement)
 import Web.HTML.HTMLOptionElement (setText, text) as HTMLOptionElement
@@ -89,7 +90,7 @@ setTestCheckout testMap = do
   let
     isTestPrice = case Map.findMin testMap of
       Nothing -> false
-      Just { value: { variantId, swapId }} -> variantId /= swapId
+      Just { value: { variantId, swapId } } -> variantId /= swapId
   let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements
@@ -154,21 +155,31 @@ registerOnSelectVariant testMap =
             [ el ]
 
 -- Maps a form variant option text to another for Established Titles
-type VariantOptionMap
+type OptionTextMap
   = Map String String
 
-selectTextMap :: VariantOptionMap
-selectTextMap =
+optionTextMap :: OptionTextMap
+optionTextMap =
   Map.fromFoldable
-    [ Tuple "1 Sq Ft" "1 Sq Ft"
-    , Tuple "5 Sq Ft (+$160)" "5 Sq Ft (+$150)"
-    , Tuple "10 Sq Ft (+$300)" "10 Sq Ft (+$290)"
-    , Tuple "Digital Only" "Digital Only"
-    , Tuple "Add Print +$30" "Add Print +$20"
-    , Tuple "No" "No"
-    , Tuple "Yes +$59" "Yes +$49"
+    -- [ Tuple "1 Sq Ft" "1 Sq Ft"
+    -- , Tuple "5 Sq Ft (+$160)" "5 Sq Ft (+$150)"
+    -- , Tuple "10 Sq Ft (+$300)" "10 Sq Ft (+$290)"
+    -- , Tuple "Digital Only" "Digital Only"
+    [ Tuple "Add Print +$30" "Add Print +$20"
+    -- , Tuple "No" "No"
+    -- , Tuple "Yes +$59" "Yes +$59"
     -- liberty price test option
     , Tuple "custom" "custom +$5"
+    ]
+
+-- Maps a form variant option label text to another for Established Titles
+type LabelTextMap
+  = Map String String
+
+labelTextMap :: LabelTextMap
+labelTextMap =
+  Map.fromFoldable
+    [ Tuple "Add a Printed Certificate for $30?" "Add a Printed Certificate for $20?"
     ]
 
 setOptionTexts :: Effect Unit
@@ -179,10 +190,23 @@ setOptionTexts =
     <#> map unsafeToOption
     >>= traverse_ \optionElement -> do
         mTargetText <- HTMLOptionElement.text optionElement
-        case lookup selectTextMap mTargetText of
+        case lookup optionTextMap mTargetText of
           -- TODO: use exceptT with logging
           Nothing -> Logger.log Warn "unrecognized variant option"
           Just swapText -> HTMLOptionElement.setText swapText optionElement
+  where
+  lookup = flip Map.lookup
+
+setLabelTexts :: Effect Unit
+setLabelTexts =
+  Site.queryDocument (QuerySelector "label")
+    <#> map Element.toNode
+    >>= traverse_ \node -> do
+        text <- Node.textContent node
+        case lookup labelTextMap text of
+          -- don't recoginze the element, do nothing.
+          Nothing -> pure unit
+          Just swapText -> Node.setTextContent swapText node
   where
   lookup = flip Map.lookup
 

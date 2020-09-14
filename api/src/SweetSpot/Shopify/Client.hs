@@ -294,11 +294,10 @@ instance MonadShopify AppM where
                   payload = value ^?! key "rules" . _JSON @Value @[SmartCollectionRule] & SmartCollectionRuleUpdate
               updates = withUpdatedRules ^?! key "smart_collections" . _Array
           results <- traverse updateCollection updates
-          pure $ case partitionEithers (V.toList results) of
-            ([], x : xs) -> Right ()
-            (errs, _) -> Left $ "Error updating SmartCollections: " <> mconcat txtErrs
-              where
-                txtErrs = fmap tshow errs
+          case partitionEithers (V.toList results) of
+            (errs, _) -> do
+              unless (null errs) (L.warn $ "Errors while hiding variants: " <> tshow errs)
+              pure $ Right ()
 
 withClientEnvAndToken ::
   ShopDomain ->

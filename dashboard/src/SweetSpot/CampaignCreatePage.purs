@@ -288,14 +288,23 @@ mkCampaignCreatePage = do
                               , type: "text"
                               }
                           , Spacing.large
-                          , element Shopify.button
-                              { onClick: notNull $ mkEffectFn1 $ const $ setIsProductPickerVisible true
-                              , children: [ R.text "Select products" ]
-                              , primary: false
-                              , submit: false
-                              , url: null
-                              , loading: false
-                              , disabled: false
+                          , R.div
+                              { className: styles.selectProductsContainer
+                              , children:
+                                  [ element Shopify.button
+                                      { onClick: notNull $ mkEffectFn1 $ const $ setIsProductPickerVisible true
+                                      , children: [ R.text "Select products" ]
+                                      , primary: false
+                                      , submit: false
+                                      , url: null
+                                      , loading: false
+                                      , disabled: false
+                                      }
+                                  , R.div
+                                      { className: styles.eligibilityMessage
+                                      , children: [ R.text "All variants of a product need to have an SKU for it to be eligible for an experiment." ]
+                                      }
+                                  ]
                               }
                           , element Shopify.card
                               { title: "Products to test"

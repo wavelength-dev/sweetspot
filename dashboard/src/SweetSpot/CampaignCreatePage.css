@@ -13,3 +13,12 @@
 .confirmText {
   margin-bottom: 1em;
 }
+
+.selectProductsContainer {
+  display: flex;
+  align-items: center;
+}
+
+.eligibilityMessage {
+  margin-left: 1em;
+}

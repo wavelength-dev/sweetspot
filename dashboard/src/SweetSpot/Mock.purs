@@ -62,7 +62,7 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignName: "Expensive Jackets, Cheap Monkeys"
     , _uiCampaignLift: Just $ InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
     , _uiCampaignAOVChange: Just $ 0.9531
-    , _uiCampaignCRChange:  Just $1.074074074
+    , _uiCampaignCRChange: Just $ 1.074074074
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: Just $ 6.4e-2
@@ -104,7 +104,7 @@ bonoboHat =
   Product
     { _productId: "bonobo-shopify-product-id"
     , _productTitle: "Bonobo"
-    , _productImage: Image { _imageSrc: "aoeusnth" }
+    , _productImage: Just $ Image { _imageSrc: "aoeusnth" }
     , _productVariants:
         [ Variant
             { _variantId: "bonobo-shopify-variant-id"

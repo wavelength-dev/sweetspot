@@ -4,7 +4,9 @@ import Partial.Unsafe (unsafeCrashWith)
 
 foreign import rawAppEnv :: String
 
-data AppEnv = Local | Remote
+data AppEnv
+  = Local
+  | Remote
 
 appEnv :: AppEnv
 appEnv = case rawAppEnv of

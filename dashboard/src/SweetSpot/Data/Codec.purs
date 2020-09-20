@@ -1,12 +1,11 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
-
 import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
-import Data.Argonaut.Decode ((.:))
+import Data.Argonaut.Decode ((.:), (.:?))
 import Data.DateTime (DateTime)
-import Data.Either (Either(..), note)
+import Data.Either (Either(..), hush, note)
 import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
@@ -15,19 +14,19 @@ import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..)
 
 decodeInfResult :: Json -> Either String (Maybe InfResult)
 decodeInfResult json =
-  (
-    do
+  ( do
       o <- decodeJson json
       lb <- o .: "_lowerBound"
       ub <- o .: "_upperBound"
       mean <- o .: "_mean"
-      pure $ Just $
-        InfResult
+      pure $ Just
+        $ InfResult
             { _lowerBound: lb
             , _upperBound: ub
             , _mean: mean
             }
-  ) <|> pure Nothing
+  )
+    <|> pure Nothing
 
 decodeUITreatmentVariant :: Json -> Either String UITreatmentVariant
 decodeUITreatmentVariant json = do
@@ -126,7 +125,11 @@ decodeProduct json = do
   pid <- o .: "_productId"
   title <- o .: "_productTitle"
   variants <- o .: "_productVariants" >>= traverse decodeVariant
-  image <- o .: "_productImage" >>= decodeImage
+  image <-
+    o .:? "_productImage"
+      >>= case _ of
+          Just json -> decodeImage json # hush >>> Right
+          Nothing -> Right Nothing
   pure
     $ Product
         { _productId: pid

@@ -1,7 +1,6 @@
 module SweetSpot.Session where
 
 import Prelude
-
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import SweetSpot.QueryString (findParam, parseQueryString) as QueryString

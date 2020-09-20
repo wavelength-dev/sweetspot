@@ -14,30 +14,37 @@ import SweetSpot.Data.Common (MoneyFormat)
 import SweetSpot.Shopify.Types
 import SweetSpot.Util (formatPrice)
 
-fromShopImage :: ShopImage -> Image
-fromShopImage img =
-  Image {_imageSrc = img ^. shopImageSrc}
+fromShopImage :: Maybe ShopImage -> Maybe Image
+fromShopImage = fmap (\img -> Image {_imageSrc = img ^. shopImageSrc})
 
-fromShopVariant :: Text -> MoneyFormat -> ShopVariant -> Variant
+fromShopVariant :: Text -> MoneyFormat -> ShopVariant -> Maybe Variant
 fromShopVariant productTitle fmt v =
-  Variant
-    { _variantId = v ^. shopVariantId,
-      _variantProductId = v ^. shopVariantProductId,
-      _variantTitle = v ^. shopVariantTitle,
-      _variantProductTitle = productTitle,
-      _variantSku = v ^. shopVariantSku,
-      _variantPrice = v ^. shopVariantPrice & formatPrice fmt
-    }
+  ( \sku ->
+      Variant
+        { _variantId = v ^. shopVariantId,
+          _variantProductId = v ^. shopVariantProductId,
+          _variantTitle = v ^. shopVariantTitle,
+          _variantProductTitle = productTitle,
+          _variantSku = sku,
+          _variantPrice = v ^. shopVariantPrice & formatPrice fmt
+        }
+  )
+    <$> view shopVariantSku v
 
-fromShopProduct :: MoneyFormat -> ShopProduct -> Product
+fromShopProduct :: MoneyFormat -> ShopProduct -> Maybe Product
 fromShopProduct fmt p =
-  Product
-    { _productId = p ^. shopProductId,
-      _productTitle = productTitle,
-      _productImage = p ^. shopProductImage & fromShopImage,
-      _productVariants =
-        p ^. shopProductVariants
-          & L.map (fromShopVariant productTitle fmt)
-    }
+  view shopProductVariants p
+    & ( L.map (fromShopVariant title fmt)
+          >>> sequence
+          >>> fmap
+            ( \variants ->
+                Product
+                  { _productId = p ^. shopProductId,
+                    _productTitle = title,
+                    _productImage = p ^. shopProductImage & fromShopImage,
+                    _productVariants = variants
+                  }
+            )
+      )
   where
-    productTitle = p ^. shopProductTitle
+    title = p ^. shopProductTitle

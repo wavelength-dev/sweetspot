@@ -1,7 +1,6 @@
 module SweetSpot.CampaignViewPage where
 
 import Prelude
-
 import Data.Array (zip) as Array
 import Data.DateTime (DateTime)
 import Data.DateTime as DateTime
@@ -53,7 +52,7 @@ startingDate dateTime status =
   R.div
     { className: styles.statusItem
     , children:
-      [ R.p { className: styles.statusItem__title, children: [ R.text $ formatDate <$> dateTime # fromMaybe "-" ] }
+        [ R.p { className: styles.statusItem__title, children: [ R.text $ formatDate <$> dateTime # fromMaybe "-" ] }
         , Spacing.small
         , R.p { className: styles.statusItem__subtitle, children: [ R.text "started" ] }
         ]
@@ -70,14 +69,16 @@ age now mStart mEnd =
         ]
     }
   where
-    description = case mEnd of
-      Nothing -> "age"
-      Just _ -> "ended"
-    value = case mEnd of
-      Nothing -> (DateTime.diff now <$> mStart :: Maybe Days)
-                    <#> (\(Days d) -> d # abs >>> floor >>> show >>> (_ <> " days"))
-                    # fromMaybe "-"
-      Just end -> formatDate end
+  description = case mEnd of
+    Nothing -> "age"
+    Just _ -> "ended"
+
+  value = case mEnd of
+    Nothing ->
+      (DateTime.diff now <$> mStart :: Maybe Days)
+        <#> (\(Days d) -> d # abs >>> floor >>> show >>> (_ <> " days"))
+        # fromMaybe "-"
+    Just end -> formatDate end
 
 data Direction
   = Up
@@ -133,26 +134,27 @@ mkCampaignViewPage = do
 
       conversionChange = view uiCampaignCRChange campaign
 
-      onStopCampaign = liftEffect (setLoading true)
-                        *> Service.stopCampaign sessionId campaignId
-                        *> liftEffect (setLoading false *> window >>= location >>= reload)
-                        # Aff.launchAff_
+      onStopCampaign =
+        liftEffect (setLoading true)
+          *> Service.stopCampaign sessionId campaignId
+          *> liftEffect (setLoading false *> window >>= location >>= reload)
+          # Aff.launchAff_
     pure
       $ element Shopify.page
           { title: notNull name
           , subtitle: null
           , breadcrumbs: [ { content: "Experiment list", url: "#/" } ]
           , primaryAction:
-              if isJust (campaign ^. uiCampaignEnd)
-                 then null
-                 else
-                  notNull
-                    { content: "Stop Experiment"
-                    , url: null
-                    , primary: false
-                    , onAction: notNull onStopCampaign
-                    , loading: loading
-                    }
+              if isJust (campaign ^. uiCampaignEnd) then
+                null
+              else
+                notNull
+                  { content: "Stop Experiment"
+                  , url: null
+                  , primary: false
+                  , onAction: notNull onStopCampaign
+                  , loading: loading
+                  }
           , children:
               [ R.div
                   { className: styles.status

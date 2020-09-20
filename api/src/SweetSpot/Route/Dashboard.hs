@@ -12,7 +12,6 @@ import RIO hiding ((^.), to, view)
 import qualified RIO.HashMap as HM
 import qualified RIO.List as L
 import RIO.Partial (fromJust)
-import qualified RIO.Text as T
 import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api
@@ -61,8 +60,14 @@ getProductsHandler id = runAppM $ do
           moneyFormat <- unsafeGetShopMoneyFormat domain
           return $
             ps
-              & L.filter ((/= "sweetspot-variant") . (^. shopProductType))
-              & L.map (fromShopProduct moneyFormat)
+              & L.filter
+                ( view shopProductType
+                    >>> ( \case
+                            Nothing -> True
+                            Just productType -> productType /= "sweetspot-variant"
+                        )
+                )
+              & mapMaybe (fromShopProduct moneyFormat)
         Left err -> do
           Log.error err
           throwError internalServerErr
@@ -90,59 +95,61 @@ createCampaignExperiment domain cmpId ce = do
   mJson <- fetchProductJson domain (ce ^. createExperimentProductId)
   case mJson of
     Left err -> do
-      Log.error err
+      Log.error $ "Failed to fetch product json " <> err
       throwError internalServerErr
     Right json -> do
-      let mControlProduct = parse parseJSON $ json ^?! key "product"
-          variantPrices = ce ^. createExperimentVariants
-          withNewPrice =
-            json
-              & key "product" . key "variants" . values . _Object
-              %~ ( \variant ->
-                     let variantId = variant ^?! at "id" . _Just . _Number . to scientificToIntText
-                         newPrice =
-                           L.find (view createVariantSvid >>> (\(Svid txt) -> txt) >>> (==) variantId) variantPrices
-                             & fromJust
-                             & view createVariantPrice
-                             & showText
-                             & String
-                      in HM.insert "price" newPrice variant
-                 )
-              & key "product" . key "handle" . _String <>~ "-ssv"
-              & key "product" . key "product_type" . _String .~ "sweetspot-variant"
-              & key "product" . key "images" . values . key "variant_ids" .~ Null
-              & key "product" . key "variants" . values . key "image_id" .~ Null
-      mNewProduct <- createProduct domain withNewPrice
-      case (mControlProduct, mNewProduct) of
-        (Success controlProduct, Right newProduct) -> do
-          let controlVariant = controlProduct ^?! shopProductVariants . ix 0
-              testVariant = newProduct ^?! shopProductVariants . ix 0
-              controlPrice = controlVariant ^. shopVariantPrice
-              testPrice = testVariant ^. shopVariantPrice
-              createDbExperiment :: Int -> ShopVariant -> AppM ()
-              createDbExperiment treatment variant = createExperiment args
-                where
-                  args =
-                    InsertExperiment
-                      { _insertExperimentSku = variant ^. shopVariantSku,
-                        _insertExperimentSvid = variant ^. shopVariantId,
-                        _insertExperimentProductId = variant ^. shopVariantProductId,
-                        _insertExperimentPrice = variant ^. shopVariantPrice,
-                        _insertExperimentShopDomain = domain,
-                        _insertExperimentCampaignId = cmpId,
-                        _insertExperimentProductName = controlProduct ^. shopProductTitle,
-                        _insertExperimentTreatment = treatment
-                      }
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 0) controlProduct
-          traverseOf_ (shopProductVariants . traversed) (createDbExperiment 1) newProduct
-          Log.info "Created experiment(s)"
-          return ()
-        (Error err, _) -> do
-          Log.error $ "Failed to parse control product " <> T.pack err
-          return ()
-        (_, Left err) -> do
-          Log.error $ "Failed to create test product " <> err
-          return ()
+      let mControlProduct = json ^?! key "product" . to (parse parseJSON) :: Result ShopProductWithSkus
+      case mControlProduct of
+        Error str -> do
+          Log.error $ "Failed to parse control product " <> tshow str
+          throwError $ err400 {errBody = "Failed to parse control product"}
+        Success controlProduct -> do
+          let variantPrices = ce ^. createExperimentVariants
+              withNewPrice =
+                json
+                  & key "product" . key "variants" . values . _Object
+                  %~ ( \variant ->
+                         let variantId = variant ^?! at "id" . _Just . _Number . to scientificToIntText
+                             newPrice =
+                               L.find (view createVariantSvid >>> (\(Svid txt) -> txt) >>> (==) variantId) variantPrices
+                                 & fromJust
+                                 & view createVariantPrice
+                                 & showText
+                                 & String
+                          in HM.insert "price" newPrice variant
+                     )
+                  & key "product" . key "handle" . _String <>~ "-ssv"
+                  & key "product" . key "product_type" . _String .~ "sweetspot-variant"
+                  & key "product" . key "images" . values . key "variant_ids" .~ Null
+                  & key "product" . key "variants" . values . key "image_id" .~ Null
+          mNewProduct <- createProduct domain withNewPrice
+          case mNewProduct of
+            Right newProduct -> do
+              let controlVariant = controlProduct ^?! shopProductWithSkusVariants . ix 0
+                  testVariant = newProduct ^?! shopProductWithSkusVariants . ix 0
+                  controlPrice = controlVariant ^. shopVariantWithSkuPrice
+                  testPrice = testVariant ^. shopVariantWithSkuPrice
+                  createDbExperiment :: Int -> ShopVariantWithSku -> AppM ()
+                  createDbExperiment treatment variant = createExperiment args
+                    where
+                      args =
+                        InsertExperiment
+                          { _insertExperimentSku = variant ^. shopVariantWithSkuSku,
+                            _insertExperimentSvid = variant ^. shopVariantWithSkuId,
+                            _insertExperimentProductId = variant ^. shopVariantWithSkuProductId,
+                            _insertExperimentPrice = variant ^. shopVariantWithSkuPrice,
+                            _insertExperimentShopDomain = domain,
+                            _insertExperimentCampaignId = cmpId,
+                            _insertExperimentProductName = controlProduct ^. shopProductWithSkusTitle,
+                            _insertExperimentTreatment = treatment
+                          }
+              traverseOf_ (shopProductWithSkusVariants . traversed) (createDbExperiment 0) controlProduct
+              traverseOf_ (shopProductWithSkusVariants . traversed) (createDbExperiment 1) newProduct
+              Log.info "Created experiment(s)"
+              return ()
+            Left err -> do
+              Log.error $ "Failed to create test product " <> err
+              return ()
 
 stopCampaignHandler :: CampaignId -> SessionId -> ServerM OkResponse
 stopCampaignHandler campaignId sessionId = runAppM $ do

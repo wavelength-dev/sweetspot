@@ -115,7 +115,7 @@ class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
   fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
-  createProduct :: ShopDomain -> Value -> m (Either Text ShopProduct)
+  createProduct :: ShopDomain -> Value -> m (Either Text ShopProductWithSkus)
   deleteProduct :: ShopDomain -> Pid -> m (Either Text ())
   registerWebhooks :: ShopDomain -> m (Either Text ())
   fetchShopInfo :: Text -> ShopDomain -> m (Either Text ShopInfo)

@@ -65,7 +65,7 @@ data Product
       { _productId :: !Pid,
         _productTitle :: !Text,
         _productVariants :: ![Variant],
-        _productImage :: !Image
+        _productImage :: !(Maybe Image)
       }
   deriving (Eq, Generic, Show)
 

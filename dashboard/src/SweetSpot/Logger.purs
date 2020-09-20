@@ -30,19 +30,16 @@ logError = case Env.appEnv of
   Remote -> Datadog.logError
 
 logInfoContext :: forall a. String -> a -> Effect Unit
-logInfoContext msg context =
-    case Env.appEnv of
-      Local -> runEffectFn2 jsLogInfo msg context
-      Remote -> Datadog.logInfoContext msg context
+logInfoContext msg context = case Env.appEnv of
+  Local -> runEffectFn2 jsLogInfo msg context
+  Remote -> Datadog.logInfoContext msg context
 
 logWarnContext :: forall a. String -> a -> Effect Unit
-logWarnContext msg context =
-    case Env.appEnv of
-      Local -> runEffectFn2 jsLogWarn msg context
-      Remote -> Datadog.logWarnContext msg context
+logWarnContext msg context = case Env.appEnv of
+  Local -> runEffectFn2 jsLogWarn msg context
+  Remote -> Datadog.logWarnContext msg context
 
 logErrorContext :: forall a. String -> a -> Effect Unit
-logErrorContext msg context =
-    case Env.appEnv of
-      Local -> runEffectFn2 jsLogError msg context
-      Remote -> Datadog.logErrorContext msg context
+logErrorContext msg context = case Env.appEnv of
+  Local -> runEffectFn2 jsLogError msg context
+  Remote -> Datadog.logErrorContext msg context

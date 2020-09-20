@@ -292,7 +292,7 @@ data ShopVariant
       { _shopVariantId :: !Svid,
         _shopVariantProductId :: !Pid,
         _shopVariantTitle :: !Text,
-        _shopVariantSku :: !Sku,
+        _shopVariantSku :: !(Maybe Sku),
         _shopVariantPrice :: !Price
       }
   deriving (Eq, Generic, Show)
@@ -318,6 +318,37 @@ instance FromJSON ShopVariant where
         }
 
 -- | ---------------------------------------------------------------------------
+-- | ShopVariantWithSku
+-- | ---------------------------------------------------------------------------
+data ShopVariantWithSku
+  = ShopVariantWithSku
+      { _shopVariantWithSkuId :: !Svid,
+        _shopVariantWithSkuProductId :: !Pid,
+        _shopVariantWithSkuTitle :: !Text,
+        _shopVariantWithSkuSku :: !Sku,
+        _shopVariantWithSkuPrice :: !Price
+      }
+  deriving (Eq, Show)
+
+makeLenses ''ShopVariantWithSku
+
+instance FromJSON ShopVariantWithSku where
+  parseJSON = withObject "ShopVariantWithSku" $ \v -> do
+    id <- v .: "id"
+    productId <- v .: "product_id"
+    title <- v .: "title"
+    sku <- v .: "sku"
+    price <- v .: "price"
+    return
+      ShopVariantWithSku
+        { _shopVariantWithSkuId = id & showText @Int & Svid,
+          _shopVariantWithSkuProductId = productId & showText @Int & Pid,
+          _shopVariantWithSkuTitle = title,
+          _shopVariantWithSkuSku = sku,
+          _shopVariantWithSkuPrice = price & read @Scientific & Price
+        }
+
+-- | ---------------------------------------------------------------------------
 -- | ShopProduct
 -- | ---------------------------------------------------------------------------
 data ShopProduct
@@ -325,8 +356,8 @@ data ShopProduct
       { _shopProductId :: !Pid,
         _shopProductTitle :: !Text,
         _shopProductVariants :: ![ShopVariant],
-        _shopProductImage :: !ShopImage,
-        _shopProductType :: !Text
+        _shopProductImage :: !(Maybe ShopImage),
+        _shopProductType :: !(Maybe Text)
       }
   deriving (Eq, Generic, Show)
 
@@ -339,7 +370,7 @@ instance FromJSON ShopProduct where
     id <- v .: "id"
     title <- v .: "title"
     variants <- v .: "variants" >>= traverse parseJSON
-    image <- (v .: "image" >>= parseJSON) <|> pure ShopImage {_shopImageSrc = "notfound.jpg"}
+    image <- v .: "image" >>= parseJSON
     productType <- v .: "product_type"
     return
       ShopProduct
@@ -348,6 +379,37 @@ instance FromJSON ShopProduct where
           _shopProductVariants = variants,
           _shopProductImage = image,
           _shopProductType = productType
+        }
+
+-- | ---------------------------------------------------------------------------
+-- | ShopProductWithSkus
+-- | ---------------------------------------------------------------------------
+data ShopProductWithSkus
+  = ShopProductWithSkus
+      { _shopProductWithSkusId :: !Pid,
+        _shopProductWithSkusTitle :: !Text,
+        _shopProductWithSkusVariants :: ![ShopVariantWithSku],
+        _shopProductWithSkusImage :: !(Maybe ShopImage),
+        _shopProductWithSkusType :: !(Maybe Text)
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''ShopProductWithSkus
+
+instance FromJSON ShopProductWithSkus where
+  parseJSON = withObject "ShopProductWithSkus" $ \v -> do
+    id <- v .: "id"
+    title <- v .: "title"
+    variants <- v .: "variants" >>= traverse parseJSON
+    image <- v .: "image" >>= parseJSON
+    productType <- v .: "product_type"
+    return
+      ShopProductWithSkus
+        { _shopProductWithSkusId = id & showText @Int & Pid,
+          _shopProductWithSkusTitle = title,
+          _shopProductWithSkusVariants = variants,
+          _shopProductWithSkusImage = image,
+          _shopProductWithSkusType = productType
         }
 
 -- | ---------------------------------------------------------------------------

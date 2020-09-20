@@ -14,7 +14,9 @@ import Servant
 import SweetSpot.AppM (AppM (..), ServerM)
 import SweetSpot.Data.Api (OkResponse (..))
 import SweetSpot.Data.Common (ActionRequestType (..))
+import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
+import qualified SweetSpot.Logger as L
 import SweetSpot.Shopify.Types
 
 type AppUninstalledRoute =
@@ -49,13 +51,17 @@ appUninstalledHandler (AppUninstalledReq domain) =
     uninstallShop domain >> return OkResponse {message = "Shop successfully uninstalled"}
 
 redactShopHandler :: RedactShop -> ServerM OkResponse
-redactShopHandler payload =
-  runAppM $
-    insertActionRequest
-      (payload ^. redactShopDomain)
-      RedactShopType
-      (toJSON payload)
-      >> return OkResponse {message = "Request received"}
+redactShopHandler payload = runAppM $ do
+  mShopId <- validateShopDomain domain
+  case mShopId of
+    Just _ -> do
+      insertActionRequest domain RedactShopType (toJSON payload)
+      pure OkResponse {message = "Request received"}
+    Nothing -> do
+      L.warn $ "Received RedactShop request for non-existent shop " <> tshow domain
+      pure OkResponse {message = "Request received"}
+  where
+    domain = payload ^. redactShopDomain
 
 redactCustomerHandler :: RedactCustomer -> ServerM OkResponse
 redactCustomerHandler payload =

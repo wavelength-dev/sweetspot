@@ -12,7 +12,6 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Fulcrum (FulcrumDB (..))
 import qualified SweetSpot.Logger as L
-import SweetSpot.Route.Util (badRequestErr)
 import SweetSpot.Shopify.Types
 
 type UserTestRoute =

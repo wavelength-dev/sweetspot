@@ -57,7 +57,7 @@ userCheckoutHandler domain payload = runAppM $ do
     (_, _, True) -> pure OkResponse {message = "Checkout received"}
     _ -> do
       L.error $ "Unable to register checkout for " <> tshow domain <> ", user " <> tshow uid
-      throwError badRequestErr
+      pure OkResponse {message = "Checkout received"}
 
 fulcrumHandler =
   getUserTestHandler :<|> userCheckoutHandler

@@ -1,13 +1,11 @@
 module SweetSpot.CampaignCreatePage where
 
 import Prelude
-import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Lens (view, (^.), over, traversed, filtered, (^..), folded)
 import Data.Maybe (Maybe(..))
-import Data.Maybe as Maybe
 import Data.Nullable (notNull, null)
 import Data.Number (fromString) as Number
 import Data.String (Pattern(..))
@@ -214,22 +212,26 @@ mkCampaignCreatePage = do
       unsafeGetProductById :: String -> Product
       unsafeGetProductById id = unsafePartial $ Array.unsafeIndex props.products 0
 
-      -- Updates the variant rows to match the selected variants.
-      -- We can't recreate variant rows because existing ones might have a modified test price.
-      updateVariantRowsWithSelected :: Array Product -> Array VariantRow
-      updateVariantRowsWithSelected = Array.concatMap productToVariantRows >>> Array.filter (alreadySelected >>> not)
-        where
-        alreadySelected :: VariantRow -> Boolean
-        alreadySelected vr = Array.find (_.id >>> eq vr.id) variantRows # Maybe.isJust
+      selectedVariantIds :: Array String
+      selectedVariantIds = map _.productId variantRows
 
       -- Takes a new list of variants to test and updates our variant rows
       onSelectedVariantsUpdated :: Array String -> Effect Unit
-      onSelectedVariantsUpdated newProductIdsToTest = updateVariantRowsWithSelected products # setVariantRows
+      onSelectedVariantsUpdated newProductIdsToTest = setVariantRows updatedVariantRows
         where
-        products =
-          Array.filter
-            (view productId >>> flip Array.elem newProductIdsToTest)
+        additions = Array.difference newProductIdsToTest selectedVariantIds
+
+        removals = Array.difference selectedVariantIds newProductIdsToTest
+
+        -- When adding, append and don't touch existing variant rows.
+        -- When removing, filter existing
+        updatedVariantRows = case additions # Array.null >>> not of
+          true ->
             props.products
+              # Array.filter (view productId >>> flip Array.elem additions)
+              >>> Array.concatMap productToVariantRows
+              >>> append variantRows
+          false -> Array.filter (_.productId >>> flip Array.elem removals >>> not) variantRows
 
       -- Takes a new test price and updates the variant rows with a new row with the new test price
       updateVariantRowsWithTestPrice :: VariantRow -> String -> Array VariantRow
@@ -241,9 +243,6 @@ mkCampaignCreatePage = do
 
       mkSetVariantTestPrice :: VariantRow -> String -> Effect Unit
       mkSetVariantTestPrice targetVariantRow newPrice = updateVariantRowsWithTestPrice targetVariantRow newPrice # setVariantRows
-
-      selectedVariantIds :: Array String
-      selectedVariantIds = map _.productId variantRows
 
       isValidCreateCampaign :: Boolean
       isValidCreateCampaign = Array.all (_.testPriceValidation >>> isValidPrice) variantRows
@@ -259,19 +258,18 @@ mkCampaignCreatePage = do
                   , title: "Products to test"
                   , onClose: mkEffectFn1 $ const $ setIsProductPickerVisible false
                   , children:
-                      ( (flip mapWithIndex) props.products \i product ->
-                          element Shopify.modalSection
-                            { key: show i
-                            , children:
-                                [ element Shopify.optionList
-                                    { onChange: mkEffectFn1 onSelectedVariantsUpdated
-                                    , options: [ productToOption product ]
-                                    , selected: selectedVariantIds
-                                    , allowMultiple: true
-                                    }
-                                ]
-                            }
-                      )
+                      [ element Shopify.modalSection
+                          { key: "0"
+                          , children:
+                              [ element Shopify.optionList
+                                  { onChange: mkEffectFn1 onSelectedVariantsUpdated
+                                  , options: map productToOption props.products
+                                  , selected: selectedVariantIds
+                                  , allowMultiple: true
+                                  }
+                              ]
+                          }
+                      ]
                   }
               , element Shopify.form
                   { onSubmit: mkEffectFn1 (const mempty)

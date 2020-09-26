@@ -2,68 +2,29 @@ module Fulcrum.Main where
 
 import Prelude
 import Control.Monad.Cont (lift)
-import Control.Monad.Except (ExceptT, except, runExceptT, throwError)
-import Data.DateTime (diff) as DateTime
+import Control.Monad.Except (except, runExceptT, throwError)
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Time.Duration (Days(..))
 import Effect (Effect)
 import Effect.AVar as AVar
-import Effect.Aff (Aff, Error, Milliseconds(..), error, runAff_)
+import Effect.Aff (Aff, Error, Milliseconds(..))
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (catchException)
-import Effect.Now as Now
-import Fulcrum.Cache (TestMapsCache(..))
-import Fulcrum.Cache as Cache
 import Fulcrum.Checkout (setTestCheckout, registerOnSelectVariant) as Checkout
 import Fulcrum.Data (TestMapByVariant)
-import Fulcrum.Data (hashMapFromTestMaps) as Data
 import Fulcrum.Logger (LogLevel(..))
 import Fulcrum.Logger (log, logWithContext) as Logger
 import Fulcrum.RunState (getIsRunning, getRunQueue, getTestContext, initRunQueue, initTestContext, setIsRunning) as RunState
 import Fulcrum.RuntimeDependency (getIsRuntimeAdequate) as RuntimeDependency
-import Fulcrum.Service (TestMapProvisions(..))
-import Fulcrum.Service as Service
 import Fulcrum.Site (awaitDomReady)
 import Fulcrum.Site (getIsDebugging, getIsDryRun, getIsPricePage, readHostname) as Site
+import Fulcrum.TestMap (getTestMap) as TestMap
 import Fulcrum.TestPrice (applyTestPrices, observeTestPrices, revealAllPrices) as TestPrice
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
-
--- uses test maps with < 1 day age when available
--- always updates the cache in the background
-getTestMap :: UserId -> ExceptT String Aff TestMapByVariant
-getTestMap userId = do
-  now <- Now.nowDateTime # liftEffect
-  mapsCache <- Cache.getCachedTestMaps # liftEffect >>= except
-  case mapsCache of
-    EmptyCache -> do
-      testMaps <- Service.fetchTestMaps (OnlyUserId userId) # lift >>= except
-      Cache.setCachedTestMaps { created: now, testMaps } # liftEffect
-      Data.hashMapFromTestMaps testMaps # pure
-    CachedMaps { created, testMaps } -> do
-      let
-        isFresh = DateTime.diff created now < (Days 1.0)
-      if isFresh then do
-        -- fetch latest maps in the background
-        runAff_ logResult do
-          eNewTestMaps <- Service.fetchTestMaps (OnlyUserId userId)
-          case eNewTestMaps of
-            Left msg -> Aff.throwError (error msg)
-            Right newTestMaps -> Cache.setCachedTestMaps { created: now, testMaps: newTestMaps } # liftEffect
-          # liftEffect
-        Data.hashMapFromTestMaps testMaps # pure
-      else do
-        newTestMaps <- Service.fetchTestMaps (OnlyUserId userId) # lift >>= except
-        Cache.setCachedTestMaps { created: now, testMaps: newTestMaps } # liftEffect
-        Data.hashMapFromTestMaps testMaps # pure
-  where
-  logResult (Left err) = Logger.log Error (show err)
-
-  logResult (Right _) = pure unit
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
@@ -108,7 +69,7 @@ main =
                 RunState.initRunQueue
                 RunState.initTestContext
                 RunState.getTestContext
-            testContext <- getTestMap userId
+            testContext <- TestMap.getTestMap userId
             isPricePage <- liftEffect Site.getIsPricePage
             when isPricePage do
               unless (Map.isEmpty testContext) do

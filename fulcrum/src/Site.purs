@@ -44,10 +44,10 @@ awaitDomReady =
     rs <- HTMLDocument.readyState =<< Window.document =<< HTML.window
     case rs of
       Loading -> do
-        et <- Window.toEventTarget <$> HTML.window
+        eventTarget <- Window.toEventTarget <$> HTML.window
         listener <- EventTarget.eventListener (\_ -> callback (Right unit))
-        EventTarget.addEventListener EventTypes.domcontentloaded listener false et
-        pure $ effectCanceler (EventTarget.removeEventListener EventTypes.domcontentloaded listener false et)
+        EventTarget.addEventListener EventTypes.domcontentloaded listener false eventTarget
+        pure $ effectCanceler (EventTarget.removeEventListener EventTypes.domcontentloaded listener false eventTarget)
       _ -> do
         callback (Right unit)
         pure nonCanceler

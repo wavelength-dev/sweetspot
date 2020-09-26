@@ -3,7 +3,8 @@ module Fulcrum.Service where
 import Prelude
 import Control.Monad.Except (runExcept)
 import Data.Argonaut (Json)
-import Data.Argonaut (jsonParser, stringify) as Argonaut
+import Data.Argonaut (jsonParser, printJsonDecodeError, stringify) as Argonaut
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, error, throwError)
@@ -42,7 +43,7 @@ fetchTestMaps provisions = do
   bodyText <- Milkis.text res
   when (not (status == 200 || status == 201)) do
     throwError $ error $ show status <> " - " <> textToMessage bodyText
-  pure (Argonaut.jsonParser bodyText >>= decodeTestMaps)
+  pure (Argonaut.jsonParser bodyText >>= decodeTestMaps >>> lmap Argonaut.printJsonDecodeError)
   where
   qs = getTestMapQueryString provisions
 

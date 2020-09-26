@@ -1,11 +1,13 @@
 module Fulcrum.Data where
 
 import Prelude
-import Data.Argonaut (caseJsonString, decodeJson) as Argonaut
-import Data.Argonaut (class DecodeJson, Json)
-import Data.Either (Either(..))
+import Data.Argonaut (caseJsonString, decodeJson, fromString, toString) as Argonaut
+import Data.Argonaut (class DecodeJson, class EncodeJson, Json, JsonDecodeError(..))
+import Data.Bifunctor (lmap)
+import Data.Either (Either(..), note)
 import Data.Map (Map)
 import Data.Map (fromFoldable) as Map
+import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 
@@ -28,8 +30,16 @@ derive instance eqSku :: Eq Sku
 
 derive instance ordSku :: Ord Sku
 
+derive instance newtypeSku :: Newtype Sku _
+
 instance decodeJsonSku :: DecodeJson Sku where
-  decodeJson json = Argonaut.caseJsonString (Left "sku is not a string") (Sku >>> Right) json
+  decodeJson json =
+    Argonaut.toString json
+      # note (TypeMismatch "sku is not a string")
+      >>> map Sku
+
+instance encodeJsonSku :: EncodeJson Sku where
+  encodeJson (Sku sku) = Argonaut.fromString sku
 
 instance showSku :: Show Sku where
   show (Sku sku) = show sku
@@ -43,7 +53,7 @@ type TestMap
     , userId :: String
     }
 
-decodeTestMaps :: Json -> Either String (Array TestMap)
+decodeTestMaps :: Json -> Either JsonDecodeError (Array TestMap)
 decodeTestMaps = Argonaut.decodeJson >=> traverse Argonaut.decodeJson
 
 type TestMapByVariant

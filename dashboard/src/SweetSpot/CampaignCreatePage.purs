@@ -69,7 +69,7 @@ productToVariantRows product =
         let
           id = variant ^. variantId
 
-          title = variant ^. variantTitle
+          title = view productTitle product <> " - " <> view variantTitle variant
 
           sku = variant ^. variantSku
 

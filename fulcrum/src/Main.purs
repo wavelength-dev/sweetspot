@@ -3,16 +3,21 @@ module Fulcrum.Main where
 import Prelude
 import Control.Monad.Cont (lift)
 import Control.Monad.Except (ExceptT, except, runExceptT, throwError)
+import Data.DateTime (diff) as DateTime
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Time.Duration (Days(..))
 import Effect (Effect)
 import Effect.AVar as AVar
-import Effect.Aff (Aff, Error, Milliseconds(..))
+import Effect.Aff (Aff, Error, Milliseconds(..), error, runAff_)
 import Effect.Aff as Aff
 import Effect.Aff.AVar as AAVar
 import Effect.Class (liftEffect)
 import Effect.Exception (catchException)
+import Effect.Now as Now
+import Fulcrum.Cache (TestMapsCache(..))
+import Fulcrum.Cache as Cache
 import Fulcrum.Checkout (setTestCheckout, registerOnSelectVariant) as Checkout
 import Fulcrum.Data (TestMapByVariant)
 import Fulcrum.Data (hashMapFromTestMaps) as Data
@@ -28,14 +33,37 @@ import Fulcrum.TestPrice (applyTestPrices, observeTestPrices, revealAllPrices) a
 import Fulcrum.User (UserId)
 import Fulcrum.User (findUserId) as User
 
+-- uses test maps with < 1 day age when available
+-- always updates the cache in the background
 getTestMap :: UserId -> ExceptT String Aff TestMapByVariant
 getTestMap userId = do
-  isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
-  when (not isRuntimeAdequate) (throwError inadequateRuntimeError)
-  testMaps <- Service.fetchTestMaps (OnlyUserId userId) # lift >>= except
-  Data.hashMapFromTestMaps testMaps # pure
+  now <- Now.nowDateTime # liftEffect
+  mapsCache <- Cache.getCachedTestMaps # liftEffect >>= except
+  case mapsCache of
+    EmptyCache -> do
+      testMaps <- Service.fetchTestMaps (OnlyUserId userId) # lift >>= except
+      Cache.setCachedTestMaps { created: now, testMaps } # liftEffect
+      Data.hashMapFromTestMaps testMaps # pure
+    CachedMaps { created, testMaps } -> do
+      let
+        isFresh = DateTime.diff created now < (Days 1.0)
+      if isFresh then do
+        -- fetch latest maps in the background
+        runAff_ logResult do
+          eNewTestMaps <- Service.fetchTestMaps (OnlyUserId userId)
+          case eNewTestMaps of
+            Left msg -> Aff.throwError (error msg)
+            Right newTestMaps -> Cache.setCachedTestMaps { created: now, testMaps: newTestMaps } # liftEffect
+          # liftEffect
+        Data.hashMapFromTestMaps testMaps # pure
+      else do
+        newTestMaps <- Service.fetchTestMaps (OnlyUserId userId) # lift >>= except
+        Cache.setCachedTestMaps { created: now, testMaps: newTestMaps } # liftEffect
+        Data.hashMapFromTestMaps testMaps # pure
   where
-  inadequateRuntimeError = "sweetspot can't run in current runtime"
+  logResult (Left err) = Logger.log Error (show err)
+
+  logResult (Right _) = pure unit
 
 handleExit :: forall a e. Show e => Either e a -> Effect Unit
 handleExit = case _ of
@@ -61,20 +89,19 @@ withHandledExceptions =
     Logger.logWithContext Error "unhandled exception" error
 
 main :: Effect Unit
-main = withHandledExceptions mainEffect
-  where
-  mainEffect =
-    Aff.runAff_ wrapUp do
-      exposeGlobals reapply # liftEffect
-      hostname <- liftEffect Site.readHostname
-      isDryRun <- liftEffect Site.getIsDryRun
-      isDebugging <- liftEffect Site.getIsDebugging
-      awaitDomReady
-      isPricePage <- liftEffect Site.getIsPricePage
-      when isPricePage do
+main =
+  withHandledExceptions
+    $ Aff.runAff_ wrapUp do
+        exposeGlobals reapply # liftEffect
+        hostname <- liftEffect Site.readHostname
+        isDryRun <- liftEffect Site.getIsDryRun
+        isDebugging <- liftEffect Site.getIsDebugging
+        awaitDomReady
         Logger.logWithContext Info ("running fulcrum on " <> hostname) { isDryRun, isDebugging } # liftEffect
         eSuccess <-
           runExceptT do
+            isRuntimeAdequate <- liftEffect RuntimeDependency.getIsRuntimeAdequate
+            unless isRuntimeAdequate (throwError "browser runtime inadequate for sweetspot")
             userId <- findUserIdWithWaitLimit # lift >>= except
             sessionTestContext <-
               liftEffect do
@@ -82,15 +109,17 @@ main = withHandledExceptions mainEffect
                 RunState.initTestContext
                 RunState.getTestContext
             testContext <- getTestMap userId
-            unless (Map.isEmpty testContext) do
-              -- we cache the test maps and apply them
-              -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
-              _ <- AAVar.tryPut testContext sessionTestContext # lift
-              applyTestMaps testContext # liftEffect
-              TestPrice.observeTestPrices testContext # liftEffect
-              Checkout.registerOnSelectVariant testContext # liftEffect
+            isPricePage <- liftEffect Site.getIsPricePage
+            when isPricePage do
+              unless (Map.isEmpty testContext) do
+                -- we cache the test maps and apply them
+                -- as this is the main loop, and it only runs once, we can safely assume the avar to be empty
+                _ <- AAVar.tryPut testContext sessionTestContext # lift
+                applyTestMaps testContext # liftEffect
+                TestPrice.observeTestPrices testContext # liftEffect
+                Checkout.registerOnSelectVariant testContext # liftEffect
         case eSuccess of
-          Left msg -> Aff.error msg # throwError
+          Left msg -> Logger.log Error msg # liftEffect
           Right _ -> mempty
 
 applyTestMaps :: TestMapByVariant -> Effect Unit

@@ -17,7 +17,7 @@ import Fulcrum.Checkout.Highlight (highlightCheckout)
 import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.EstablishedTitles (isCurrentSite) as EstablishedTitles
 import Fulcrum.Logger (LogLevel(..))
-import Fulcrum.Logger (logWithContext) as Logger
+import Fulcrum.Logger (log, logWithContext) as Logger
 import Fulcrum.Site (getIsDebugging, getIsDryRun, getUrlParam, onElementsMutation, queryDocument, readHostname) as Site
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Element)
@@ -95,7 +95,10 @@ setTestCheckout testMap = do
   let
     execute = do
       traverse_ (setCheckoutVariantId testMap) optionElements
-      when ((isEstablishedTitles || isLibertyPrice) && isTestPrice) setOptionTexts *> setLabelTexts
+      when ((isEstablishedTitles || isLibertyPrice) && isTestPrice) do
+        Logger.log Info $ "isTestPrice " <> (show isTestPrice)
+        setOptionTexts
+        setLabelTexts
   unless isDryRun execute
   when (isDryRun && isDebugging) execute
 

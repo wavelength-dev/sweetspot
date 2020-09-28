@@ -219,6 +219,10 @@ a {
   max-width: 80%;
 }
 
+.checkout-snippet {
+  min-width: 50%;
+}
+
 @media (min-width: 600px) {
   .getting-started-img {
     max-width: 60%;

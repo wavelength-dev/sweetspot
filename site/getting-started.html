@@ -76,6 +76,14 @@ img {
       </pre>
       <img class="getting-started-img" src="/img/getting-started/price-hidden-css.png" alt="screenshot showing where to add the price hiding CSS">
 
+      <h2>Step 4 - capturing checkouts</h2>
+      <p class="text soundness-text">In order to know which products are being bought, sweetspot needs to record completed orders on the checkout "thank you" page. Checkout scripts require manual adding. Go to the shopify admin, settings, checkout, then in the "order processing" section, under "additional scripts" paste the following script:</p>
+      <textarea class="soundness-text checkout-snippet">
+&lt;script&gt;
+"use strict";var captureCheckout=function(){var e;return null===(e=window.Shopify)||void 0===e?void 0:e.checkout},mCheckout=captureCheckout(),captureUserToken=function(e){var t=setInterval((function(){var r,o=null===(r=window.trekkie)||void 0===r?void 0:r.user().traits().uniqToken;void 0!==o&&(clearInterval(t),e(o))}),100)};if(void 0!==mCheckout){var order_1={id:mCheckout.order_id,created_at:mCheckout.created_at,cart_token:mCheckout.token,line_items:mCheckout.line_items.map((function(e){return{variant_id:e.variant_id,quantity:e.quantity}}))};captureUserToken((function(e){var t={order:order_1,user_id:e};fetch("/apps/sweetspot/api/fulcrum/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}))}
+&lt;/script&gt;
+      </textarea>
+
       <h2>Ready to test</h2>
 
       <p class="text soundness-text">That's all there is to it. SweetSpot is now ready to run price tests! Not using a common Shopify theme? Issues setting up? Message us at <a href="mailto:hello@wavelength.dev">hello@wavelength.dev</a> and we’ll help you set-up!</p>

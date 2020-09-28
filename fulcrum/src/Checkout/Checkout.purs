@@ -169,7 +169,7 @@ optionTextMap =
     -- , Tuple "5 Sq Ft (+$160)" "5 Sq Ft (+$150)"
     -- , Tuple "10 Sq Ft (+$300)" "10 Sq Ft (+$290)"
     -- , Tuple "Digital Only" "Digital Only"
-    [ Tuple "Add Print +$30" "Add Print +$35"
+    [ Tuple "Yes +$30" "Yes +$35"
     -- , Tuple "No" "No"
     , Tuple "Yes +$59" "Yes +$64"
     -- liberty price test option

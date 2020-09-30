@@ -1,7 +1,7 @@
 module Fulcrum.Checkout where
 
 import Prelude
-import Control.Monad.Except (ExceptT, runExceptT, throwError)
+import Control.Monad.Except (runExceptT, throwError)
 import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Map (Map)
@@ -123,12 +123,12 @@ onSelectVariant testMap = do
         Nothing -> throwError "product select is not a select element"
         Just narrowEl -> pure narrowEl
       rawTargetId <- case mTargetId of
-        Nothing -> throwError "failed to read variant from URL"
+        Nothing -> throwError $ "failed to read variant from URL " <> show mTargetId
         Just targetId -> VariantId targetId # pure
       case Map.lookup rawTargetId testMap of
         -- The id may not be a sweetspot id, already swapped or unknown
         -- Do nothing.
-        Nothing -> pure unit :: ExceptT String Effect Unit
+        Nothing -> pure unit
         Just test ->
           liftEffect do
             let
@@ -140,7 +140,11 @@ onSelectVariant testMap = do
             unless isDryRun execute
             when (isDryRun && isDebugging) execute
   case eSuccess of
-    Left err -> Logger.logWithContext Error "failed to set checkout on select" err
+    Left msg ->
+      Logger.logWithContext
+        Error
+        "failed to set checkout on select"
+        { msg }
     Right _ -> mempty
 
 -- on established titles the #ProductSelect has its value updated through JavaScript

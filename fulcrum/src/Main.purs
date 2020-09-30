@@ -130,7 +130,7 @@ findUserIdWithWaitLimit = tryFindUserId 0.0
     case mUserId of
       Just userId -> Right userId # pure
       Nothing ->
-        if waitTime > 6000.0 then
+        if waitTime > 8000.0 then
           Left "find user id timed out" # pure
         else do
           Aff.delay (Milliseconds 50.0)

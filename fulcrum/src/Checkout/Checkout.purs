@@ -6,7 +6,7 @@ import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map (findMin, fromFoldable, lookup) as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.String as String
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
@@ -114,38 +114,43 @@ onSelectVariant testMap = do
   isDryRun <- Site.getIsDryRun
   mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
   mTargetId <- Site.getUrlParam "variant"
-  eSuccess <-
-    runExceptT do
-      el <- case Array.head mEls of
-        Nothing -> throwError "no product select found"
-        Just firstEl -> pure firstEl
-      selectEl <- case HTMLSelectElement.fromElement el of
-        Nothing -> throwError "product select is not a select element"
-        Just narrowEl -> pure narrowEl
-      rawTargetId <- case mTargetId of
-        Nothing -> throwError $ "failed to read variant from URL " <> show mTargetId
-        Just targetId -> VariantId targetId # pure
-      case Map.lookup rawTargetId testMap of
-        -- The id may not be a sweetspot id, already swapped or unknown
-        -- Do nothing.
-        Nothing -> pure unit
-        Just test ->
-          liftEffect do
-            let
-              execute = do
-                -- if the value is there already we don't set it again
-                current <- HTMLSelectElement.value selectEl
-                unless (current == test.swapId) do
-                  HTMLSelectElement.setValue test.swapId selectEl
-            unless isDryRun execute
-            when (isDryRun && isDebugging) execute
-  case eSuccess of
-    Left msg ->
-      Logger.logWithContext
-        Error
-        "failed to set checkout on select"
-        { msg }
-    Right _ -> mempty
+  -- not all form interactions select a new variant.
+  -- this is dangerous. it's possible a variant was selected but
+  -- the url simply didn't update (in time) as we expect.
+  -- TODO: only trigger this function on relevant select changes
+  unless (isNothing mTargetId) do
+    eSuccess <-
+      runExceptT do
+        el <- case Array.head mEls of
+          Nothing -> throwError "no product select found"
+          Just firstEl -> pure firstEl
+        selectEl <- case HTMLSelectElement.fromElement el of
+          Nothing -> throwError "product select is not a select element"
+          Just narrowEl -> pure narrowEl
+        rawTargetId <- case mTargetId of
+          Nothing -> throwError $ "failed to read variant from URL " <> show mTargetId
+          Just targetId -> VariantId targetId # pure
+        case Map.lookup rawTargetId testMap of
+          -- The id may not be a sweetspot id, already swapped or unknown
+          -- Do nothing.
+          Nothing -> pure unit
+          Just test ->
+            liftEffect do
+              let
+                execute = do
+                  -- if the value is there already we don't set it again
+                  current <- HTMLSelectElement.value selectEl
+                  unless (current == test.swapId) do
+                    HTMLSelectElement.setValue test.swapId selectEl
+              unless isDryRun execute
+              when (isDryRun && isDebugging) execute
+    case eSuccess of
+      Left msg ->
+        Logger.logWithContext
+          Error
+          "failed to set checkout on select"
+          { msg }
+      Right _ -> mempty
 
 -- on established titles the #ProductSelect has its value updated through JavaScript
 -- we react

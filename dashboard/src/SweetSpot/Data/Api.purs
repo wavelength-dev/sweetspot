@@ -10,23 +10,22 @@ import Data.Maybe (Maybe, Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(SProxy))
 import Prim (Array, Number, String)
+
 import Prelude
 
-newtype InfResult
-  = InfResult
-  { _lowerBound :: Number
-  , _upperBound :: Number
-  , _mean :: Number
-  }
+newtype InfResult =
+    InfResult {
+      _lowerBound :: Number
+    , _upperBound :: Number
+    , _mean :: Number
+    }
 
 derive instance eqInfResult :: Eq InfResult
-
 derive instance genericInfResult :: Generic InfResult _
-
 derive instance newtypeInfResult :: Newtype InfResult _
 
 --------------------------------------------------------------------------------
-_InfResult :: Iso' InfResult { _lowerBound :: Number, _upperBound :: Number, _mean :: Number }
+_InfResult :: Iso' InfResult { _lowerBound :: Number, _upperBound :: Number, _mean :: Number}
 _InfResult = _Newtype
 
 lowerBound :: Lens' InfResult Number
@@ -39,27 +38,26 @@ mean :: Lens' InfResult Number
 mean = _Newtype <<< prop (SProxy :: SProxy "_mean")
 
 --------------------------------------------------------------------------------
-newtype UICampaign
-  = UICampaign
-  { _uiCampaignId :: String
-  , _uiCampaignName :: String
-  , _uiCampaignStart :: Maybe DateTime
-  , _uiCampaignEnd :: Maybe DateTime
-  , _uiCampaignLift :: Maybe InfResult
-  , _uiCampaignAOVChange :: Maybe Number
-  , _uiCampaignCRChange :: Maybe Number
-  , _uiCampaignCtrlTreatment :: UITreatment
-  , _uiCampaignTestTreatment :: UITreatment
-  }
+newtype UICampaign =
+    UICampaign {
+      _uiCampaignId :: String
+    , _uiCampaignName :: String
+    , _uiCampaignStart :: Maybe DateTime
+    , _uiCampaignEnd :: Maybe DateTime
+    , _uiCampaignLift :: Maybe InfResult
+    , _uiCampaignAOVChange :: Maybe Number
+    , _uiCampaignCRChange :: Maybe Number
+    , _uiCampaignCtrlTreatment :: UITreatment
+    , _uiCampaignTestTreatment :: UITreatment
+    , _uiCampaignUpdatedAt :: DateTime
+    }
 
 derive instance eqUICampaign :: Eq UICampaign
-
 derive instance genericUICampaign :: Generic UICampaign _
-
 derive instance newtypeUICampaign :: Newtype UICampaign _
 
 --------------------------------------------------------------------------------
-_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: Maybe InfResult, _uiCampaignAOVChange :: Maybe Number, _uiCampaignCRChange :: Maybe Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment }
+_UICampaign :: Iso' UICampaign { _uiCampaignId :: String, _uiCampaignName :: String, _uiCampaignStart :: Maybe DateTime, _uiCampaignEnd :: Maybe DateTime, _uiCampaignLift :: Maybe InfResult, _uiCampaignAOVChange :: Maybe Number, _uiCampaignCRChange :: Maybe Number, _uiCampaignCtrlTreatment :: UITreatment, _uiCampaignTestTreatment :: UITreatment, _uiCampaignUpdatedAt :: DateTime}
 _UICampaign = _Newtype
 
 uiCampaignId :: Lens' UICampaign String
@@ -89,22 +87,23 @@ uiCampaignCtrlTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignCtrlTr
 uiCampaignTestTreatment :: Lens' UICampaign UITreatment
 uiCampaignTestTreatment = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignTestTreatment")
 
+uiCampaignUpdatedAt :: Lens' UICampaign DateTime
+uiCampaignUpdatedAt = _Newtype <<< prop (SProxy :: SProxy "_uiCampaignUpdatedAt")
+
 --------------------------------------------------------------------------------
-newtype UITreatment
-  = UITreatment
-  { _uiTreatmentCR :: Maybe Number
-  , _uiTreatmentAOV :: String
-  , _uiTreatmentVariants :: Array UITreatmentVariant
-  }
+newtype UITreatment =
+    UITreatment {
+      _uiTreatmentCR :: Maybe Number
+    , _uiTreatmentAOV :: String
+    , _uiTreatmentVariants :: Array UITreatmentVariant
+    }
 
 derive instance eqUITreatment :: Eq UITreatment
-
 derive instance genericUITreatment :: Generic UITreatment _
-
 derive instance newtypeUITreatment :: Newtype UITreatment _
 
 --------------------------------------------------------------------------------
-_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Maybe Number, _uiTreatmentAOV :: String, _uiTreatmentVariants :: Array UITreatmentVariant }
+_UITreatment :: Iso' UITreatment { _uiTreatmentCR :: Maybe Number, _uiTreatmentAOV :: String, _uiTreatmentVariants :: Array UITreatmentVariant}
 _UITreatment = _Newtype
 
 uiTreatmentCR :: Lens' UITreatment (Maybe Number)
@@ -117,21 +116,19 @@ uiTreatmentVariants :: Lens' UITreatment (Array UITreatmentVariant)
 uiTreatmentVariants = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentVariants")
 
 --------------------------------------------------------------------------------
-newtype UITreatmentVariant
-  = UITreatmentVariant
-  { _uiTreatmentVariantTitle :: String
-  , _uiTreatmentSku :: String
-  , _uiTreatmentVariantPrice :: String
-  }
+newtype UITreatmentVariant =
+    UITreatmentVariant {
+      _uiTreatmentVariantTitle :: String
+    , _uiTreatmentSku :: String
+    , _uiTreatmentVariantPrice :: String
+    }
 
 derive instance eqUITreatmentVariant :: Eq UITreatmentVariant
-
 derive instance genericUITreatmentVariant :: Generic UITreatmentVariant _
-
 derive instance newtypeUITreatmentVariant :: Newtype UITreatmentVariant _
 
 --------------------------------------------------------------------------------
-_UITreatmentVariant :: Iso' UITreatmentVariant { _uiTreatmentVariantTitle :: String, _uiTreatmentSku :: String, _uiTreatmentVariantPrice :: String }
+_UITreatmentVariant :: Iso' UITreatmentVariant { _uiTreatmentVariantTitle :: String, _uiTreatmentSku :: String, _uiTreatmentVariantPrice :: String}
 _UITreatmentVariant = _Newtype
 
 uiTreatmentVariantTitle :: Lens' UITreatmentVariant String
@@ -144,43 +141,39 @@ uiTreatmentVariantPrice :: Lens' UITreatmentVariant String
 uiTreatmentVariantPrice = _Newtype <<< prop (SProxy :: SProxy "_uiTreatmentVariantPrice")
 
 --------------------------------------------------------------------------------
-newtype Image
-  = Image
-  { _imageSrc :: String
-  }
+newtype Image =
+    Image {
+      _imageSrc :: String
+    }
 
 derive instance eqImage :: Eq Image
-
 derive instance genericImage :: Generic Image _
-
 derive instance newtypeImage :: Newtype Image _
 
 --------------------------------------------------------------------------------
-_Image :: Iso' Image { _imageSrc :: String }
+_Image :: Iso' Image { _imageSrc :: String}
 _Image = _Newtype
 
 imageSrc :: Lens' Image String
 imageSrc = _Newtype <<< prop (SProxy :: SProxy "_imageSrc")
 
 --------------------------------------------------------------------------------
-newtype Variant
-  = Variant
-  { _variantId :: String
-  , _variantProductId :: String
-  , _variantTitle :: String
-  , _variantProductTitle :: String
-  , _variantSku :: String
-  , _variantPrice :: String
-  }
+newtype Variant =
+    Variant {
+      _variantId :: String
+    , _variantProductId :: String
+    , _variantTitle :: String
+    , _variantProductTitle :: String
+    , _variantSku :: String
+    , _variantPrice :: String
+    }
 
 derive instance eqVariant :: Eq Variant
-
 derive instance genericVariant :: Generic Variant _
-
 derive instance newtypeVariant :: Newtype Variant _
 
 --------------------------------------------------------------------------------
-_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantProductTitle :: String, _variantSku :: String, _variantPrice :: String }
+_Variant :: Iso' Variant { _variantId :: String, _variantProductId :: String, _variantTitle :: String, _variantProductTitle :: String, _variantSku :: String, _variantPrice :: String}
 _Variant = _Newtype
 
 variantId :: Lens' Variant String
@@ -202,22 +195,20 @@ variantPrice :: Lens' Variant String
 variantPrice = _Newtype <<< prop (SProxy :: SProxy "_variantPrice")
 
 --------------------------------------------------------------------------------
-newtype Product
-  = Product
-  { _productId :: String
-  , _productTitle :: String
-  , _productVariants :: Array Variant
-  , _productImage :: Maybe Image
-  }
+newtype Product =
+    Product {
+      _productId :: String
+    , _productTitle :: String
+    , _productVariants :: Array Variant
+    , _productImage :: Maybe Image
+    }
 
 derive instance eqProduct :: Eq Product
-
 derive instance genericProduct :: Generic Product _
-
 derive instance newtypeProduct :: Newtype Product _
 
 --------------------------------------------------------------------------------
-_Product :: Iso' Product { _productId :: String, _productTitle :: String, _productVariants :: Array Variant, _productImage :: Maybe Image }
+_Product :: Iso' Product { _productId :: String, _productTitle :: String, _productVariants :: Array Variant, _productImage :: Maybe Image}
 _Product = _Newtype
 
 productId :: Lens' Product String
@@ -233,20 +224,18 @@ productImage :: Lens' Product (Maybe Image)
 productImage = _Newtype <<< prop (SProxy :: SProxy "_productImage")
 
 --------------------------------------------------------------------------------
-newtype CartTokenReq
-  = CartTokenReq
-  { _cartTokenReqToken :: String
-  , _cartTokenReqUser :: String
-  }
+newtype CartTokenReq =
+    CartTokenReq {
+      _cartTokenReqToken :: String
+    , _cartTokenReqUser :: String
+    }
 
 derive instance eqCartTokenReq :: Eq CartTokenReq
-
 derive instance genericCartTokenReq :: Generic CartTokenReq _
-
 derive instance newtypeCartTokenReq :: Newtype CartTokenReq _
 
 --------------------------------------------------------------------------------
-_CartTokenReq :: Iso' CartTokenReq { _cartTokenReqToken :: String, _cartTokenReqUser :: String }
+_CartTokenReq :: Iso' CartTokenReq { _cartTokenReqToken :: String, _cartTokenReqUser :: String}
 _CartTokenReq = _Newtype
 
 cartTokenReqToken :: Lens' CartTokenReq String
@@ -256,20 +245,18 @@ cartTokenReqUser :: Lens' CartTokenReq String
 cartTokenReqUser = _Newtype <<< prop (SProxy :: SProxy "_cartTokenReqUser")
 
 --------------------------------------------------------------------------------
-newtype CreateVariant
-  = CreateVariant
-  { _createVariantSvid :: String
-  , _createVariantPrice :: Number
-  }
+newtype CreateVariant =
+    CreateVariant {
+      _createVariantSvid :: String
+    , _createVariantPrice :: Number
+    }
 
 derive instance eqCreateVariant :: Eq CreateVariant
-
 derive instance genericCreateVariant :: Generic CreateVariant _
-
 derive instance newtypeCreateVariant :: Newtype CreateVariant _
 
 --------------------------------------------------------------------------------
-_CreateVariant :: Iso' CreateVariant { _createVariantSvid :: String, _createVariantPrice :: Number }
+_CreateVariant :: Iso' CreateVariant { _createVariantSvid :: String, _createVariantPrice :: Number}
 _CreateVariant = _Newtype
 
 createVariantSvid :: Lens' CreateVariant String
@@ -279,20 +266,18 @@ createVariantPrice :: Lens' CreateVariant Number
 createVariantPrice = _Newtype <<< prop (SProxy :: SProxy "_createVariantPrice")
 
 --------------------------------------------------------------------------------
-newtype CreateExperiment
-  = CreateExperiment
-  { _createExperimentProductId :: String
-  , _createExperimentVariants :: Array CreateVariant
-  }
+newtype CreateExperiment =
+    CreateExperiment {
+      _createExperimentProductId :: String
+    , _createExperimentVariants :: Array CreateVariant
+    }
 
 derive instance eqCreateExperiment :: Eq CreateExperiment
-
 derive instance genericCreateExperiment :: Generic CreateExperiment _
-
 derive instance newtypeCreateExperiment :: Newtype CreateExperiment _
 
 --------------------------------------------------------------------------------
-_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentVariants :: Array CreateVariant }
+_CreateExperiment :: Iso' CreateExperiment { _createExperimentProductId :: String, _createExperimentVariants :: Array CreateVariant}
 _CreateExperiment = _Newtype
 
 createExperimentProductId :: Lens' CreateExperiment String
@@ -302,21 +287,19 @@ createExperimentVariants :: Lens' CreateExperiment (Array CreateVariant)
 createExperimentVariants = _Newtype <<< prop (SProxy :: SProxy "_createExperimentVariants")
 
 --------------------------------------------------------------------------------
-newtype CreateCampaign
-  = CreateCampaign
-  { _createCampaignName :: String
-  , _createCampaignEnd :: Maybe DateTime
-  , _createCampaignExperiments :: Array CreateExperiment
-  }
+newtype CreateCampaign =
+    CreateCampaign {
+      _createCampaignName :: String
+    , _createCampaignEnd :: Maybe DateTime
+    , _createCampaignExperiments :: Array CreateExperiment
+    }
 
 derive instance eqCreateCampaign :: Eq CreateCampaign
-
 derive instance genericCreateCampaign :: Generic CreateCampaign _
-
 derive instance newtypeCreateCampaign :: Newtype CreateCampaign _
 
 --------------------------------------------------------------------------------
-_CreateCampaign :: Iso' CreateCampaign { _createCampaignName :: String, _createCampaignEnd :: Maybe DateTime, _createCampaignExperiments :: Array CreateExperiment }
+_CreateCampaign :: Iso' CreateCampaign { _createCampaignName :: String, _createCampaignEnd :: Maybe DateTime, _createCampaignExperiments :: Array CreateExperiment}
 _CreateCampaign = _Newtype
 
 createCampaignName :: Lens' CreateCampaign String

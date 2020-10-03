@@ -27,6 +27,7 @@ storewide10Campaign =
     , _uiCampaignLift: Just $ InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
     , _uiCampaignAOVChange: Just 0.9531
     , _uiCampaignCRChange: Just 1.074074074
+    , _uiCampaignUpdatedAt: unsafeToDateTime "2020-02-23T06:15:41Z"
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: Just 6.4e-2
@@ -63,6 +64,7 @@ expensiveJacketsCheapMonkeysCampaign =
     , _uiCampaignLift: Just $ InfResult { _lowerBound: 0.2, _upperBound: 2.7, _mean: 1.4 }
     , _uiCampaignAOVChange: Just $ 0.9531
     , _uiCampaignCRChange: Just $ 1.074074074
+    , _uiCampaignUpdatedAt: unsafeToDateTime "2020-02-23T06:15:41Z"
     , _uiCampaignCtrlTreatment:
         UITreatment
           { _uiTreatmentCR: Just $ 6.4e-2

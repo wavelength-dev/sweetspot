@@ -193,7 +193,7 @@ labelTextMap :: LabelTextMap
 labelTextMap =
   Map.fromFoldable
     [ Tuple "Add a Printed Certificate for $30?" "Add a Printed Certificate for $35?"
-    , Tuple "Frame Your Certificate for $59?" "Add a Printed Certificate for $64?"
+    , Tuple "Frame Your Certificate for $59?" "Frame Your Certificate for $64?"
     ]
 
 setOptionTexts :: Effect Unit

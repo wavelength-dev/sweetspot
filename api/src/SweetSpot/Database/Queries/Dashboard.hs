@@ -64,6 +64,7 @@ class Monad m => DashboardDB m where
   campaignBelongsToShop :: SessionId -> CampaignId -> m Bool
   stopCampaign :: CampaignId -> m ()
   getTestVariantIds :: CampaignId -> m [Pid]
+  clearCampaignCache :: CampaignId -> m ()
 
 instance DashboardDB AppM where
   createCampaign domain cc = withConn $ \conn -> do
@@ -122,6 +123,11 @@ instance DashboardDB AppM where
         $ select
         $ selectShopCampaigns domain
     traverse (readCacheOrEnhance conn domain) cmps
+
+  clearCampaignCache cmpId = withConn $ \conn ->
+    runBeamPostgres conn
+      $ runDelete
+      $ delete (db ^. statsCaches) (\c -> c ^. statsCacheCampaignId ==. val_ cmpId)
 
   createSession shopDomain' sessionId' = withConn $ \conn -> do
     mShopDomain <- validateSessionId' conn sessionId'

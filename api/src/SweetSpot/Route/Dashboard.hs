@@ -159,6 +159,7 @@ stopCampaignHandler campaignId sessionId = runAppM $ do
   case (authorized, shopDomain) of
     (True, Just domain) ->
       stopCampaign campaignId
+        >> clearCampaignCache campaignId
         >> getTestVariantIds campaignId
         >>= traverse_ (deleteProduct domain)
         >> pure OkResponse {message = "Campaign stopped"}

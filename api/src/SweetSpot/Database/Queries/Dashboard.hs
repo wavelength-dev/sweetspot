@@ -290,6 +290,7 @@ userRevenueArrForTreatment cmpId' treatment' =
       treatment <- all_ (db ^. treatments)
       guard_ (_checkoutEventUserId event `references_` user)
       guard_ (event ^. checkoutEventCampaignId ==. val_ cmpId')
+      guard_ (treatment ^. treatmentCampaignId ==. val_ cmpId')
       guard_ (_checkoutItemCheckoutEventId item `references_` event)
       guard_ (item ^. checkoutItemSvid ==. variant ^. productVariantVariantId)
       guard_ (_treatmentProductVariantId treatment `references_` variant)

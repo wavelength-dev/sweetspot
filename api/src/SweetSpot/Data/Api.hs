@@ -137,7 +137,8 @@ data UICampaign
         _uiCampaignAOVChange :: !(Maybe Double),
         _uiCampaignCRChange :: !(Maybe Double),
         _uiCampaignCtrlTreatment :: !UITreatment,
-        _uiCampaignTestTreatment :: !UITreatment
+        _uiCampaignTestTreatment :: !UITreatment,
+        _uiCampaignUpdatedAt :: !UTCTime
       }
   deriving (Generic, Eq, Show)
 

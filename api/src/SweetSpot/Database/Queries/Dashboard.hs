@@ -9,10 +9,14 @@ module SweetSpot.Database.Queries.Dashboard
 where
 
 import Control.Lens
+import qualified Data.Aeson as Aeson
+import qualified Data.Aeson.Types as Aeson
 import Data.Scientific (fromFloatDigits)
+import qualified Data.Time.Clock as Clock
 import Database.Beam
 import Database.Beam.Backend.SQL.BeamExtensions as BeamExt
 import Database.Beam.Postgres
+import qualified Database.Beam.Postgres.Full as PG
 import RIO hiding (Vector, (^.), view)
 import qualified RIO.List as L
 import RIO.Partial (fromJust)
@@ -117,7 +121,7 @@ instance DashboardDB AppM where
         $ runSelectReturningList
         $ select
         $ selectShopCampaigns domain
-    traverse (enhanceCampaign conn domain) cmps
+    traverse (readCacheOrEnhance conn domain) cmps
 
   createSession shopDomain' sessionId' = withConn $ \conn -> do
     mShopDomain <- validateSessionId' conn sessionId'
@@ -187,6 +191,16 @@ instance DashboardDB AppM where
       $ select
       $ view productVariantProductId <$> selectUITreatmentVariants cmpId' 1
 
+readCacheOrEnhance :: Connection -> ShopDomain -> Campaign -> IO UICampaign
+readCacheOrEnhance conn domain campaign = do
+  mCache <- readStatsCache conn (campaign ^. campaignId)
+  case mCache of
+    Just cached -> pure cached
+    Nothing -> do
+      uiCampaign <- enhanceCampaign conn domain campaign
+      upsertStatsCache conn uiCampaign
+      pure uiCampaign
+
 enhanceCampaign :: Connection -> ShopDomain -> Campaign -> IO UICampaign
 enhanceCampaign conn domain cmp = do
   let cmpId' = cmp ^. campaignId
@@ -223,6 +237,7 @@ enhanceCampaign conn domain cmp = do
       $ runSelectReturningList
       $ select
       $ selectUITreatmentVariants cmpId' 1
+  updatedAt <- Clock.getCurrentTime
   return
     UICampaign
       { _uiCampaignId = cmp ^. campaignId,
@@ -257,7 +272,8 @@ enhanceCampaign conn domain cmp = do
                 testTreatmentVariants
                   & map toUITreatmentVariant
                   & L.sortOn (view uiTreatmentSku)
-            }
+            },
+        _uiCampaignUpdatedAt = updatedAt
       }
 
 selectUITreatmentVariants cmpId' treat' = do
@@ -326,3 +342,44 @@ validateSessionId' conn sessionId' =
       guard_ (_sessionShopId session `references_` shop)
       guard_ (session ^. sessionId ==. val_ sessionId')
       pure $ shop ^. shopDomain
+
+readStatsCache :: Connection -> CampaignId -> IO (Maybe UICampaign)
+readStatsCache conn cmpId = do
+  now <- Clock.getCurrentTime
+  result <-
+    runBeamPostgres conn
+      $ runSelectReturningOne
+      $ select
+      $ all_ (db ^. statsCaches)
+        & filter_ (view statsCacheCampaignId >>> (==. val_ cmpId))
+  pure $ case result of
+    Nothing -> Nothing
+    Just cache ->
+      let (PgJSONB json) = cache ^. statsCachePayload
+          campaign = (Aeson.parseMaybe Aeson.parseJSON) json & fromJust :: UICampaign
+          campaignEnded = campaign ^. uiCampaignEnd & isJust
+          cacheValid =
+            Clock.diffUTCTime now (campaign ^. uiCampaignUpdatedAt)
+              & (<= 1000 * 60 * 60) -- 60min
+       in if campaignEnded || cacheValid
+            then Just campaign
+            else Nothing
+
+upsertStatsCache :: Connection -> UICampaign -> IO ()
+upsertStatsCache conn campaign =
+  runBeamPostgres conn
+    $ runInsert
+    $ PG.insert
+      (db ^. statsCaches)
+      ( insertExpressions
+          [ StatsCache
+              { _statsCacheId = pgGenUUID_,
+                _statsCacheCampaignId = val_ (CampaignKey (campaign ^. uiCampaignId)),
+                _statsCachePayload = val_ (PgJSONB (Aeson.toJSON campaign))
+              }
+          ]
+      )
+      ( PG.onConflict
+          (PG.conflictingConstraint "stats_cache_campaign_id_key")
+          (PG.onConflictUpdateInstead id)
+      )

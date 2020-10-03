@@ -395,6 +395,29 @@ instance Table AppChargeT where
 AppCharge (LensFor appChargeId) (LensFor appChargeShopifyId) (LensFor appChargeStatus) (ShopKey (LensFor appChargeShopId)) (LensFor appChargeName) (LensFor appChargePrice) (LensFor appChargeReturnUrl) (LensFor appChargeConfirmationUrl) = tableLenses
 
 -- | ---------------------------------------------------------------------------
+-- | StatsCache
+-- | ---------------------------------------------------------------------------
+data StatsCacheT f
+  = StatsCache
+      { _statsCacheId :: Columnar f UUID,
+        _statsCacheCampaignId :: PrimaryKey CampaignT f,
+        _statsCachePayload :: Columnar f (PgJSONB Value)
+      }
+  deriving (Generic, Beamable)
+
+type StatsCache = StatsCacheT Identity
+
+type StatsCacheKey = PrimaryKey StatsCacheT Identity
+
+instance Table StatsCacheT where
+  data PrimaryKey StatsCacheT f
+    = StatsCacheKey (Columnar f UUID)
+    deriving (Generic, Beamable)
+  primaryKey = StatsCacheKey . _statsCacheId
+
+StatsCache (LensFor statsCacheId) (CampaignKey (LensFor statsCacheCampaignId)) (LensFor statsCachePayload) = tableLenses
+
+-- | ---------------------------------------------------------------------------
 -- | Database
 -- | ---------------------------------------------------------------------------
 data SweetSpotDb f
@@ -413,13 +436,14 @@ data SweetSpotDb f
         _userCartTokens :: f (TableEntity UserCartTokenT),
         _actionRequests :: f (TableEntity ActionRequestT),
         _appCharges :: f (TableEntity AppChargeT),
+        _statsCaches :: f (TableEntity StatsCacheT),
         _cryptoExtension :: f (PgExtensionEntity PgCrypto)
       }
   deriving (Generic)
 
 instance Database Postgres SweetSpotDb
 
-SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens appCharges) (TableLens cryptoExtension) =
+SweetSpotDb (TableLens shops) (TableLens installNonces) (TableLens users) (TableLens campaigns) (TableLens productVariants) (TableLens treatments) (TableLens userExperiments) (TableLens checkoutEvents) (TableLens checkoutItems) (TableLens events) (TableLens sessions) (TableLens userCartTokens) (TableLens actionRequests) (TableLens appCharges) (TableLens statsCaches) (TableLens cryptoExtension) =
   dbLenses
 
 -- | ---------------------------------------------------------------------------
@@ -553,5 +577,12 @@ migration () =
           _appChargePrice = field "price" text notNull,
           _appChargeReturnUrl = field "return_url" text notNull,
           _appChargeConfirmationUrl = field "confirmation_url" text notNull
+        }
+    <*> createTable
+      "stats_cache"
+      StatsCache
+        { _statsCacheId = field "id" (DataType pgUuidType) notNull,
+          _statsCacheCampaignId = CampaignKey (field "campaign_id" (DataType pgUuidType)),
+          _statsCachePayload = field "payload" jsonb notNull
         }
     <*> pgCreateExtension

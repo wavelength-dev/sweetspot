@@ -1,6 +1,7 @@
 module SweetSpot.Data.Codec where
 
 import Prelude
+
 import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:), (.:?))
@@ -55,28 +56,30 @@ decodeUITreatment json = do
         }
 
 -- Brittle parser of ISO8601 / RFC3339
-parseDateTime :: Maybe String -> Either String (Maybe DateTime)
-parseDateTime Nothing = Right Nothing
+parseOptionalDateTime :: Maybe String -> Either String (Maybe DateTime)
+parseOptionalDateTime Nothing = Right Nothing
+parseOptionalDateTime (Just encodedDateTime) = Just <$> parseDateTime encodedDateTime
 
-parseDateTime (Just encodedDateTime) =
-  JSDate.parse encodedDateTime
+parseDateTime :: String -> Either String DateTime
+parseDateTime encodedDateTime =
+   JSDate.parse encodedDateTime
     # unsafePerformEffect
     >>> JSDate.toDateTime
     >>> note "failed to parse date"
-    <#> Just
 
 decodeUICampaign :: Json -> Either String UICampaign
 decodeUICampaign json = do
   obj <- decodeJson json
   _uiCampaignId <- obj .: "_uiCampaignId"
   _uiCampaignName <- obj .: "_uiCampaignName"
-  _uiCampaignStart <- obj .: "_uiCampaignStart" >>= parseDateTime
-  _uiCampaignEnd <- obj .: "_uiCampaignEnd" >>= parseDateTime
+  _uiCampaignStart <- obj .: "_uiCampaignStart" >>= parseOptionalDateTime
+  _uiCampaignEnd <- obj .: "_uiCampaignEnd" >>= parseOptionalDateTime
   _uiCampaignLift <- obj .: "_uiCampaignLift" >>= decodeInfResult
   _uiCampaignAOVChange <- obj .: "_uiCampaignAOVChange"
   _uiCampaignCRChange <- obj .: "_uiCampaignCRChange"
   _uiCampaignCtrlTreatment <- obj .: "_uiCampaignCtrlTreatment" >>= decodeUITreatment
   _uiCampaignTestTreatment <- obj .: "_uiCampaignTestTreatment" >>= decodeUITreatment
+  _uiCampaignUpdatedAt <- obj .: "_uiCampaignUpdatedAt" >>= parseDateTime
   pure
     $ UICampaign
         { _uiCampaignId
@@ -88,6 +91,7 @@ decodeUICampaign json = do
         , _uiCampaignCRChange
         , _uiCampaignCtrlTreatment
         , _uiCampaignTestTreatment
+        , _uiCampaignUpdatedAt
         }
 
 decodeUICampaigns :: Json -> Either String (Array UICampaign)

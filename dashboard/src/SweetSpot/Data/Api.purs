@@ -247,8 +247,8 @@ productImage = _Newtype <<< prop (SProxy :: SProxy "_productImage")
 --------------------------------------------------------------------------------
 newtype ProductsResponse =
     ProductsResponse {
-      _productsResponsePagination :: Pagination
-    , _productsResponseProducts :: Array Product
+      _pagination :: Pagination
+    , _products :: Array Product
     }
 
 derive instance eqProductsResponse :: Eq ProductsResponse
@@ -256,14 +256,14 @@ derive instance genericProductsResponse :: Generic ProductsResponse _
 derive instance newtypeProductsResponse :: Newtype ProductsResponse _
 
 --------------------------------------------------------------------------------
-_ProductsResponse :: Iso' ProductsResponse { _productsResponsePagination :: Pagination, _productsResponseProducts :: Array Product}
+_ProductsResponse :: Iso' ProductsResponse { _pagination :: Pagination, _products :: Array Product}
 _ProductsResponse = _Newtype
 
-productsResponsePagination :: Lens' ProductsResponse Pagination
-productsResponsePagination = _Newtype <<< prop (SProxy :: SProxy "_productsResponsePagination")
+pagination :: Lens' ProductsResponse Pagination
+pagination = _Newtype <<< prop (SProxy :: SProxy "_pagination")
 
-productsResponseProducts :: Lens' ProductsResponse (Array Product)
-productsResponseProducts = _Newtype <<< prop (SProxy :: SProxy "_productsResponseProducts")
+products :: Lens' ProductsResponse (Array Product)
+products = _Newtype <<< prop (SProxy :: SProxy "_products")
 
 --------------------------------------------------------------------------------
 newtype CartTokenReq =

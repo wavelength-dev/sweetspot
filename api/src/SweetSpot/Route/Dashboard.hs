@@ -71,8 +71,8 @@ getProductsHandler id mPageInfo = runAppM $ do
               & mapMaybe (fromShopProduct moneyFormat)
               & \ps ->
                 ProductsResponse
-                  { _productsResponsePagination = pagination,
-                    _productsResponseProducts = ps
+                  { _pagination = pagination,
+                    _products = ps
                   }
         Left err -> do
           Log.error err

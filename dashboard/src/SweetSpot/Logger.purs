@@ -14,32 +14,25 @@ foreign import jsLogWarn :: forall a. EffectFn2 String a Unit
 
 foreign import jsLogError :: forall a. EffectFn2 String a Unit
 
-logInfo :: String -> Effect Unit
-logInfo = case Env.appEnv of
-  Local -> Console.info
-  Remote -> Datadog.logInfo
+data LogLevel
+  = Info
+  | Warn
+  | Error
 
-logWarn :: String -> Effect Unit
-logWarn = case Env.appEnv of
-  Local -> Console.warn
-  Remote -> Datadog.logWarn
+log :: LogLevel -> String -> Effect Unit
+log level = case level, Env.appEnv of
+  Info, Local -> Console.info
+  Warn, Local -> Console.warn
+  Error, Local -> Console.error
+  Info, Remote -> Datadog.logInfo
+  Warn, Remote -> Datadog.logWarn
+  Error, Remote -> Datadog.logError
 
-logError :: String -> Effect Unit
-logError = case Env.appEnv of
-  Local -> Console.error
-  Remote -> Datadog.logError
-
-logInfoContext :: forall a. String -> a -> Effect Unit
-logInfoContext msg context = case Env.appEnv of
-  Local -> runEffectFn2 jsLogInfo msg context
-  Remote -> Datadog.logInfoContext msg context
-
-logWarnContext :: forall a. String -> a -> Effect Unit
-logWarnContext msg context = case Env.appEnv of
-  Local -> runEffectFn2 jsLogWarn msg context
-  Remote -> Datadog.logWarnContext msg context
-
-logErrorContext :: forall a. String -> a -> Effect Unit
-logErrorContext msg context = case Env.appEnv of
-  Local -> runEffectFn2 jsLogError msg context
-  Remote -> Datadog.logErrorContext msg context
+logWithContext :: forall a. LogLevel -> String -> a -> Effect Unit
+logWithContext level = case level, Env.appEnv of
+  Info, Local -> runEffectFn2 jsLogInfo
+  Warn, Local -> runEffectFn2 jsLogWarn
+  Error, Local -> runEffectFn2 jsLogError
+  Info, Remote -> Datadog.logInfoContext
+  Warn, Remote -> Datadog.logWarnContext
+  Error, Remote -> Datadog.logErrorContext

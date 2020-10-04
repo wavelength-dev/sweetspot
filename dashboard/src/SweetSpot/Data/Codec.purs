@@ -132,7 +132,7 @@ decodeProduct json = do
   image <-
     o .:? "_productImage"
       >>= case _ of
-          Just json -> decodeImage json # hush >>> Right
+          Just jsonImage -> decodeImage jsonImage # hush >>> Right
           Nothing -> Right Nothing
   pure
     $ Product

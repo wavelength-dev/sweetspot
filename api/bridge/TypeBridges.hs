@@ -26,3 +26,4 @@ sweetspotBridge =
     <|> (typeName ^== "UTCTime" >> return psDate)
     <|> (typeName ^== "CartToken" >> return psString)
     <|> (typeName ^== "UserId" >> return psString)
+    <|> (typeName ^== "PageInfo" >> return psString)

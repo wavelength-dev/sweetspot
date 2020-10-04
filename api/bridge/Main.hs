@@ -29,7 +29,11 @@ writeDashboardTypes =
          in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.Variant)
          in equal p (mkSumType p),
+        let p = (Proxy :: Proxy Api.Pagination)
+         in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.Product)
+         in equal p (mkSumType p),
+        let p = (Proxy :: Proxy Api.ProductsResponse)
          in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.CartTokenReq)
          in equal p (mkSumType p),

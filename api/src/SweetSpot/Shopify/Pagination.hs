@@ -2,26 +2,15 @@
 
 module SweetSpot.Shopify.Pagination where
 
-import Control.Lens (element, makeLenses, preview)
+import Control.Lens (element, preview)
 import RIO
 import qualified RIO.List as L
 import qualified RIO.Text as T
-import Servant
+import Servant (FromHttpApiData)
+import SweetSpot.Data.Api
 
 newtype LinkHeader = LinkHeader Text
   deriving (Show, FromHttpApiData)
-
-newtype PageInfo = PageInfo Text
-  deriving (Eq, Show, ToHttpApiData)
-
-data Pagination
-  = Pagination
-      { _paginationPrevious :: !(Maybe PageInfo),
-        _paginationNext :: !(Maybe PageInfo)
-      }
-  deriving (Eq, Show)
-
-makeLenses ''Pagination
 
 parseLinkHeader :: LinkHeader -> Pagination
 parseLinkHeader (LinkHeader txt) =

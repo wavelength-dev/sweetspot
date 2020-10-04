@@ -195,6 +195,27 @@ variantPrice :: Lens' Variant String
 variantPrice = _Newtype <<< prop (SProxy :: SProxy "_variantPrice")
 
 --------------------------------------------------------------------------------
+newtype Pagination =
+    Pagination {
+      _paginationPrevious :: Maybe String
+    , _paginationNext :: Maybe String
+    }
+
+derive instance eqPagination :: Eq Pagination
+derive instance genericPagination :: Generic Pagination _
+derive instance newtypePagination :: Newtype Pagination _
+
+--------------------------------------------------------------------------------
+_Pagination :: Iso' Pagination { _paginationPrevious :: Maybe String, _paginationNext :: Maybe String}
+_Pagination = _Newtype
+
+paginationPrevious :: Lens' Pagination (Maybe String)
+paginationPrevious = _Newtype <<< prop (SProxy :: SProxy "_paginationPrevious")
+
+paginationNext :: Lens' Pagination (Maybe String)
+paginationNext = _Newtype <<< prop (SProxy :: SProxy "_paginationNext")
+
+--------------------------------------------------------------------------------
 newtype Product =
     Product {
       _productId :: String
@@ -222,6 +243,27 @@ productVariants = _Newtype <<< prop (SProxy :: SProxy "_productVariants")
 
 productImage :: Lens' Product (Maybe Image)
 productImage = _Newtype <<< prop (SProxy :: SProxy "_productImage")
+
+--------------------------------------------------------------------------------
+newtype ProductsResponse =
+    ProductsResponse {
+      _productsResponsePagination :: Pagination
+    , _productsResponseProducts :: Array Product
+    }
+
+derive instance eqProductsResponse :: Eq ProductsResponse
+derive instance genericProductsResponse :: Generic ProductsResponse _
+derive instance newtypeProductsResponse :: Newtype ProductsResponse _
+
+--------------------------------------------------------------------------------
+_ProductsResponse :: Iso' ProductsResponse { _productsResponsePagination :: Pagination, _productsResponseProducts :: Array Product}
+_ProductsResponse = _Newtype
+
+productsResponsePagination :: Lens' ProductsResponse Pagination
+productsResponsePagination = _Newtype <<< prop (SProxy :: SProxy "_productsResponsePagination")
+
+productsResponseProducts :: Lens' ProductsResponse (Array Product)
+productsResponseProducts = _Newtype <<< prop (SProxy :: SProxy "_productsResponseProducts")
 
 --------------------------------------------------------------------------------
 newtype CartTokenReq =

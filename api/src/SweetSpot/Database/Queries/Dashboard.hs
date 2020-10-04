@@ -366,7 +366,7 @@ readStatsCache conn cmpId = do
           campaignEnded = campaign ^. uiCampaignEnd & isJust
           cacheValid =
             Clock.diffUTCTime now (campaign ^. uiCampaignUpdatedAt)
-              & (<= 1000 * 60 * 60) -- 60min
+              & (<= 60 * 60) -- 60min
        in if campaignEnded || cacheValid
             then Just campaign
             else Nothing

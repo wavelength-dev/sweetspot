@@ -118,3 +118,29 @@ bonoboHat =
             }
         ]
     }
+
+bonoboHat2 :: Product
+bonoboHat2 =
+  Product
+    { _productId: "bonobo-shopify-product-id-2"
+    , _productTitle: "Bonobo 2"
+    , _productImage: Just $ Image { _imageSrc: "aoeusnth" }
+    , _productVariants:
+        [ Variant
+            { _variantId: "bonobo-shopify-variant-id-2"
+            , _variantPrice: "$24.99"
+            , _variantProductId: "bonobo-shopify-product-id-2"
+            , _variantSku: "bonobo-6154"
+            , _variantTitle: "Bonobo hat"
+            , _variantProductTitle: "Bonobo hat"
+            }
+        , Variant
+            { _variantId: "bonobo-shopify-variant-id-3"
+            , _variantPrice: "$24.99"
+            , _variantProductId: "bonobo-shopify-product-id-2"
+            , _variantSku: "bonobo-6155"
+            , _variantTitle: "Bonobo hat"
+            , _variantProductTitle: "Bonobo hat"
+            }
+        ]
+    }

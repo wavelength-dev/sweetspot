@@ -27,7 +27,8 @@ import SweetSpot.Util (scientificToIntText)
 type ProductsRoute =
   "products"
     :> QueryParam' '[Required, Strict] "session" SessionId
-    :> Get '[JSON] [Product]
+    :> QueryParam "page_info" PageInfo
+    :> Get '[JSON] ProductsResponse
 
 type CampaignRoute =
   "campaigns"
@@ -49,17 +50,17 @@ type DashboardAPI =
   "dashboard"
     :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute :<|> StopCampaignRoute)
 
-getProductsHandler :: SessionId -> ServerM [Product]
-getProductsHandler id = runAppM $ do
+getProductsHandler :: SessionId -> Maybe PageInfo -> ServerM ProductsResponse
+getProductsHandler id mPageInfo = runAppM $ do
   mDomain <- validateSessionId id
   case mDomain of
     Just domain -> do
-      mProducts <- fetchProducts domain
+      mProducts <- fetchProducts domain mPageInfo
       case mProducts of
-        Right ps -> do
+        Right (pagination, products) -> do
           moneyFormat <- unsafeGetShopMoneyFormat domain
           return $
-            ps
+            products
               & L.filter
                 ( view shopProductType
                     >>> ( \case
@@ -68,6 +69,11 @@ getProductsHandler id = runAppM $ do
                         )
                 )
               & mapMaybe (fromShopProduct moneyFormat)
+              & \ps ->
+                ProductsResponse
+                  { _productsResponsePagination = pagination,
+                    _productsResponseProducts = ps
+                  }
         Left err -> do
           Log.error err
           throwError internalServerErr

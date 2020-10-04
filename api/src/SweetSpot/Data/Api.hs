@@ -14,6 +14,7 @@ import Data.Aeson
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import RIO
+import Servant (FromHttpApiData, ToHttpApiData)
 import SweetSpot.Data.Common
 import SweetSpot.Shopify.Types (FromShopJSON (..), Order (..))
 
@@ -74,6 +75,37 @@ makeLenses ''Product
 instance ToJSON Product
 
 instance FromJSON Product
+
+-- | ---------------------------------------------------------------------------
+-- | Pagination
+-- | ---------------------------------------------------------------------------
+newtype PageInfo = PageInfo Text
+  deriving (Eq, Generic, Show, FromHttpApiData, ToHttpApiData)
+
+instance ToJSON PageInfo
+
+data Pagination
+  = Pagination
+      { _paginationPrevious :: !(Maybe PageInfo),
+        _paginationNext :: !(Maybe PageInfo)
+      }
+  deriving (Eq, Generic, Show)
+
+makeLenses ''Pagination
+
+instance ToJSON Pagination
+
+-- | ---------------------------------------------------------------------------
+-- | ProductsResponse
+-- | ---------------------------------------------------------------------------
+data ProductsResponse
+  = ProductsResponse
+      { _productsResponsePagination :: !Pagination,
+        _productsResponseProducts :: ![Product]
+      }
+  deriving (Eq, Generic, Show)
+
+instance ToJSON ProductsResponse
 
 -- | ---------------------------------------------------------------------------
 -- | InfResult

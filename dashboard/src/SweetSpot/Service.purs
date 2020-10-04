@@ -1,6 +1,8 @@
 module SweetSpot.Service where
 
 import Prelude
+import SweetSpot.Data.Api
+
 import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (throwError)
 import Data.Argonaut (Json, jsonEmptyObject, jsonParser, (:=), (~>))
@@ -17,8 +19,8 @@ import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.CampaignListPage (CampaignId)
-import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, CreateVariant, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentProductId, createExperimentVariants, createVariantPrice, createVariantSvid)
-import SweetSpot.Data.Codec (decodeProducts, decodeUICampaigns) as Codec
+import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, CreateVariant, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentProductId, createExperimentVariants, createVariantPrice, createVariantSvid, productsResponseProducts)
+import SweetSpot.Data.Codec as Codec
 import SweetSpot.Env (apiUrl) as Env
 import SweetSpot.Logger as Logger
 import SweetSpot.QueryString (buildQueryString) as QueryString
@@ -84,7 +86,11 @@ fetchCampaigns :: SessionId -> Aff (Array UICampaign)
 fetchCampaigns sessionId = fetchResource Campaigns sessionId >>= Codec.decodeUICampaigns >>> decodeOrThrow
 
 fetchProducts :: SessionId -> Aff (Array Product)
-fetchProducts sessionId = fetchResource Products sessionId >>= Codec.decodeProducts >>> decodeOrThrow
+fetchProducts sessionId =
+  fetchResource Products sessionId
+    >>= Codec.decodeProductsResponse
+    >>> decodeOrThrow
+    <#> view productsResponseProducts
 
 encodeCreateVariant :: CreateVariant -> Json
 encodeCreateVariant createVariant =

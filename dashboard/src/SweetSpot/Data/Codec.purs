@@ -11,7 +11,7 @@ import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Unsafe (unsafePerformEffect)
-import SweetSpot.Data.Api (Image(..), InfResult(..), Product(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
+import SweetSpot.Data.Api
 
 decodeInfResult :: Json -> Either String (Maybe InfResult)
 decodeInfResult json =
@@ -146,3 +146,25 @@ decodeProducts :: Json -> Either String (Array Product)
 decodeProducts json = do
   arr <- decodeJson json
   traverse decodeProduct arr
+
+decodePagination :: Json -> Either String Pagination
+decodePagination json = do
+  o <- decodeJson json
+  previous <- o .: "_paginationPrevious"
+  next <- o .: "_paginationNext"
+  pure
+    $ Pagination
+      { _paginationPrevious: previous
+      , _paginationNext: next
+      }
+
+decodeProductsResponse :: Json -> Either String ProductsResponse
+decodeProductsResponse json = do
+  o <- decodeJson json
+  pagination <- o .: "_productsResponsePagination" >>= decodePagination
+  products <- o .: "_productsResponseProducts" >>= decodeProducts
+  pure
+    $ ProductsResponse
+      { _productsResponsePagination: pagination
+      , _productsResponseProducts: products
+      }

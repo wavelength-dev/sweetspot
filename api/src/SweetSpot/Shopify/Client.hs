@@ -18,6 +18,7 @@ import Servant.API (toUrlPiece)
 import Servant.Client
 import Servant.Links (safeLink)
 import SweetSpot.AppM
+import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Env (Environment (..))
@@ -113,7 +114,7 @@ resultsPerPage = 250
 
 class Monad m => MonadShopify m where
   exchangeAccessToken :: ShopDomain -> Text -> m (Either Text Text)
-  fetchProducts :: ShopDomain -> m (Either Text [ShopProduct])
+  fetchProducts :: ShopDomain -> Maybe PageInfo -> m (Either Text (Pagination, [ShopProduct]))
   fetchProductJson :: ShopDomain -> Pid -> m (Either Text Value)
   createProduct :: ShopDomain -> Value -> m (Either Text ShopProductWithSkus)
   deleteProduct :: ShopDomain -> Pid -> m (Either Text ())
@@ -141,13 +142,22 @@ instance MonadShopify AppM where
       Left err -> Left $ "Error exchanging auth token: " <> tshow err
       Right body -> Right $ access_token body
 
-  fetchProducts domain =
+  fetchProducts domain mPageInfo =
     withClientEnvAndToken domain $ \clientEnv token -> do
-      if domain == ShopDomain "established-titles.myshopify.com"
-        then pure $ Right []
-        else do
-          let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
-          recursivelyFetchProducts getProductsClient clientEnv token Nothing []
+      let getProductsClient = client (Proxy :: Proxy GetProductsRoute)
+      response <- liftIO $ runClientM (getProductsClient mPageInfo resultsPerPage token) clientEnv
+      pure $ case response of
+        Left err -> Left $ "Error getting products: " <> tshow err
+        Right result ->
+          let link = lookupResponseHeader result :: ResponseHeader "Link" LinkHeader
+              (Headers body _) = result
+              eProducts = parseProducts body
+           in case (link, eProducts) of
+                (Header h, Right products) -> Right (pagination, products)
+                  where
+                    pagination = parseLinkHeader h
+                (_, Left err) -> Left err
+                _ -> Left "Unable to parse link header"
 
   fetchProductJson domain productId =
     withClientEnvAndToken domain $ \clientEnv token -> do
@@ -373,3 +383,13 @@ recursivelyFetchProducts client clientEnv token mPageInfo accumProducts = do
             Just (Success products) -> Right products
             Just (Error err) -> Left $ T.pack err
             Nothing -> Left "Missing key 'products' in products response"
+
+parseProducts :: Value -> Either Text [ShopProduct]
+parseProducts body =
+  let result =
+        body ^? key "products"
+          & fmap (traverse (parse parseJSON) . toListOf values)
+   in case result of
+        Just (Success products) -> Right products
+        Just (Error err) -> Left $ T.pack err
+        Nothing -> Left "Missing key 'products' in products response"

@@ -1,14 +1,14 @@
 module SweetSpot.Service where
 
-import Prelude
 import SweetSpot.Data.Api
-
 import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (throwError)
 import Data.Argonaut (Json, jsonEmptyObject, jsonParser, (:=), (~>))
 import Data.Argonaut (stringify) as Argonaut
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Lens (view)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff, Error, error)
 import Effect.Aff (attempt) as Aff
@@ -17,11 +17,12 @@ import Effect.Exception.Unsafe (unsafeThrow) as Unsafe
 import Milkis (Options, Response, Fetch)
 import Milkis as Milkis
 import Milkis.Impl.Window as MilkisImpl
+import Prelude (class Show, Unit, bind, discard, map, pure, show, unit, unless, (#), ($), (<>), (==), (>>=), (>>>))
 import Record.Unsafe.Union as RecordUnsafe
 import SweetSpot.CampaignListPage (CampaignId)
-import SweetSpot.Data.Api (CreateCampaign, CreateExperiment, CreateVariant, Product, UICampaign, createCampaignExperiments, createCampaignName, createExperimentProductId, createExperimentVariants, createVariantPrice, createVariantSvid, productsResponseProducts)
 import SweetSpot.Data.Codec as Codec
 import SweetSpot.Env (apiUrl) as Env
+import SweetSpot.Logger (LogLevel(..)) as LogLevel
 import SweetSpot.Logger as Logger
 import SweetSpot.QueryString (buildQueryString) as QueryString
 import SweetSpot.Session (SessionId(..))
@@ -56,14 +57,14 @@ getResourceRoute Campaigns = serviceUrl <> "campaigns"
 
 getResourceRoute Products = serviceUrl <> "products"
 
-fetchResource :: Resource -> SessionId -> Aff Json
-fetchResource resource (SessionId sessionId) = do
+fetchResource :: Resource -> SessionId -> Maybe String -> Aff Json
+fetchResource resource (SessionId sessionId) mPageInfo = do
   res <- getJson (route <> queryString) {}
   let
     status = Milkis.statusCode res
   body <- Milkis.text res
   unless (status == 200) do
-    Logger.logErrorContext "failed to fetch resource" { status: show status, body } # liftEffect
+    Logger.logWithContext LogLevel.Error "failed to fetch resource" { status: show status, body } # liftEffect
     "failed to fetch resource " <> show resource # error >>> throwError
   case jsonParser body of
     Left parseErrorMessage -> throwError $ error $ parseErrorMessage
@@ -71,8 +72,16 @@ fetchResource resource (SessionId sessionId) = do
   where
   route = getResourceRoute resource
 
+  sessionParam = Tuple "session" sessionId # Just
+
+  pageParam = case mPageInfo of
+    Nothing -> Nothing
+    Just pageInfo -> Tuple "page_info" pageInfo # Just
+
+  queryParams = Array.catMaybes [ sessionParam, pageParam ]
+
   queryString =
-    QueryString.buildQueryString [ Tuple "session" sessionId ]
+    QueryString.buildQueryString queryParams
       # case _ of
           Left errMsg -> Unsafe.unsafeThrow errMsg
           Right qs -> qs
@@ -83,14 +92,16 @@ decodeOrThrow = case _ of
   Right result -> pure result
 
 fetchCampaigns :: SessionId -> Aff (Array UICampaign)
-fetchCampaigns sessionId = fetchResource Campaigns sessionId >>= Codec.decodeUICampaigns >>> decodeOrThrow
+fetchCampaigns sessionId =
+  fetchResource Campaigns sessionId Nothing
+    >>= Codec.decodeUICampaigns
+    >>> decodeOrThrow
 
-fetchProducts :: SessionId -> Aff (Array Product)
-fetchProducts sessionId =
-  fetchResource Products sessionId
+fetchProducts :: SessionId -> Maybe String -> Aff ProductsResponse
+fetchProducts sessionId pageInfo =
+  fetchResource Products sessionId pageInfo
     >>= Codec.decodeProductsResponse
     >>> decodeOrThrow
-    <#> view productsResponseProducts
 
 encodeCreateVariant :: CreateVariant -> Json
 encodeCreateVariant createVariant =
@@ -157,4 +168,4 @@ stopCampaign (SessionId sessionId) campaignId = do
     status = Milkis.statusCode res
   body <- Milkis.text res
   unless (status == 200) do
-    liftEffect $ Logger.logErrorContext "failed to stop experiment" { body }
+    liftEffect $ Logger.logWithContext LogLevel.Error "failed to stop experiment" { body }

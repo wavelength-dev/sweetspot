@@ -1,7 +1,7 @@
 module SweetSpot.Data.Codec where
 
-import Prelude
-
+import Prelude (bind, pure, (#), ($), (<$>), (>>=), (>>>))
+import SweetSpot.Data.Api (Image(..), InfResult(..), Pagination(..), Product(..), ProductsResponse(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:), (.:?))
@@ -11,7 +11,6 @@ import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Unsafe (unsafePerformEffect)
-import SweetSpot.Data.Api
 
 decodeInfResult :: Json -> Either String (Maybe InfResult)
 decodeInfResult json =
@@ -58,11 +57,12 @@ decodeUITreatment json = do
 -- Brittle parser of ISO8601 / RFC3339
 parseOptionalDateTime :: Maybe String -> Either String (Maybe DateTime)
 parseOptionalDateTime Nothing = Right Nothing
+
 parseOptionalDateTime (Just encodedDateTime) = Just <$> parseDateTime encodedDateTime
 
 parseDateTime :: String -> Either String DateTime
 parseDateTime encodedDateTime =
-   JSDate.parse encodedDateTime
+  JSDate.parse encodedDateTime
     # unsafePerformEffect
     >>> JSDate.toDateTime
     >>> note "failed to parse date"
@@ -154,17 +154,17 @@ decodePagination json = do
   next <- o .: "_paginationNext"
   pure
     $ Pagination
-      { _paginationPrevious: previous
-      , _paginationNext: next
-      }
+        { _paginationPrevious: previous
+        , _paginationNext: next
+        }
 
 decodeProductsResponse :: Json -> Either String ProductsResponse
 decodeProductsResponse json = do
   o <- decodeJson json
-  pagination <- o .: "_productsResponsePagination" >>= decodePagination
-  products <- o .: "_productsResponseProducts" >>= decodeProducts
+  _pagination <- o .: "_pagination" >>= decodePagination
+  _products <- o .: "_products" >>= decodeProducts
   pure
     $ ProductsResponse
-      { _productsResponsePagination: pagination
-      , _productsResponseProducts: products
-      }
+        { _pagination
+        , _products
+        }

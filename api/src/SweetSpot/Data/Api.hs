@@ -100,8 +100,8 @@ instance ToJSON Pagination
 -- | ---------------------------------------------------------------------------
 data ProductsResponse
   = ProductsResponse
-      { _productsResponsePagination :: !Pagination,
-        _productsResponseProducts :: ![Product]
+      { _pagination :: !Pagination,
+        _products :: ![Product]
       }
   deriving (Eq, Generic, Show)
 

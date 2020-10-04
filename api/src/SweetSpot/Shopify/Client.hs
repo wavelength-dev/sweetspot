@@ -156,6 +156,8 @@ instance MonadShopify AppM where
                 (Header h, Right products) -> Right (pagination, products)
                   where
                     pagination = parseLinkHeader h
+                (MissingHeader, Right products) ->
+                  Right (Pagination {_paginationPrevious = Nothing, _paginationNext = Nothing}, products)
                 (_, Left err) -> Left err
                 _ -> Left "Unable to parse link header"
 

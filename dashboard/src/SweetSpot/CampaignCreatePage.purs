@@ -253,13 +253,13 @@ mkCampaignCreatePage = do
 
             checkMatchingVariant :: Variant -> Boolean
             checkMatchingVariant variant =
-              String.contains matchPattern (variant ^. variantTitle)
-                || String.contains matchPattern (variant ^. variantSku)
+              String.contains matchPattern (String.toLower (variant ^. variantTitle))
+                || String.contains matchPattern (String.toLower (variant ^. variantSku))
 
             checkMatchingProduct :: Product -> Boolean
             checkMatchingProduct product =
-              String.contains matchPattern (product ^. productTitle)
-                || (map checkMatchingVariant (product ^. productVariants) # or)
+              String.contains matchPattern (String.toLower (product ^. productTitle))
+                || (map checkMatchingVariant ((product ^. productVariants)) # or)
 
             containsPattern = String.contains matchPattern
           in

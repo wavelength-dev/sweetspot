@@ -15,8 +15,8 @@ import Data.String (Pattern(..))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, Milliseconds(..))
-import Effect.Aff (attempt, delay, launchAff_) as Aff
+import Effect.Aff (Aff)
+import Effect.Aff (attempt, launchAff_) as Aff
 import Effect.Class (liftEffect)
 import Effect.Now (nowDateTime)
 import Effect.Uncurried (mkEffectFn1)
@@ -30,7 +30,6 @@ import SweetSpot.Data.Api (CreateCampaign(..), CreateExperiment(..), CreateVaria
 import SweetSpot.Data.Api (products) as SL
 import SweetSpot.Logger (LogLevel(..)) as LogLevel
 import SweetSpot.Logger as Logger
-import SweetSpot.Mock (bonoboHat, bonoboHat2)
 import SweetSpot.ProductsResource (ProductsResource(..))
 import SweetSpot.Service (makeCampaign)
 import SweetSpot.Service as Service
@@ -223,11 +222,6 @@ useProductsResource sessionId = React.do
 
           fetchedProducts = paginatedProducts ^. SL.products
         fetchMoreProducts ([] <> fetchedProducts) mNextPage
-    setProductsResource (PartialProducts []) # liftEffect
-    Aff.delay (Milliseconds 3000.0)
-    setProductsResource (PartialProducts [ bonoboHat ]) # liftEffect
-    Aff.delay (Milliseconds 3000.0)
-    setProductsResource (AllProducts [ bonoboHat, bonoboHat2 ]) # liftEffect
   pure productsResource
 
 mkCampaignCreatePage :: Component { sessionId :: SessionId }

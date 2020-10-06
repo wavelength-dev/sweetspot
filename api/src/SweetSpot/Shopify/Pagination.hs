@@ -2,7 +2,7 @@
 
 module SweetSpot.Shopify.Pagination where
 
-import Control.Lens (element, preview)
+import Control.Lens (element)
 import RIO
 import qualified RIO.List as L
 import qualified RIO.Text as T

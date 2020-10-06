@@ -2,7 +2,7 @@
 
 module SweetSpot.Shopify.Client where
 
-import Control.Lens hiding (Strict)
+import Control.Lens ((^?!), toListOf)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader.Class (asks)
 import Data.Aeson (ToJSON (..), Value)
@@ -10,7 +10,7 @@ import Data.Aeson.Lens
 import Data.Aeson.Types (Result (..), parse, parseJSON)
 import Network.HTTP.Client hiding (Proxy)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import RIO hiding ((^.), to, view)
+import RIO
 import qualified RIO.Text as T
 import qualified RIO.Vector as V
 import Servant

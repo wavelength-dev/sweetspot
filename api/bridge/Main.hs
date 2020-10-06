@@ -1,6 +1,5 @@
 module Main where
 
-import Data.Proxy (Proxy (..))
 import Language.PureScript.Bridge
   ( buildBridge,
     equal,

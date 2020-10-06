@@ -4,11 +4,11 @@ module SweetSpot.Route.Dashboard
   )
 where
 
-import Control.Lens hiding (Strict)
+import Control.Lens ((<>~), (^?!), _Just, at, ix, traverseOf_, traversed)
 import Data.Aeson (Result (..), Value (..), parseJSON)
 import Data.Aeson.Lens
 import Data.Aeson.Types (parse)
-import RIO hiding ((^.), to, view)
+import RIO
 import qualified RIO.HashMap as HM
 import qualified RIO.List as L
 import RIO.Partial (fromJust)

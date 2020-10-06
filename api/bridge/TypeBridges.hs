@@ -3,7 +3,6 @@ module TypeBridges where
 import Control.Applicative
 import Language.PureScript.Bridge
 import Language.PureScript.Bridge.PSTypes
-import Language.PureScript.Bridge.TypeInfo (TypeInfo (..))
 import RIO
 
 psDate =

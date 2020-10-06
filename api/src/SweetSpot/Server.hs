@@ -4,7 +4,6 @@ module SweetSpot.Server
   )
 where
 
-import Control.Monad.Reader (runReaderT)
 import Data.Pool (withResource)
 import Network.Wai.Handler.Warp
   ( defaultSettings,

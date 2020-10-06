@@ -2,7 +2,6 @@ module SweetSpot.CampaignListPage where
 
 import Prelude
 import Data.Array (intercalate)
-import Data.Array as Array
 import Data.DateTime (DateTime)
 import Data.Lens (view)
 import Data.Maybe (Maybe(..))
@@ -159,11 +158,11 @@ mkCampaignListPage =
 
       checkIsCampaignActiveNow = checkIsCampaignActive now
 
-      navigateToCreateOrWarn =
-        if Array.any checkIsCampaignActiveNow props.campaigns then
-          setIsSingleCampaignWarningVisible true
-        else do
-          Hash.setHash "/create"
+      navigateToCreateOrWarn = Hash.setHash "/create"
+        -- if Array.any checkIsCampaignActiveNow props.campaigns then
+        --   setIsSingleCampaignWarningVisible true
+        -- else do
+        --   Hash.setHash "/create"
     useEffect unit do
       intervalId <- Timer.setInterval 1000 (Now.nowDateTime >>= setNow)
       pure $ Timer.clearInterval intervalId

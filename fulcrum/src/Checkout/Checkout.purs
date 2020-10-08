@@ -18,7 +18,7 @@ import Fulcrum.Data (TestMapByVariant, VariantId(..))
 import Fulcrum.EstablishedTitles (isCurrentSite) as EstablishedTitles
 import Fulcrum.Logger (LogLevel(..))
 import Fulcrum.Logger (logWithContext) as Logger
-import Fulcrum.Site (getIsDebugging, getIsDryRun, getUrlParam, onElementsMutation, queryDocument, readHostname) as Site
+import Fulcrum.Site (findElement, getIsDebugging, getIsDryRun, getUrlParam, onElementsMutation, queryDocument, readHostname) as Site
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Element)
 import Web.DOM.Element (getAttribute, setAttribute, toNode) as Element
@@ -112,19 +112,22 @@ onSelectVariant :: TestMapByVariant -> Effect Unit
 onSelectVariant testMap = do
   isDebugging <- Site.getIsDebugging
   isDryRun <- Site.getIsDryRun
-  mEls <- Site.queryDocument (QuerySelector "#ProductSelect")
+  mProductSelect <- Site.findElement [ QuerySelector "#ProductSelect", QuerySelector "#ProductSelect-product-template" ]
   mTargetId <- Site.getUrlParam "variant"
-  -- not all form interactions select a new variant.
-  -- this is dangerous. it's possible a variant was selected but
-  -- the url simply didn't update (in time) as we expect.
+  -- The first form update that selects a new variant adds a
+  -- 'variant' parameter to the URL. Not all form updates are variant
+  -- updates and so updates before a variant was ever selected result
+  -- in running this function without the URL indicating the selected
+  -- variant. We assume that means no update is needed. This is
+  -- dangerous as the URL might simply not have updated, yet.
   -- TODO: only trigger this function on relevant select changes
   unless (isNothing mTargetId) do
     eSuccess <-
       runExceptT do
-        el <- case Array.head mEls of
+        productSelect <- case mProductSelect of
           Nothing -> throwError "no product select found"
-          Just firstEl -> pure firstEl
-        selectEl <- case HTMLSelectElement.fromElement el of
+          Just productSelect -> pure productSelect
+        selectEl <- case HTMLSelectElement.fromElement productSelect of
           Nothing -> throwError "product select is not a select element"
           Just narrowEl -> pure narrowEl
         rawTargetId <- case mTargetId of

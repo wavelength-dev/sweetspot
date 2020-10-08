@@ -1,7 +1,7 @@
 module Fulcrum.Site where
 
 import Prelude
-import Data.Array (catMaybes, null) as Array
+import Data.Array (catMaybes, concat, head, null) as Array
 import Data.Either (Either(..))
 import Data.Foldable (oneOf) as Foldable
 import Data.Maybe (Maybe(..))
@@ -79,6 +79,12 @@ queryDocument querySelector =
   where
   -- We discard nodes that are not elements.
   nodesToElements = NodeList.toArray >=> map Element.fromNode >>> Array.catMaybes >>> pure
+
+findElement :: Array QuerySelector -> Effect (Maybe Element)
+findElement querySelectors =
+  traverse queryDocument querySelectors
+    <#> Array.concat
+    >>> Array.head
 
 getIsDebugging :: Effect Boolean
 getIsDebugging = do

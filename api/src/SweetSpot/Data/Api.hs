@@ -321,3 +321,13 @@ instance ToJSON CheckoutPayload where
       [ "userId" .= uid,
         "order" .= (toJSON order)
       ]
+
+-- | ---------------------------------------------------------------------------
+-- | AppChargeStatusResponse
+-- | ---------------------------------------------------------------------------
+data AppChargeStatusResponse
+  = AppChargeStatusResponse
+      {_appChargeStatusResponse :: !AppChargeStatus}
+  deriving (Generic)
+
+instance ToJSON AppChargeStatusResponse

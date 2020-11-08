@@ -68,10 +68,6 @@ a {
   height: auto;
 }
 
-.subtitle {
-  margin-top: -0.5em;
-}
-
 .header-title {
   font-weight: 300;
   font-size: 1.5em;
@@ -226,9 +222,6 @@ a {
 @media (min-width: 600px) {
   .getting-started-img {
     max-width: 60%;
-  }
-  .subtitle {
-    margin-top: -1em;
   }
 
   .header {

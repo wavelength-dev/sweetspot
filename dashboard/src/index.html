@@ -15,35 +15,16 @@
     <div id="app"></div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <script src="./index.js"></script>
-    <!-- begin olark code -->
-    <script type="text/javascript" async>
-      ;(function (o, l, a, r, k, y) {
-        if (o.olark) return
-        r = 'script'
-        y = l.createElement(r)
-        r = l.getElementsByTagName(r)[0]
-        y.async = 1
-        y.src = '//' + a
-        r.parentNode.insertBefore(y, r)
-        y = o.olark = function () {
-          k.s.push(arguments)
-          k.t.push(+new Date())
-        }
-        y.extend = function (i, j) {
-          y('extend', i, j)
-        }
-        y.identify = function (i) {
-          y('identify', (k.i = i))
-        }
-        y.configure = function (i, j) {
-          y('configure', i, j)
-          k.c[i] = j
-        }
-        k = y._ = { s: [], t: [+new Date()], c: {}, l: a }
-      })(window, document, 'static.olark.com/jsclient/loader.js')
-      /* custom configuration goes here (www.olark.com/documentation) */
-      olark.identify('7238-295-10-2083')
+    <script type="text/javascript">
+      window.$crisp = []
+      window.CRISP_WEBSITE_ID = 'ffd77e14-415a-4b86-aecf-8260e6daf43b'
+      ;(function () {
+        d = document
+        s = d.createElement('script')
+        s.src = 'https://client.crisp.chat/l.js'
+        s.async = 1
+        d.getElementsByTagName('head')[0].appendChild(s)
+      })()
     </script>
-    <!-- end olark code -->
   </body>
 </html>

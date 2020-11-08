@@ -7,7 +7,6 @@ module SweetSpot.Route.OAuth
   )
 where
 
-import Control.Monad.Reader.Class (asks)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import RIO
 import Servant
@@ -15,7 +14,6 @@ import SweetSpot.AppM
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Install (InstallDB (..))
 import SweetSpot.Database.Queries.Webhook (WebhookDB (..))
-import SweetSpot.Database.Schema
 import qualified SweetSpot.Logger as L
 import SweetSpot.Route.Util
 import SweetSpot.Shopify.Client (MonadShopify (..))
@@ -97,10 +95,11 @@ redirectHandler (Code code) hmac _ nonce shopDomain =
             deleteInstallNonce shopDomain
             uninstallShop shopDomain
             throwError internalServerErr
-          Right appCharge -> do
+          Right _ -> do
             L.info $ "Successfully installed app for " <> showText shopDomain
             deleteInstallNonce shopDomain
-            pure $ addHeader (appCharge ^. appChargeConfirmationUrl) NoContent
+            appUrl <- getAppUrl shopDomain
+            pure $ addHeader appUrl NoContent
       _ -> do
         L.error "OAuth redirect handler got invalid nonce"
         throwError badRequestErr

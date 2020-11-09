@@ -323,11 +323,13 @@ instance ToJSON CheckoutPayload where
       ]
 
 -- | ---------------------------------------------------------------------------
--- | AppChargeStatusResponse
+-- | AppChargeResponse
 -- | ---------------------------------------------------------------------------
-data AppChargeStatusResponse
-  = AppChargeStatusResponse
-      {_appChargeStatusResponse :: !AppChargeStatus}
-  deriving (Generic)
+data AppChargeResponse
+  = AppChargeResponse
+      { _status :: !AppChargeStatus,
+        _confirmationUrl :: !Text
+      }
+  deriving (Generic, Eq)
 
-instance ToJSON AppChargeStatusResponse
+instance ToJSON AppChargeResponse

@@ -26,3 +26,4 @@ sweetspotBridge =
     <|> (typeName ^== "CartToken" >> return psString)
     <|> (typeName ^== "UserId" >> return psString)
     <|> (typeName ^== "PageInfo" >> return psString)
+    <|> (typeName ^== "AppChargeStatus" >> return psString)

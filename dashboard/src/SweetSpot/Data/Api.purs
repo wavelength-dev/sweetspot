@@ -354,3 +354,24 @@ createCampaignExperiments :: Lens' CreateCampaign (Array CreateExperiment)
 createCampaignExperiments = _Newtype <<< prop (SProxy :: SProxy "_createCampaignExperiments")
 
 --------------------------------------------------------------------------------
+newtype AppChargeResponse =
+    AppChargeResponse {
+      _status :: String
+    , _confirmationUrl :: String
+    }
+
+derive instance eqAppChargeResponse :: Eq AppChargeResponse
+derive instance genericAppChargeResponse :: Generic AppChargeResponse _
+derive instance newtypeAppChargeResponse :: Newtype AppChargeResponse _
+
+--------------------------------------------------------------------------------
+_AppChargeResponse :: Iso' AppChargeResponse { _status :: String, _confirmationUrl :: String}
+_AppChargeResponse = _Newtype
+
+status :: Lens' AppChargeResponse String
+status = _Newtype <<< prop (SProxy :: SProxy "_status")
+
+confirmationUrl :: Lens' AppChargeResponse String
+confirmationUrl = _Newtype <<< prop (SProxy :: SProxy "_confirmationUrl")
+
+--------------------------------------------------------------------------------

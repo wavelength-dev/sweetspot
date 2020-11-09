@@ -224,7 +224,7 @@ useProductsResource sessionId = React.do
         fetchMoreProducts ([] <> fetchedProducts) mNextPage
   pure productsResource
 
-mkCampaignCreatePage :: Component { sessionId :: SessionId }
+mkCampaignCreatePage :: Component { sessionId :: SessionId, enableCreate :: Boolean }
 mkCampaignCreatePage = do
   now <- nowDateTime
   component "CampaignCreatePage" \props -> React.do
@@ -464,7 +464,7 @@ mkCampaignCreatePage = do
                               , url: null
                               , onClick: const (setModalOpen true) # mkEffectFn1 >>> notNull
                               , loading: false
-                              , disabled: not isValidCreateCampaign || Array.null variantRows || modalOpen
+                              , disabled: not props.enableCreate && (not isValidCreateCampaign || Array.null variantRows || modalOpen)
                               }
                           ]
                       ]

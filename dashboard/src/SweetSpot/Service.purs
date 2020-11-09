@@ -47,15 +47,19 @@ serviceUrl = Env.apiUrl <> "/api/dashboard/"
 data Resource
   = Campaigns
   | Products
+  | AppCharge
 
 instance showResource :: Show Resource where
   show Campaigns = "campaigns"
   show Products = "products"
+  show AppCharge = "appCharge"
 
 getResourceRoute :: Resource -> String
 getResourceRoute Campaigns = serviceUrl <> "campaigns"
 
 getResourceRoute Products = serviceUrl <> "products"
+
+getResourceRoute AppCharge = serviceUrl <> "charge/status"
 
 fetchResource :: Resource -> SessionId -> Maybe String -> Aff Json
 fetchResource resource (SessionId sessionId) mPageInfo = do
@@ -101,6 +105,12 @@ fetchProducts :: SessionId -> Maybe String -> Aff ProductsResponse
 fetchProducts sessionId pageInfo =
   fetchResource Products sessionId pageInfo
     >>= Codec.decodeProductsResponse
+    >>> decodeOrThrow
+
+fetchAppCharge :: SessionId -> Aff AppChargeResponse
+fetchAppCharge sessionId =
+  fetchResource AppCharge sessionId Nothing
+    >>= Codec.decodeAppChargeResponse
     >>> decodeOrThrow
 
 encodeCreateVariant :: CreateVariant -> Json

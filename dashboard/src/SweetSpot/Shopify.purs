@@ -24,6 +24,15 @@ type Action
     , loading :: Boolean
     }
 
+foreign import banner ::
+  ReactComponent
+    { title :: String
+    , action :: { content :: String, url :: String }
+    , status :: String
+    , onDismiss :: Effect Unit
+    , children :: Array JSX
+    }
+
 foreign import page ::
   ReactComponent
     { children :: Array JSX

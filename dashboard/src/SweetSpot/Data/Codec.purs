@@ -1,7 +1,5 @@
 module SweetSpot.Data.Codec where
 
-import Prelude (bind, pure, (#), ($), (<$>), (>>=), (>>>))
-import SweetSpot.Data.Api (Image(..), InfResult(..), Pagination(..), Product(..), ProductsResponse(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 import Control.Alt ((<|>))
 import Data.Argonaut (Json, decodeJson)
 import Data.Argonaut.Decode ((.:), (.:?))
@@ -11,6 +9,8 @@ import Data.JSDate as JSDate
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Unsafe (unsafePerformEffect)
+import Prelude (bind, pure, (#), ($), (<$>), (>>=), (>>>))
+import SweetSpot.Data.Api (AppChargeResponse(..), Image(..), InfResult(..), Pagination(..), Product(..), ProductsResponse(..), UICampaign(..), UITreatment(..), UITreatmentVariant(..), Variant(..))
 
 decodeInfResult :: Json -> Either String (Maybe InfResult)
 decodeInfResult json =
@@ -167,4 +167,15 @@ decodeProductsResponse json = do
     $ ProductsResponse
         { _pagination
         , _products
+        }
+
+decodeAppChargeResponse :: Json -> Either String AppChargeResponse
+decodeAppChargeResponse json = do
+  o <- decodeJson json
+  _status <- o .: "_status"
+  _confirmationUrl <- o .: "_confirmationUrl"
+  pure
+    $ AppChargeResponse
+        { _status
+        , _confirmationUrl
         }

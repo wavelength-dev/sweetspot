@@ -41,6 +41,8 @@ writeDashboardTypes =
         let p = (Proxy :: Proxy Api.CreateExperiment)
          in equal p (mkSumType p),
         let p = (Proxy :: Proxy Api.CreateCampaign)
+         in equal p (mkSumType p),
+        let p = (Proxy :: Proxy Api.AppChargeResponse)
          in equal p (mkSumType p)
       ]
 

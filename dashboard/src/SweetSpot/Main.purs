@@ -3,13 +3,14 @@ module SweetSpot.Main where
 import Prelude
 import Data.Array (find)
 import Data.Array (null) as Array
+import Data.Lens ((^.))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (attempt) as Aff
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
-import React.Basic.DOM (css, div, text) as R
+import React.Basic.DOM (css, div, text, p) as R
 import React.Basic.DOM (render)
 import React.Basic.Hooks (Component, component, element, useEffectAlways, useEffectOnce, useState', (/\))
 import React.Basic.Hooks (bind, discard) as React
@@ -17,13 +18,14 @@ import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.CampaignCreatePage (mkCampaignCreatePage)
 import SweetSpot.CampaignListPage (mkCampaignListPage)
 import SweetSpot.CampaignViewPage (mkCampaignViewPage)
-import SweetSpot.Data.Api (UICampaign(..))
+import SweetSpot.Data.Api (UICampaign(..), AppChargeResponse(..), status, confirmationUrl)
+import SweetSpot.Mock as Mock
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (LogLevel(..)) as LogLevel
 import SweetSpot.Logger (log, logWithContext) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
 import SweetSpot.Route (Route(..), useRouter)
-import SweetSpot.Service (fetchCampaigns) as Service
+import SweetSpot.Service (fetchCampaigns, fetchAppCharge) as Service
 import SweetSpot.Session (SessionId)
 import SweetSpot.Session (getSessionId) as Session
 import SweetSpot.Shopify as Shopify
@@ -60,20 +62,51 @@ mkApp = do
     route /\ setRoute <- useState' CampaignList
     useEffectOnce (useRouter setRoute)
     campaignsResource /\ setCampaignsResource <- useState' EmptyResource
+    appChargeResource /\ setAppChargeResource <- useState' EmptyResource
     useAff props.sessionId do
       setCampaignsResource Loading # liftEffect
-      eCampaigns <- Service.fetchCampaigns props.sessionId # Aff.attempt
-      liftEffect case eCampaigns of
-        Left error -> do
+      setAppChargeResource Loading # liftEffect
+      eCampaigns <- pure $ Service.fetchCampaigns props.sessionId # Aff.attempt
+      eAppCharge <- pure $ Service.fetchAppCharge props.sessionId # Aff.attempt
+      liftEffect case eCampaigns, eAppCharge of
+        Right campaigns, Right appCharge -> do
+          setCampaignsResource (Resource campaigns)
+          setAppChargeResource (Resource appCharge)
+        Left error, Right _ -> do
           setCampaignsResource FetchFail
           Logger.logWithContext LogLevel.Error "failed to fetch campaigns" error
-        Right campaigns -> setCampaignsResource (Resource campaigns)
+        Right _, Left error -> do
+          setAppChargeResource FetchFail
+          Logger.logWithContext LogLevel.Error "failed to fetch appCharge" error
+        Left err0, Left err1 -> do
+          setCampaignsResource FetchFail
+          setAppChargeResource FetchFail
+          Logger.logWithContext LogLevel.Error "failed to fetch campaigns" err0
+          Logger.logWithContext LogLevel.Error "failed to fetch appCharge" err1
       pure unit
     pure
       $ element Shopify.appProvider
           { i18n: Shopify.enTranslations
           , children:
-              [ case route of
+              [ case appChargeResource of
+                  Resource appCharge -> case appCharge ^. status of
+                    "active" -> mempty
+                    _ ->
+                      element
+                        Shopify.banner
+                        { title: "SweetSpot is in evaluation mode"
+                        , action: { content: "Upgrade now", url: appCharge ^. confirmationUrl }
+                        , status: "info"
+                        , onDismiss: mempty
+                        , children:
+                            [ R.p
+                                { children:
+                                    [ R.text "You're currently using the free evaluation version. If you want to run your first experiment, please upgrade your plan." ]
+                                }
+                            ]
+                        }
+                  _ -> mempty
+              , case route of
                   CampaignList -> case campaignsResource of
                     EmptyResource -> mempty
                     Loading -> loading
@@ -83,7 +116,14 @@ mkApp = do
                         gettingStartedPage
                       else
                         campaignListPage { campaigns }
-                  CampaignCreate -> campaignCreatePage { sessionId: props.sessionId }
+                  CampaignCreate ->
+                    campaignCreatePage
+                      { sessionId: props.sessionId
+                      , enableCreate:
+                          case appChargeResource of
+                            Resource appCharge -> appCharge ^. status == "active"
+                            _ -> false
+                      }
                   CampaignView rawCampaignId -> case campaignsResource of
                     EmptyResource -> mempty
                     Loading -> loading

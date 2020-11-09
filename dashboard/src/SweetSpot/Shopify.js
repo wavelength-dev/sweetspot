@@ -1,6 +1,7 @@
 const enTranslations = require('@shopify/polaris/locales/en.json')
 const {
   AppProvider,
+  Banner,
   Button,
   Card,
   DataTable,
@@ -23,6 +24,7 @@ const {
 } = require('@shopify/polaris')
 
 exports.appProvider = AppProvider
+exports.banner = Banner
 exports.button = Button
 exports.card = Card
 exports.dataTable = DataTable

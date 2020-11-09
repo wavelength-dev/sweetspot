@@ -20,7 +20,6 @@ import Data.UUID.Types
   )
 import Database.Beam.Backend.SQL
 import Database.Beam.Query (HasSqlEqualityCheck (..))
-import GHC.Generics (Generic)
 import RIO
 import qualified RIO.Text as T
 import Servant.API
@@ -450,6 +449,7 @@ data AppChargeStatus
   | Active
   | Declined
   | Expired
+  deriving (Eq)
 
 instance Show AppChargeStatus where
   show = \case

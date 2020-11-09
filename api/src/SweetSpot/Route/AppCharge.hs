@@ -9,7 +9,7 @@ import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import RIO
 import Servant
 import SweetSpot.AppM
-import SweetSpot.Data.Api (AppChargeStatusResponse (..))
+import SweetSpot.Data.Api (AppChargeResponse (..))
 import SweetSpot.Data.Common
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..))
 import SweetSpot.Database.Queries.Install (InstallDB (..))
@@ -26,7 +26,7 @@ type ActivateAppChargeRoute =
 type AppChargeStatusRoute =
   "charge" :> "status"
     :> QueryParam' '[Required, Strict] "session" SessionId
-    :> Get '[JSON] AppChargeStatusResponse
+    :> Get '[JSON] AppChargeResponse
 
 type AppChargeAPI = ActivateAppChargeRoute :<|> AppChargeStatusRoute
 
@@ -57,7 +57,7 @@ activateAppChargeHandler domain = runAppM $ do
       appUrl <- getAppUrl domain
       pure $ addHeader appUrl NoContent
 
-appChargeStatusRoute :: SessionId -> ServerM AppChargeStatusResponse
+appChargeStatusRoute :: SessionId -> ServerM AppChargeResponse
 appChargeStatusRoute sessionId = runAppM $ do
   mDomain <- validateSessionId sessionId
   case mDomain of
@@ -65,8 +65,9 @@ appChargeStatusRoute sessionId = runAppM $ do
     Just domain -> do
       appCharge <- getAppCharge domain
       pure
-        AppChargeStatusResponse
-          { _appChargeStatusResponse = _appChargeStatus appCharge
+        AppChargeResponse
+          { _status = _appChargeStatus appCharge,
+            _confirmationUrl = _appChargeConfirmationUrl appCharge
           }
 
 appChargeHandler = activateAppChargeHandler :<|> appChargeStatusRoute

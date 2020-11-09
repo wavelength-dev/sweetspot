@@ -18,6 +18,8 @@ import SweetSpot.Data.Api
 import SweetSpot.Data.Common
 import SweetSpot.Data.Mapping (fromShopProduct)
 import SweetSpot.Database.Queries.Dashboard (DashboardDB (..), InsertExperiment (..))
+import SweetSpot.Database.Queries.Install (InstallDB (..))
+import SweetSpot.Database.Schema
 import qualified SweetSpot.Logger as Log
 import SweetSpot.Route.Util (internalServerErr, unauthorizedErr)
 import SweetSpot.Shopify.Client (MonadShopify (..))
@@ -46,9 +48,14 @@ type StopCampaignRoute =
     :> QueryParam' '[Required, Strict] "session" SessionId
     :> Post '[JSON] OkResponse
 
+type AppChargeStatusRoute =
+  "charge" :> "status"
+    :> QueryParam' '[Required, Strict] "session" SessionId
+    :> Get '[JSON] AppChargeResponse
+
 type DashboardAPI =
   "dashboard"
-    :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute :<|> StopCampaignRoute)
+    :> (ProductsRoute :<|> CampaignRoute :<|> CreateCampaignRoute :<|> StopCampaignRoute :<|> AppChargeStatusRoute)
 
 getProductsHandler :: SessionId -> Maybe PageInfo -> ServerM ProductsResponse
 getProductsHandler id mPageInfo = runAppM $ do
@@ -171,8 +178,22 @@ stopCampaignHandler campaignId sessionId = runAppM $ do
         >> pure OkResponse {message = "Campaign stopped"}
     _ -> throwError unauthorizedErr
 
+appChargeStatusHandler :: SessionId -> ServerM AppChargeResponse
+appChargeStatusHandler sessionId = runAppM $ do
+  mDomain <- validateSessionId sessionId
+  case mDomain of
+    Nothing -> throwError unauthorizedErr
+    Just domain -> do
+      appCharge <- getAppCharge domain
+      pure
+        AppChargeResponse
+          { _status = _appChargeStatus appCharge,
+            _confirmationUrl = _appChargeConfirmationUrl appCharge
+          }
+
 dashboardHandler =
   getProductsHandler
     :<|> getCampaignsHandler
     :<|> createCampaignHandler
     :<|> stopCampaignHandler
+    :<|> appChargeStatusHandler

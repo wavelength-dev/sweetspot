@@ -66,8 +66,8 @@ mkApp = do
     useAff props.sessionId do
       setCampaignsResource Loading # liftEffect
       setAppChargeResource Loading # liftEffect
-      eCampaigns <- pure $ Service.fetchCampaigns props.sessionId # Aff.attempt
-      eAppCharge <- pure $ Service.fetchAppCharge props.sessionId # Aff.attempt
+      eCampaigns <- Service.fetchCampaigns props.sessionId # Aff.attempt
+      eAppCharge <- Service.fetchAppCharge props.sessionId # Aff.attempt
       liftEffect case eCampaigns, eAppCharge of
         Right campaigns, Right appCharge -> do
           setCampaignsResource (Resource campaigns)

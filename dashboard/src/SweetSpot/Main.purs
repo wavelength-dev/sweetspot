@@ -3,13 +3,14 @@ module SweetSpot.Main where
 import Prelude
 import Data.Array (find)
 import Data.Array (null) as Array
-import Data.Lens ((^.))
 import Data.Either (Either(..))
+import Data.Lens ((^.))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (attempt) as Aff
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
+import Effect.Uncurried (mkEffectFn1)
 import React.Basic.DOM (css, div, text, p) as R
 import React.Basic.DOM (render)
 import React.Basic.Hooks (Component, component, element, useEffectAlways, useEffectOnce, useState', (/\))
@@ -18,12 +19,13 @@ import React.Basic.Hooks.Aff (useAff)
 import SweetSpot.CampaignCreatePage (mkCampaignCreatePage)
 import SweetSpot.CampaignListPage (mkCampaignListPage)
 import SweetSpot.CampaignViewPage (mkCampaignViewPage)
-import SweetSpot.Data.Api (UICampaign(..), AppChargeResponse(..), status, confirmationUrl)
-import SweetSpot.Mock as Mock
+import SweetSpot.Data.Api (UICampaign(..), confirmationUrl, status)
 import SweetSpot.GettingStartedPage (gettingStartedPage)
 import SweetSpot.Logger (LogLevel(..)) as LogLevel
 import SweetSpot.Logger (log, logWithContext) as Logger
 import SweetSpot.MissingSessionPage (missingSessionPage)
+import SweetSpot.Mock as Mock
+import SweetSpot.ParentRedirect (parentRedirect)
 import SweetSpot.Route (Route(..), useRouter)
 import SweetSpot.Service (fetchCampaigns, fetchAppCharge) as Service
 import SweetSpot.Session (SessionId)
@@ -95,7 +97,10 @@ mkApp = do
                       element
                         Shopify.banner
                         { title: "SweetSpot is in evaluation mode"
-                        , action: { content: "Upgrade now", url: appCharge ^. confirmationUrl }
+                        , action:
+                            { content: "Upgrade now"
+                            , onAction: const (parentRedirect (appCharge ^. confirmationUrl)) # mkEffectFn1
+                            }
                         , status: "info"
                         , onDismiss: mempty
                         , children:

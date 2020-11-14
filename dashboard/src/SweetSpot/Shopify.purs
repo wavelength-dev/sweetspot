@@ -27,7 +27,7 @@ type Action
 foreign import banner ::
   ReactComponent
     { title :: String
-    , action :: { content :: String, url :: String }
+    , action :: { content :: String, onAction :: EffectFn1 Unit Unit }
     , status :: String
     , onDismiss :: Effect Unit
     , children :: Array JSX
